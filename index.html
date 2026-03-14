@@ -3,58 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑會員網</title>
+    <title>小佑行動會員網</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #121212; --pink: #FFD1DC; --accent: #FF8FA3; --card: #1e1e1e; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; }
-        #loading-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        #loading-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
-        .top-nav { position: fixed; top: 0; width: 100%; height: 70px; display: flex; justify-content: flex-end; align-items: center; padding: 0 20px; box-sizing: border-box; z-index: 100; }
-        .text-btn { background: none; border: 1px solid var(--accent); color: var(--pink); padding: 8px 15px; border-radius: 8px; font-size: 15px; margin-left: 10px; font-weight: bold; }
-        .slide-wrap { display: flex; width: 400%; height: 100vh; transition: 0.3s; }
-        .page { width: 25%; padding: 80px 20px 100px; box-sizing: border-box; overflow-y: auto; }
-        .card { background: var(--card); border-radius: 18px; padding: 20px; margin-bottom: 15px; }
-        .input-box { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 16px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 16px; border-radius: 10px; background: var(--accent); color: #fff; border: none; font-size: 17px; font-weight: bold; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 80px; background: var(--card); display: flex; border-top: 1px solid #333; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #666; }
-        .nav-item.active { color: var(--pink); }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; font-weight: 500; }
+        #loading-full, #loading-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        #loading-full { background:#000; } #loading-half { background:rgba(0,0,0,0.7); }
+        .spinner { width: 50px; height: 50px; border: 6px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
+        .top-nav { position: fixed; top: 0; width: 100%; height: 75px; display: flex; justify-content: flex-end; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 100; }
+        .text-btn { background: var(--card); border: 2px solid var(--accent); color: var(--pink); padding: 10px 18px; border-radius: 12px; font-size: 16px; margin-left: 10px; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .slide-wrap { display: flex; width: 400%; height: 100vh; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .page { width: 25%; padding: 90px 25px 100px; box-sizing: border-box; overflow-y: auto; }
+        .card { background: var(--card); border-radius: 24px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border: 1px solid #333; }
+        .u-bal-text { font-size: 64px; font-weight: 900; color: var(--pink); margin: 10px 0; text-shadow: 0 4px 15px rgba(255,143,163,0.4); }
+        .input-box { width: 100%; padding: 18px; margin: 12px 0; border-radius: 15px; border: 2px solid #444; background: #2a2a2a; color: #fff; font-size: 18px; font-weight: bold; box-sizing: border-box; }
+        .btn { width: 100%; padding: 20px; border-radius: 18px; background: var(--accent); color: #fff; border: none; font-size: 20px; font-weight: 900; letter-spacing: 1px; box-shadow: 0 6px 15px rgba(255,143,163,0.3); }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 85px; background: #1a1a1a; display: flex; border-top: 2px solid #333; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; color: #777; font-weight: bold; }
+        .nav-item.active { color: var(--pink); } .nav-item span { font-size: 28px; margin-bottom: 4px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div id="loading-full"><div class="spinner"></div><p style="color:var(--pink); margin-top:15px;">系統啟動中...</p></div>
-    <div id="loading-half"><div class="spinner"></div><p style="color:var(--pink); margin-top:15px;">處理中...</p></div>
+    <div id="loading-full"><div class="spinner"></div><p style="color:var(--pink); margin-top:20px; font-size:18px; font-weight:bold;">系統處理中，請稍後...</p></div>
+    <div id="loading-half"><div class="spinner"></div><p style="color:var(--pink); margin-top:20px; font-size:18px; font-weight:bold;">同步數據中...</p></div>
 
-    <div id="loginView" style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
-        <h1 style="color:var(--pink); font-size:32px;">小佑會員網</h1>
-        <input type="text" id="acc" class="input-box" placeholder="輸入帳號">
-        <input type="password" id="pw" class="input-box" placeholder="輸入密碼">
-        <button class="btn" onclick="login()">登入系統</button>
+    <div id="loginView" style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:35px; background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);">
+        <h1 style="color:var(--pink); font-size:42px; margin-bottom:50px; letter-spacing:2px; text-shadow: 0 5px 15px rgba(0,0,0,0.5);">小佑會員網</h1>
+        <input type="text" id="acc" class="input-box" placeholder="帳號">
+        <input type="password" id="pw" class="input-box" placeholder="密碼">
+        <button class="btn" onclick="login()" style="margin-top:20px;">登入帳戶</button>
     </div>
 
     <div id="appView" style="display:none;">
         <div class="top-nav">
             <button class="text-btn" onclick="openMemberQR()">會員條碼</button>
-            <button class="text-btn" onclick="location.reload()">登出</button>
+            <button class="text-btn" onclick="location.reload()" style="border-color:#555; color:#aaa;">登出</button>
         </div>
         <div class="slide-wrap" id="slide">
             <div class="page">
-                <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
-                <div class="card" style="text-align:center;"><small>餘額</small><h1 style="font-size:45px; margin:5px 0;">$ <span id="uBal">0</span></h1></div>
+                <h2 style="font-size:28px;">你好，<span id="uName" style="color:var(--pink);">會員</span></h2>
+                <div class="card" style="text-align:center;"><small style="font-size:16px; color:#aaa;">可用餘額</small><div class="u-bal-text">$ <span id="uBal">0</span></div></div>
                 <button class="btn" onclick="showTopupInput()">發起儲值服務</button>
             </div>
-            <div class="page"><h3>交易紀錄</h3><div id="tList">載入中...</div></div>
-            <div class="page"><h3>我的優惠券</h3><div id="cList">目前無優惠</div></div>
+            <div class="page"><h2 style="font-size:28px;">交易紀錄</h2><div id="tList"></div></div>
+            <div class="page"><h2 style="font-size:28px;">我的優惠券</h2><div id="cList">暫無可用優惠券</div></div>
             <div class="page">
-                <h3>個人中心</h3>
+                <h2 style="font-size:28px;">個人中心</h2>
                 <div class="card">
+                    <label style="color:#aaa;">更換名稱</label>
                     <input type="text" id="editName" class="input-box">
-                    <button class="btn" style="padding:10px; font-size:14px;" onclick="updateProfile()">更新姓名</button>
+                    <button class="btn" style="padding:12px; font-size:16px;" onclick="updateProfile()">確認更名</button>
                 </div>
-                <button class="btn" style="background:#444;" onclick="changePW()">修改密碼</button>
             </div>
         </div>
         <div class="nav-bar">
@@ -66,64 +67,67 @@
     </div>
 
     <div id="inputOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; justify-content:center; align-items:center;">
-        <div class="card" style="width:85%; max-width:320px; background:#fff; color:#333;">
-            <h3 style="margin-top:0;">輸入儲值金額</h3>
-            <input type="number" id="topupAmt" class="input-box" style="background:#eee; color:#000;" placeholder="金額 (例如: 100)">
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn" style="background:#888; flex:1;" onclick="closeInput()">取消</button>
+        <div class="card" style="width:85%; max-width:340px; background:#fff; color:#333; text-align:center;">
+            <h2 style="margin:0 0 15px 0;">儲值金額</h2>
+            <input type="number" id="topupAmt" class="input-box" style="background:#f0f0f0; color:#000; border-color:#ccc;" placeholder="請輸入金額">
+            <div style="display:flex; gap:12px; margin-top:15px;">
+                <button class="btn" style="background:#999; flex:1;" onclick="closeInput()">取消</button>
                 <button class="btn" style="flex:1;" onclick="generateTopupQR()">確定</button>
             </div>
         </div>
     </div>
 
-    <div id="qrOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; justify-content:center; align-items:center;">
-        <div style="background:#fff; padding:25px; border-radius:15px; text-align:center;">
-            <h3 id="qrT" style="color:#000; margin-bottom:15px;"></h3>
-            <div id="qrcode" style="display:inline-block;"></div>
-            <button class="btn" style="background:#333; margin-top:20px;" onclick="document.getElementById('qrOverlay').style.display='none'">關閉條碼</button>
+    <div id="qrOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:9999; flex-direction:column; justify-content:center; align-items:center;">
+        <div style="background:#fff; padding:35px; border-radius:30px; text-align:center; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <h3 id="qrT" style="color:#000; font-size:24px; margin-bottom:20px;">條碼</h3>
+            <div id="qrcode" style="display:inline-block; border:10px solid #fff;"></div>
+            <button class="btn" style="background:#222; margin-top:30px;" onclick="document.getElementById('qrOverlay').style.display='none'">關閉視窗</button>
         </div>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbwWc2God7js7OUsXiWkPqzDsrP4J2Re9kYHnAwBePj2GiecVBJlHI-YzhxXtOmvkqtd/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbwWc2God7js7OUsXiWkPqzDsrP4J2Re9kYHnAwBePj2GiecVBJlHI-YzhxXtOmvkqtd/exec"; // 記得替換
         let user = null;
         function showL(t){ document.getElementById('loading-full').style.display=t==='full'?'flex':'none'; document.getElementById('loading-half').style.display=t==='half'?'flex':'none'; }
-        
         async function login(){
             showL('full');
-            const acc=document.getElementById('acc').value;
-            const pw=document.getElementById('pw').value;
-            const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc,pw})}).then(r=>r.json());
-            if(res.success){
-                if(res.role==='admin') location.href='/admin';
-                else { user=res; document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block'; updateUI(); }
-            } else alert(res.message);
+            const acc=document.getElementById('acc').value; const pw=document.getElementById('pw').value;
+            try {
+                const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc,pw})}).then(r=>r.json());
+                if(res.success){
+                    if(res.role==='admin') location.href='/admin';
+                    else { user=res; document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block'; updateUI(); }
+                } else alert(res.message);
+            } catch(e){ alert("連線失敗"); }
             showL('none');
         }
         function updateUI(){ document.getElementById('uName').innerText=user.name; document.getElementById('uBal').innerText=user.balance; document.getElementById('editName').value=user.name; }
         function go(i,el){
-            document.getElementById('slide').style.transform=`translateX(-${i*25}%)`;
-            document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-            el.classList.add('active');
-            if(i===1) fetchHistory();
+            showL('half');
+            setTimeout(()=>{
+                document.getElementById('slide').style.transform=`translateX(-${i*25}%)`;
+                document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+                el.classList.add('active');
+                if(i===1) fetchHistory();
+                showL('none');
+            }, 300);
         }
         function openMemberQR(){
-            document.getElementById('qrcode').innerHTML=""; document.getElementById('qrT').innerText='會員身份碼';
-            new QRCode(document.getElementById('qrcode'),{text:user.id,width:200,height:200});
+            document.getElementById('qrcode').innerHTML=""; document.getElementById('qrT').innerText='會員身分識別碼';
+            new QRCode(document.getElementById('qrcode'),{text:user.id,width:240,height:240});
             document.getElementById('qrOverlay').style.display='flex';
         }
         function showTopupInput(){ document.getElementById('inputOverlay').style.display='flex'; }
         function closeInput(){ document.getElementById('inputOverlay').style.display='none'; document.getElementById('topupAmt').value=""; }
         function generateTopupQR(){
-            const amt=document.getElementById('topupAmt').value;
-            if(!amt) return;
+            const amt=document.getElementById('topupAmt').value; if(!amt || amt <=0) return alert("金額無效");
             document.getElementById('qrcode').innerHTML=""; document.getElementById('qrT').innerText=`儲值碼 ($${amt})`;
-            new QRCode(document.getElementById('qrcode'),{text:`TOPUP|${user.id}|${amt}`,width:200,height:200});
+            new QRCode(document.getElementById('qrcode'),{text:`TOPUP|${user.id}|${amt}`,width:240,height:240});
             closeInput(); document.getElementById('qrOverlay').style.display='flex';
         }
         async function fetchHistory(){
             const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json());
-            document.getElementById('tList').innerHTML=res.list.map(r=>`<div class='card'><b>${r[2]}</b><br><small>${new Date(r[0]).toLocaleString()}</small><span style='float:right;color:var(--accent)'>$${r[3]}</span></div>`).join('');
+            document.getElementById('tList').innerHTML=res.list.map(r=>`<div class='card'><b>${r[2]}</b><br><small style='color:#888'>${new Date(r[0]).toLocaleString()}</small><span style='float:right;color:var(--accent);font-size:20px;font-weight:900;'>$${r[3]}</span></div>`).join('');
         }
     </script>
 </body>
