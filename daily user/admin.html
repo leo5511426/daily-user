@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>管理後台</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: sans-serif; background: #121212; color: white; margin: 0; text-align: center; }
+    .header { background: #1f1f1f; padding: 25px; border-bottom: 2px solid #FF8FA3; font-size: 22px; }
+    #reader { width: 100%; max-width: 500px; margin: auto; }
+    .card { margin: 25px; padding: 30px; background: #1e1e1e; border-radius: 25px; }
+    .btn { padding: 20px; width: 100%; border: none; border-radius: 15px; color: white; margin: 10px 0; font-weight: bold; font-size: 18px; }
+    input { width: 100%; padding: 20px; font-size: 32px; background: #333; color: white; border: none; border-radius: 15px; margin-bottom: 15px; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+<div class="header">小佑管理系統</div>
+<div id="reader"></div>
+<div id="resultCard" class="card" style="display:none;">
+  <div id="info" style="font-size:20px; margin-bottom:20px; color:#FFD1DC;"></div>
+  <div id="manual">
+    <input type="number" id="amt" placeholder="0.00">
+    <button class="btn" style="background:#2ecc71;" onclick="submit('add')">確認加值 (+)</button>
+    <button class="btn" style="background:#ff4757;" onclick="submit('sub')">執行扣款 (-)</button>
+  </div>
+  <button class="btn" style="background:#444;" onclick="location.reload()">重新掃描</button>
+</div>
+
+<script>
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby5cwOhok9ANFdB7Hx8xGszckMP-0_PUb3u4DfDME_hzjW1plAUBdoP8tJ7C5ukwnOd/exec";
+  let sid = ""; 
+  let html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
+    html5QrCode.pause();
+    document.getElementById('resultCard').style.display = 'block';
+    const p = text.split('|');
+    if(p[0] === 'TOPUP') {
+      sid = p[1];
+      document.getElementById('info').innerHTML = `會員: ${p[1]}<br>快速加值: $${p[2]}`;
+      postData(sid, p[2], '掃碼儲值');
+    } else {
+      sid = text;
+      document.getElementById('info').innerText = "會員 ID: " + text;
+    }
+  });
+
+  async function postData(uid, amount, desc) {
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'adminAction', uid, amount, desc, adminName: '小佑管理員' }) });
+    const data = await res.json();
+    alert(data.message);
+    location.reload();
+  }
+
+  function submit(type) {
+    const v = document.getElementById('amt').value;
+    if(v) postData(sid, type === 'add' ? v : -v, type === 'add' ? '加值' : '扣款');
+  }
+</script>
+</body>
+</html>
