@@ -6,39 +6,31 @@
     <title>小佑行動會員網</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #121212; --pink: #FFD1DC; --accent: #FF8FA3; --card: #1e1e1e; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; font-weight: bold; }
-        
-        /* 遮罩 */
+        :root { --bg: #121212; --pink: #FFD1DC; --accent: #FF8FA3; --card: #1e1e1e; --error: #ff5252; --success: #2ecc71; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; font-weight: 900; }
         #loading-full, #loading-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         #loading-full { background:#000; } #loading-half { background:rgba(0,0,0,0.7); }
-        .spinner { width: 50px; height: 50px; border: 5px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
-        
-        /* 導航 */
-        .top-nav { position: fixed; top: 0; width: 100%; height: 70px; display: flex; justify-content: flex-end; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 100; }
-        .text-btn { background: var(--card); border: 2px solid var(--accent); color: var(--pink); padding: 8px 15px; border-radius: 10px; font-size: 16px; margin-left: 10px; font-weight: 900; }
-        
-        .slide-wrap { display: flex; width: 400%; height: 100vh; transition: 0.4s; }
-        .page { width: 25%; padding: 80px 25px 100px; box-sizing: border-box; overflow-y: auto; }
-        .card { background: var(--card); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        
-        /* 顯眼字體 */
-        .u-bal-text { font-size: 60px; font-weight: 900; color: var(--pink); margin: 10px 0; }
-        .input-box { width: 100%; padding: 18px; margin: 12px 0; border-radius: 12px; border: 2px solid #444; background: #2a2a2a; color: #fff; font-size: 18px; font-weight: bold; box-sizing: border-box; }
-        .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 20px; font-weight: 900; box-shadow: 0 4px 10px rgba(255,143,163,0.3); }
-        
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 80px; background: #1a1a1a; display: flex; border-top: 2px solid #333; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; color: #666; font-weight: bold; }
+        .spinner { width: 50px; height: 50px; border: 6px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
+        .top-nav { position: fixed; top: 0; width: 100%; height: 75px; display: flex; justify-content: flex-end; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 100; }
+        .text-btn { background: var(--card); border: 3px solid var(--accent); color: var(--pink); padding: 10px 18px; border-radius: 12px; font-size: 16px; margin-left: 10px; font-weight: 900; }
+        .slide-wrap { display: flex; width: 400%; height: 100vh; transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .page { width: 25%; padding: 90px 25px 100px; box-sizing: border-box; overflow-y: auto; }
+        .card { background: var(--card); border-radius: 25px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+        .u-bal-text { font-size: 65px; font-weight: 900; color: var(--pink); margin: 10px 0; text-shadow: 0 0 15px rgba(255,209,220,0.3); }
+        .input-box { width: 100%; padding: 20px; margin: 12px 0; border-radius: 15px; border: 3px solid #444; background: #2a2a2a; color: #fff; font-size: 20px; font-weight: 900; box-sizing: border-box; }
+        .btn { width: 100%; padding: 20px; border-radius: 18px; background: var(--accent); color: #fff; border: none; font-size: 22px; font-weight: 900; box-shadow: 0 6px 15px rgba(255,143,163,0.3); }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 85px; background: #1a1a1a; display: flex; border-top: 2px solid #333; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; color: #666; }
         .nav-item.active { color: var(--pink); }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div id="loading-full"><div class="spinner"></div><p style="color:var(--pink); margin-top:15px; font-weight:900;">系統啟動中...</p></div>
-    <div id="loading-half"><div class="spinner"></div><p style="color:var(--pink); margin-top:15px; font-weight:900;">同步數據中...</p></div>
+    <div id="loading-full"><div class="spinner"></div></div>
+    <div id="loading-half"><div class="spinner"></div></div>
 
-    <div id="loginView" style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
-        <h1 style="color:var(--pink); font-size:38px; margin-bottom:40px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">小佑會員網</h1>
+    <div id="loginView" style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:35px;">
+        <h1 style="color:var(--pink); font-size:45px; margin-bottom:45px;">小佑會員網</h1>
         <input type="text" id="acc" class="input-box" placeholder="帳號">
         <input type="password" id="pw" class="input-box" placeholder="密碼">
         <button class="btn" onclick="login()">登入帳戶</button>
@@ -46,128 +38,87 @@
 
     <div id="appView" style="display:none;">
         <div class="top-nav">
-            <button class="text-btn" onclick="openMemberQR()">會員條碼</button>
-            <button class="text-btn" onclick="location.reload()" style="border-color:#555; color:#888;">登出</button>
+            <button class="text-btn" onclick="openMemberQR()">條碼</button>
+            <button class="text-btn" onclick="location.reload()" style="border-color:#555; color:#777;">登出</button>
         </div>
         <div class="slide-wrap" id="slide">
             <div class="page">
-                <h2 style="font-size:26px;">你好，<span id="uName" style="color:var(--pink);">...</span></h2>
-                <div class="card" style="text-align:center;"><small style="color:#aaa;">餘額</small><div class="u-bal-text">$ <span id="uBal">0</span></div></div>
-                <button class="btn" onclick="showTopupInput()">發起儲值服務</button>
+                <h2 style="font-size:30px;">你好，<span id="uName" style="color:var(--pink);">...</span></h2>
+                <div class="card" style="text-align:center;"><small>可用餘額</small><div class="u-bal-text">$ <span id="uBal">0</span></div></div>
+                <button class="btn" onclick="showTopupInput()">儲值申請</button>
             </div>
-            <div class="page"><h2 style="font-size:26px;">交易紀錄</h2><div id="tList"></div></div>
-            <div class="page"><h2 style="font-size:26px;">我的優惠</h2><div id="cList">暫無優惠券</div></div>
-            <div class="page">
-                <h2 style="font-size:26px;">個人設定</h2>
-                <div class="card">
-                    <input type="text" id="editName" class="input-box">
-                    <button class="btn" style="padding:10px; font-size:16px;" onclick="updateProfile()">更新名稱</button>
-                </div>
+            <div class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
+            <div class="page"><h2>我的優惠</h2><div id="cList">暫無優惠</div></div>
+            <div class="page"><h2>帳號設定</h2>
+                <div class="card"><input type="text" id="editName" class="input-box"><button class="btn" onclick="updateProfile()">修改姓名</button></div>
             </div>
         </div>
         <div class="nav-bar">
-            <div class="nav-item active" onclick="go(0, this)"><span>🏠</span>首頁</div>
-            <div class="nav-item" onclick="go(1, this)"><span>🧾</span>紀錄</div>
-            <div class="nav-item" onclick="go(2, this)"><span>🎟️</span>優惠</div>
-            <div class="nav-item" onclick="go(3, this)"><span>👤</span>我的</div>
-        </div>
-    </div>
-
-    <div id="inputOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; justify-content:center; align-items:center;">
-        <div class="card" style="width:85%; max-width:320px; background:#fff; color:#333; text-align:center;">
-            <h2 style="margin:0 0 15px 0;">輸入儲值金額</h2>
-            <input type="number" id="topupAmt" class="input-box" style="background:#f0f0f0; color:#000; border-color:#ccc;" placeholder="例如: 100">
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn" style="background:#888; flex:1;" onclick="closeInput()">取消</button>
-                <button class="btn" style="flex:1;" onclick="generateTopupQR()">確定</button>
-            </div>
+            <div class="nav-item active" onclick="go(0, this)">首頁</div>
+            <div class="nav-item" onclick="go(1, this)">紀錄</div>
+            <div class="nav-item" onclick="go(2, this)">優惠</div>
+            <div class="nav-item" onclick="go(3, this)">設定</div>
         </div>
     </div>
 
     <div id="qrOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:9999; flex-direction:column; justify-content:center; align-items:center;">
-        <div style="background:#fff; padding:30px; border-radius:25px; text-align:center; width:80%;">
-            <h3 id="qrT" style="color:#000; font-size:24px; margin-bottom:15px;"></h3>
+        <div style="background:#fff; padding:40px; border-radius:30px; text-align:center; width:80%; max-width:350px;">
+            <h3 id="qrT" style="color:#000; font-size:28px;"></h3>
             <div id="qrcode" style="display:inline-block;"></div>
-            <button class="btn" style="background:#222; margin-top:25px;" onclick="document.getElementById('qrOverlay').style.display='none'">關閉視窗</button>
+            <button class="btn" style="background:#222; margin-top:30px;" onclick="document.getElementById('qrOverlay').style.display='none'">關閉</button>
+        </div>
+    </div>
+
+    <div id="inputOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; justify-content:center; align-items:center;">
+        <div class="card" style="width:85%; background:#fff; color:#333; text-align:center;">
+            <h3>輸入儲值金額</h3>
+            <input type="number" id="topupAmt" class="input-box" style="background:#f0f0f0; color:#000;">
+            <div style="display:flex; gap:10px;"><button class="btn" style="background:#888;" onclick="closeInput()">取消</button><button class="btn" onclick="generateTopupQR()">確定</button></div>
         </div>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbwxXZhncHnOoI_xRPvSLyvw6eNEV3O_82laR0P3k-U_1-I_qJrbDKYeKrYbqnOI9sX7/exec";
-        let user = null;
-        let localBal = 0;
-        let pollTimer = null;
-
-        function showL(t){ document.getElementById('loading-full').style.display=t==='full'?'flex':'none'; document.getElementById('loading-half').style.display=t==='half'?'flex':'none'; }
+        const GAS = "https://script.google.com/macros/s/AKfycbwgbkO5F1Gq1csUtlzjBNnW0jZEKznWwET2qDmvDR0RHNpb-y5qKWw1ZK2y5j_44TIo/exec";
+        let user=null; let localBal=0; let pollTimer=null;
 
         async function login(){
             showL('full');
             const acc=document.getElementById('acc').value; const pw=document.getElementById('pw').value;
-            try {
-                const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc,pw})}).then(r=>r.json());
-                if(res.success){
-                    if(res.role==='admin') location.href='/admin';
-                    else { 
-                        user=res; localBal=parseFloat(res.balance);
-                        document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block'; 
-                        updateUI(); startPoll(); 
-                    }
-                } else alert(res.message);
-            } catch(e){ alert("連線失敗"); }
+            const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc,pw})}).then(r=>r.json());
+            if(res.success){
+                if(res.role==='admin') location.href='/admin';
+                else { user=res; localBal=parseFloat(res.balance); document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block'; updateUI(); startPoll(); }
+            } else alert(res.message);
             showL('none');
         }
 
-        // 輪詢功能：每 3 秒檢查一次
         function startPoll(){
-            if(pollTimer) clearInterval(pollTimer);
             pollTimer = setInterval(async ()=>{
                 const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'checkUpdate',uid:user.id,lastBal:localBal})}).then(r=>r.json());
-                if(res.hasUpdate){
-                    localBal = res.newBalance;
-                    document.getElementById('uBal').innerText = res.newBalance;
-                    showSuccessOverlay(res.message, res.amount);
+                if(res.hasError) showStatusOverlay("交易失敗", "❌", res.errorMsg, "var(--error)");
+                else if(res.hasUpdate){
+                    localBal=res.newBalance; document.getElementById('uBal').innerText=res.newBalance;
+                    showStatusOverlay("交易成功", "💰", res.message + " $" + Math.abs(res.amount), "var(--success)");
                 }
             }, 3000);
         }
 
-        function showSuccessOverlay(msg, amt){
-            const overlay = document.getElementById('qrOverlay');
-            const qrBox = document.getElementById('qrcode');
-            const title = document.getElementById('qrT');
-            title.innerHTML = `<span style="color:#2ecc71; font-size:32px;">交易成功</span>`;
-            qrBox.innerHTML = `<div style="font-size:80px; margin:20px 0;">💰</div><div style="font-size:26px; color:#333;">${msg}</div><div style="font-size:50px; color:#e74c3c; font-weight:900;">$${Math.abs(amt)}</div>`;
-            overlay.style.display = 'flex';
+        function showStatusOverlay(titleText, emoji, msg, color){
+            const title = document.getElementById('qrT'); const box = document.getElementById('qrcode');
+            title.innerHTML = `<span style="color:${color}">${titleText}</span>`;
+            box.innerHTML = `<div style="font-size:100px;">${emoji}</div><div style="font-size:30px; color:#333;">${msg}</div>`;
+            document.getElementById('qrOverlay').style.display='flex';
             new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3').play();
         }
 
+        function showL(t){ document.getElementById('loading-full').style.display=t==='full'?'flex':'none'; document.getElementById('loading-half').style.display=t==='half'?'flex':'none'; }
         function updateUI(){ document.getElementById('uName').innerText=user.name; document.getElementById('uBal').innerText=user.balance; document.getElementById('editName').value=user.name; }
-        function go(i,el){ 
-            showL('half'); 
-            setTimeout(()=>{
-                document.getElementById('slide').style.transform=`translateX(-${i*25}%)`;
-                document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-                el.classList.add('active');
-                if(i===1) fetchHistory();
-                showL('none');
-            }, 300);
-        }
-        function openMemberQR(){
-            document.getElementById('qrcode').innerHTML=""; document.getElementById('qrT').innerText='會員身份碼';
-            new QRCode(document.getElementById('qrcode'),{text:user.id,width:220,height:220});
-            document.getElementById('qrOverlay').style.display='flex';
-        }
+        function go(i,el){ document.getElementById('slide').style.transform=`translateX(-${i*25}%)`; document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); el.classList.add('active'); if(i===1) fetchHistory(); }
+        function openMemberQR(){ document.getElementById('qrcode').innerHTML=""; document.getElementById('qrT').innerText='會員身份碼'; new QRCode(document.getElementById('qrcode'),{text:user.id,width:240,height:240}); document.getElementById('qrOverlay').style.display='flex'; }
         function showTopupInput(){ document.getElementById('inputOverlay').style.display='flex'; }
-        function closeInput(){ document.getElementById('inputOverlay').style.display='none'; document.getElementById('topupAmt').value=""; }
-        function generateTopupQR(){
-            const amt=document.getElementById('topupAmt').value; if(!amt) return;
-            document.getElementById('qrcode').innerHTML=""; document.getElementById('qrT').innerText=`儲值碼 ($${amt})`;
-            new QRCode(document.getElementById('qrcode'),{text:`TOPUP|${user.id}|${amt}`,width:220,height:220});
-            closeInput(); document.getElementById('qrOverlay').style.display='flex';
-        }
-        async function fetchHistory(){
-            const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json());
-            document.getElementById('tList').innerHTML=res.list.map(r=>`<div class='card'><b>${r[2]}</b><br><small style='color:#888;'>${new Date(r[0]).toLocaleString()}</small><span style='float:right;color:var(--accent);font-size:18px;'>$${r[3]}</span></div>`).join('');
-        }
+        function closeInput(){ document.getElementById('inputOverlay').style.display='none'; }
+        function generateTopupQR(){ const amt=document.getElementById('topupAmt').value; document.getElementById('qrcode').innerHTML=""; document.getElementById('qrT').innerText=`儲值碼 $${amt}`; new QRCode(document.getElementById('qrcode'),{text:`TOPUP|${user.id}|${amt}`,width:240,height:240}); closeInput(); document.getElementById('qrOverlay').style.display='flex'; }
+        async function fetchHistory(){ const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json()); document.getElementById('tList').innerHTML=res.list.map(r=>`<div class='card'><b>${r[2]}</b><br><small>${new Date(r[0]).toLocaleString()}</small><span style='float:right; color:var(--accent); font-size:20px;'>$${r[3]}</span></div>`).join(''); }
     </script>
 </body>
 </html>
