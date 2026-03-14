@@ -3,115 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小佑 POS 旗艦大字系統</title>
+    <title>小佑 POS 系統</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --main: #1e272e; --accent: #FF8FA3; --bg: #f0f2f5; --success: #2ecc71; --danger: #e74c3c; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
-        
-        /* 左側大導覽 */
-        .sidebar { width: 140px; background: var(--main); color: white; display: flex; flex-direction: column; align-items: center; padding-top: 40px; }
-        .side-btn { margin-bottom: 40px; font-size: 50px; cursor: pointer; }
-
-        /* 工作區 */
-        .work-area { flex: 1; padding: 40px; display: flex; flex-direction: column; }
-        .status-bar { background: #333; color: #ffeb3b; padding: 25px; border-radius: 20px; margin-bottom: 30px; font-size: 32px; font-weight: 900; text-align: center; border: 4px solid var(--accent); }
-        
-        /* POS 按鈕網格 - 放大 */
-        .pos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
-        .pos-card { background: white; height: 220px; border-radius: 35px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 15px 30px rgba(0,0,0,0.1); cursor: pointer; border: 5px solid transparent; transition: 0.2s; }
-        .pos-card:active { transform: scale(0.92); background: #eee; }
-        .pos-card h2 { margin-top: 15px; font-size: 36px; color: #111; }
-        .pos-card i { font-size: 80px; }
-
-        /* 全螢幕加載圈 */
-        #loading { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.98); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        #scanner-wrap { display: none; background: #000; border-radius: 40px; overflow: hidden; position: relative; border: 8px solid var(--accent); }
+        :root { --bg: #f4f4f4; --main: #2c3e50; --accent: #FF8FA3; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; }
+        .sidebar { width: 100px; background: var(--main); color: #fff; display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+        .work-area { flex: 1; padding: 30px; }
+        .hint-bar { background: #333; color: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; font-size: 24px; font-weight: bold; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .pos-btn { background: #fff; height: 180px; border-radius: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; cursor: pointer; border: 4px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        /* 縮小掃描框：只留中間一塊 */
+        #reader { width: 320px !important; height: 320px !important; margin: 20px auto; border-radius: 20px; overflow: hidden; border: 5px solid var(--accent); }
+        #loading, #successPop { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
-
-<audio id="cashSound" src="https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3"></audio>
-
-<div id="loading">
-    <div style="width:120px; height:120px; border:15px solid #ddd; border-top:15px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
-    <h1 style="color:var(--accent); font-size:48px; margin-top:40px;">系統處理中...</h1>
-</div>
-
-<div class="sidebar">
-    <div class="side-btn" onclick="location.reload()">🏠</div>
-    <div class="side-btn" onclick="showCoupons()">🎟️</div>
-    <div class="side-btn" onclick="location.href='/'">🚪</div>
-</div>
-
-<div class="work-area">
-    <div class="status-bar" id="hint">POS 系統就緒：請選擇功能</div>
-    
-    <div id="main-menu" class="pos-grid">
-        <div class="pos-card" style="border-color:var(--success);" onclick="ready('add', '請掃描：加值[+]')"><i>💰</i><h2>加值 [+]</h2></div>
-        <div class="pos-card" style="border-color:var(--danger);" onclick="ready('sub', '請掃描：扣款[-]')"><i>🛒</i><h2>扣款 [-]</h2></div>
-        <div class="pos-card" style="border-color:#3498db;" onclick="ready('ref', '請掃描：退款[+]')"><i>🔄</i><h2>退款 [+]</h2></div>
-        <div class="pos-card" style="border-color:#9b59b6;" onclick="ready('query', '請掃描：查詢資料')"><i>🔍</i><h2>查詢資料</h2></div>
+    <audio id="cashSound" src="https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3"></audio>
+    <div id="loading"><h1>系統處理中...</h1></div>
+    <div id="successPop">
+        <div style="font-size:100px;">✅</div>
+        <h1 id="popMsg" style="font-size:40px; color:#2c3e50;">交易完成</h1>
+        <p style="font-size:24px; color:#666;">視窗將自動關閉</p>
     </div>
 
-    <div id="scanner-wrap">
-        <div id="reader" style="width:100%;"></div>
-        <button onclick="location.reload()" style="width:100%; padding:35px; background:#222; color:white; border:none; font-size:32px; font-weight:bold;">❌ 取消返回</button>
+    <div class="sidebar">
+        <div style="font-size:40px; cursor:pointer;" onclick="location.reload()">🏠</div>
+        <div style="font-size:40px; margin-top:40px; cursor:pointer;" onclick="showCoupon()">🎟️</div>
     </div>
-</div>
 
-<script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby5cwOhok9ANFdB7Hx8xGszckMP-0_PUb3u4DfDME_hzjW1plAUBdoP8tJ7C5ukwnOd/exec";
-    let mode = "";
-    const html5QrCode = new Html5Qrcode("reader");
+    <div class="work-area">
+        <div class="hint-bar" id="hint">請選擇操作功能</div>
+        <div id="menu" class="grid">
+            <div class="pos-btn" style="border-color:#2ecc71" onclick="ready('add','加值[+]')">💰 加值</div>
+            <div class="pos-btn" style="border-color:#e74c3c" onclick="ready('sub','扣款[-]')">🛒 扣款</div>
+            <div class="pos-btn" style="border-color:#3498db" onclick="ready('ref','退款[+]')">🔄 退款</div>
+            <div class="pos-btn" style="border-color:#9b59b6" onclick="ready('query','查詢會員')">🔍 查詢</div>
+        </div>
+        <div id="scan-wrap" style="display:none; text-align:center;">
+            <div id="reader"></div>
+            <button onclick="location.reload()" style="padding:20px 50px; font-size:20px; background:#444; color:#fff; border:none; border-radius:10px;">取消返回</button>
+        </div>
+    </div>
 
-    function ready(m, txt) {
-        mode = m;
-        document.getElementById('hint').innerText = "⚠️ 操作中：" + txt;
-        document.getElementById('main-menu').style.display = 'none';
-        document.getElementById('scanner-wrap').style.display = 'block';
-        
-        html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 350 }, (text) => {
-            html5QrCode.stop();
-            execute(text);
-        });
-    }
+    <script>
+        const GAS = "https://script.google.com/macros/s/AKfycbyf2xJMYD06hcsslulemGVoBZ4CWwy3vwa2IthIw8lMWdQsPlXGqLPcmq-v2LR9D4Hr/exec";
+        let mode = "";
+        const scanner = new Html5Qrcode("reader");
 
-    async function execute(val) {
-        let uid = val, amount = 0;
-        if(val.includes('|')) {
-            const p = val.split('|');
-            uid = p[1]; amount = p[2];
+        function ready(m, t){
+            mode = m;
+            document.getElementById('hint').innerText = "操作中：" + t;
+            document.getElementById('menu').style.display='none';
+            document.getElementById('scan-wrap').style.display='block';
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+                scanner.stop();
+                execute(text);
+            });
         }
 
-        if(mode !== 'query' && !amount) {
-            amount = prompt("請輸入交易金額：");
-            if(!amount) return location.reload();
-        }
-
-        document.getElementById('loading').style.display = 'flex';
-        const finalAmt = (mode === 'sub') ? -amount : amount;
-
-        try {
-            const res = await fetch(GAS_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'adminAction',
-                    uid: uid,
-                    amount: finalAmt,
-                    desc: "POS_" + mode,
-                    adminName: "櫃員小佑"
-                })
-            }).then(r => r.json());
-
-            if(res.success) {
+        async function execute(val){
+            let uid = val, amt = 0;
+            if(val.includes('|')){ const p=val.split('|'); uid=p[1]; amt=p[2]; }
+            if(mode !== 'query' && !amt) amt = prompt("輸入金額");
+            
+            document.getElementById('loading').style.display='flex';
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'adminAction',uid:uid,amount:mode==='sub'?-amt:amt,desc:'POS_'+mode,adminName:'小佑'})}).then(r=>r.json());
+            document.getElementById('loading').style.display='none';
+            
+            if(res.success){
                 document.getElementById('cashSound').play();
-                alert("✅ 交易成功！\n目前餘額：$" + res.message);
-            } else alert("❌ 失敗：" + res.message);
-        } catch(e) { alert("連線錯誤"); }
-        location.reload();
-    }
-</script>
-<style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+                document.getElementById('popMsg').innerText = "交易完成！\n新餘額：$" + res.message;
+                document.getElementById('successPop').style.display='flex';
+                setTimeout(()=>location.reload(), 2500); // 2.5秒自動關閉
+            } else alert(res.message);
+        }
+    </script>
 </body>
 </html>
