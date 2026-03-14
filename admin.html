@@ -2,122 +2,125 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑 POS 系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小佑 POS 旗艦系統</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --pos-bg: #eef2f3; --pos-side: #34495e; --pos-accent: #FF8FA3; }
-        body { font-family: "Noto Sans TC", sans-serif; margin: 0; background: var(--pos-bg); display: flex; height: 100vh; overflow: hidden; }
+        :root { --main: #2c3e50; --accent: #FF8FA3; --bg: #f8f9fa; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; }
         
         /* 側邊欄 */
-        .sidebar { width: 120px; background: var(--pos-side); color: white; display: flex; flex-direction: column; align-items: center; padding-top: 30px; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
-        .nav-btn { width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 20px; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; transition: 0.3s; }
-        .nav-btn:active { transform: scale(0.9); background: var(--pos-accent); }
+        .sidebar { width: 100px; background: var(--main); color: white; display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+        .side-btn { margin-bottom: 25px; font-size: 28px; cursor: pointer; }
 
         /* 主畫面 */
-        .main { flex: 1; padding: 40px; display: flex; flex-direction: column; }
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; max-width: 600px; margin: 40px auto; }
-        .btn-item { height: 180px; background: white; border-radius: 30px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.05); cursor: pointer; border: 3px solid transparent; transition: 0.3s; }
-        .btn-item:hover { border-color: var(--pos-accent); }
-        .btn-item span { font-size: 50px; margin-bottom: 15px; }
-        .btn-item b { font-size: 22px; color: #333; }
+        .work-area { flex: 1; padding: 30px; display: flex; flex-direction: column; }
+        .status-bar { background: #fff; padding: 15px 25px; border-radius: 15px; margin-bottom: 20px; border-left: 5px solid var(--accent); font-weight: bold; font-size: 18px; color: #555; }
+        
+        .pos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .pos-card { background: white; padding: 30px; border-radius: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; }
+        .pos-card:active { transform: scale(0.95); }
+        .pos-card h3 { margin-top: 15px; color: #333; }
+        .pos-card i { font-size: 40px; }
 
-        #scanner-view { display: none; background: white; border-radius: 30px; overflow: hidden; position: relative; }
+        #scanner-container { display: none; background: #000; border-radius: 20px; overflow: hidden; position: relative; }
         #loading { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
 
-<audio id="cashSound" src="https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3" preload="auto"></audio>
-
-<div id="loading">
-    <div style="width:60px; height:60px; border:6px solid #f3f3f3; border-top:6px solid #FF8FA3; border-radius:50%; animation:spin 1s linear infinite;"></div>
-    <div style="margin-top:25px; font-size:20px; font-weight:bold; color:#FF8FA3;">系統處理中，請稍後...</div>
-</div>
+<audio id="cashSound" src="https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3"></audio>
+<div id="loading"><div style="width:50px; height:50px; border:5px solid #eee; border-top:5px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div><h2 style="color:var(--accent);">系統處理中...</h2></div>
 
 <div class="sidebar">
-    <div class="nav-btn" onclick="location.reload()">🏠</div>
-    <div class="nav-btn" onclick="location.href='/'">🚪</div>
+    <div class="side-btn" onclick="location.reload()">🏠</div>
+    <div class="side-btn" onclick="showCouponMgmt()">🎟️</div>
+    <div class="side-btn" onclick="location.href='/'">🚪</div>
 </div>
 
-<div class="main">
-    <h1 style="text-align:center; font-size:32px; color:#2c3e50;">小佑行動 POS 收銀系統</h1>
+<div class="work-area">
+    <div class="status-bar" id="hint">歡迎使用！請選擇下方功能開始操作</div>
     
-    <div id="menu" class="grid">
-        <div class="btn-item" onclick="startScan('add')"><span>💰</span><b>儲值加值</b></div>
-        <div class="btn-item" onclick="startScan('sub')"><span>🛒</span><b>扣款消費</b></div>
-        <div class="btn-item" onclick="startScan('query')"><span>👤</span><b>會員資料</b></div>
-        <div class="btn-item" onclick="location.reload()"><span>🔄</span><b>重新整理</b></div>
+    <div id="main-menu" class="pos-grid">
+        <div class="pos-card" onclick="ready('add', '請掃描會員碼進行 [加值+]')"><i>💰</i><h3>加值+</h3></div>
+        <div class="pos-card" onclick="ready('sub', '請掃描會員碼進行 [扣款-]')"><i>🛒</i><h3>扣款-</h3></div>
+        <div class="pos-card" onclick="ready('ref', '請掃描會員碼進行 [退款+]')"><i>🔄</i><h3>退款+</h3></div>
+        <div class="pos-card" onclick="ready('query', '請掃描會員碼查詢資料')"><i>🔍</i><h3>會員查詢</h3></div>
+        <div class="pos-card" onclick="showCouponMgmt()"><i>🎫</i><h3>優惠券管理</h3></div>
     </div>
 
-    <div id="scanner-view">
+    <div id="scanner-container">
         <div id="reader"></div>
-        <button onclick="location.reload()" style="width:100%; padding:25px; background:#2c3e50; color:white; border:none; font-size:20px;">取消返回主選單</button>
+        <button onclick="location.reload()" style="width:100%; padding:20px; background:#444; color:white; border:none;">取消並返回</button>
+    </div>
+
+    <div id="coupon-mgmt" style="display:none;" class="pos-grid">
+        <div class="pos-card" style="grid-column: span 3; background:var(--main); color:white;"><h2>優惠券管理系統</h2></div>
+        <div class="pos-card" onclick="alert('新增優惠券')"><i>➕</i><h3>新增券碼</h3></div>
+        <div class="pos-card" onclick="alert('編輯優惠券')"><i>📝</i><h3>編輯/修改</h3></div>
+        <div class="pos-card" onclick="alert('刪除優惠券')"><i>❌</i><h3>停用/刪除</h3></div>
+        <button class="pos-card" style="grid-column: span 3;" onclick="location.reload()">返回主選單</button>
     </div>
 </div>
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby5cwOhok9ANFdB7Hx8xGszckMP-0_PUb3u4DfDME_hzjW1plAUBdoP8tJ7C5ukwnOd/exec";
-    let mode = "";
+    let currentMode = "";
     const html5QrCode = new Html5Qrcode("reader");
 
-    function playSound() {
-        const sound = document.getElementById('cashSound');
-        sound.currentTime = 0;
-        sound.play().catch(e => console.log("音效播放被瀏覽器阻擋，需先點擊頁面一次"));
-    }
-
-    function startScan(m) {
-        mode = m;
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('scanner-view').style.display = 'block';
+    function ready(mode, text) {
+        currentMode = mode;
+        document.getElementById('hint').innerText = "提示：" + text;
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('scanner-container').style.display = 'block';
         
-        html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 280 }, (text) => {
+        // 啟動二維掃描
+        html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
             html5QrCode.stop();
-            handleTransaction(text);
+            doAction(text);
         });
     }
 
-    async function handleTransaction(text) {
-        let uid = text;
-        let amount = 0;
+    function showCouponMgmt() {
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('coupon-mgmt').style.display = 'grid';
+        document.getElementById('hint').innerText = "提示：正在進行優惠券庫存管理";
+    }
 
-        if (text.includes('|')) {
-            const parts = text.split('|');
-            uid = parts[1];
-            amount = parts[2];
+    async function doAction(scannedText) {
+        let uid = scannedText;
+        let amount = 0;
+        if(scannedText.includes('|')) {
+            const p = scannedText.split('|');
+            uid = p[1]; amount = p[2];
         }
 
-        if (mode !== 'query' && !amount) {
-            amount = prompt("請手動輸入金額:");
-            if (!amount) return location.reload();
+        if(currentMode !== 'query' && !amount) {
+            amount = prompt("請手動輸入金額：");
+            if(!amount) return location.reload();
         }
 
         document.getElementById('loading').style.display = 'flex';
-        
+        const finalAmt = (currentMode === 'sub') ? -amount : amount;
+
         try {
             const res = await fetch(GAS_URL, {
                 method: 'POST',
                 body: JSON.stringify({
                     action: 'adminAction',
                     uid: uid,
-                    amount: mode === 'sub' ? -amount : amount,
-                    desc: mode === 'query' ? '資料查詢' : (mode === 'sub' ? 'POS扣款' : 'POS加值'),
-                    adminName: '小佑管理員'
+                    amount: finalAmt,
+                    desc: "POS_" + currentMode,
+                    adminName: "櫃員A"
                 })
             }).then(r => r.json());
 
-            if (res.success) {
-                playSound(); // 💸 成功時播放收銀聲
-                alert("✨ 交易成功！\n" + res.message);
-            } else {
-                alert("❌ 失敗：" + res.message);
-            }
-        } catch(e) {
-            alert("API 連線錯誤");
-        } finally {
-            location.reload();
-        }
+            if(res.success) {
+                document.getElementById('cashSound').play();
+                alert("操作成功！\n餘額更新為：$" + res.message);
+            } else alert("錯誤：" + res.message);
+        } catch(e) { alert("連線異常"); }
+        location.reload();
     }
 </script>
 <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
