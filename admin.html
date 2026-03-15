@@ -2,69 +2,124 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>POS 管理後台</title>
+    <title>小佑 POS 管理系統</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; margin: 0; font-weight: 900; }
-        .header { background: #2c3e50; color: #fff; padding: 20px; text-align: center; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
-        .op-card { background: #fff; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; font-size: 24px; }
-        #reader { width: 350px; margin: 20px auto; border-radius: 20px; overflow: hidden; display: none; border: 5px solid #FF8FA3; }
-        #loading { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; font-weight: bold; }
+        .header { background: #1a1a1a; color: white; padding: 20px; text-align: center; }
+        .tab-nav { display: flex; background: #333; }
+        .tab { flex: 1; padding: 15px; color: #ccc; text-align: center; cursor: pointer; }
+        .tab.active { background: #FF8FA3; color: white; }
+        .content { padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .hint { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ffeeba; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn-main { background: #FF8FA3; color: white; border: none; font-size: 18px; }
+        #reader { width: 300px; margin: 10px auto; border: 5px solid #FF8FA3; border-radius: 15px; display: none; }
     </style>
 </head>
 <body>
-    <div id="loading"><h1>執行中，請稍後...</h1></div>
-    <div class="header"><h1>POS 操作系統</h1></div>
-    <div id="menu" class="btn-grid">
-        <div class="op-card" style="color:green;" onclick="start('add')">➕ 會員加值</div>
-        <div class="op-card" style="color:red;" onclick="start('sub')">➖ 會員扣款</div>
+    <div class="header"><h1>POS 管理後台</h1></div>
+    <div class="tab-nav">
+        <div class="tab active" onclick="showTab('pos')">收銀</div>
+        <div class="tab" onclick="showTab('coupon')">優惠券</div>
+        <div class="tab" onclick="location.reload()">重新整理</div>
     </div>
-    <div id="reader"></div>
-    <button id="cancel" style="display:none; width:80%; margin: 20px auto; padding: 20px; background: #888; color: #fff; border: none; border-radius: 15px; display: block;" onclick="location.reload()">放棄並返回</button>
+
+    <div id="posArea" class="content">
+        <div class="hint">第一步：請先選擇操作類型 (加值/扣款/退款)</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+            <button onclick="setMode('add')">🟢加值</button>
+            <button onclick="setMode('sub')">🔴扣款</button>
+            <button onclick="setMode('refund')">🔵退款</button>
+        </div>
+        <div id="scanStep" style="display:none;">
+            <div class="hint">第二步：請對準會員條碼進行掃描</div>
+            <div id="reader"></div>
+            <button onclick="location.reload()">取消掃描</button>
+        </div>
+    </div>
+
+    <div id="couponArea" class="content" style="display:none;">
+        <div class="card">
+            <h3>發放新優惠券</h3>
+            <div class="hint">請輸入名稱、金額及會員 ID 後點選發放</div>
+            <input type="text" id="cpName" placeholder="優惠券名稱 (如：生日禮)">
+            <input type="number" id="cpVal" placeholder="面額金額">
+            <input type="text" id="cpUid" placeholder="會員 ID (如：S001)">
+            <button class="btn-main" onclick="addCoupon()">確定發放</button>
+        </div>
+        <h3>現有優惠券列表</h3>
+        <div id="allCpList">讀取中...</div>
+    </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyzNMwjYxA094jdeq4qOJJSPrDdZNs0fJ_K_z5N9Oi1frnwELXlsdbNd0k8BWrvb6t_/exec";
-        let mode = "";
+        const GAS = "https://script.google.com/macros/s/AKfycbw5gkUvZZa9yI9O4SBr7arua8GI6rV1EISspEJRoY2VL7ucvX4OEoP0bRrtHDB6v9O0/exec";
         const scanner = new Html5Qrcode("reader");
+        let currentMode = "";
 
-        function start(m){
-            mode = m;
-            document.getElementById('menu').style.display='none';
+        function showTab(t){
+            document.getElementById('posArea').style.display = t==='pos'?'block':'none';
+            document.getElementById('couponArea').style.display = t==='coupon'?'block':'none';
+            if(t==='coupon') loadCoupons();
+        }
+
+        function setMode(m){
+            currentMode = m;
+            document.getElementById('scanStep').style.display='block';
             document.getElementById('reader').style.display='block';
-            document.getElementById('cancel').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
                 scanner.stop();
-                process(txt);
+                handleProcess(txt);
             });
         }
 
-        async function process(val){
-            let uid = val, amt = 0;
+        async function handleProcess(val){
+            let uid = val, amt = 0, isRefund = (currentMode === 'refund');
             if(val.includes('|')){ const p=val.split('|'); uid=p[1]; amt=p[2]; }
-            else { amt = prompt("請輸入操作金額："); }
-
+            else { amt = prompt(`請輸入要${currentMode==='add'?'加值':(currentMode==='sub'?'扣款':'退款')}的金額：`); }
+            
             if(!amt || isNaN(amt)) return location.reload();
-
-            // 確定操作確認
-            const conf = confirm(`【操作確認】\n對象：${uid}\n模式：${mode==='add'?'加值':'扣款'}\n金額：$${amt}\n\n點選確定即可執行！`);
-            if(!conf) return location.reload();
-
-            document.getElementById('loading').style.display='flex';
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
-                action:'adminAction', uid: uid, 
-                amount: mode==='sub' ? -amt : amt, 
-                desc: 'POS_OP', adminName: '櫃員'
-            })}).then(r=>r.json());
-
-            if(res.success){
-                new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3').play();
-                alert("✅ 操作成功！新餘額：$" + res.message);
-            } else {
-                new Audio('https://assets.mixkit.co/active_storage/sfx/2016/2016-preview.mp3').play();
-                alert("❌ 失敗：" + res.message);
+            
+            if(confirm(`【最終確認】\n帳號：${uid}\n金額：$${amt}\n動作：${currentMode}\n\n點選確定即可執行！`)){
+                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
+                    action:'adminAction', uid:uid, 
+                    amount: currentMode==='sub'?-amt:amt, 
+                    desc: '櫃員手動操作', adminName:'櫃員', isRefund: isRefund
+                })}).then(r=>r.json());
+                
+                if(res.success){
+                    new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3').play();
+                    alert("✅ 執行成功！");
+                } else {
+                    new Audio('https://assets.mixkit.co/active_storage/sfx/2016/2016-preview.mp3').play();
+                    alert("❌ 失敗："+res.message);
+                }
+                location.reload();
             }
-            location.reload();
+        }
+
+        async function addCoupon(){
+            const n=document.getElementById('cpName').value, v=document.getElementById('cpVal').value, u=document.getElementById('cpUid').value;
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'addCoupon',cName:n,cValue:v,targetUid:u})}).then(r=>r.json());
+            alert(res.message); loadCoupons();
+        }
+
+        async function loadCoupons(){
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'allCoupons'})}).then(r=>r.json());
+            document.getElementById('allCpList').innerHTML = res.list.map((r, i) => `
+                <div class="card">
+                    ID: ${r[1]} | <b>${r[2]}</b> ($${r[3]})
+                    <button style="background:red; color:white; width:auto; float:right; padding:5px;" onclick="delCoupon(${i+2})">刪除</button>
+                </div>
+            `).join('');
+        }
+
+        async function delCoupon(idx){
+            if(confirm("確定要刪除這張優惠券嗎？")){
+                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'deleteCoupon',rowIdx:idx})}).then(r=>r.json());
+                alert(res.message); loadCoupons();
+            }
         }
     </script>
 </body>
