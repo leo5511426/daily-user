@@ -2,64 +2,65 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>POS 專業管理後台</title>
+    <title>POS 專業管理介面</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; font-size: 20px; font-weight: bold; }
-        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .card { background: white; padding: 30px; border-radius: 20px; margin: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input, textarea { width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; }
-        .btn { background: #FF8FA3; color: white; border: none; padding: 20px; width: 100%; border-radius: 15px; cursor: pointer; font-size: 22px; }
-        .user-list { height: 200px; overflow-y: auto; border: 2px solid #eee; padding: 10px; margin: 10px 0; }
+        body { font-family: sans-serif; background: #f4f6f9; font-size: 22px; padding: 20px; font-weight: bold; }
+        .card { background: white; padding: 40px; border-radius: 25px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
+        input, textarea { width: 100%; padding: 20px; margin: 15px 0; font-size: 20px; border: 3px solid #eee; border-radius: 15px; box-sizing: border-box; }
+        .btn { background: #FF8FA3; color: white; border: none; padding: 25px; width: 100%; border-radius: 20px; font-size: 24px; cursor: pointer; }
+        .u-list { border: 3px solid #f9f9f9; padding: 15px; max-height: 250px; overflow-y: auto; background: #fff; border-radius: 15px; margin: 15px 0; }
+        .u-item { padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
-    <div id="loader"><div class="spinner"></div><p>系統處理中，請稍後...</p></div>
+    <div id="loader"><h2>系統處理中，請稍後...</h2></div>
 
     <div class="card">
-        <h2>發送優惠券</h2>
-        <input type="text" id="cName" placeholder="優惠券名稱">
-        <input type="number" id="cVal" placeholder="面額 (可選)">
-        <input type="number" id="cMin" placeholder="最低消費金額">
-        <textarea id="cDesc" placeholder="詳細說明"></textarea>
+        <h1>發放優惠券系統</h1>
+        <input type="text" id="cn" placeholder="優惠券名稱">
+        <input type="number" id="cv" placeholder="面額 (可選)">
+        <input type="number" id="cm" placeholder="最低消費門檻">
+        <textarea id="cd" placeholder="詳細說明/使用條款"></textarea>
         
-        <p>選擇會員： 
-            <button onclick="toggleAll(true)">全選</button> 
-            <button onclick="toggleAll(false)">全取消</button>
-        </p>
-        <div class="user-list" id="uList">載入會員中...</div>
+        <div style="margin-top:20px;">
+            對象會員：
+            <button onclick="checkAll(true)">一鍵全選</button> 
+            <button onclick="checkAll(false)">取消全選</button>
+        </div>
+        <div class="u-list" id="uBox">載入會員清單中...</div>
         
-        <button class="btn" onclick="sendCoupons()">點選確定發送</button>
+        <button class="btn" onclick="send()">點選確定批次發送</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbxK6ITww3uB3C5MPC6XOxR4m1qnVGpuEqlRpXOXa7lyNRiE6fCNGnwLVzZ7D3x0weFH/exec";
-        
-        async function loadUsers(){
+        const GAS = "你的_GAS_部署網址";
+
+        async function load(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users'})}).then(r=>r.json());
-            document.getElementById('uList').innerHTML = res.list.map(u => `
-                <div><input type="checkbox" class="u-check" value="${u.id}"> ${u.name} (${u.id})</div>
+            document.getElementById('uBox').innerHTML = res.list.map(u => `
+                <div class="u-item"><input type="checkbox" class="u-sel" value="${u.id}" style="transform:scale(1.8); margin-right:15px;"> ${u.name} [${u.id}]</div>
             `).join('');
         }
-        
-        function toggleAll(st){ document.querySelectorAll('.u-check').forEach(c=>c.checked=st); }
 
-        async function sendCoupons(){
-            const ids = Array.from(document.querySelectorAll('.u-check:checked')).map(c=>c.value);
-            if(ids.length === 0) return alert("請至少選擇一個會員");
+        function checkAll(st){ document.querySelectorAll('.u-sel').forEach(x=>x.checked=st); }
+
+        async function send(){
+            const ids = Array.from(document.querySelectorAll('.u-sel:checked')).map(x=>x.value);
+            if(ids.length === 0) return alert("請至少選擇一位會員");
             
             document.getElementById('loader').style.display='flex';
-            const data = {
-                name: document.getElementById('cName').value,
-                val: document.getElementById('cVal').value,
-                min: document.getElementById('cMin').value,
-                desc: document.getElementById('cDesc').value
+            const cData = {
+                name: document.getElementById('cn').value,
+                val: document.getElementById('cv').value,
+                min: document.getElementById('cm').value,
+                desc: document.getElementById('cd').value
             };
-            await fetch(GAS,{method:'POST',body:JSON.stringify({action:'addCoupons',cData:data,targetUids:ids})});
-            alert("發送成功！");
+            await fetch(GAS,{method:'POST',body:JSON.stringify({action:'addCoupons',cData:cData,targetUids:ids})});
+            alert("發送完畢！");
             location.reload();
         }
-        
-        loadUsers();
+        load();
     </script>
 </body>
 </html>
