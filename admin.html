@@ -34,7 +34,7 @@
     </div>
 
     <script>
-        const GAS = "你的_GAS_部署網址";
+        const GAS = "https://script.google.com/macros/s/AKfycbzQucZ8sq16SKDZG2-3KPs-yyLupUzs8Eikc7PLvXK8Nn3hSpDA9rGVqISWhtWPJLX8/exec";
 
         async function load(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users'})}).then(r=>r.json());
