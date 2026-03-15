@@ -2,65 +2,102 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>POS 專業管理介面</title>
+    <title>POS 管理系統</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f6f9; font-size: 22px; padding: 20px; font-weight: bold; }
-        .card { background: white; padding: 40px; border-radius: 25px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
-        input, textarea { width: 100%; padding: 20px; margin: 15px 0; font-size: 20px; border: 3px solid #eee; border-radius: 15px; box-sizing: border-box; }
-        .btn { background: #FF8FA3; color: white; border: none; padding: 25px; width: 100%; border-radius: 20px; font-size: 24px; cursor: pointer; }
-        .u-list { border: 3px solid #f9f9f9; padding: 15px; max-height: 250px; overflow-y: auto; background: #fff; border-radius: 15px; margin: 15px 0; }
-        .u-item { padding: 10px; border-bottom: 1px solid #eee; }
+        :root { --bg: #f4f7f6; --accent: #FF8FA3; --green: #2ecc71; --red: #ff5252; --blue: #3498db; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; font-weight: 900; }
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        .header { background: #1a1a1a; color: white; padding: 25px; text-align: center; }
+        .container { padding: 30px; max-width: 600px; margin: auto; }
+        .card { background: white; padding: 35px; border-radius: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 30px; }
+        .btn { padding: 22px; border-radius: 18px; border: none; font-size: 22px; font-weight: 900; cursor: pointer; width: 100%; margin: 12px 0; transition: 0.2s; }
+        .btn-add { background: var(--green); color: white; }
+        .btn-sub { background: var(--red); color: white; }
+        .btn-blue { background: var(--blue); color: white; }
+        #reader { width: 100%; border-radius: 20px; overflow: hidden; display: none; border: 5px solid var(--accent); margin-bottom: 20px; }
+        .hint { background: #fff3cd; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 18px; color: #856404; text-align: center; }
+        .u-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; }
     </style>
 </head>
 <body>
-    <div id="loader"><h2>系統處理中，請稍後...</h2></div>
-
-    <div class="card">
-        <h1>發放優惠券系統</h1>
-        <input type="text" id="cn" placeholder="優惠券名稱">
-        <input type="number" id="cv" placeholder="面額 (可選)">
-        <input type="number" id="cm" placeholder="最低消費門檻">
-        <textarea id="cd" placeholder="詳細說明/使用條款"></textarea>
-        
-        <div style="margin-top:20px;">
-            對象會員：
-            <button onclick="checkAll(true)">一鍵全選</button> 
-            <button onclick="checkAll(false)">取消全選</button>
+    <div id="loader"><p style="font-size:24px;">系統連線處理中...</p></div>
+    <div class="header"><h1>POS 運營管理後台</h1></div>
+    
+    <div class="container">
+        <div id="menu">
+            <div class="hint">第一步：請點選要執行的操作類型</div>
+            <button class="btn btn-add" onclick="startScan('add')">🟢 會員加值服務</button>
+            <button class="btn btn-sub" onclick="startScan('sub')">🔴 現場交易扣款</button>
+            <button class="btn btn-blue" onclick="startScan('refund')">🔵 異常交易退款</button>
+            
+            <div class="card" style="margin-top:40px;">
+                <h3>優惠券批次發放</h3>
+                <input type="text" id="cn" style="width:100%; padding:15px; margin:5px 0;" placeholder="名稱">
+                <input type="number" id="cv" style="width:100%; padding:15px; margin:5px 0;" placeholder="面額">
+                <input type="number" id="cm" style="width:100%; padding:15px; margin:5px 0;" placeholder="門檻">
+                <button class="btn btn-add" style="font-size:18px;" onclick="sendBatch()">點選發放給全體會員</button>
+            </div>
         </div>
-        <div class="u-list" id="uBox">載入會員清單中...</div>
-        
-        <button class="btn" onclick="send()">點選確定批次發送</button>
+
+        <div id="scanPart" style="display:none;">
+            <div class="hint">第二步：請對準顧客條碼進行掃描</div>
+            <div id="reader"></div>
+            <button class="btn" style="background:#888; color:#fff;" onclick="location.reload()">放棄並返回首頁</button>
+        </div>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbzQucZ8sq16SKDZG2-3KPs-yyLupUzs8Eikc7PLvXK8Nn3hSpDA9rGVqISWhtWPJLX8/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbyO0O8m1YuIr0wZ7roEY6Gz-5y4K2HRrfRUdGuRr5uqjGx0X51gnLa7MewC0NPRUaA/exec";
+        const scanner = new Html5Qrcode("reader");
+        let currentMode = "";
 
-        async function load(){
+        function startScan(m){
+            currentMode = m;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('scanPart').style.display = 'block';
+            document.getElementById('reader').style.display = 'block';
+            scanner.start({ facingMode: "environment" }, { fps: 12, qrbox: 280 }, (txt) => {
+                scanner.stop();
+                handleProcess(txt);
+            });
+        }
+
+        async function handleProcess(val){
+            let uid = val, amt = 0;
+            // 判斷是否為快速儲值條碼
+            if(val.includes('|')){ 
+                const p = val.split('|'); uid = p[1]; amt = p[2]; 
+            } else { 
+                amt = prompt(`請輸入要${currentMode==='add'?'加值':(currentMode==='sub'?'扣款':'退款')}的金額：`); 
+            }
+
+            if(!amt || isNaN(amt)) return location.reload();
+
+            if(confirm(`【最終確認】\n對象：${uid}\n金額：$${amt}\n\n確定執行？`)){
+                document.getElementById('loader').style.display='flex';
+                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
+                    action:'adminAction', uid:uid, 
+                    amount: currentMode==='sub' ? -amt : amt, 
+                    desc: '櫃員手動操作', adminName:'POS櫃員', type: currentMode
+                })}).then(r=>r.json());
+                
+                alert(res.success ? "✅ 執行成功！" : "❌ 失敗：" + res.message);
+                location.reload();
+            }
+        }
+
+        async function sendBatch(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users'})}).then(r=>r.json());
-            document.getElementById('uBox').innerHTML = res.list.map(u => `
-                <div class="u-item"><input type="checkbox" class="u-sel" value="${u.id}" style="transform:scale(1.8); margin-right:15px;"> ${u.name} [${u.id}]</div>
-            `).join('');
-        }
-
-        function checkAll(st){ document.querySelectorAll('.u-sel').forEach(x=>x.checked=st); }
-
-        async function send(){
-            const ids = Array.from(document.querySelectorAll('.u-sel:checked')).map(x=>x.value);
-            if(ids.length === 0) return alert("請至少選擇一位會員");
-            
+            const ids = res.list.map(u => u.id);
             document.getElementById('loader').style.display='flex';
-            const cData = {
-                name: document.getElementById('cn').value,
-                val: document.getElementById('cv').value,
-                min: document.getElementById('cm').value,
-                desc: document.getElementById('cd').value
-            };
-            await fetch(GAS,{method:'POST',body:JSON.stringify({action:'addCoupons',cData:cData,targetUids:ids})});
-            alert("發送完畢！");
-            location.reload();
+            await fetch(GAS,{method:'POST',body:JSON.stringify({
+                action:'addCoupons',
+                cData: { name: document.getElementById('cn').value, val: document.getElementById('cv').value, min: document.getElementById('cm').value, desc: '全體發放' },
+                targetUids: ids
+            })});
+            alert("發送成功"); location.reload();
         }
-        load();
     </script>
 </body>
 </html>
