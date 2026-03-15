@@ -6,72 +6,86 @@
     <title>小佑會員網</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #121212; --pink: #FFD1DC; --accent: #FF8FA3; --card: #1e1e1e; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; font-size: 20px; }
+        :root { --bg: #121212; --pink: #FFD1DC; --accent: #FF8FA3; --card: #1e1e1e; --green: #2ecc71; --red: #ff5252; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; font-size: 20px; overflow: hidden; }
         
-        /* 系統加載動畫 */
-        #sysLoader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
-        .full-mask { background: #000; }
-        .half-mask { background: rgba(0,0,0,0.75); }
-        .spinner { width: 70px; height: 70px; border: 8px solid #333; border-top: 8px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        /* 遮罩轉圈圈 */
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
+        .full-mask { background: #000; } .half-mask { background: rgba(0,0,0,0.8); }
+        .spinner { width: 60px; height: 60px; border: 8px solid #333; border-top: 8px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* 全域放大 UI */
-        .u-bal-text { font-size: 85px; color: var(--pink); margin: 20px 0; }
-        .input-box { width: 100%; padding: 25px; margin: 12px 0; border-radius: 18px; border: 3px solid #444; background: #2a2a2a; color: #fff; font-size: 24px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 25px; border-radius: 20px; background: var(--accent); color: #fff; border: none; font-size: 26px; font-weight: 900; cursor: pointer; }
+        /* UI 放大 */
+        .u-bal-text { font-size: 85px; color: var(--pink); margin: 15px 0; }
+        .input-box { width: 100%; padding: 22px; margin: 12px 0; border-radius: 15px; border: 3px solid #444; background: #2a2a2a; color: #fff; font-size: 24px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 22px; border-radius: 18px; background: var(--accent); color: #fff; border: none; font-size: 24px; font-weight: 900; cursor: pointer; }
         
-        .top-nav { position: fixed; top: 0; width: 100%; height: 75px; display: flex; justify-content: flex-end; align-items: center; padding: 0 25px; }
+        /* 右上方登出按鈕 */
+        .top-nav { position: fixed; top: 0; width: 100%; height: 75px; display: flex; justify-content: flex-end; align-items: center; padding: 0 20px; z-index: 100; }
+        .logout-box { border: 2px solid #555; padding: 8px 18px; border-radius: 12px; color: #aaa; font-size: 16px; cursor: pointer; transition: 0.3s; }
+
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 95px; background: #1a1a1a; display: flex; border-top: 2px solid #333; }
         .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #666; font-size: 20px; }
         .nav-item.active { color: var(--pink); }
         
-        .page { width: 100vw; height: 100vh; padding: 100px 35px; box-sizing: border-box; overflow-y: auto; display: none; }
-        .card { background: var(--card); border-radius: 30px; padding: 35px; margin-bottom: 25px; }
+        .page { width: 100vw; height: 100vh; padding: 100px 30px 120px; box-sizing: border-box; overflow-y: auto; display: none; }
+        .card { background: var(--card); border-radius: 25px; padding: 30px; margin-bottom: 25px; }
+        
+        /* 交易紀錄樣式 */
+        .trans-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid #333; }
+        .trans-amt { font-size: 24px; font-weight: 900; }
+        
         #qrOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
-    <div id="sysLoader"><div class="spinner"></div><p style="margin-top:25px; font-size:22px;">系統處理中，請稍後...</p></div>
+    <div id="loader"><div class="spinner"></div><p style="margin-top:20px;">系統處理中，請稍後...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:45px;">
-        <h1 style="color:var(--pink); font-size:55px;">小佑會員網</h1>
+        <h1 style="color:var(--pink); font-size:55px; margin-bottom:40px;">小佑會員網</h1>
         <input type="text" id="acc" class="input-box" placeholder="帳號">
         <input type="password" id="pw" class="input-box" placeholder="密碼">
-        <button class="btn" style="margin-top:20px;" onclick="login()">點選確定登入系統</button>
+        <button class="btn" onclick="login()">點選確定登入系統</button>
     </div>
 
     <div id="appView" style="display:none;">
-        <div class="top-nav"><span onclick="logout()" style="color:#888; font-size:18px;">登出帳號</span></div>
+        <div class="top-nav"><div class="logout-box" onclick="logout()">登出</div></div>
         
         <div id="p0" class="page" style="display:block;">
             <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
-            <div class="card" style="text-align:center;"><small>可用餘額</small><div class="u-bal-text">$ <span id="uBal">0</span></div></div>
-            <button class="btn" onclick="openQR()">出示會員條碼</button>
+            <div class="card" style="text-align:center;"><small>我的可用餘額</small><div class="u-bal-text">$ <span id="uBal">0</span></div></div>
+            <button class="btn" onclick="openQR('ID')">出示會員身份條碼</button>
+            <div style="margin-top:30px;">
+                <p>快速儲值申請：</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+                    <button class="btn" style="background:#444; padding:15px; font-size:20px;" onclick="openQR('TOPUP', 100)">$100</button>
+                    <button class="btn" style="background:#444; padding:15px; font-size:20px;" onclick="openQR('TOPUP', 500)">$500</button>
+                    <button class="btn" style="background:#444; padding:15px; font-size:20px;" onclick="openQR('TOPUP', 1000)">$1000</button>
+                </div>
+            </div>
         </div>
 
-        <div id="p1" class="page"><h2>交易明細</h2><div id="tList"></div></div>
+        <div id="p1" class="page"><h2>交易明細紀錄</h2><div id="tList"></div></div>
         <div id="p2" class="page"><h2>我的優惠券</h2><div id="cList"></div></div>
         
         <div id="p3" class="page">
             <h2>個人設定</h2>
             <div class="card">
-                <h3>資料管理</h3>
-                <input type="text" id="setName" class="input-box" placeholder="更改顯示姓名">
-                <input type="password" id="setPw" class="input-box" placeholder="變更登入密碼">
-                <button class="btn" onclick="saveSettings()">儲存個人變更</button>
+                <h3>帳號資料管理</h3>
+                <input type="text" id="setName" class="input-box" placeholder="變更姓名">
+                <input type="password" id="setPw" class="input-box" placeholder="變更密碼">
+                <button class="btn" onclick="saveSettings()">儲存修改並登出</button>
             </div>
             <div class="card">
                 <h3>系統資訊</h3>
-                <p>版本：v3.5 企業版</p>
-                <p>伺服器：雲端即時同步</p>
+                <p>版本：v4.0 專業運營版</p>
             </div>
-            <button class="btn" style="background:#ff5252;" onclick="confirmDelete()">刪除帳號 (永久移除資料)</button>
+            <button class="btn" style="background:var(--red);" onclick="delAcc()">刪除帳號 (永久移除資料)</button>
         </div>
 
         <div class="nav-bar">
             <div class="nav-item active" onclick="go(0)">首頁</div>
-            <div class="nav-item" onclick="go(1)">明細</div>
+            <div class="nav-item" onclick="go(1)">紀錄</div>
             <div class="nav-item" onclick="go(2)">優惠</div>
             <div class="nav-item" onclick="go(3)">設定</div>
         </div>
@@ -79,97 +93,95 @@
 
     <div id="qrOverlay">
         <div style="background:#fff; padding:45px; border-radius:35px; text-align:center; width:85%;">
-            <h3 id="qrT" style="color:#000; font-size:30px; margin-bottom:20px;">會員身份碼</h3>
-            <div id="qrcode"></div>
+            <h3 id="qrT" style="color:#000;"></h3>
+            <div id="qrcode" style="display:inline-block;"></div>
             <button class="btn" style="background:#222; margin-top:40px;" onclick="document.getElementById('qrOverlay').style.display='none'">點選確定關閉</button>
         </div>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbzQucZ8sq16SKDZG2-3KPs-yyLupUzs8Eikc7PLvXK8Nn3hSpDA9rGVqISWhtWPJLX8/exec";
-        let user=null, localBal=0, poll=null;
+        const GAS = "https://script.google.com/macros/s/AKfycbyO0O8m1YuIr0wZ7roEY6Gz-5y4K2HRrfRUdGuRr5uqjGx0X51gnLa7MewC0NPRUaA/exec";
+        let user=null, localBal=0;
+        const S_OK = 'https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3';
 
         window.onload = async () => {
             const u = localStorage.getItem('u'), p = localStorage.getItem('p');
-            if(u && p) {
-                document.getElementById('acc').value = u;
-                document.getElementById('pw').value = p;
-                await login(true);
+            if(u && p) { 
+                document.getElementById('acc').value=u; document.getElementById('pw').value=p; 
+                login(true); 
             }
         };
 
         async function login(isAuto=false){
             toggleLoader(true, true);
-            const acc = document.getElementById('acc').value, pw = document.getElementById('pw').value;
+            const acc=document.getElementById('acc').value, pw=document.getElementById('pw').value;
             try {
                 const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc,pw})}).then(r=>r.json());
                 if(res.success){
                     localStorage.setItem('u', acc); localStorage.setItem('p', pw);
-                    user = res; localBal = parseFloat(res.balance);
-                    document.getElementById('loginView').style.display='none';
-                    document.getElementById('appView').style.display='block';
-                    updateUI(); startPoll();
-                } else if(!isAuto) alert("登入失敗，請檢查帳密");
-            } catch(e){ alert("伺服器連線中斷"); }
+                    user=res; localBal=parseFloat(res.balance);
+                    document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block';
+                    updateUI(); startPolling();
+                } else if(!isAuto) alert("登入失敗，請檢查帳號密碼");
+            } catch(e){ alert("伺服器連線異常"); }
             toggleLoader(false);
         }
 
         function toggleLoader(show, full=false){
-            const ld = document.getElementById('sysLoader');
+            const ld = document.getElementById('loader');
             ld.className = full ? 'full-mask' : 'half-mask';
             ld.style.display = show ? 'flex' : 'none';
         }
 
-        function startPoll(){
-            poll = setInterval(async ()=>{
+        function startPolling(){
+            setInterval(async ()=>{
                 const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'checkUpdate',uid:user.id,lastBal:localBal})}).then(r=>r.json());
                 if(res.hasUpdate){
-                    localBal = res.newBalance; document.getElementById('uBal').innerText = res.newBalance;
-                    alert("通知：帳戶餘額已更新！");
+                    const title = res.isRefund ? "收到退款" : (res.amount > 0 ? "存入成功" : "扣款成功");
+                    localBal=res.newBalance; document.getElementById('uBal').innerText=res.newBalance;
+                    new Audio(S_OK).play();
+                    showResult(title, "💰", `$ ${Math.abs(res.amount)}`, "var(--green)");
+                } else if(res.hasError) {
+                    showResult("交易失敗", "❌", res.errorMsg, "var(--red)");
                 }
             }, 5000);
+        }
+
+        function showResult(t, e, m, c){
+            document.getElementById('qrT').innerHTML=`<span style="color:${c}">${t}</span>`;
+            document.getElementById('qrcode').innerHTML=`<div style="font-size:85px;">${e}</div><div style="font-size:30px;color:#333;">${m}</div>`;
+            document.getElementById('qrOverlay').style.display='flex';
+        }
+
+        function openQR(type, amt=0){
+            document.getElementById('qrT').innerText = type==='ID' ? '我的會員身份條碼' : `儲值申請：$${amt}`;
+            document.getElementById('qrcode').innerHTML="";
+            new QRCode(document.getElementById('qrcode'),{text: type==='ID' ? user.id : `TOPUP|${user.id}|${amt}`, width:260,height:260});
+            document.getElementById('qrOverlay').style.display='flex';
         }
 
         function go(idx){
             document.querySelectorAll('.page').forEach(p=>p.style.display='none');
             document.getElementById('p'+idx).style.display='block';
             document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active', i===idx));
-            if(idx===1) fetchT(); if(idx===2) fetchC();
+            if(idx===1) fetchTrans(); if(idx===2) fetchCoupons();
         }
 
-        async function saveSettings(){
-            const name = document.getElementById('setName').value, pw = document.getElementById('setPw').value;
-            if(!confirm("確定要儲存變更嗎？")) return;
-            toggleLoader(true);
-            await fetch(GAS,{method:'POST',body:JSON.stringify({action:'updateProfile',uid:user.id,newName:name,newPw:pw})});
-            alert("變更成功，請重新啟動系統"); logout();
-        }
-
-        function confirmDelete(){
-            if(confirm("二次確認：您確定要刪除帳號？這將無法復原。")){
-                if(confirm("最後警告：點選確定後，您的所有點數與資料將被永久抹除。")){
-                    toggleLoader(true);
-                    fetch(GAS,{method:'POST',body:JSON.stringify({action:'deleteUser',uid:user.id})}).then(()=>logout());
-                }
-            }
-        }
-
-        function openQR(){
-            document.getElementById('qrcode').innerHTML="";
-            new QRCode(document.getElementById('qrcode'),{text:user.id,width:280,height:280});
-            document.getElementById('qrOverlay').style.display='flex';
+        async function fetchTrans(){
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json());
+            document.getElementById('tList').innerHTML = res.list.map(r => `
+                <div class="trans-item">
+                    <div><b>${r[2]}</b><br><small style="color:#777;">${new Date(r[0]).toLocaleString()}</small></div>
+                    <div class="trans-amt" style="color:${r[3]>0?'var(--green)':'var(--red)'}">${r[3]>0?'+':''}${r[3]}</div>
+                </div>
+            `).join('');
         }
 
         function updateUI(){ document.getElementById('uName').innerText=user.name; document.getElementById('uBal').innerText=user.balance; }
         function logout(){ localStorage.clear(); location.reload(); }
-        async function fetchT(){ 
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json());
-            document.getElementById('tList').innerHTML = res.list.map(r=>`<div class="card"><b>${r[2]}</b><span style="float:right;color:var(--accent);">$${r[3]}</span></div>`).join('');
-        }
-        async function fetchC(){ 
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json());
-            document.getElementById('cList').innerHTML = res.list.map(r=>`<div class="card">🎟️ <b>${r[2]}</b><br><small>面額：$${r[3] || '無'} | 低消：$${r[4]}<br>${r[5]}</small></div>`).join('');
-        }
+        async function saveSettings(){ toggleLoader(true); await fetch(GAS,{method:'POST',body:JSON.stringify({action:'updateProfile',uid:user.id,newName:document.getElementById('setName').value,newPw:document.getElementById('setPw').value})}); logout(); }
+        function delAcc(){ if(confirm("確定刪除帳號？資料無法復原。")) fetch(GAS,{method:'POST',body:JSON.stringify({action:'deleteUser',uid:user.id})}).then(()=>logout()); }
+        async function fetchCoupons(){ const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json()); document.getElementById('cList').innerHTML=res.list.map(r=>`<div class="card">🎟️ <b>${r[2]}</b><br><small>面額：$${r[3]} | 低消：$${r[4]}<br>${r[5]}</small></div>`).join(''); }
     </script>
 </body>
 </html>
