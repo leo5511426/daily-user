@@ -2,16 +2,14 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理後台 v12.0</title>
+    <title>管理後台 v12.5</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; }
         .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #ccc; }
         select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #fff; }
-        
-        /* 遮罩樣式 */
-        .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,1); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.6); z-index:9998; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -56,20 +54,14 @@
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyQvLMLZAksPuPRF62gDdr6KaggP9XtD52a8-uD4TuMm_aldCizgJaVOeW1uQStRbA/exec";
+        const GAS = "你的_GAS_網址";
         const scanner = new Html5Qrcode("qrDiv");
-        const mFull = document.getElementById('mFull');
-        const mHalf = document.getElementById('mHalf');
+        const mFull = document.getElementById('mFull'), mHalf = document.getElementById('mHalf');
 
         async function init() {
             mHalf.style.display='flex';
             const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            u.list.forEach(i => {
-                const opt = `<option value="${i.id}">${i.name}</option>`;
-                document.getElementById('tUser').innerHTML += opt;
-                document.getElementById('lUser').innerHTML += opt;
-                document.getElementById('cUser').innerHTML += opt;
-            });
+            u.list.forEach(i => { document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.innerHTML += `<option value="${i.id}">${i.name}</option>`); });
             const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
             l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item}</option>`);
             mHalf.style.display='none';
@@ -84,22 +76,14 @@
         function doWallet() { api({ action:'adminAction', type:tType.value, uid:tUser.value, amount:tAmt.value, note:tNote.value }); }
         function doLoan() { api({ action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value }); }
         function autoFill() { const opt = pLoan.selectedOptions[0]; if(opt.dataset.rem) { pCash.value = opt.dataset.rem; recalc(); } }
-        function recalc() {
-            const opt = pLoan.selectedOptions[0]; if(!opt.dataset.rem) return;
-            const total = parseFloat(opt.dataset.rem), cash = parseFloat(pCash.value) || 0;
-            document.getElementById('pBal').value = (cash < total) ? (total - cash).toFixed(0) : 0;
-        }
-        function doPay() {
-            const opt = pLoan.selectedOptions[0];
-            api({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value });
-        }
+        function recalc() { const opt = pLoan.selectedOptions[0]; if(!opt.dataset.rem) return; const total = parseFloat(opt.dataset.rem), cash = parseFloat(pCash.value) || 0; document.getElementById('pBal').value = (cash < total) ? (total - cash).toFixed(0) : 0; }
+        function doPay() { const opt = pLoan.selectedOptions[0]; api({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value }); }
         function doCoupon() { api({ action:'adminAction', type:'send_coupon', all:cAll.checked, uid:cUser.value, cpName:cName.value, cpDesc:cDesc.value, cpExp:cExp.value }); }
-
         function startScan() {
             document.getElementById('qrDiv').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
                 if(txt.startsWith("CP|")) { api({ action:'adminAction', type:'use_coupon', cpId: txt.split('|')[1] }); }
-                else { tUser.value = txt; lUser.value = txt; cUser.value = txt; alert("會員識別: " + txt); }
+                else { document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.value = txt); alert("會員識別: " + txt); }
                 scanner.stop(); document.getElementById('qrDiv').style.display='none';
             });
         }
