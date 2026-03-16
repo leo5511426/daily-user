@@ -2,77 +2,139 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會員端</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小佑系統 v9.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --pink: #FFD1DC; --red: #ff5252; --card: #1a1a1a; }
-        body { background: #000; color: #fff; font-family: sans-serif; font-weight: 900; margin: 0; padding-bottom: 90px; }
-        .page { padding: 80px 20px; display: none; }
-        .card { background: var(--card); border-radius: 18px; padding: 18px; margin-bottom: 12px; border: 1px solid #333; }
-        .overdue-glow { border: 2px solid var(--red); box-shadow: 0 0 15px rgba(255, 82, 82, 0.4); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        .nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 12px; }
-        .active { color: var(--pink); }
+        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; }
+        .page { width: 100vw; min-height: 100vh; padding: 100px 20px 130px; box-sizing: border-box; display: none; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #282828; }
+        .overdue { border: 2px solid var(--red) !important; background: rgba(255,82,82,0.1); }
+        .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; margin-top: 10px; }
+        .input-box { width: 100%; padding: 18px; margin: 10px 0; border-radius: 12px; background: #222; color: #fff; border: 1px solid #333; box-sizing: border-box; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 13px; }
+        .nav-item.active { color: var(--pink); }
+        .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; background:rgba(0,0,0,0.8); }
+        .spinner { border: 4px solid #333; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .arrow { transition: 0.3s; display: inline-block; }
+        .arrow.rotated { transform: rotate(90deg); }
+        .detail-box { max-height: 0; overflow: hidden; transition: 0.3s; font-size: 15px; color: #aaa; }
+        .detail-box.show { max-height: 200px; padding-top: 15px; }
+        #qrModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
+    <div id="halfMask" class="mask"><div class="spinner"></div>資料同步處理中...</div>
+
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
-        <h1 style="color:var(--pink);">你好，請登入</h1>
-        <input type="text" id="acc" placeholder="帳號" style="width:100%; padding:15px; margin:10px; border-radius:10px;">
-        <input type="password" id="pw" placeholder="密碼" style="width:100%; padding:15px; margin:10px; border-radius:10px;">
-        <button onclick="login()" style="width:100%; padding:15px; background:var(--pink); border:none; border-radius:10px; font-weight:900;">登入系統</button>
+        <h1 style="color:var(--pink); font-size:40px;">小佑會員網</h1>
+        <input type="text" id="acc" class="input-box" placeholder="帳號">
+        <input type="password" id="pw" class="input-box" placeholder="密碼">
+        <button class="btn" onclick="login()">登入</button>
     </div>
 
     <div id="appView" style="display:none;">
         <div id="p0" class="page" style="display:block;">
+            <h2>你好，<span id="uName">...</span></h2>
             <div class="card" style="text-align:center;">
-                <small>目前儲值金餘額</small>
-                <div style="font-size:50px; color:var(--pink);">$ <span id="uBal">0</span></div>
+                <small style="color:#888;">可用餘額</small>
+                <div style="font-size:60px; color:var(--pink);">$ <span id="uBal">0</span></div>
             </div>
-            <h2>我的借款單</h2>
-            <div id="loanList"></div>
+            <button class="btn" onclick="showQR('ID')">📘 會員識別碼</button>
         </div>
         <div id="p1" class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
-        <div class="nav">
-            <div class="nav-item active" onclick="go(0)">帳務</div>
-            <div class="nav-item" onclick="go(1)">歷史</div>
-            <div class="nav-item" onclick="location.reload()">登出</div>
+        <div id="p4" class="page"><h2>借款帳務</h2><div id="loanList"></div></div>
+        <div id="p2" class="page"><h2>優惠券</h2><div id="cList"></div></div>
+        <div id="p3" class="page">
+            <h2>設定</h2>
+            <button class="btn" style="background:var(--red);" onclick="location.reload()">登出系統</button>
+        </div>
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="go(0)">首頁</div>
+            <div class="nav-item" onclick="go(1)">紀錄</div>
+            <div class="nav-item" onclick="go(4)">借款</div>
+            <div class="nav-item" onclick="go(2)">優惠</div>
+            <div class="nav-item" onclick="go(3)">設定</div>
+        </div>
+    </div>
+
+    <div id="qrModal">
+        <div style="background:#fff; padding:30px; border-radius:25px; text-align:center;">
+            <div id="qrcode"></div>
+            <button class="btn" style="background:var(--red); margin-top:20px;" onclick="qrModal.style.display='none'">關閉</button>
         </div>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbzWStm_kDFO0lOcPjiXQBw2sAHVnJKkpnx8iBDsiLcGFsNiQhV5LOQ8ctjbKhRHfOn4/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbwVssTj0tS-UT9_zNFvrfqc1gjSKWRm4NfnYc6EN1nMQrxoJlecTUnGl4aLP2WHSRtl/exec";
         let user = null;
+        const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
         async function login(){
+            toggleMask(true);
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc:acc.value,pw:pw.value})}).then(r=>r.json());
-            if(res.success){ user=res; uBal.innerText=res.balance; loginView.style.display='none'; appView.style.display='block'; fetchLoans(); }
+            if(res.success){ user=res; updateUI(); loginView.style.display='none'; appView.style.display='block'; } else alert(res.message);
+            toggleMask(false);
+        }
+
+        function showQR(type, id){ 
+            let d = type === 'ID' ? user.id : "USE_CP|"+id;
+            qrc.clear(); qrc.makeCode(d); qrModal.style.display='flex'; 
         }
 
         async function go(idx){
             document.querySelectorAll('.page').forEach(p=>p.style.display='none');
             document.getElementById('p'+idx).style.display='block';
-            if(idx===0) fetchLoans();
-            if(idx===1) fetchTrans();
-        }
-
-        async function fetchLoans(){
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
-            loanList.innerHTML = res.list.map(l => `
-                <div class="card ${l.interest>0?'overdue-glow':''}">
-                    <b>${l.item}</b> ${l.interest>0?'<span style="color:var(--red);">🚨 逾期利息中</span>':''}
-                    <div style="display:flex; justify-content:space-between; margin-top:8px;">
-                        <span>需還: $${l.remain}</span>
-                        <small style="color:#888;">到期: ${l.deadline}</small>
-                    </div>
-                </div>`).join('');
+            document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active', [0,1,4,2,3][i]===idx));
+            if(idx!==0){ toggleMask(true); if(idx===1)await fetchTrans(); if(idx===4)await fetchLoans(); if(idx===2)await fetchCoupons(); toggleMask(false); }
         }
 
         async function fetchTrans(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json());
-            tList.innerHTML = res.list.map(t => `<div class="card"><b>${t.desc}</b> <span style="color:${t.amount>0?'#10b981':'#ff5252'}">${t.amount>0?'+':''}${t.amount}</span><br><small>${t.date} | ${t.note}</small></div>`).join('');
+            tList.innerHTML = res.list.map((r,i)=>`
+                <div class="card" onclick="toggleDetail('t${i}')">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div><b>${r.desc}</b><br><small style="color:#666;">${r.date.split(' ')[0]}</small></div>
+                        <div style="text-align:right">
+                            <b style="color:${r.amount>0?'var(--green)':'var(--red)'}; font-size:20px;">${r.amount>0?'+':''}${r.amount}</b>
+                            <div style="font-size:12px; color:var(--accent);">詳情 <span id="arr-t${i}" class="arrow">▶</span></div>
+                        </div>
+                    </div>
+                    <div id="t${i}" class="detail-box">執行：${r.admin}<br>餘額：$${r.balance}<br>備註：${r.note||'無'}</div>
+                </div>`).join('');
         }
+
+        async function fetchLoans(){
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
+            loanList.innerHTML = res.list.map((l,i)=>`
+                <div class="card ${l.interest>0?'overdue':''}" onclick="toggleDetail('l${i}')">
+                    <div style="display:flex; justify-content:space-between;">
+                        <div>
+                            <b>${l.item}</b>
+                            ${l.interest>0?'<div style="color:var(--red); font-size:12px;">🚨 逾期利息中 $'+l.interest+'</div>':''}
+                            <br><small>待還總計：$${l.remain}</small>
+                        </div>
+                        <div class="view-tip">帳務 <span id="arr-l${i}" class="arrow">▶</span></div>
+                    </div>
+                    <div id="l${i}" class="detail-box">到期：${l.deadline}<br>本金：$${l.principal}<br>已還：$${l.paid}</div>
+                </div>`).join('');
+        }
+
+        async function fetchCoupons(){
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json());
+            cList.innerHTML = res.list.filter(c=>c.status==='未使用').map(c=>`
+                <div class="card">
+                    <b>${c.name}</b><br><small>${c.desc}</small><br>
+                    <button class="btn" style="background:var(--green); font-size:14px; padding:10px;" onclick="showQR('CP','${c.id}')">出示條碼</button>
+                </div>`).join('');
+        }
+
+        function toggleDetail(id){ document.getElementById(id).classList.toggle('show'); document.getElementById('arr-'+id).classList.toggle('rotated'); }
+        function toggleMask(s){ document.getElementById('halfMask').style.display=s?'flex':'none'; }
+        function updateUI(){ uName.innerText=user.name; uBal.innerText=user.balance; }
     </script>
 </body>
 </html>
