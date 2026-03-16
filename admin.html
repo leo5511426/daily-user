@@ -2,91 +2,90 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理端 v7.5</title>
+    <title>管理端 v7.7</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; font-weight: bold; }
-        .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; background: #3b82f6; color: #fff; }
+        body { font-family: sans-serif; background: #f4f4f4; padding: 25px; font-weight: bold; }
+        .card { background: #fff; padding: 30px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        select, input { width: 100%; padding: 18px; margin: 12px 0; border-radius: 12px; border: 1px solid #ddd; font-size: 18px; }
+        .btn { padding: 20px; border: none; border-radius: 12px; cursor: pointer; width: 100%; font-weight: bold; font-size: 20px; transition: 0.3s; }
+        .btn-primary { background: #3b82f6; color: #fff; }
+        .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; opacity: 0.8; }
+        
+        /* 處理中遮罩 */
+        #loadingOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.85); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        .spin { border: 6px solid #f3f3f3; border-top: 6px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <div id="loadingOverlay"><div class="spin"></div><h2 id="loadingText">系統處理中，請稍後...</h2></div>
+
     <div class="card">
-        <h3>💰 帳務操作</h3>
-        <button onclick="startScan('trans')" style="margin-bottom:10px;">📷 掃描條碼</button>
-        <div id="qrTrans" style="width:100%; display:none;"></div>
+        <h3>💰 帳務核心操作</h3>
+        <button onclick="startScan()" style="background:#444; color:#fff; padding:12px; border-radius:10px; margin-bottom:15px;">📷 啟動條碼掃描</button>
+        <div id="qrDiv" style="display:none; margin-bottom:20px;"></div>
+        
         <select id="tUser"><option value="">-- 選擇會員 --</option></select>
         <select id="tAction">
             <option value="add">➕ 儲值 (加值)</option>
             <option value="sub">➖ 消費 (扣款)</option>
             <option value="refund">↩️ 退款 (退回)</option>
         </select>
-        <input type="number" id="tAmt" placeholder="金額">
-        <input type="text" id="tNote" placeholder="備註內容">
-        <button class="btn" onclick="doTrans()">執行交易</button>
-    </div>
-
-    <div class="card">
-        <h3>⚖️ 借款撥款</h3>
-        <select id="lUser"><option value="">-- 選擇會員 --</option></select>
-        <input type="text" id="lItem" placeholder="項目">
-        <input type="number" id="lAmt" placeholder="本金">
-        <input type="date" id="lExp">
-        <button class="btn" onclick="doLoan()">確認撥款</button>
-    </div>
-
-    <div class="card">
-        <h3>🎟️ 優惠券</h3>
-        <input type="text" id="cpN" placeholder="標題">
-        <input type="text" id="cpD" placeholder="說明">
-        <input type="date" id="cpE">
-        <div id="uCheck" style="max-height:150px; overflow:auto; border:1px solid #eee; padding:10px;"></div>
-        <button class="btn" style="background:#ff8fa3;" onclick="doCoupon()">發送勾選對象</button>
+        <input type="number" id="tAmt" placeholder="請輸入金額">
+        <input type="text" id="tNote" placeholder="輸入備註 (如：購買社服)">
+        
+        <button id="btnSubmit" class="btn btn-primary" onclick="doTrans()">確認執行交易</button>
     </div>
 
     <script>
         const GAS = "https://script.google.com/macros/s/AKfycbz0uwkCVQ7nn2_wiCh34fqFpHkLX9_R31oqGZ0l8D22wLh83s6IcsqgXArdh-g7qtZ9/exec";
-        const scannerTrans = new Html5Qrcode("qrTrans");
+        const scanner = new Html5Qrcode("qrDiv");
 
         async function init(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            const selT = document.getElementById('tUser'), selL = document.getElementById('lUser'), divU = document.getElementById('uCheck');
-            res.list.forEach(u => {
-                const opt = `<option value="${u.id}">${u.name}(${u.id})</option>`;
-                selT.innerHTML+=opt; selL.innerHTML+=opt;
-                divU.innerHTML+=`<div><input type="checkbox" class="u-cb" value="${u.id}"> ${u.name}</div>`;
-            });
+            const sel = document.getElementById('tUser');
+            res.list.forEach(u => sel.innerHTML += `<option value="${u.id}">${u.name} (${u.id})</option>`);
         }
 
-        function startScan(type){
-            document.getElementById('qrTrans').style.display='block';
-            scannerTrans.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                if(txt.includes('|')){
-                    const p = txt.split('|'); tUser.value=p[1]; tAmt.value=p[2]; tAction.value="add"; tNote.value="快速加值";
-                } else { tUser.value=txt; }
-                scannerTrans.stop(); document.getElementById('qrTrans').style.display='none';
-            });
-        }
+        async function doTrans() {
+            const btn = document.getElementById('btnSubmit');
+            if(!tUser.value || !tAmt.value) return alert("請完整填寫會員與金額！");
 
-        async function doTrans(){
+            // --- 防重複點擊啟動 ---
+            btn.disabled = true;
+            btn.innerText = "處理中，請勿關閉分頁...";
+            setLoading(true);
+
             const type = tAction.value;
-            const amt = (type==='sub') ? -Math.abs(tAmt.value) : Math.abs(tAmt.value);
-            const body = { action:'adminAction', type, uid:tUser.value, amount:amt, desc:tAction.options[tAction.selectedIndex].text, note:tNote.value, adminName:'管理員' };
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
-            alert(res.message); location.reload();
+            const amt = (type === 'sub') ? -Math.abs(tAmt.value) : Math.abs(tAmt.value);
+            const body = { 
+                action: 'adminAction', type, uid: tUser.value, amount: amt, 
+                desc: tAction.options[tAction.selectedIndex].text, note: tNote.value, adminName: '管理員' 
+            };
+
+            try {
+                const res = await fetch(GAS, { method: 'POST', body: JSON.stringify(body) }).then(r => r.json());
+                alert(res.message);
+                location.reload();
+            } catch (e) {
+                alert("傳輸發生錯誤，請檢查網路後重試。");
+                btn.disabled = false;
+                btn.innerText = "確認執行交易";
+                setLoading(false);
+            }
         }
 
-        async function doLoan(){
-            const body = { action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lExp.value };
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
-            alert(res.message); location.reload();
-        }
-
-        async function doCoupon(){
-            const uids = Array.from(document.querySelectorAll('.u-cb:checked')).map(c=>c.value);
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({ action:'adminAction', type:'send_coupon', uids, cpName:cpN.value, cpDesc:cpD.value, cpExp:cpE.value })}).then(r=>r.json());
-            alert(res.message);
+        function setLoading(s) { document.getElementById('loadingOverlay').style.display = s ? 'flex' : 'none'; }
+        
+        function startScan(){
+            document.getElementById('qrDiv').style.display='block';
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                if(txt.includes('|')){
+                    const p = txt.split('|'); tUser.value=p[1]; tAmt.value=p[2]; tAction.value="add"; tNote.value="掃描快速加值";
+                } else { tUser.value=txt; }
+                scanner.stop(); document.getElementById('qrDiv').style.display='none';
+            });
         }
         init();
     </script>
