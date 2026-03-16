@@ -2,85 +2,79 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理後台 v8.0</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>管理後台 v10.0</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f9; padding: 20px; }
-        .card { background: #fff; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
-        .btn-blue { background: #3b82f6; color: #fff; }
-        .btn-green { background: #10b981; color: #fff; }
-        .btn-red { background: #ef4444; color: #fff; }
-        #loading { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
+        body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; color: #333; }
+        .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .loan-zone { border-top: 5px solid #3b82f6; }
+        .pay-zone { border-top: 5px solid #10b981; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; color: #fff; cursor: pointer; font-size: 16px; }
+        .pay-box { background: #f9f9f9; padding: 15px; border-radius: 10px; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <div id="loading"><div style="border:4px solid #f3f3f3; border-top:4px solid #3b82f6; border-radius:50%; width:30px; height:30px; animation:spin 1s linear infinite;"></div><p>系統處理中，請稍後...</p></div>
-
-    <div class="card">
-        <h3>📷 快速掃描 (加值/核銷)</h3>
-        <div id="qrDiv" style="width:100%; max-width:400px; display:none; margin-bottom:10px;"></div>
-        <button class="btn" style="background:#444; color:#fff;" onclick="startScan()">啟動相機</button>
+    <div class="card loan-zone">
+        <h3 style="color:#3b82f6; margin-top:0;">💰 撥付借款</h3>
+        <select id="lUser"><option value="">-- 選擇借款人 --</option></select>
+        <input type="text" id="lItem" placeholder="項目名目">
+        <input type="number" id="lAmt" placeholder="本金金額">
+        <input type="date" id="lDeadline">
+        <button class="btn" style="background:#3b82f6;" onclick="doLoan()">確認撥款</button>
     </div>
 
-    <div class="card">
-        <h3>💰 帳務處理</h3>
-        <select id="tUser"><option value="">-- 選擇會員 --</option></select>
-        <select id="tAction"><option value="add">➕ 儲值</option><option value="sub">➖ 扣款 (檢查餘額)</option></select>
-        <input type="number" id="tAmt" placeholder="金額">
-        <button id="btnT" class="btn btn-blue" onclick="doTrans()">執行帳務</button>
-    </div>
-
-    <div class="card">
-        <h3>⚖️ 還款中心</h3>
-        <select id="pLoan" onchange="setPayAmt()"><option value="">-- 選擇借款單 --</option></select>
-        <input type="number" id="pAmt" placeholder="還款金額">
-        <select id="pMethod"><option value="cash">💵 現金還款</option><option value="balance">💳 儲值金扣除</option></select>
-        <button id="btnP" class="btn btn-green" onclick="doPay()">完成還款</button>
-    </div>
-
-    <div class="card">
-        <h3>🎟️ 發送優惠券</h3>
-        <input type="text" id="cpName" placeholder="券名">
-        <input type="text" id="cpExp" placeholder="期限 (如 2026/12/31)">
-        <label><input type="checkbox" id="cpAll"> 發送給全體成員</label>
-        <button id="btnC" class="btn btn-red" onclick="doCoupon()">批次送出</button>
+    <div class="card pay-zone">
+        <h3 style="color:#10b981; margin-top:0;">↩️ 複合還款處理</h3>
+        <select id="pLoan" onchange="autoFill()"><option value="">-- 選擇待還款項 --</option></select>
+        <div class="pay-box">
+            <label>💵 實收現金</label>
+            <input type="number" id="pCash" oninput="recalc()">
+            <label>💳 餘額扣除 (自動計算差額)</label>
+            <input type="number" id="pBal" readonly style="background:#eee;">
+            <p style="text-align:right; margin:5px 0 0;">總計還款：$ <span id="pTotal">0</span></p>
+        </div>
+        <button class="btn" style="background:#10b981;" onclick="doPay()">執行還款沖帳</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyyzieXpFSIxk8cYkfk7Y3aISTAyB31PZvfpIfWafhyjY1PjRjjnUAsF_TgildxZb9e/exec";
-        const scanner = new Html5Qrcode("qrDiv");
-
+        const GAS = "https://script.google.com/macros/s/AKfycbxXrH30bwKM8OTkLP3QX-XnS_bOJb_RAlgUVTm4EJTsh0631o58Je5Lvxfc3DbxK8lr/exec";
         async function init() {
             const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            u.list.forEach(i => document.getElementById('tUser').innerHTML += `<option value="${i.id}">${i.name}</option>`);
+            u.list.forEach(i => document.getElementById('lUser').innerHTML += `<option value="${i.id}">${i.name}</option>`);
             const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-remain="${i.remain}">${i.item} - ${i.uid} (剩餘 $${i.remain})</option>`);
+            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} - ${i.item} (欠$${i.remain})</option>`);
         }
 
-        async function api(btnId, body) {
-            document.getElementById(btnId).disabled = true; document.getElementById('loading').style.display='flex';
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
+        function autoFill() {
+            const opt = pLoan.selectedOptions[0];
+            if(opt.dataset.rem) {
+                document.getElementById('pCash').value = opt.dataset.rem;
+                recalc();
+            }
+        }
+
+        function recalc() {
+            const opt = pLoan.selectedOptions[0];
+            if(!opt.dataset.rem) return;
+            const total = parseFloat(opt.dataset.rem);
+            const cash = parseFloat(document.getElementById('pCash').value) || 0;
+            const bal = (cash < total) ? total - cash : 0;
+            document.getElementById('pBal').value = bal.toFixed(0);
+            document.getElementById('pTotal').innerText = (cash + bal).toFixed(0);
+        }
+
+        async function doLoan() {
+            await send({ action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value });
+        }
+
+        async function doPay() {
+            const opt = pLoan.selectedOptions[0];
+            await send({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value });
+        }
+
+        async function send(b) {
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(b)}).then(r=>r.json());
             alert(res.message); location.reload();
-        }
-
-        function doTrans() { api('btnT', { action:'adminAction', type:tAction.value, uid:tUser.value, amount:(tAction.value==='sub'?-Math.abs(tAmt.value):tAmt.value), desc:tAction.options[tAction.selectedIndex].text }); }
-        
-        function doPay() {
-            const opt = document.getElementById('pLoan').selectedOptions[0];
-            api('btnP', { action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, amount:pAmt.value, method:pMethod.value });
-        }
-
-        function doCoupon() { api('btnC', { action:'adminAction', type:'send_coupon', all:document.getElementById('cpAll').checked, cpName:cpName.value, cpExp:cpExp.value }); }
-
-        function startScan() {
-            document.getElementById('qrDiv').style.display='block';
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                if(txt.startsWith("USE_CP|")) { api('btnT', { action:'adminAction', type:'use_coupon', cpId:txt.split('|')[1] }); }
-                else { tUser.value = txt; }
-                scanner.stop();
-            });
         }
         init();
     </script>
