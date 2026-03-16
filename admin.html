@@ -2,92 +2,92 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理端 - 高級控管中心</title>
+    <title>管理端 v7.5</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; font-weight: bold; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; font-weight: bold; }
+        .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; color: white; }
-        .user-row { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
-        #reader { width: 100%; max-width: 400px; margin: auto; display: none; }
+        .btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; background: #3b82f6; color: #fff; }
     </style>
 </head>
 <body>
-    <h2>系統管理端 v7.0</h2>
-
     <div class="card">
-        <h3>⚖️ 借款撥款 (可掃描/選擇)</h3>
-        <button onclick="startLoanScan()" style="background:#555; color:#fff; padding:10px; border-radius:5px; margin-bottom:10px;">📷 掃描會員碼</button>
-        <div id="reader"></div>
-        <select id="lUser"><option value="">-- 選擇會員 --</option></select>
-        <input type="text" id="lItem" placeholder="借款項目 (如: 緊急周轉)">
-        <input type="number" id="lAmt" placeholder="借款金額 (上限500)">
-        <small>還款期限：</small>
-        <input type="date" id="lDeadline">
-        <button class="btn" style="background:#3b82f6;" onclick="doLoan()">核准撥款</button>
+        <h3>💰 帳務操作</h3>
+        <button onclick="startScan('trans')" style="margin-bottom:10px;">📷 掃描條碼</button>
+        <div id="qrTrans" style="width:100%; display:none;"></div>
+        <select id="tUser"><option value="">-- 選擇會員 --</option></select>
+        <select id="tAction">
+            <option value="add">➕ 儲值 (加值)</option>
+            <option value="sub">➖ 消費 (扣款)</option>
+            <option value="refund">↩️ 退款 (退回)</option>
+        </select>
+        <input type="number" id="tAmt" placeholder="金額">
+        <input type="text" id="tNote" placeholder="備註內容">
+        <button class="btn" onclick="doTrans()">執行交易</button>
     </div>
 
     <div class="card">
-        <h3>🎟️ 優惠券發放系統</h3>
-        <input type="text" id="cpName" placeholder="優惠券標題">
-        <input type="text" id="cpDesc" placeholder="內容說明">
-        <input type="date" id="cpExp">
-        <div style="margin:10px 0;">
-            <button onclick="checkAll(true)">全選</button> <button onclick="checkAll(false)">取消全選</button>
-        </div>
-        <div id="userList" style="max-height:200px; overflow-y:auto; border:1px solid #ddd; padding:10px; border-radius:8px;"></div>
-        <button class="btn" style="background:#ff8fa3;" onclick="doSendCoupon()">發送給所選對象</button>
+        <h3>⚖️ 借款撥款</h3>
+        <select id="lUser"><option value="">-- 選擇會員 --</option></select>
+        <input type="text" id="lItem" placeholder="項目">
+        <input type="number" id="lAmt" placeholder="本金">
+        <input type="date" id="lExp">
+        <button class="btn" onclick="doLoan()">確認撥款</button>
+    </div>
+
+    <div class="card">
+        <h3>🎟️ 優惠券</h3>
+        <input type="text" id="cpN" placeholder="標題">
+        <input type="text" id="cpD" placeholder="說明">
+        <input type="date" id="cpE">
+        <div id="uCheck" style="max-height:150px; overflow:auto; border:1px solid #eee; padding:10px;"></div>
+        <button class="btn" style="background:#ff8fa3;" onclick="doCoupon()">發送勾選對象</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbxXp5OaaTFOPGPE_FZWjhKdFFu3uioDWzditinJDzgwBjfN-4HSQpABRZuhYMdqgG_x/exec";
-        const html5QrCode = new Html5Qrcode("reader");
+        const GAS = "https://script.google.com/macros/s/AKfycbz0uwkCVQ7nn2_wiCh34fqFpHkLX9_R31oqGZ0l8D22wLh83s6IcsqgXArdh-g7qtZ9/exec";
+        const scannerTrans = new Html5Qrcode("qrTrans");
 
-        async function init() {
+        async function init(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            const select = document.getElementById('lUser');
-            const list = document.getElementById('userList');
+            const selT = document.getElementById('tUser'), selL = document.getElementById('lUser'), divU = document.getElementById('uCheck');
             res.list.forEach(u => {
-                select.innerHTML += `<option value="${u.id}">${u.name} (${u.id})</option>`;
-                list.innerHTML += `<div class="user-row"><input type="checkbox" class="u-cb" value="${u.id}" style="width:auto; margin-right:10px;"> ${u.name} (${u.id})</div>`;
+                const opt = `<option value="${u.id}">${u.name}(${u.id})</option>`;
+                selT.innerHTML+=opt; selL.innerHTML+=opt;
+                divU.innerHTML+=`<div><input type="checkbox" class="u-cb" value="${u.id}"> ${u.name}</div>`;
             });
         }
 
-        function startLoanScan() {
-            document.getElementById('reader').style.display = 'block';
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                document.getElementById('lUser').value = txt;
-                html5QrCode.stop();
-                document.getElementById('reader').style.display = 'none';
+        function startScan(type){
+            document.getElementById('qrTrans').style.display='block';
+            scannerTrans.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                if(txt.includes('|')){
+                    const p = txt.split('|'); tUser.value=p[1]; tAmt.value=p[2]; tAction.value="add"; tNote.value="快速加值";
+                } else { tUser.value=txt; }
+                scannerTrans.stop(); document.getElementById('qrTrans').style.display='none';
             });
         }
 
-        async function doLoan() {
-            const body = {
-                action:'adminAction', type:'create_loan',
-                uid: document.getElementById('lUser').value,
-                loanItem: document.getElementById('lItem').value,
-                amount: document.getElementById('lAmt').value,
-                deadline: document.getElementById('lDeadline').value
-            };
+        async function doTrans(){
+            const type = tAction.value;
+            const amt = (type==='sub') ? -Math.abs(tAmt.value) : Math.abs(tAmt.value);
+            const body = { action:'adminAction', type, uid:tUser.value, amount:amt, desc:tAction.options[tAction.selectedIndex].text, note:tNote.value, adminName:'管理員' };
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
             alert(res.message); location.reload();
         }
 
-        async function doSendCoupon() {
-            const uids = Array.from(document.querySelectorAll('.u-cb:checked')).map(c => c.value);
-            const body = {
-                action:'adminAction', type:'send_coupon', uids,
-                cpName: document.getElementById('cpName').value,
-                cpDesc: document.getElementById('cpDesc').value,
-                cpExp: document.getElementById('cpExp').value
-            };
+        async function doLoan(){
+            const body = { action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lExp.value };
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
-            alert(res.message);
+            alert(res.message); location.reload();
         }
 
-        function checkAll(s) { document.querySelectorAll('.u-cb').forEach(c => c.checked = s); }
+        async function doCoupon(){
+            const uids = Array.from(document.querySelectorAll('.u-cb:checked')).map(c=>c.value);
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({ action:'adminAction', type:'send_coupon', uids, cpName:cpN.value, cpDesc:cpD.value, cpExp:cpE.value })}).then(r=>r.json());
+            alert(res.message);
+        }
         init();
     </script>
 </body>
