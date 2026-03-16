@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑系統 v7.7</title>
+    <title>小佑系統 v7.8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --blue: #3b82f6; --green: #2ecc71; --red: #ff5252; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; line-height: 1.5; overflow-x: hidden; }
-        
+        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --green: #2ecc71; --red: #ff5252; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; }
         .page { width: 100vw; min-height: 100vh; padding: 100px 25px 130px; box-sizing: border-box; display: none; }
         .card { background: var(--card); border-radius: 25px; padding: 25px; margin-bottom: 20px; border: 1px solid #282828; }
-        
-        h2 { font-size: 32px; margin-bottom: 25px; color: var(--pink); }
         .btn { width: 100%; padding: 20px; border-radius: 18px; background: var(--accent); color: #fff; border: none; font-size: 20px; font-weight: 900; cursor: pointer; }
         .input-box { width: 100%; padding: 20px; margin: 12px 0; border-radius: 15px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box; font-size: 18px; }
         
         /* 遮罩 */
-        .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align:center; font-size:18px; }
+        .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
         #fullMask { background: #000; }
         #halfMask { background: rgba(0,0,0,0.8); }
         .spinner { border: 6px solid #222; border-top: 6px solid var(--accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
@@ -26,14 +23,13 @@
         /* 導覽列 */
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 95px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 14px; }
-        .nav-item.active { color: var(--pink); font-size: 15px; }
+        .nav-item.active { color: var(--pink); }
 
-        /* 交易紀錄與箭頭 */
+        /* 詳情箭頭 */
         .item-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .view-detail { color: var(--accent); font-size: 14px; display: flex; align-items: center; gap: 5px; margin-top: 5px; font-weight: 400; }
+        .view-tip { color: var(--accent); font-size: 14px; font-weight: 400; display: flex; align-items: center; gap: 5px; }
         .arrow { transition: 0.3s; display: inline-block; }
         .arrow.rotated { transform: rotate(90deg); }
-        
         .detail-box { max-height: 0; overflow: hidden; transition: 0.3s; background: #0a0a0a; font-size: 16px; color: #aaa; border-radius: 15px; }
         .detail-box.show { max-height: 300px; padding: 20px; border: 1px solid #333; margin-top: 15px; }
 
@@ -48,27 +44,25 @@
     <div id="halfMask" class="mask"><div class="spinner"></div>資料同步處理中，請稍後...</div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:35px;">
-        <h1 style="color:var(--pink); font-size:45px; margin-bottom:40px;">小佑會員網</h1>
+        <h1 style="color:var(--pink); font-size:45px;">小佑會員網</h1>
         <input type="text" id="acc" class="input-box" placeholder="帳號">
         <input type="password" id="pw" class="input-box" placeholder="密碼">
-        <button class="btn" onclick="login()" style="margin-top:20px;">登入帳戶</button>
+        <button class="btn" onclick="login()">進入系統</button>
     </div>
 
     <div id="appView" style="display:none;">
         <div id="p0" class="page" style="display:block;">
             <h2>你好，<span id="uName">...</span></h2>
             <div class="card" style="text-align:center; padding:45px 20px;">
-                <small style="color:#888; font-size:18px;">可用餘額</small>
-                <div style="font-size:70px; color:var(--pink); margin:10px 0;">$ <span id="uBal">0</span></div>
+                <small style="color:#888;">當前餘額</small>
+                <div style="font-size:70px; color:var(--pink);">$ <span id="uBal">0</span></div>
             </div>
             <button class="btn" onclick="showQR('ID')">📘 出示會員識別碼</button>
             <div class="card" style="margin-top:25px; border: 1px dashed #444;">
-                <small style="font-size:16px;">快速儲值條碼</small>
-                <input type="number" id="quickAmt" class="input-box" placeholder="輸入金額">
+                <input type="number" id="quickAmt" class="input-box" placeholder="輸入加值金額">
                 <button class="btn" style="background:var(--green);" onclick="showQR('TOPUP')">產生加值條碼</button>
             </div>
         </div>
-
         <div id="p1" class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
         <div id="p4" class="page"><h2>借款帳務</h2><div id="loanList"></div></div>
         <div id="p2" class="page"><h2>專屬優惠券</h2><div id="cList"></div></div>
@@ -81,7 +75,6 @@
             </div>
             <button class="btn" style="background:var(--red);" onclick="location.reload()">登出</button>
         </div>
-
         <div class="nav-bar">
             <div class="nav-item active" onclick="go(0)">首頁</div>
             <div class="nav-item" onclick="go(1)">紀錄</div>
@@ -99,7 +92,7 @@
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbz0uwkCVQ7nn2_wiCh34fqFpHkLX9_R31oqGZ0l8D22wLh83s6IcsqgXArdh-g7qtZ9/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycby5aAEJfvOJjcKbB8rjTs1t1X1xbQFPnGOzMHZoeS7DOkyTEVKhQnO21jHUWyQ823z4/exec";
         let user = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 250, height: 250 });
 
@@ -133,13 +126,10 @@
                         <div><b style="font-size:22px;">${r.desc}</b><br><small style="color:#666;">${r.date.split(' ')[0]}</small></div>
                         <div style="text-align:right">
                             <div style="color:${r.amount>0?'var(--green)':'var(--red)'}; font-size:24px;">${r.amount>0?'+':''}${r.amount}</div>
-                            <div class="view-detail">點擊查看 <span id="arr-t${i}" class="arrow">▶</span></div>
+                            <div class="view-tip">詳情 <span id="arr-t${i}" class="arrow">▶</span></div>
                         </div>
                     </div>
-                    <div id="t${i}" class="detail-box">
-                        時間：${r.date}<br>執行人：${r.admin}<br>餘額：$${r.balance}<br>
-                        <span style="color:var(--pink)">備註：${r.note||'無'}</span>
-                    </div>
+                    <div id="t${i}" class="detail-box">執行人：${r.admin}<br>餘額：$${r.balance}<br><span style="color:var(--pink)">備註：${r.note||'無'}</span></div>
                 </div>`).join('');
         }
 
@@ -149,15 +139,15 @@
                 <div class="card" onclick="toggleDetail('l${i}')">
                     <div class="item-header">
                         <div><b style="font-size:22px;">${l.item}</b><br><small>剩餘應還：$${l.remain}</small></div>
-                        <div class="view-detail">帳務 <span id="arr-l${i}" class="arrow">▶</span></div>
+                        <div class="view-tip">帳務 <span id="arr-l${i}" class="arrow">▶</span></div>
                     </div>
-                    <div id="l${i}" class="detail-box">期限: ${l.deadline}<br>本金: $${l.principal}<br>利息: $${l.interest}<br>已還: $${l.paid}</div>
+                    <div id="l${i}" class="detail-box">期限：${l.deadline}<br>本金：$${l.principal}<br>利息：$${l.interest}<br>已還：$${l.paid}</div>
                 </div>`).join('');
         }
 
         async function fetchCoupons(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json());
-            cList.innerHTML = res.list.map(c=>`<div class="card"><b style="font-size:20px;">${c.name}</b><br>${c.desc}<br><small style="color:var(--accent)">有效期: ${c.exp}</small></div>`).join('');
+            cList.innerHTML = res.list.map(c=>`<div class="card"><b style="font-size:20px;">${c.name}</b><br>${c.desc}<br><small style="color:var(--accent)">有效至: ${c.exp}</small></div>`).join('');
         }
 
         async function updateUser(){
@@ -166,11 +156,7 @@
             alert(res.message); toggleMask('half', false);
         }
 
-        function toggleDetail(id){ 
-            document.getElementById(id).classList.toggle('show'); 
-            const arr = document.getElementById('arr-'+id);
-            if(arr) arr.classList.toggle('rotated');
-        }
+        function toggleDetail(id){ document.getElementById(id).classList.toggle('show'); document.getElementById('arr-'+id).classList.toggle('rotated'); }
         function toggleMask(t,s){ document.getElementById(t+'Mask').style.display=s?'flex':'none'; }
         function updateUI(){ uName.innerText=user.name; uBal.innerText=user.balance; }
     </script>
