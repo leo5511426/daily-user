@@ -2,79 +2,87 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理後台 v10.0</title>
+    <title>管理後台 v10.2</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; color: #333; }
-        .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .loan-zone { border-top: 5px solid #3b82f6; }
-        .pay-zone { border-top: 5px solid #10b981; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; color: #fff; cursor: pointer; font-size: 16px; }
-        .pay-box { background: #f9f9f9; padding: 15px; border-radius: 10px; margin: 10px 0; }
+        body { font-family: sans-serif; background: #f0f4f8; padding: 20px; font-weight: bold; }
+        .card { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .loan-card { border-left: 6px solid #3b82f6; }
+        .pay-card { border-left: 6px solid #10b981; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .pay-info { background: #f8fdfa; padding: 15px; border-radius: 10px; border: 1px dashed #10b981; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <div class="card loan-zone">
-        <h3 style="color:#3b82f6; margin-top:0;">💰 撥付借款</h3>
-        <select id="lUser"><option value="">-- 選擇借款人 --</option></select>
-        <input type="text" id="lItem" placeholder="項目名目">
-        <input type="number" id="lAmt" placeholder="本金金額">
+    <div class="card loan-card">
+        <h3 style="color:#3b82f6; margin-top:0;">💰 撥付借款 (建立單據)</h3>
+        <select id="lUser"><option value="">-- 選擇借款對象 --</option></select>
+        <input type="text" id="lItem" placeholder="借款項目名目">
+        <input type="number" id="lAmt" placeholder="借款本金金額">
         <input type="date" id="lDeadline">
-        <button class="btn" style="background:#3b82f6;" onclick="doLoan()">確認撥款</button>
+        <button class="btn" style="background:#3b82f6;" onclick="doAction('create_loan')">確認撥款</button>
     </div>
 
-    <div class="card pay-zone">
-        <h3 style="color:#10b981; margin-top:0;">↩️ 複合還款處理</h3>
-        <select id="pLoan" onchange="autoFill()"><option value="">-- 選擇待還款項 --</option></select>
-        <div class="pay-box">
-            <label>💵 實收現金</label>
-            <input type="number" id="pCash" oninput="recalc()">
-            <label>💳 餘額扣除 (自動計算差額)</label>
-            <input type="number" id="pBal" readonly style="background:#eee;">
-            <p style="text-align:right; margin:5px 0 0;">總計還款：$ <span id="pTotal">0</span></p>
+    <div class="card pay-card">
+        <h3 style="color:#10b981; margin-top:0;">↩️ 複合還款 (收錢/沖帳)</h3>
+        <select id="pLoan" onchange="autoFillPay()"><option value="">-- 選擇待還款項目 --</option></select>
+        <div class="pay-info">
+            <label>💵 實收現金 (手動輸入)：</label>
+            <input type="number" id="pCash" oninput="recalcPay()">
+            <label>💳 餘額補足 (系統自動計算)：</label>
+            <input type="number" id="pBal" readonly style="background:#e9ecef; color:#d63384;">
+            <p style="text-align:right; margin:5px 0 0; color:#10b981;">本次沖帳總額：$ <span id="pTotalText">0</span></p>
         </div>
-        <button class="btn" style="background:#10b981;" onclick="doPay()">執行還款沖帳</button>
+        <button class="btn" style="background:#10b981;" onclick="doAction('pay_loan')">確認還款沖帳</button>
+    </div>
+
+    <div class="card">
+        <h3>🎟️ 優惠券管理</h3>
+        <input type="text" id="cpName" placeholder="券名">
+        <input type="text" id="cpExp" placeholder="期限 (2026/12/31)">
+        <label><input type="checkbox" id="cpAll"> 全體發送</label>
+        <button class="btn" style="background:#ff8fa3;" onclick="doAction('send_coupon')">發送優惠券</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbxXrH30bwKM8OTkLP3QX-XnS_bOJb_RAlgUVTm4EJTsh0631o58Je5Lvxfc3DbxK8lr/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbzWStm_kDFO0lOcPjiXQBw2sAHVnJKkpnx8iBDsiLcGFsNiQhV5LOQ8ctjbKhRHfOn4/exec";
+
         async function init() {
-            const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            u.list.forEach(i => document.getElementById('lUser').innerHTML += `<option value="${i.id}">${i.name}</option>`);
-            const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} - ${i.item} (欠$${i.remain})</option>`);
+            const resU = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
+            resU.list.forEach(u => document.getElementById('lUser').innerHTML += `<option value="${u.id}">${u.name}</option>`);
+            const resL = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
+            resL.list.forEach(l => document.getElementById('pLoan').innerHTML += `<option value="${l.id}" data-uid="${l.uid}" data-rem="${l.remain}">${l.uid} | ${l.item} (剩$${l.remain})</option>`);
         }
 
-        function autoFill() {
+        function autoFillPay() {
             const opt = pLoan.selectedOptions[0];
             if(opt.dataset.rem) {
-                document.getElementById('pCash').value = opt.dataset.rem;
-                recalc();
+                document.getElementById('pCash').value = opt.dataset.rem; // 預設全現金
+                recalcPay();
             }
         }
 
-        function recalc() {
+        function recalcPay() {
             const opt = pLoan.selectedOptions[0];
             if(!opt.dataset.rem) return;
             const total = parseFloat(opt.dataset.rem);
             const cash = parseFloat(document.getElementById('pCash').value) || 0;
             const bal = (cash < total) ? total - cash : 0;
             document.getElementById('pBal').value = bal.toFixed(0);
-            document.getElementById('pTotal').innerText = (cash + bal).toFixed(0);
+            document.getElementById('pTotalText').innerText = (cash + bal).toFixed(0);
         }
 
-        async function doLoan() {
-            await send({ action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value });
-        }
+        async function doAction(type) {
+            let body = { action:'adminAction', type: type };
+            if(type==='create_loan') body = {...body, uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value};
+            if(type==='pay_loan') {
+                const opt = pLoan.selectedOptions[0];
+                body = {...body, loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value};
+            }
+            if(type==='send_coupon') body = {...body, all:cpAll.checked, cpName:cpName.value, cpExp:cpExp.value};
 
-        async function doPay() {
-            const opt = pLoan.selectedOptions[0];
-            await send({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value });
-        }
-
-        async function send(b) {
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(b)}).then(r=>r.json());
-            alert(res.message); location.reload();
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
+            alert(res.message); if(res.success) location.reload();
         }
         init();
     </script>
