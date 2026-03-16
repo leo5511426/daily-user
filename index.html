@@ -3,91 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑會員系統 v6.0</title>
+    <title>小佑會員網 v7.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #111; --green: #2ecc71; --red: #ff5252; --blue: #3b82f6; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; overflow: hidden; }
-        .page { width: 100vw; height: 100vh; padding: 80px 20px 110px; box-sizing: border-box; overflow-y: auto; display: none; }
+        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #111; --blue: #3b82f6; --green: #2ecc71; --red: #ff5252; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; overflow-x: hidden; }
+        .page { width: 100vw; min-height: 100vh; padding: 80px 20px 110px; box-sizing: border-box; display: none; }
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
-        .btn { width: 100%; padding: 20px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 20px; font-weight: 900; cursor: pointer; }
-        .input-box { width: 100%; padding: 18px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; background: #222; color: #fff; font-size: 18px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 18px; border-radius: 12px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; cursor: pointer; }
+        .input-box { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box; font-size: 16px; }
         
+        /* 遮罩 */
+        .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        #fullMask { background: #000; }
+        #halfMask { background: rgba(0,0,0,0.7); }
+        .spinner { border: 5px solid #222; border-top: 5px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
         /* 摺疊樣式 */
-        .detail-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #080808; font-size: 14px; color: #888; border-radius: 10px; }
+        .detail-box { max-height: 0; overflow: hidden; transition: 0.3s; background: #080808; font-size: 14px; color: #888; border-radius: 10px; }
         .detail-box.show { max-height: 250px; padding: 15px; margin-top: 10px; border: 1px solid #333; }
         .item-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .arrow { transition: transform 0.3s; color: var(--accent); font-size: 12px; }
+        .arrow { transition: 0.3s; color: var(--accent); }
         .arrow.rotated { transform: rotate(180deg); }
 
         /* 導覽列 */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 85px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 12px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 85px; background: #0a0a0a; display: flex; border-top: 1px solid #222; z-index: 100; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 12px; cursor: pointer; }
         .nav-item.active { color: var(--pink); }
-        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; background:rgba(0,0,0,0.9); justify-content:center; align-items:center; }
+
+        #qrModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
-    <div id="loader"><div style="border:5px solid #222; border-top:5px solid var(--accent); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div></div>
-    <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+    <div id="fullMask" class="mask"><div class="spinner"></div><p>系統處理中，請稍後...</p></div>
+    <div id="halfMask" class="mask"><div class="spinner"></div><p>資料同步理中，請稍後...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
-        <h1 style="color:var(--pink);">小佑會員網</h1>
+        <h1 style="color:var(--pink); font-size:40px;">小佑會員網</h1>
         <input type="text" id="acc" class="input-box" placeholder="帳號">
         <input type="password" id="pw" class="input-box" placeholder="密碼">
-        <button class="btn" onclick="login()">登入</button>
+        <button class="btn" onclick="login()">登入系統</button>
     </div>
 
     <div id="appView" style="display:none;">
         <div id="p0" class="page" style="display:block;">
-            <h2>你好，<span id="uName">...</span></h2>
-            <div class="card" style="text-align:center;"><small>我的餘額</small><div style="font-size:60px; color:var(--pink);">$ <span id="uBal">0</span></div></div>
-            <button class="btn" onclick="openQR('ID')">出示條碼</button>
+            <h2>你好， <span id="uName" style="color:var(--pink);">...</span></h2>
+            <div class="card" style="text-align:center;"><small>可用餘額</small><div style="font-size:55px; color:var(--pink);">$ <span id="uBal">0</span></div></div>
+            <button class="btn" onclick="showQR('ID')">出示會員識別碼</button>
+            <div class="card" style="margin-top:25px; border: 1px dashed #444;">
+                <small>快速加值 (自訂金額)</small>
+                <input type="number" id="topupAmt" class="input-box" placeholder="輸入預計加值金額">
+                <button class="btn" style="background:var(--green);" onclick="showQR('TOPUP')">產生加值條碼</button>
+            </div>
         </div>
 
         <div id="p1" class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
-        <div id="p4" class="page">
-            <h2>借款管理</h2>
-            <div class="card" style="background:linear-gradient(135deg,#1e293b,#000);">
-                <small>總待還額 (含逾期利息)</small>
-                <div style="font-size:40px; color:#fff;">$ <span id="totalDebt">0</span></div>
-                <div id="quotaTxt" style="font-size:12px; color:#64748b; margin-top:5px;">額度: $0 / $500</div>
+        <div id="p4" class="page"><h2>借款帳務中心</h2><div id="loanList"></div></div>
+        <div id="p2" class="page"><h2>我的優惠券</h2><div id="cList"></div></div>
+        
+        <div id="p3" class="page">
+            <h2>個人設定</h2>
+            <div class="card">
+                <h3>更新基本資料</h3>
+                <input type="text" id="newName" class="input-box" placeholder="更改顯示姓名">
+                <input type="password" id="newPw" class="input-box" placeholder="設定新密碼">
+                <button class="btn" onclick="updateUser()">儲存變更</button>
             </div>
-            <div id="loanList"></div>
+            <div class="card" style="text-align:center;">
+                <p style="color:#666; font-size:14px;">系統版本: v7.0 Gold Edition</p>
+                <button class="btn" style="background:var(--red);" onclick="location.reload()">登出並結束連線</button>
+            </div>
         </div>
 
         <div class="nav-bar">
             <div class="nav-item active" onclick="go(0)">首頁</div>
             <div class="nav-item" onclick="go(1)">紀錄</div>
             <div class="nav-item" onclick="go(4)">借款</div>
+            <div class="nav-item" onclick="go(2)">優惠</div>
             <div class="nav-item" onclick="go(3)">設定</div>
         </div>
     </div>
 
+    <div id="qrModal" onclick="this.style.display='none'">
+        <h3 id="qrTitle">會員條碼</h3>
+        <div id="qrcode" style="padding:15px; background:#fff; border-radius:10px;"></div>
+        <p style="margin-top:20px; color:#666;">點擊螢幕任何處關閉</p>
+    </div>
+
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbywx5K_Alpt02YSS4_GqQE-JCUgrUnaRSMoncaftyQgyai6aIOjtg2SvfSP5oiAPrkf/exec";
-        let user=null;
+        const GAS = "https://script.google.com/macros/s/AKfycbxXp5OaaTFOPGPE_FZWjhKdFFu3uioDWzditinJDzgwBjfN-4HSQpABRZuhYMdqgG_x/exec";
+        let user = null;
+        const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
         async function login(){
-            toggleL(true);
+            toggleMask('full', true);
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc:document.getElementById('acc').value,pw:document.getElementById('pw').value})}).then(r=>r.json());
             if(res.success){
-                user=res;
-                document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block';
-                document.getElementById('uName').innerText=user.name; document.getElementById('uBal').innerText=user.balance;
-            } else alert("登入失敗");
-            toggleL(false);
+                user=res; updateUI();
+                document.getElementById('loginView').style.display='none';
+                document.getElementById('appView').style.display='block';
+            } else alert(res.message);
+            toggleMask('full', false);
         }
 
-        function go(idx){
+        function showQR(type){
+            let data = user.id;
+            if(type === 'TOPUP'){
+                const amt = document.getElementById('topupAmt').value;
+                if(!amt) return alert("請輸入加值金額");
+                data = `TOPUP|${user.id}|${amt}`;
+                document.getElementById('qrTitle').innerText = `加值請求：$${amt}`;
+            } else {
+                document.getElementById('qrTitle').innerText = "您的識別碼";
+            }
+            qrc.clear(); qrc.makeCode(data);
+            document.getElementById('qrModal').style.display='flex';
+        }
+
+        async function go(idx){
             document.querySelectorAll('.page').forEach(p=>p.style.display='none');
             document.getElementById('p'+idx).style.display='block';
-            if(idx===1) fetchTrans();
-            if(idx===4) fetchLoans();
+            document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active', [0,1,4,2,3][i]===idx));
+            
+            if(idx !== 0) {
+                toggleMask('half', true);
+                if(idx===1) await fetchTrans();
+                if(idx===4) await fetchLoans();
+                if(idx===2) await fetchCoupons();
+                toggleMask('half', false);
+            }
         }
 
         async function fetchTrans(){
-            toggleL(true);
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json());
             document.getElementById('tList').innerHTML = res.list.map((r,i)=>`
                 <div class="card">
@@ -98,42 +146,50 @@
                             <span id="arr-t${i}" class="arrow">▼</span>
                         </div>
                     </div>
-                    <div id="t${i}" class="detail-box">
-                        單號：${r.id}<br>時間：${r.date}<br>執行：${r.admin}<br>餘額：$${r.balance}
-                    </div>
+                    <div id="t${i}" class="detail-box">時間：${r.date}<br>執行人：${r.admin}<br>異動後餘額：$${r.balance}</div>
                 </div>`).join('');
-            toggleL(false);
         }
 
         async function fetchLoans(){
-            toggleL(true);
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
-            let total=0, mb=0;
-            document.getElementById('loanList').innerHTML = res.list.map((l,i)=>{
-                total += l.remain;
-                if(new Date(l.date).getMonth() === new Date().getMonth()) mb += l.principal;
-                return `
-                <div class="card">
+            document.getElementById('loanList').innerHTML = res.list.map((l,i)=>`
+                <div class="card" style="border-left: 5px solid ${l.remain<=0?'var(--green)':'var(--blue)'}">
                     <div class="item-header" onclick="toggleDetail('l${i}')">
-                        <div><b>${l.item}</b><br><small style="color:#444;">尚欠：$${l.remain}</small></div>
+                        <div><b>${l.item}</b><br><small style="color:#666;">尚欠：$${l.remain}</small></div>
                         <span id="arr-l${i}" class="arrow">▼</span>
                     </div>
                     <div id="l${i}" class="detail-box">
-                        單號：${l.id}<br>借款日期：${l.date}<br>還款期限：${l.deadline}<br>
-                        本金：$${l.principal} / 利息：$${l.interest}<br>已還：$${l.paid}
+                        撥款日期：${l.date}<br>還款期限：<b style="color:var(--accent)">${l.deadline}</b><br>
+                        本金：$${l.principal} / 利息：$${l.interest}<br>已還金額：$${l.paid}
                     </div>
-                </div>`;
-            }).join('');
-            document.getElementById('totalDebt').innerText = total;
-            document.getElementById('quotaTxt').innerText = `本月額度: $${mb} / $500`;
-            toggleL(false);
+                </div>`).join('');
+        }
+
+        async function fetchCoupons(){
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json());
+            document.getElementById('cList').innerHTML = res.list.map(c=>`
+                <div class="card" style="border-left: 5px solid ${c.status==='未使用'?'var(--accent)':'#333'}">
+                    <b>${c.name}</b> <small style="float:right">${c.status}</small><br>
+                    <small style="color:#888;">${c.desc}</small><br>
+                    <small style="color:var(--red);">效期至: ${c.exp}</small>
+                </div>`).join('');
+        }
+
+        async function updateUser(){
+            toggleMask('half', true);
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
+                action:'updateProfile', uid:user.id, newName:document.getElementById('newName').value, newPw:document.getElementById('newPw').value
+            })}).then(r=>r.json());
+            alert(res.message);
+            toggleMask('half', false);
         }
 
         function toggleDetail(id){
             document.getElementById(id).classList.toggle('show');
             document.getElementById('arr-'+id).classList.toggle('rotated');
         }
-        function toggleL(s){ document.getElementById('loader').style.display=s?'flex':'none'; }
+        function toggleMask(type, show){ document.getElementById(type+'Mask').style.display = show?'flex':'none'; }
+        function updateUI(){ document.getElementById('uName').innerText=user.name; document.getElementById('uBal').innerText=user.balance; }
     </script>
 </body>
 </html>
