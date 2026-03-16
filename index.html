@@ -3,185 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑會員網</title>
+    <title>小佑會員系統 v6.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #121212; --pink: #FFD1DC; --accent: #FF8FA3; --card: #1e1e1e; --green: #2ecc71; --red: #ff5252; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; font-size: 20px; overflow: hidden; }
+        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #111; --green: #2ecc71; --red: #ff5252; --blue: #3b82f6; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; overflow: hidden; }
+        .page { width: 100vw; height: 100vh; padding: 80px 20px 110px; box-sizing: border-box; overflow-y: auto; display: none; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
+        .btn { width: 100%; padding: 20px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 20px; font-weight: 900; cursor: pointer; }
+        .input-box { width: 100%; padding: 18px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; background: #222; color: #fff; font-size: 18px; box-sizing: border-box; }
         
-        /* 遮罩轉圈圈 */
-        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
-        .full-mask { background: #000; } .half-mask { background: rgba(0,0,0,0.8); }
-        .spinner { width: 60px; height: 60px; border: 8px solid #333; border-top: 8px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        /* 摺疊樣式 */
+        .detail-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #080808; font-size: 14px; color: #888; border-radius: 10px; }
+        .detail-box.show { max-height: 250px; padding: 15px; margin-top: 10px; border: 1px solid #333; }
+        .item-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .arrow { transition: transform 0.3s; color: var(--accent); font-size: 12px; }
+        .arrow.rotated { transform: rotate(180deg); }
 
-        /* UI 放大 */
-        .u-bal-text { font-size: 85px; color: var(--pink); margin: 15px 0; }
-        .input-box { width: 100%; padding: 22px; margin: 12px 0; border-radius: 15px; border: 3px solid #444; background: #2a2a2a; color: #fff; font-size: 24px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 22px; border-radius: 18px; background: var(--accent); color: #fff; border: none; font-size: 24px; font-weight: 900; cursor: pointer; }
-        
-        /* 右上方登出按鈕 */
-        .top-nav { position: fixed; top: 0; width: 100%; height: 75px; display: flex; justify-content: flex-end; align-items: center; padding: 0 20px; z-index: 100; }
-        .logout-box { border: 2px solid #555; padding: 8px 18px; border-radius: 12px; color: #aaa; font-size: 16px; cursor: pointer; transition: 0.3s; }
-
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 95px; background: #1a1a1a; display: flex; border-top: 2px solid #333; }
-        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #666; font-size: 20px; }
+        /* 導覽列 */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 85px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 12px; }
         .nav-item.active { color: var(--pink); }
-        
-        .page { width: 100vw; height: 100vh; padding: 100px 30px 120px; box-sizing: border-box; overflow-y: auto; display: none; }
-        .card { background: var(--card); border-radius: 25px; padding: 30px; margin-bottom: 25px; }
-        
-        /* 交易紀錄樣式 */
-        .trans-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid #333; }
-        .trans-amt { font-size: 24px; font-weight: 900; }
-        
-        #qrOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; background:rgba(0,0,0,0.9); justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
-    <div id="loader"><div class="spinner"></div><p style="margin-top:20px;">系統處理中，請稍後...</p></div>
+    <div id="loader"><div style="border:5px solid #222; border-top:5px solid var(--accent); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div></div>
+    <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 
-    <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:45px;">
-        <h1 style="color:var(--pink); font-size:55px; margin-bottom:40px;">小佑會員網</h1>
+    <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
+        <h1 style="color:var(--pink);">小佑會員網</h1>
         <input type="text" id="acc" class="input-box" placeholder="帳號">
         <input type="password" id="pw" class="input-box" placeholder="密碼">
-        <button class="btn" onclick="login()">點選確定登入系統</button>
+        <button class="btn" onclick="login()">登入</button>
     </div>
 
     <div id="appView" style="display:none;">
-        <div class="top-nav"><div class="logout-box" onclick="logout()">登出</div></div>
-        
         <div id="p0" class="page" style="display:block;">
-            <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
-            <div class="card" style="text-align:center;"><small>我的可用餘額</small><div class="u-bal-text">$ <span id="uBal">0</span></div></div>
-            <button class="btn" onclick="openQR('ID')">出示會員身份條碼</button>
-            <div style="margin-top:30px;">
-                <p>快速儲值申請：</p>
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
-                    <button class="btn" style="background:#444; padding:15px; font-size:20px;" onclick="openQR('TOPUP', 100)">$100</button>
-                    <button class="btn" style="background:#444; padding:15px; font-size:20px;" onclick="openQR('TOPUP', 500)">$500</button>
-                    <button class="btn" style="background:#444; padding:15px; font-size:20px;" onclick="openQR('TOPUP', 1000)">$1000</button>
-                </div>
-            </div>
+            <h2>你好，<span id="uName">...</span></h2>
+            <div class="card" style="text-align:center;"><small>我的餘額</small><div style="font-size:60px; color:var(--pink);">$ <span id="uBal">0</span></div></div>
+            <button class="btn" onclick="openQR('ID')">出示條碼</button>
         </div>
 
-        <div id="p1" class="page"><h2>交易明細紀錄</h2><div id="tList"></div></div>
-        <div id="p2" class="page"><h2>我的優惠券</h2><div id="cList"></div></div>
-        
-        <div id="p3" class="page">
-            <h2>個人設定</h2>
-            <div class="card">
-                <h3>帳號資料管理</h3>
-                <input type="text" id="setName" class="input-box" placeholder="變更姓名">
-                <input type="password" id="setPw" class="input-box" placeholder="變更密碼">
-                <button class="btn" onclick="saveSettings()">儲存修改並登出</button>
+        <div id="p1" class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
+        <div id="p4" class="page">
+            <h2>借款管理</h2>
+            <div class="card" style="background:linear-gradient(135deg,#1e293b,#000);">
+                <small>總待還額 (含逾期利息)</small>
+                <div style="font-size:40px; color:#fff;">$ <span id="totalDebt">0</span></div>
+                <div id="quotaTxt" style="font-size:12px; color:#64748b; margin-top:5px;">額度: $0 / $500</div>
             </div>
-            <div class="card">
-                <h3>系統資訊</h3>
-                <p>版本：v4.0 專業運營版</p>
-            </div>
-            <button class="btn" style="background:var(--red);" onclick="delAcc()">刪除帳號 (永久移除資料)</button>
+            <div id="loanList"></div>
         </div>
 
         <div class="nav-bar">
             <div class="nav-item active" onclick="go(0)">首頁</div>
             <div class="nav-item" onclick="go(1)">紀錄</div>
-            <div class="nav-item" onclick="go(2)">優惠</div>
+            <div class="nav-item" onclick="go(4)">借款</div>
             <div class="nav-item" onclick="go(3)">設定</div>
         </div>
     </div>
 
-    <div id="qrOverlay">
-        <div style="background:#fff; padding:45px; border-radius:35px; text-align:center; width:85%;">
-            <h3 id="qrT" style="color:#000;"></h3>
-            <div id="qrcode" style="display:inline-block;"></div>
-            <button class="btn" style="background:#222; margin-top:40px;" onclick="document.getElementById('qrOverlay').style.display='none'">點選確定關閉</button>
-        </div>
-    </div>
-
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyO0O8m1YuIr0wZ7roEY6Gz-5y4K2HRrfRUdGuRr5uqjGx0X51gnLa7MewC0NPRUaA/exec";
-        let user=null, localBal=0;
-        const S_OK = 'https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3';
+        const GAS = "你的_GAS_網址";
+        let user=null;
 
-        window.onload = async () => {
-            const u = localStorage.getItem('u'), p = localStorage.getItem('p');
-            if(u && p) { 
-                document.getElementById('acc').value=u; document.getElementById('pw').value=p; 
-                login(true); 
-            }
-        };
-
-        async function login(isAuto=false){
-            toggleLoader(true, true);
-            const acc=document.getElementById('acc').value, pw=document.getElementById('pw').value;
-            try {
-                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc,pw})}).then(r=>r.json());
-                if(res.success){
-                    localStorage.setItem('u', acc); localStorage.setItem('p', pw);
-                    user=res; localBal=parseFloat(res.balance);
-                    document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block';
-                    updateUI(); startPolling();
-                } else if(!isAuto) alert("登入失敗，請檢查帳號密碼");
-            } catch(e){ alert("伺服器連線異常"); }
-            toggleLoader(false);
-        }
-
-        function toggleLoader(show, full=false){
-            const ld = document.getElementById('loader');
-            ld.className = full ? 'full-mask' : 'half-mask';
-            ld.style.display = show ? 'flex' : 'none';
-        }
-
-        function startPolling(){
-            setInterval(async ()=>{
-                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'checkUpdate',uid:user.id,lastBal:localBal})}).then(r=>r.json());
-                if(res.hasUpdate){
-                    const title = res.isRefund ? "收到退款" : (res.amount > 0 ? "存入成功" : "扣款成功");
-                    localBal=res.newBalance; document.getElementById('uBal').innerText=res.newBalance;
-                    new Audio(S_OK).play();
-                    showResult(title, "💰", `$ ${Math.abs(res.amount)}`, "var(--green)");
-                } else if(res.hasError) {
-                    showResult("交易失敗", "❌", res.errorMsg, "var(--red)");
-                }
-            }, 5000);
-        }
-
-        function showResult(t, e, m, c){
-            document.getElementById('qrT').innerHTML=`<span style="color:${c}">${t}</span>`;
-            document.getElementById('qrcode').innerHTML=`<div style="font-size:85px;">${e}</div><div style="font-size:30px;color:#333;">${m}</div>`;
-            document.getElementById('qrOverlay').style.display='flex';
-        }
-
-        function openQR(type, amt=0){
-            document.getElementById('qrT').innerText = type==='ID' ? '我的會員身份條碼' : `儲值申請：$${amt}`;
-            document.getElementById('qrcode').innerHTML="";
-            new QRCode(document.getElementById('qrcode'),{text: type==='ID' ? user.id : `TOPUP|${user.id}|${amt}`, width:260,height:260});
-            document.getElementById('qrOverlay').style.display='flex';
+        async function login(){
+            toggleL(true);
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc:document.getElementById('acc').value,pw:document.getElementById('pw').value})}).then(r=>r.json());
+            if(res.success){
+                user=res;
+                document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block';
+                document.getElementById('uName').innerText=user.name; document.getElementById('uBal').innerText=user.balance;
+            } else alert("登入失敗");
+            toggleL(false);
         }
 
         function go(idx){
             document.querySelectorAll('.page').forEach(p=>p.style.display='none');
             document.getElementById('p'+idx).style.display='block';
-            document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active', i===idx));
-            if(idx===1) fetchTrans(); if(idx===2) fetchCoupons();
+            if(idx===1) fetchTrans();
+            if(idx===4) fetchLoans();
         }
 
         async function fetchTrans(){
+            toggleL(true);
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json());
-            document.getElementById('tList').innerHTML = res.list.map(r => `
-                <div class="trans-item">
-                    <div><b>${r[2]}</b><br><small style="color:#777;">${new Date(r[0]).toLocaleString()}</small></div>
-                    <div class="trans-amt" style="color:${r[3]>0?'var(--green)':'var(--red)'}">${r[3]>0?'+':''}${r[3]}</div>
-                </div>
-            `).join('');
+            document.getElementById('tList').innerHTML = res.list.map((r,i)=>`
+                <div class="card">
+                    <div class="item-header" onclick="toggleDetail('t${i}')">
+                        <div><b>${r.desc}</b><br><small style="color:#444;">${r.date.split(' ')[0]}</small></div>
+                        <div style="text-align:right">
+                            <span style="color:${r.amount>0?'var(--green)':'var(--red)'}; font-size:18px;">${r.amount>0?'+':''}${r.amount}</span>
+                            <span id="arr-t${i}" class="arrow">▼</span>
+                        </div>
+                    </div>
+                    <div id="t${i}" class="detail-box">
+                        單號：${r.id}<br>時間：${r.date}<br>執行：${r.admin}<br>餘額：$${r.balance}
+                    </div>
+                </div>`).join('');
+            toggleL(false);
         }
 
-        function updateUI(){ document.getElementById('uName').innerText=user.name; document.getElementById('uBal').innerText=user.balance; }
-        function logout(){ localStorage.clear(); location.reload(); }
-        async function saveSettings(){ toggleLoader(true); await fetch(GAS,{method:'POST',body:JSON.stringify({action:'updateProfile',uid:user.id,newName:document.getElementById('setName').value,newPw:document.getElementById('setPw').value})}); logout(); }
-        function delAcc(){ if(confirm("確定刪除帳號？資料無法復原。")) fetch(GAS,{method:'POST',body:JSON.stringify({action:'deleteUser',uid:user.id})}).then(()=>logout()); }
-        async function fetchCoupons(){ const res=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json()); document.getElementById('cList').innerHTML=res.list.map(r=>`<div class="card">🎟️ <b>${r[2]}</b><br><small>面額：$${r[3]} | 低消：$${r[4]}<br>${r[5]}</small></div>`).join(''); }
+        async function fetchLoans(){
+            toggleL(true);
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
+            let total=0, mb=0;
+            document.getElementById('loanList').innerHTML = res.list.map((l,i)=>{
+                total += l.remain;
+                if(new Date(l.date).getMonth() === new Date().getMonth()) mb += l.principal;
+                return `
+                <div class="card">
+                    <div class="item-header" onclick="toggleDetail('l${i}')">
+                        <div><b>${l.item}</b><br><small style="color:#444;">尚欠：$${l.remain}</small></div>
+                        <span id="arr-l${i}" class="arrow">▼</span>
+                    </div>
+                    <div id="l${i}" class="detail-box">
+                        單號：${l.id}<br>借款日期：${l.date}<br>還款期限：${l.deadline}<br>
+                        本金：$${l.principal} / 利息：$${l.interest}<br>已還：$${l.paid}
+                    </div>
+                </div>`;
+            }).join('');
+            document.getElementById('totalDebt').innerText = total;
+            document.getElementById('quotaTxt').innerText = `本月額度: $${mb} / $500`;
+            toggleL(false);
+        }
+
+        function toggleDetail(id){
+            document.getElementById(id).classList.toggle('show');
+            document.getElementById('arr-'+id).classList.toggle('rotated');
+        }
+        function toggleL(s){ document.getElementById('loader').style.display=s?'flex':'none'; }
     </script>
 </body>
 </html>
