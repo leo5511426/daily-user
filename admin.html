@@ -2,99 +2,84 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理端 v7.8</title>
+    <title>管理後台 v8.0</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 25px; font-weight: bold; }
-        .card { background: #fff; padding: 30px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        select, input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        .btn { padding: 18px; border: none; border-radius: 12px; cursor: pointer; width: 100%; font-weight: bold; font-size: 18px; margin-top: 10px; }
-        .btn-primary { background: #3b82f6; color: #fff; }
-        .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
-        #loadingOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .spin { border: 6px solid #f3f3f3; border-top: 6px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .user-list { border: 1px solid #eee; border-radius: 10px; padding: 15px; max-height: 200px; overflow-y: auto; background: #fafafa; }
+        body { font-family: sans-serif; background: #f4f7f9; padding: 20px; }
+        .card { background: #fff; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .btn-blue { background: #3b82f6; color: #fff; }
+        .btn-green { background: #10b981; color: #fff; }
+        .btn-red { background: #ef4444; color: #fff; }
+        #loading { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
-    <div id="loadingOverlay"><div class="spin"></div><h2>系統處理中...</h2></div>
+    <div id="loading"><div style="border:4px solid #f3f3f3; border-top:4px solid #3b82f6; border-radius:50%; width:30px; height:30px; animation:spin 1s linear infinite;"></div><p>系統處理中，請稍後...</p></div>
 
     <div class="card">
-        <h3>💰 帳務操作</h3>
-        <button onclick="startScan()" style="background:#555; color:#fff; border:none; padding:10px; border-radius:8px;">📷 掃描條碼</button>
-        <div id="qrDiv" style="display:none; margin-top:15px;"></div>
-        <select id="tUser"><option value="">-- 選擇會員 --</option></select>
-        <select id="tAction">
-            <option value="add">➕ 儲值 (加值)</option>
-            <option value="sub">➖ 消費 (扣款 - 餘額檢查啟動)</option>
-            <option value="refund">↩️ 退款</option>
-        </select>
-        <input type="number" id="tAmt" placeholder="金額">
-        <input type="text" id="tNote" placeholder="備註">
-        <button id="btnTrans" class="btn btn-primary" onclick="doTrans()">執行交易</button>
+        <h3>📷 快速掃描 (加值/核銷)</h3>
+        <div id="qrDiv" style="width:100%; max-width:400px; display:none; margin-bottom:10px;"></div>
+        <button class="btn" style="background:#444; color:#fff;" onclick="startScan()">啟動相機</button>
     </div>
 
     <div class="card">
-        <h3>⚖️ 建立借款單</h3>
-        <select id="lUser"><option value="">-- 選擇會員 --</option></select>
-        <input type="text" id="lItem" placeholder="項目內容">
-        <input type="number" id="lAmt" placeholder="本金金額">
-        <input type="date" id="lDeadline">
-        <button id="btnLoan" class="btn btn-primary" style="background:#2ecc71;" onclick="doLoan()">確認借款</button>
+        <h3>💰 帳務處理</h3>
+        <select id="tUser"><option value="">-- 選擇會員 --</option></select>
+        <select id="tAction"><option value="add">➕ 儲值</option><option value="sub">➖ 扣款 (檢查餘額)</option></select>
+        <input type="number" id="tAmt" placeholder="金額">
+        <button id="btnT" class="btn btn-blue" onclick="doTrans()">執行帳務</button>
+    </div>
+
+    <div class="card">
+        <h3>⚖️ 還款中心</h3>
+        <select id="pLoan" onchange="setPayAmt()"><option value="">-- 選擇借款單 --</option></select>
+        <input type="number" id="pAmt" placeholder="還款金額">
+        <select id="pMethod"><option value="cash">💵 現金還款</option><option value="balance">💳 儲值金扣除</option></select>
+        <button id="btnP" class="btn btn-green" onclick="doPay()">完成還款</button>
     </div>
 
     <div class="card">
         <h3>🎟️ 發送優惠券</h3>
         <input type="text" id="cpName" placeholder="券名">
-        <input type="text" id="cpDesc" placeholder="說明">
-        <input type="text" id="cpExp" placeholder="到期日">
-        <div id="userCheckList" class="user-list"></div>
-        <button id="btnCoupon" class="btn btn-primary" style="background:#ff8fa3;" onclick="doCoupon()">批次發送</button>
+        <input type="text" id="cpExp" placeholder="期限 (如 2026/12/31)">
+        <label><input type="checkbox" id="cpAll"> 發送給全體成員</label>
+        <button id="btnC" class="btn btn-red" onclick="doCoupon()">批次送出</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycby5aAEJfvOJjcKbB8rjTs1t1X1xbQFPnGOzMHZoeS7DOkyTEVKhQnO21jHUWyQ823z4/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbyyzieXpFSIxk8cYkfk7Y3aISTAyB31PZvfpIfWafhyjY1PjRjjnUAsF_TgildxZb9e/exec";
         const scanner = new Html5Qrcode("qrDiv");
 
         async function init() {
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            res.list.forEach(u => {
-                const opt = `<option value="${u.id}">${u.name} (${u.id})</option>`;
-                document.getElementById('tUser').innerHTML += opt;
-                document.getElementById('lUser').innerHTML += opt;
-                document.getElementById('userCheckList').innerHTML += `<div><input type="checkbox" class="u-cb" value="${u.id}"> ${u.name}</div>`;
-            });
+            const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
+            u.list.forEach(i => document.getElementById('tUser').innerHTML += `<option value="${i.id}">${i.name}</option>`);
+            const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
+            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-remain="${i.remain}">${i.item} - ${i.uid} (剩餘 $${i.remain})</option>`);
         }
 
         async function api(btnId, body) {
-            const btn = document.getElementById(btnId);
-            btn.disabled = true; document.getElementById('loadingOverlay').style.display='flex';
-            try {
-                const res = await fetch(GAS, { method: 'POST', body: JSON.stringify(body) }).then(r => r.json());
-                alert(res.message); if(res.success) location.reload();
-            } catch (e) { alert("連線失敗"); }
-            btn.disabled = false; document.getElementById('loadingOverlay').style.display='none';
+            document.getElementById(btnId).disabled = true; document.getElementById('loading').style.display='flex';
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
+            alert(res.message); location.reload();
         }
 
-        function doTrans() {
-            const type = tAction.value;
-            const amt = (type==='sub') ? -Math.abs(tAmt.value) : Math.abs(tAmt.value);
-            api('btnTrans', { action: 'adminAction', type, uid: tUser.value, amount: amt, desc: tAction.options[tAction.selectedIndex].text, note: tNote.value, adminName: '管理員' });
+        function doTrans() { api('btnT', { action:'adminAction', type:tAction.value, uid:tUser.value, amount:(tAction.value==='sub'?-Math.abs(tAmt.value):tAmt.value), desc:tAction.options[tAction.selectedIndex].text }); }
+        
+        function doPay() {
+            const opt = document.getElementById('pLoan').selectedOptions[0];
+            api('btnP', { action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, amount:pAmt.value, method:pMethod.value });
         }
 
-        function doLoan() { api('btnLoan', { action: 'adminAction', type: 'create_loan', uid: lUser.value, loanItem: lItem.value, amount: lAmt.value, deadline: lDeadline.value }); }
-
-        function doCoupon() {
-            const uids = Array.from(document.querySelectorAll('.u-cb:checked')).map(cb => cb.value);
-            api('btnCoupon', { action: 'adminAction', type: 'send_coupon', uids, cpName: cpName.value, cpDesc: cpDesc.value, cpExp: cpExp.value });
-        }
+        function doCoupon() { api('btnC', { action:'adminAction', type:'send_coupon', all:document.getElementById('cpAll').checked, cpName:cpName.value, cpExp:cpExp.value }); }
 
         function startScan() {
             document.getElementById('qrDiv').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                if(txt.includes('|')){ const p=txt.split('|'); tUser.value=p[1]; tAmt.value=p[2]; tAction.value="add"; tNote.value="快速加值"; } else { tUser.value=txt; }
-                scanner.stop(); document.getElementById('qrDiv').style.display='none';
+                if(txt.startsWith("USE_CP|")) { api('btnT', { action:'adminAction', type:'use_coupon', cpId:txt.split('|')[1] }); }
+                else { tUser.value = txt; }
+                scanner.stop();
             });
         }
         init();
