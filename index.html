@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑會員網</title>
+    <title>小佑會員網 v12.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -16,23 +16,31 @@
         .nav-item.active { color: var(--pink); }
         .detail { max-height: 0; overflow: hidden; transition: 0.3s; font-size: 14px; color: #888; margin-top: 10px; }
         .detail.show { max-height: 200px; padding-top: 10px; border-top: 1px solid #222; }
+        
+        /* 遮罩樣式 */
+        .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9998; flex-direction:column; justify-content:center; align-items:center; }
+        .spinner { border: 4px solid #333; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         #qrModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
+    <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統處理中，請稍後...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>系統資料同步處理中，請稍後...</p></div>
+
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
-        <h1 style="color:var(--pink); font-size:40px;">Member</h1>
+        <h1 style="color:var(--pink); font-size:40px;">LOGIN</h1>
         <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px;" placeholder="帳號">
         <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px;" placeholder="密碼">
-        <button class="btn" onclick="login()">登入</button>
+        <button class="btn" onclick="login()">登入系統</button>
     </div>
 
     <div id="appView" style="display:none;">
         <div id="p0" class="page" style="display:block;">
             <h2>你好，<span id="uName">...</span></h2>
             <div class="card" style="text-align:center;">
-                <small style="color:#888;">餘額</small>
-                <div style="font-size:55px; color:var(--pink); font-weight:900;">$ <span id="uBal">0</span></div>
+                <div style="font-size:55px; color:var(--pink);">$ <span id="uBal">0</span></div>
             </div>
             <button class="btn" onclick="showQR('USER', user.id)">📘 個人識別碼</button>
         </div>
@@ -52,20 +60,25 @@
 
     <div id="qrModal">
         <div style="background:#fff; padding:30px; border-radius:25px; text-align:center;">
-            <p id="qrTitle" style="color:#000; font-weight:bold; margin-bottom:10px;"></p>
+            <p id="qrTitle" style="color:#000; font-weight:bold;"></p>
             <div id="qrcode"></div>
             <button class="btn" style="background:var(--red); margin-top:20px;" onclick="qrModal.style.display='none'">關閉</button>
         </div>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyuPeGpO4UY02q9zC1fjTZ6Ko3YVgVvuNwczjGbwNECSBqHAAzOHbwMTCoF5fQgxxyu/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbyQvLMLZAksPuPRF62gDdr6KaggP9XtD52a8-uD4TuMm_aldCizgJaVOeW1uQStRbA/exec";
         let user = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
+        const mFull = document.getElementById('mFull');
+        const mHalf = document.getElementById('mHalf');
 
         async function login(){
+            mFull.style.display='flex';
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc:acc.value,pw:pw.value})}).then(r=>r.json());
-            if(res.success){ user=res; updateUI(); loginView.style.display='none'; appView.style.display='block'; } else alert(res.message);
+            if(res.success){ user=res; uName.innerText=user.name; uBal.innerText=user.balance; loginView.style.display='none'; appView.style.display='block'; } 
+            else alert(res.message);
+            mFull.style.display='none';
         }
 
         function showQR(type, val){
@@ -80,42 +93,33 @@
             document.querySelectorAll('.page').forEach(p=>p.style.display='none');
             document.getElementById('p'+idx).style.display='block';
             document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active', [0,1,4,2,3][i]===idx));
-            if(idx===1) fetchTrans(); if(idx(4)) fetchLoans(); if(idx===2) fetchCoupons();
+            if(idx!==0 && idx!==3){
+                mHalf.style.display='flex';
+                if(idx===1) await fetchTrans(); if(idx===4) await fetchLoans(); if(idx===2) await fetchCoupons();
+                mHalf.style.display='none';
+            }
         }
 
         async function fetchTrans(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'trans',uid:user.id})}).then(r=>r.json());
-            tList.innerHTML = res.list.map((r,i)=>`
-                <div class="card" onclick="document.getElementById('td${i}').classList.toggle('show')">
-                    <div style="display:flex; justify-content:space-between;">
-                        <b>${r.desc}</b> <b style="color:${r.amount>0?'var(--green)':'var(--red)'}">${r.amount>0?'+':''}${r.amount}</b>
-                    </div>
-                    <small style="color:#666;">${r.date}</small>
-                    <div id="td${i}" class="detail">餘額：$${r.balance}<br>備註：${r.note||'無'}</div>
-                </div>`).join('');
+            tList.innerHTML = res.list.map((r,i)=>`<div class="card" onclick="document.getElementById('td${i}').classList.toggle('show')">
+                <div style="display:flex; justify-content:space-between;"><b>${r.desc}</b> <b style="color:${r.amount>0?'var(--green)':'var(--red)'}">${r.amount>0?'+':''}${r.amount}</b></div>
+                <small style="color:#666;">${r.date}</small><div id="td${i}" class="detail">餘額：$${r.balance}<br>備註：${r.note||'無'}</div></div>`).join('');
         }
 
         async function fetchLoans(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
-            loanList.innerHTML = res.list.map((l,i)=>`
-                <div class="card" onclick="document.getElementById('ld${i}').classList.toggle('show')">
-                    <b>${l.item}</b> <span style="float:right; color:var(--pink); font-size:20px;">$${l.remain}</span>
-                    <div id="ld${i}" class="detail">本金: $${l.principal} | 罰金: $${l.interest}<br>期限: ${l.deadline} | 狀態: ${l.status}</div>
-                </div>`).join('');
+            loanList.innerHTML = res.list.map((l,i)=>`<div class="card" onclick="document.getElementById('ld${i}').classList.toggle('show')">
+                <b>${l.item}</b> <span style="float:right; color:var(--pink); font-size:20px;">$${l.remain}</span>
+                <div id="ld${i}" class="detail">本金: $${l.principal} | 罰金: $${l.interest}<br>期限: ${l.deadline} | 狀態: ${l.status}</div></div>`).join('');
         }
 
         async function fetchCoupons(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json());
-            cList.innerHTML = res.list.filter(c=>c.status==='未使用').map(c=>`
-                <div class="card">
-                    <b style="color:var(--pink); font-size:18px;">${c.name}</b>
-                    <p style="font-size:14px; margin:5px 0;">${c.desc}</p>
-                    <small style="color:#666;">期限: ${c.exp}</small>
-                    <button class="btn" style="background:var(--green); font-size:14px; padding:10px; margin-top:10px;" onclick="showQR('CP', '${c.id}')">出示核銷碼</button>
-                </div>`).join('');
+            cList.innerHTML = res.list.filter(c=>c.status==='未使用').map(c=>`<div class="card">
+                <b style="color:var(--pink);">${c.name}</b><p style="font-size:14px;">${c.desc}</p><small>期限: ${c.exp}</small>
+                <button class="btn" style="background:var(--green); font-size:14px; padding:10px;" onclick="showQR('CP', '${c.id}')">出示碼</button></div>`).join('');
         }
-
-        function updateUI(){ uName.innerText=user.name; uBal.innerText=user.balance; }
     </script>
 </body>
 </html>
