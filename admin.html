@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理後台 v9.0 - 複合還款版</title>
+    <title>管理後台 v9.0</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; }
@@ -12,15 +12,12 @@
         .btn-blue { background: #3b82f6; color: #fff; }
         .btn-green { background: #10b981; color: #fff; }
         .btn-red { background: #ef4444; color: #fff; }
+        .pay-info { background: #f0fdf4; padding: 15px; border-radius: 10px; border: 1px dashed #10b981; margin: 10px 0; }
         #loading { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
-        /* 新增複合支付區域樣式 */
-        .pay-box { background: #f0fdf4; padding: 15px; border-radius: 10px; border: 1px dashed #10b981; margin: 10px 0; }
-        .loan-zone { border-left: 6px solid #3b82f6; }
-        .pay-zone { border-left: 6px solid #10b981; }
     </style>
 </head>
 <body>
-    <div id="loading"><div style="border:4px solid #f3f3f3; border-top:4px solid #3b82f6; border-radius:50%; width:30px; height:30px; animation:spin 1s linear infinite;"></div><p>系統處理中，請稍後...</p></div>
+    <div id="loading"><div style="border:4px solid #f3f3f3; border-top:4px solid #3b82f6; border-radius:50%; width:30px; height:30px; animation:spin 1s linear infinite;"></div><p>系統處理中...</p></div>
 
     <div class="card">
         <h3>📷 快速掃描</h3>
@@ -28,98 +25,72 @@
         <button class="btn" style="background:#444; color:#fff;" onclick="startScan()">啟動相機</button>
     </div>
 
-    <div class="card loan-zone">
-        <h3>💰 撥付借款 (建立單據)</h3>
-        <select id="lUser"><option value="">-- 選擇借款對象 --</option></select>
-        <input type="text" id="lItem" placeholder="借款項目 (如：午餐代墊)">
-        <input type="number" id="lAmt" placeholder="借款本金金額">
+    <div class="card" style="border-top: 5px solid #3b82f6;">
+        <h3>💰 撥付借款</h3>
+        <select id="lUser"><option value="">-- 選擇會員 --</option></select>
+        <input type="text" id="lItem" placeholder="項目 (如：代墊午餐)">
+        <input type="number" id="lAmt" placeholder="本金金額">
         <input type="date" id="lDeadline">
         <button id="btnL" class="btn btn-blue" onclick="doCreateLoan()">確認撥款</button>
     </div>
 
-    <div class="card pay-zone">
-        <h3>⚖️ 還款中心 (支援餘額補足)</h3>
-        <select id="pLoan" onchange="autoFillPay()"><option value="">-- 選擇待還借款單 --</option></select>
-        <div class="pay-box">
+    <div class="card" style="border-top: 5px solid #10b981;">
+        <h3>⚖️ 複合還款 (支援餘額補足)</h3>
+        <select id="pLoan" onchange="autoFill()"><option value="">-- 選擇待還款項 --</option></select>
+        <div class="pay-info">
             <label>💵 實收現金：</label>
-            <input type="number" id="pCash" oninput="recalcPay()">
-            <label>💳 餘額補足 (自動計算差額)：</label>
+            <input type="number" id="pCash" oninput="recalc()">
+            <label>💳 餘額扣除 (自動差額)：</label>
             <input type="number" id="pBal" readonly style="background:#eee; color:#d63384;">
-            <p style="text-align:right; font-size:14px; color:#10b981; margin:5px 0 0;">結清總額：$ <span id="pTotalText">0</span></p>
+            <p style="text-align:right; margin:5px 0 0; color:#10b981;">總計還款：$ <span id="pTotal">0</span></p>
         </div>
         <button id="btnP" class="btn btn-green" onclick="doPay()">完成複合還款</button>
     </div>
 
-    <div class="card">
-        <h3>🎟️ 優惠券與一般帳務</h3>
-        <input type="text" id="cpName" placeholder="券名">
-        <input type="text" id="cpExp" placeholder="期限">
-        <button id="btnC" class="btn btn-red" onclick="doCoupon()">送出優惠券</button>
-    </div>
-
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbzWStm_kDFO0lOcPjiXQBw2sAHVnJKkpnx8iBDsiLcGFsNiQhV5LOQ8ctjbKhRHfOn4/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbwVssTj0tS-UT9_zNFvrfqc1gjSKWRm4NfnYc6EN1nMQrxoJlecTUnGl4aLP2WHSRtl/exec";
         const scanner = new Html5Qrcode("qrDiv");
 
         async function init() {
             const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            u.list.forEach(i => {
-                document.getElementById('lUser').innerHTML += `<option value="${i.id}">${i.name}</option>`;
-            });
+            u.list.forEach(i => document.getElementById('lUser').innerHTML += `<option value="${i.id}">${i.name}</option>`);
             const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-remain="${i.remain}">${i.uid} | ${i.item} (欠$${i.remain})</option>`);
+            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (欠$${i.remain})</option>`);
         }
 
-        // 自動帶入金額邏輯
-        function autoFillPay() {
+        function autoFill() {
             const opt = pLoan.selectedOptions[0];
-            if(opt.dataset.remain) {
-                document.getElementById('pCash').value = opt.dataset.remain;
-                recalcPay();
-            }
+            if(opt.dataset.rem) { pCash.value = opt.dataset.rem; recalc(); }
         }
 
-        // 核心：當現金輸入變動，自動算儲值金要補多少
-        function recalcPay() {
+        function recalc() {
             const opt = pLoan.selectedOptions[0];
-            if(!opt.dataset.remain) return;
-            const remain = parseFloat(opt.dataset.remain);
+            if(!opt.dataset.rem) return;
+            const total = parseFloat(opt.dataset.rem);
             const cash = parseFloat(pCash.value) || 0;
-            const balNeed = (cash < remain) ? remain - cash : 0;
-            pBal.value = balNeed.toFixed(0);
-            pTotalText.innerText = (cash + balNeed).toFixed(0);
+            const bal = (cash < total) ? total - cash : 0;
+            pBal.value = bal.toFixed(0);
+            pTotal.innerText = (cash + bal).toFixed(0);
         }
 
         async function api(btnId, body) {
-            document.getElementById(btnId).disabled = true; 
-            document.getElementById('loading').style.display='flex';
+            document.getElementById(btnId).disabled = true; document.getElementById('loading').style.display='flex';
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
             alert(res.message); location.reload();
         }
 
-        function doCreateLoan() {
-            api('btnL', { action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value });
-        }
-
+        function doCreateLoan() { api('btnL', { action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value }); }
+        
         function doPay() {
             const opt = pLoan.selectedOptions[0];
-            api('btnP', { 
-                action:'adminAction', 
-                type:'pay_loan', 
-                loanId:opt.value, 
-                uid:opt.dataset.uid, 
-                cashPart: pCash.value, 
-                balPart: pBal.value 
-            });
+            api('btnP', { action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value });
         }
-
-        function doCoupon() { api('btnC', { action:'adminAction', type:'send_coupon', cpName:cpName.value, cpExp:cpExp.value }); }
 
         function startScan() {
             document.getElementById('qrDiv').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                if(txt.startsWith("USE_CP|")) { api('btnC', { action:'adminAction', type:'use_coupon', cpId:txt.split('|')[1] }); }
-                else { alert("掃描到會員 ID: " + txt); }
+                if(txt.startsWith("USE_CP|")) { api('btnP', { action:'adminAction', type:'use_coupon', cpId:txt.split('|')[1] }); }
+                else { alert("會員 ID: " + txt); }
                 scanner.stop();
             });
         }
