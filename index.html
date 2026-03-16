@@ -3,54 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑系統 v7.6</title>
+    <title>小佑系統 v7.7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #111; --blue: #3b82f6; --green: #2ecc71; --red: #ff5252; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; }
-        .page { width: 100vw; min-height: 100vh; padding: 80px 20px 110px; box-sizing: border-box; display: none; }
-        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
-        .btn { width: 100%; padding: 18px; border-radius: 12px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; cursor: pointer; }
-        .input-box { width: 100%; padding: 15px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box; }
+        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --blue: #3b82f6; --green: #2ecc71; --red: #ff5252; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; line-height: 1.5; overflow-x: hidden; }
         
-        /* 遮罩修正 */
-        .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+        .page { width: 100vw; min-height: 100vh; padding: 100px 25px 130px; box-sizing: border-box; display: none; }
+        .card { background: var(--card); border-radius: 25px; padding: 25px; margin-bottom: 20px; border: 1px solid #282828; }
+        
+        h2 { font-size: 32px; margin-bottom: 25px; color: var(--pink); }
+        .btn { width: 100%; padding: 20px; border-radius: 18px; background: var(--accent); color: #fff; border: none; font-size: 20px; font-weight: 900; cursor: pointer; }
+        .input-box { width: 100%; padding: 20px; margin: 12px 0; border-radius: 15px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box; font-size: 18px; }
+        
+        /* 遮罩 */
+        .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align:center; font-size:18px; }
         #fullMask { background: #000; }
-        #halfMask { background: rgba(0,0,0,0.7); }
-        .spinner { border: 5px solid #222; border-top: 5px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        #halfMask { background: rgba(0,0,0,0.8); }
+        .spinner { border: 6px solid #222; border-top: 6px solid var(--accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 85px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 11px; }
-        .nav-item.active { color: var(--pink); }
+        /* 導覽列 */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 95px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 14px; }
+        .nav-item.active { color: var(--pink); font-size: 15px; }
+
+        /* 交易紀錄與箭頭 */
+        .item-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .view-detail { color: var(--accent); font-size: 14px; display: flex; align-items: center; gap: 5px; margin-top: 5px; font-weight: 400; }
+        .arrow { transition: 0.3s; display: inline-block; }
+        .arrow.rotated { transform: rotate(90deg); }
         
-        /* 條碼彈窗修正 */
+        .detail-box { max-height: 0; overflow: hidden; transition: 0.3s; background: #0a0a0a; font-size: 16px; color: #aaa; border-radius: 15px; }
+        .detail-box.show { max-height: 300px; padding: 20px; border: 1px solid #333; margin-top: 15px; }
+
+        /* 條碼彈窗 */
         #qrModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
-        .qr-container { background:#fff; padding:20px; border-radius:20px; position:relative; }
-        .close-qr { position:absolute; top:-50px; right:0; background:var(--red); color:#fff; border:none; padding:10px 20px; border-radius:10px; font-weight:900; cursor:pointer; }
-        
-        .detail-box { max-height: 0; overflow: hidden; transition: 0.3s; background: #080808; font-size: 13px; color: #888; border-radius: 10px; }
-        .detail-box.show { max-height: 250px; padding: 10px; border: 1px solid #333; margin-top: 10px; }
+        .qr-card { background:#fff; padding:30px; border-radius:30px; text-align:center; position:relative; }
+        .close-qr { position:absolute; top:-65px; right:0; background:var(--red); color:#fff; border:none; padding:12px 25px; border-radius:15px; font-weight:900; font-size:18px; }
     </style>
 </head>
 <body>
     <div id="fullMask" class="mask"><div class="spinner"></div>系統處理中，請稍後...</div>
     <div id="halfMask" class="mask"><div class="spinner"></div>資料同步處理中，請稍後...</div>
 
-    <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
-        <h1 style="color:var(--pink);">小佑會員網</h1>
+    <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:35px;">
+        <h1 style="color:var(--pink); font-size:45px; margin-bottom:40px;">小佑會員網</h1>
         <input type="text" id="acc" class="input-box" placeholder="帳號">
         <input type="password" id="pw" class="input-box" placeholder="密碼">
-        <button class="btn" onclick="login()">進入系統</button>
+        <button class="btn" onclick="login()" style="margin-top:20px;">登入帳戶</button>
     </div>
 
     <div id="appView" style="display:none;">
         <div id="p0" class="page" style="display:block;">
             <h2>你好，<span id="uName">...</span></h2>
-            <div class="card" style="text-align:center;"><small>可用餘額</small><div style="font-size:55px; color:var(--pink);">$ <span id="uBal">0</span></div></div>
-            <button class="btn" onclick="showQR('ID')">出示會員識別碼</button>
-            <div class="card" style="margin-top:20px;">
-                <small>快速加值條碼</small>
+            <div class="card" style="text-align:center; padding:45px 20px;">
+                <small style="color:#888; font-size:18px;">可用餘額</small>
+                <div style="font-size:70px; color:var(--pink); margin:10px 0;">$ <span id="uBal">0</span></div>
+            </div>
+            <button class="btn" onclick="showQR('ID')">📘 出示會員識別碼</button>
+            <div class="card" style="margin-top:25px; border: 1px dashed #444;">
+                <small style="font-size:16px;">快速儲值條碼</small>
                 <input type="number" id="quickAmt" class="input-box" placeholder="輸入金額">
                 <button class="btn" style="background:var(--green);" onclick="showQR('TOPUP')">產生加值條碼</button>
             </div>
@@ -60,13 +73,13 @@
         <div id="p4" class="page"><h2>借款帳務</h2><div id="loanList"></div></div>
         <div id="p2" class="page"><h2>專屬優惠券</h2><div id="cList"></div></div>
         <div id="p3" class="page">
-            <h2>個人設定</h2>
+            <h2>設定</h2>
             <div class="card">
-                <input type="text" id="newName" class="input-box" placeholder="更改姓名">
-                <input type="password" id="newPw" class="input-box" placeholder="更改密碼">
-                <button class="btn" onclick="updateUser()">儲存更新</button>
+                <input type="text" id="newName" class="input-box" placeholder="新姓名">
+                <input type="password" id="newPw" class="input-box" placeholder="新密碼">
+                <button class="btn" onclick="updateUser()">更新資料</button>
             </div>
-            <button class="btn" style="background:var(--red);" onclick="location.reload()">登出系統</button>
+            <button class="btn" style="background:var(--red);" onclick="location.reload()">登出</button>
         </div>
 
         <div class="nav-bar">
@@ -79,17 +92,16 @@
     </div>
 
     <div id="qrModal">
-        <div class="qr-container">
+        <div class="qr-card">
             <button class="close-qr" onclick="qrModal.style.display='none'">關閉 X</button>
             <div id="qrcode"></div>
         </div>
-        <p style="margin-top:30px; color:#666;">掃描完成後請點擊關閉</p>
     </div>
 
     <script>
         const GAS = "https://script.google.com/macros/s/AKfycbz0uwkCVQ7nn2_wiCh34fqFpHkLX9_R31oqGZ0l8D22wLh83s6IcsqgXArdh-g7qtZ9/exec";
         let user = null;
-        const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
+        const qrc = new QRCode(document.getElementById("qrcode"), { width: 250, height: 250 });
 
         async function login(){
             toggleMask('full', true);
@@ -102,25 +114,15 @@
 
         function showQR(type){
             let d = user.id;
-            if(type==='TOPUP'){ 
-                d=`TOPUP|${user.id}|${quickAmt.value}`; 
-                if(!quickAmt.value)return alert("請輸入加值金額"); 
-            }
-            qrc.clear(); qrc.makeCode(d); 
-            qrModal.style.display='flex';
+            if(type==='TOPUP'){ d=`TOPUP|${user.id}|${quickAmt.value}`; if(!quickAmt.value)return alert("請輸入金額"); }
+            qrc.clear(); qrc.makeCode(d); qrModal.style.display='flex';
         }
 
         async function go(idx){
             document.querySelectorAll('.page').forEach(p=>p.style.display='none');
             document.getElementById('p'+idx).style.display='block';
             document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active', [0,1,4,2,3][i]===idx));
-            if(idx!==0){ 
-                toggleMask('half', true); 
-                if(idx===1)await fetchTrans(); 
-                if(idx===4)await fetchLoans(); 
-                if(idx===2)await fetchCoupons(); 
-                toggleMask('half', false); 
-            }
+            if(idx!==0){ toggleMask('half', true); if(idx===1)await fetchTrans(); if(idx===4)await fetchLoans(); if(idx===2)await fetchCoupons(); toggleMask('half', false); }
         }
 
         async function fetchTrans(){
@@ -128,21 +130,26 @@
             tList.innerHTML = res.list.map((r,i)=>`
                 <div class="card">
                     <div class="item-header" onclick="toggleDetail('t${i}')">
-                        <div><b>${r.desc}</b><br><small>${r.date.split(' ')[0]}</small></div>
+                        <div><b style="font-size:22px;">${r.desc}</b><br><small style="color:#666;">${r.date.split(' ')[0]}</small></div>
                         <div style="text-align:right">
-                            <span style="color:${r.amount>0?'var(--green)':'var(--red)'}">${r.amount>0?'+':''}${r.amount}</span>
+                            <div style="color:${r.amount>0?'var(--green)':'var(--red)'}; font-size:24px;">${r.amount>0?'+':''}${r.amount}</div>
+                            <div class="view-detail">點擊查看 <span id="arr-t${i}" class="arrow">▶</span></div>
                         </div>
                     </div>
-                    <div id="t${i}" class="detail-box">執行人: ${r.admin}<br>餘額: $${r.balance}<br><span style="color:var(--pink)">備註: ${r.note||'無'}</span></div>
+                    <div id="t${i}" class="detail-box">
+                        時間：${r.date}<br>執行人：${r.admin}<br>餘額：$${r.balance}<br>
+                        <span style="color:var(--pink)">備註：${r.note||'無'}</span>
+                    </div>
                 </div>`).join('');
         }
 
         async function fetchLoans(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
             loanList.innerHTML = res.list.map((l,i)=>`
-                <div class="card">
-                    <div class="item-header" onclick="toggleDetail('l${i}')">
-                        <div><b>${l.item}</b><br><small>尚欠: $${l.remain}</small></div>
+                <div class="card" onclick="toggleDetail('l${i}')">
+                    <div class="item-header">
+                        <div><b style="font-size:22px;">${l.item}</b><br><small>剩餘應還：$${l.remain}</small></div>
+                        <div class="view-detail">帳務 <span id="arr-l${i}" class="arrow">▶</span></div>
                     </div>
                     <div id="l${i}" class="detail-box">期限: ${l.deadline}<br>本金: $${l.principal}<br>利息: $${l.interest}<br>已還: $${l.paid}</div>
                 </div>`).join('');
@@ -150,7 +157,7 @@
 
         async function fetchCoupons(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json());
-            cList.innerHTML = res.list.map(c=>`<div class="card"><b>${c.name}</b><br><small>${c.desc}</small><br><small style="color:var(--accent)">效期: ${c.exp}</small></div>`).join('');
+            cList.innerHTML = res.list.map(c=>`<div class="card"><b style="font-size:20px;">${c.name}</b><br>${c.desc}<br><small style="color:var(--accent)">有效期: ${c.exp}</small></div>`).join('');
         }
 
         async function updateUser(){
@@ -159,7 +166,11 @@
             alert(res.message); toggleMask('half', false);
         }
 
-        function toggleDetail(id){ document.getElementById(id).classList.toggle('show'); }
+        function toggleDetail(id){ 
+            document.getElementById(id).classList.toggle('show'); 
+            const arr = document.getElementById('arr-'+id);
+            if(arr) arr.classList.toggle('rotated');
+        }
         function toggleMask(t,s){ document.getElementById(t+'Mask').style.display=s?'flex':'none'; }
         function updateUI(){ uName.innerText=user.name; uBal.innerText=user.balance; }
     </script>
