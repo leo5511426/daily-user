@@ -2,102 +2,129 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>POS 管理系統</title>
+    <title>小佑系統 - POS 管理後台</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --bg: #f4f7f6; --accent: #FF8FA3; --green: #2ecc71; --red: #ff5252; --blue: #3498db; }
+        :root { --bg: #f4f7f6; --accent: #FF8FA3; --blue: #3b82f6; --green: #2ecc71; --red: #ff5252; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; font-weight: 900; }
-        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .header { background: #1a1a1a; color: white; padding: 25px; text-align: center; }
-        .container { padding: 30px; max-width: 600px; margin: auto; }
-        .card { background: white; padding: 35px; border-radius: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 30px; }
-        .btn { padding: 22px; border-radius: 18px; border: none; font-size: 22px; font-weight: 900; cursor: pointer; width: 100%; margin: 12px 0; transition: 0.2s; }
-        .btn-add { background: var(--green); color: white; }
-        .btn-sub { background: var(--red); color: white; }
+        .header { background: #1a1a1a; color: white; padding: 20px; text-align: center; }
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .btn { padding: 18px; border-radius: 12px; border: none; font-size: 18px; font-weight: 900; cursor: pointer; width: 100%; margin: 8px 0; transition: 0.2s; }
+        .btn-green { background: var(--green); color: white; }
         .btn-blue { background: var(--blue); color: white; }
-        #reader { width: 100%; border-radius: 20px; overflow: hidden; display: none; border: 5px solid var(--accent); margin-bottom: 20px; }
-        .hint { background: #fff3cd; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 18px; color: #856404; text-align: center; }
-        .u-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+        .btn-red { background: var(--red); color: white; }
+        
+        input { width: 100%; padding: 15px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; display: none; margin-bottom: 20px; border: 4px solid var(--accent); }
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
-    <div id="loader"><p style="font-size:24px;">系統連線處理中...</p></div>
-    <div class="header"><h1>POS 運營管理後台</h1></div>
+    <div id="loader">處理中...</div>
+    <div class="header"><h1>系統管理端 v6.0</h1></div>
     
     <div class="container">
-        <div id="menu">
-            <div class="hint">第一步：請點選要執行的操作類型</div>
-            <button class="btn btn-add" onclick="startScan('add')">🟢 會員加值服務</button>
-            <button class="btn btn-sub" onclick="startScan('sub')">🔴 現場交易扣款</button>
-            <button class="btn btn-blue" onclick="startScan('refund')">🔵 異常交易退款</button>
-            
-            <div class="card" style="margin-top:40px;">
-                <h3>優惠券批次發放</h3>
-                <input type="text" id="cn" style="width:100%; padding:15px; margin:5px 0;" placeholder="名稱">
-                <input type="number" id="cv" style="width:100%; padding:15px; margin:5px 0;" placeholder="面額">
-                <input type="number" id="cm" style="width:100%; padding:15px; margin:5px 0;" placeholder="門檻">
-                <button class="btn btn-add" style="font-size:18px;" onclick="sendBatch()">點選發放給全體會員</button>
+        <div id="mainMenu">
+            <div class="card">
+                <h3>💰 餘額帳務操作</h3>
+                <button class="btn btn-green" onclick="startScan('add')">會員儲值 (加款)</button>
+                <button class="btn btn-red" onclick="startScan('sub')">消費扣款 (減款)</button>
+            </div>
+
+            <div class="card">
+                <h3>⚖️ 借款核撥管理 (上限$500)</h3>
+                <input type="text" id="lUid" placeholder="會員 ID (可手打或掃描)">
+                <input type="text" id="lItem" placeholder="借款項目內容">
+                <input type="number" id="lAmt" placeholder="核撥金額 (1~500)">
+                <button class="btn btn-blue" onclick="createLoan()">確認核撥借款</button>
+            </div>
+
+            <div class="card">
+                <h3>🎟️ 批次推廣</h3>
+                <button class="btn" style="background:#888; color:#fff;" onclick="sendCoupon()">發放全體全站優惠券</button>
             </div>
         </div>
 
-        <div id="scanPart" style="display:none;">
-            <div class="hint">第二步：請對準顧客條碼進行掃描</div>
+        <div id="scanArea" style="display:none;">
             <div id="reader"></div>
-            <button class="btn" style="background:#888; color:#fff;" onclick="location.reload()">放棄並返回首頁</button>
+            <button class="btn" style="background:#333; color:#fff;" onclick="location.reload()">取消掃描</button>
         </div>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyO0O8m1YuIr0wZ7roEY6Gz-5y4K2HRrfRUdGuRr5uqjGx0X51gnLa7MewC0NPRUaA/exec";
+        const GAS = "你的_GAS_網址"; // 務必替換
         const scanner = new Html5Qrcode("reader");
-        let currentMode = "";
 
-        function startScan(m){
-            currentMode = m;
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('scanPart').style.display = 'block';
+        // 1. 處理餘額加減款掃描
+        function startScan(mode) {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('scanArea').style.display = 'block';
             document.getElementById('reader').style.display = 'block';
-            scanner.start({ facingMode: "environment" }, { fps: 12, qrbox: 280 }, (txt) => {
+
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
                 scanner.stop();
-                handleProcess(txt);
+                let uid = txt, amt = 0;
+                
+                // 支援快速儲值格式 TOPUP|ID|AMT
+                if(txt.includes('|')){
+                    const parts = txt.split('|');
+                    uid = parts[1];
+                    amt = parts[2];
+                } else {
+                    amt = prompt(`對象 ID: ${uid}\n請輸入${mode === 'add' ? '加值' : '扣款'}金額:`);
+                }
+
+                if(amt && !isNaN(amt)) executeAction(uid, mode === 'add' ? amt : -amt, mode);
             });
         }
 
-        async function handleProcess(val){
-            let uid = val, amt = 0;
-            // 判斷是否為快速儲值條碼
-            if(val.includes('|')){ 
-                const p = val.split('|'); uid = p[1]; amt = p[2]; 
-            } else { 
-                amt = prompt(`請輸入要${currentMode==='add'?'加值':(currentMode==='sub'?'扣款':'退款')}的金額：`); 
-            }
-
-            if(!amt || isNaN(amt)) return location.reload();
-
-            if(confirm(`【最終確認】\n對象：${uid}\n金額：$${amt}\n\n確定執行？`)){
-                document.getElementById('loader').style.display='flex';
-                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
-                    action:'adminAction', uid:uid, 
-                    amount: currentMode==='sub' ? -amt : amt, 
-                    desc: '櫃員手動操作', adminName:'POS櫃員', type: currentMode
-                })}).then(r=>r.json());
-                
-                alert(res.success ? "✅ 執行成功！" : "❌ 失敗：" + res.message);
-                location.reload();
-            }
+        // 2. 執行後台動作
+        async function executeAction(uid, amt, type) {
+            showL(true);
+            const res = await fetch(GAS, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'adminAction',
+                    uid: uid,
+                    amount: amt,
+                    desc: type === 'add' ? '櫃員儲值' : '櫃員扣款',
+                    adminName: '管理員',
+                    type: type
+                })
+            }).then(r => r.json());
+            
+            alert(res.success ? "✅ 操作成功！" : "❌ 失敗：" + res.message);
+            location.reload();
         }
 
-        async function sendBatch(){
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users'})}).then(r=>r.json());
-            const ids = res.list.map(u => u.id);
-            document.getElementById('loader').style.display='flex';
-            await fetch(GAS,{method:'POST',body:JSON.stringify({
-                action:'addCoupons',
-                cData: { name: document.getElementById('cn').value, val: document.getElementById('cv').value, min: document.getElementById('cm').value, desc: '全體發放' },
-                targetUids: ids
-            })});
-            alert("發送成功"); location.reload();
+        // 3. 執行借款核撥
+        async function createLoan() {
+            const uid = document.getElementById('lUid').value;
+            const item = document.getElementById('lItem').value;
+            const amt = document.getElementById('lAmt').value;
+
+            if(!uid || !item || !amt) return alert("請填寫完整借款資訊");
+            if(amt > 500) return alert("單次借款不得超過 $500 額度");
+
+            showL(true);
+            const res = await fetch(GAS, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'adminAction',
+                    type: 'create_loan',
+                    uid: uid,
+                    amount: amt,
+                    loanItem: item,
+                    adminName: '核貸員'
+                })
+            }).then(r => r.json());
+
+            alert(res.message);
+            location.reload();
         }
+
+        function showL(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
     </script>
 </body>
 </html>
