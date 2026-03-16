@@ -9,6 +9,7 @@
         .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #ccc; }
         select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #fff; }
+        
         .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.6); z-index:9998; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
@@ -20,20 +21,20 @@
     <div id="mHalf" class="mask-half"><div class="spinner"></div><p>系統資料同步處理中，請稍後...</p></div>
 
     <div class="card">
-        <h3>📷 掃描器</h3>
+        <h3>📷 萬用掃描器</h3>
         <div id="qrDiv" style="width:100%; display:none; margin-bottom:10px;"></div>
-        <button class="btn" style="background:#444;" onclick="startScan()">啟動掃描</button>
+        <button class="btn" style="background:#444;" onclick="startScan()">啟動相機掃描</button>
     </div>
 
-    <div class="card" style="border-top-color:#3b82f6;">
-        <h3>💳 帳戶作業</h3>
+    <div class="card" style="border-top-color: #3b82f6;">
+        <h3>💳 錢包作業</h3>
         <select id="tUser"><option value="">-- 選擇會員 --</option></select>
         <select id="tType"><option value="add">加值</option><option value="sub">扣款</option><option value="ref">退款</option></select>
-        <input type="number" id="tAmt" placeholder="金額"><input type="text" id="tNote" placeholder="備註">
-        <button class="btn" style="background:#3b82f6;" onclick="doWallet()">執行</button>
+        <input type="number" id="tAmt" placeholder="金額"><input type="text" id="tNote" placeholder="備註原因">
+        <button class="btn" style="background:#3b82f6;" onclick="doWallet()">確認執行</button>
     </div>
 
-    <div class="card" style="border-top-color:#10b981;">
+    <div class="card" style="border-top-color: #10b981;">
         <h3>💰 借還款管理</h3>
         <select id="lUser"><option value="">-- 選擇會員 --</option></select>
         <input type="text" id="lItem" placeholder="項目"><input type="number" id="lAmt" placeholder="本金"><input type="date" id="lDeadline">
@@ -42,19 +43,19 @@
         <select id="pLoan" onchange="autoFill()"><option value="">-- 選擇待還借單 --</option></select>
         <input type="number" id="pCash" placeholder="實收現金" oninput="recalc()">
         <input type="number" id="pBal" readonly style="background:#eee;" placeholder="餘額抵扣">
-        <button class="btn" style="background:#059669;" onclick="doPay()">還款</button>
+        <button class="btn" style="background:#059669;" onclick="doPay()">完成還款</button>
     </div>
 
-    <div class="card" style="border-top-color:#f59e0b;">
-        <h3>🎟️ 優惠券</h3>
+    <div class="card" style="border-top-color: #f59e0b;">
+        <h3>🎟️ 優惠券系統</h3>
         <select id="cUser"><option value="">-- 選擇收券人 --</option></select>
         <label><input type="checkbox" id="cAll"> 全體發送</label>
         <input type="text" id="cName" placeholder="券名"><input type="text" id="cDesc" placeholder="描述"><input type="text" id="cExp" placeholder="期限">
-        <button class="btn" style="background:#f59e0b;" onclick="doCoupon()">送出</button>
+        <button class="btn" style="background:#f59e0b;" onclick="doCoupon()">送出優惠券</button>
     </div>
 
     <script>
-        const GAS = "你的_GAS_網址";
+        const GAS = "https://script.google.com/macros/s/AKfycbx9HE9nv-ug9r1XfxhHRYt-idayMtN_TFCx6At9xK7OT48iy2e7ulrpJyRYz8NZ9UpW/exec";
         const scanner = new Html5Qrcode("qrDiv");
         const mFull = document.getElementById('mFull'), mHalf = document.getElementById('mHalf');
 
@@ -79,6 +80,7 @@
         function recalc() { const opt = pLoan.selectedOptions[0]; if(!opt.dataset.rem) return; const total = parseFloat(opt.dataset.rem), cash = parseFloat(pCash.value) || 0; document.getElementById('pBal').value = (cash < total) ? (total - cash).toFixed(0) : 0; }
         function doPay() { const opt = pLoan.selectedOptions[0]; api({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value }); }
         function doCoupon() { api({ action:'adminAction', type:'send_coupon', all:cAll.checked, uid:cUser.value, cpName:cName.value, cpDesc:cDesc.value, cpExp:cExp.value }); }
+
         function startScan() {
             document.getElementById('qrDiv').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
