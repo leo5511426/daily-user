@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>會員錢包 v12.6</title>
+    <title>我的電子錢包 v12.7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -26,32 +26,32 @@
     </style>
 </head>
 <body>
-    <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統處理中，請稍後...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>系統資料同步處理中，請稍後...</p></div>
+    <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統連線中...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>載入資訊中...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
         <h1 style="color:var(--pink); font-size:40px;">WALLET</h1>
         <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px;" placeholder="帳號">
         <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px;" placeholder="密碼">
-        <button class="btn" onclick="login()">登入</button>
+        <button class="btn" onclick="login()">進入錢包</button>
     </div>
 
     <div id="appView" style="display:none;">
         <div id="p0" class="page" style="display:block;">
             <h2>你好，<span id="uName">...</span></h2>
             <div class="card" style="text-align:center;"><div style="font-size:55px; color:var(--pink);">$ <span id="uBal">0</span></div></div>
-            <button class="btn" onclick="showQR('USER', user.id)">📘 個人識別碼</button>
+            <button class="btn" onclick="showQR('USER', user.id)">📘 我的識別碼</button>
         </div>
-        <div id="p1" class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
-        <div id="p4" class="page"><h2>借款帳務</h2><div id="loanList"></div></div>
-        <div id="p2" class="page"><h2>優惠券</h2><div id="cList"></div></div>
-        <div id="p3" class="page"><h2>設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">登出系統</button></div>
+        <div id="p1" class="page"><h2>最近交易紀錄</h2><div id="tList"></div></div>
+        <div id="p4" class="page"><h2>借還款資訊</h2><div id="loanList"></div></div>
+        <div id="p2" class="page"><h2>可用優惠券</h2><div id="cList"></div></div>
+        <div id="p3" class="page"><h2>帳戶設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">安全登出</button></div>
 
         <div class="nav-bar">
             <div class="nav-item active" onclick="go(0)">首頁</div>
-            <div class="nav-item" onclick="go(1)">紀錄</div>
+            <div class="nav-item" onclick="go(1)">明細</div>
             <div class="nav-item" onclick="go(4)">借款</div>
-            <div class="nav-item" onclick="go(2)">優惠</div>
+            <div class="nav-item" onclick="go(2)">票券</div>
             <div class="nav-item" onclick="go(3)">設定</div>
         </div>
     </div>
@@ -59,7 +59,7 @@
     <div id="qrModal"><div style="background:#fff; padding:30px; border-radius:25px; text-align:center;"><p id="qrTitle" style="color:#000; font-weight:bold;"></p><div id="qrcode"></div><button class="btn" style="background:var(--red); margin-top:20px;" onclick="qrModal.style.display='none'">關閉</button></div></div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbxEOgfTcyB0nwWxZKklAhJAVIE_xk5NyTg90OfmdNeu7TReTQcKnZvTStscbbH8G-vf/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbyIT0ka4Vdp71XPV2H9T5FOPKxWAXmiHeUQbCL-_stSm6q7QtGvLRFY_PoO5O1zAkLk/exec";
         let user = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
         const mFull = document.getElementById('mFull'), mHalf = document.getElementById('mHalf');
@@ -73,7 +73,7 @@
 
         function showQR(type, val){
             qrc.clear(); const qrVal = (type === 'USER') ? val : "CP|" + val;
-            document.getElementById('qrTitle').innerText = (type === 'USER') ? "會員識別碼" : "優惠券核銷條碼";
+            document.getElementById('qrTitle').innerText = (type === 'USER') ? "會員核銷碼" : "優惠券核銷碼";
             qrc.makeCode(qrVal); qrModal.style.display='flex';
         }
 
@@ -90,8 +90,8 @@
                 <div class="card">
                     <div style="display:flex; justify-content:space-between;"><b>${r.desc}</b> <b style="color:${r.amount>0?'var(--green)':'var(--red)'}">${r.amount>0?'+':''}${r.amount}</b></div>
                     <small style="color:#666;">${r.date}</small><br>
-                    <button class="btn-small" onclick="document.getElementById('td${i}').classList.toggle('show')">查看詳細交易資訊</button>
-                    <div id="td${i}" class="detail">異動後餘額：$${r.balance}<br>經辦人員：${r.admin}<br>備註：${r.note||'無'}</div>
+                    <button class="btn-small" onclick="document.getElementById('td${i}').classList.toggle('show')">查看詳細資訊</button>
+                    <div id="td${i}" class="detail">餘額變動：$${r.balance}<br>經手人：${r.admin}<br>說明：${r.note||'無'}</div>
                 </div>`).join('');
         }
 
@@ -99,22 +99,22 @@
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
             loanList.innerHTML = res.list.map((l,i)=>`
                 <div class="card">
-                    <b>${l.item}</b> <span style="float:right; color:var(--pink); font-size:20px;">尚欠 $${l.remain}</span><br>
-                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">查看借款還款細節</button>
+                    <b>${l.item}</b> <span style="float:right; color:var(--pink); font-size:20px;">欠 $${l.remain}</span><br>
+                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">查看還款紀錄</button>
                     <div id="ld${i}" class="detail">
-                        原始借款：$${l.principal}<br>
-                        已還金額：$${l.paid}<br>
-                        過期罰金：$${l.interest}<br>
+                        原始金額：$${l.principal}<br>
+                        累計已還：$${l.paid}<br>
+                        逾期罰金：$${l.interest}<br>
                         <hr style="border:0; border-top:1px dashed #444;">
-                        最終期限：${l.deadline}<br>
-                        目前狀態：${l.status}
+                        到期日：${l.deadline}<br>
+                        狀態：${l.status}
                     </div>
                 </div>`).join('');
         }
 
         async function fetchCoupons(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'coupons',uid:user.id})}).then(r=>r.json());
-            cList.innerHTML = res.list.filter(c=>c.status==='未使用').map(c=>`<div class="card"><b style="color:var(--pink);">${c.name}</b><p style="font-size:14px;">${c.desc}</p><small>期限: ${c.exp}</small><button class="btn" style="background:var(--green); font-size:14px; padding:10px;" onclick="showQR('CP', '${c.id}')">出示券碼</button></div>`).join('');
+            cList.innerHTML = res.list.filter(c=>c.status==='未使用').map(c=>`<div class="card"><b style="color:var(--pink);">${c.name}</b><p style="font-size:14px;">${c.desc}</p><small>期限: ${c.exp}</small><button class="btn" style="background:var(--green); font-size:14px; padding:10px;" onclick="showQR('CP', '${c.id}')">使用此券</button></div>`).join('');
         }
     </script>
 </body>
