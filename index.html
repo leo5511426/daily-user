@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>會員端 v12.9</title>
+    <title>小佑的日常生活行動會員－顧客端</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -30,7 +30,7 @@
     <div id="mHalf" class="mask-half"><div class="spinner"></div><p>系統資料同步處理中，請稍後...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
-        <h1 style="color:var(--pink); font-size:40px;">WALLET</h1>
+        <h1 style="color:var(--pink); font-size:40px;">小佑的日常生活行動會員</h1>
         <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px;" placeholder="帳號">
         <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px;" placeholder="密碼">
         <button class="btn" onclick="login()">登入系統</button>
@@ -124,7 +124,7 @@
             loanList.innerHTML = res.list.map((l,i)=>`
                 <div class="card">
                     <b>${l.item}</b> <span style="float:right; color:var(--pink); font-size:24px;">$${l.remain}</span><br>
-                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">查看帳務分細</button>
+                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">查看此筆借款詳細資訊</button>
                     <div id="ld${i}" class="detail">
                         原始本金: $${l.principal}<br>
                         累計已還: $${l.paid}<br>
