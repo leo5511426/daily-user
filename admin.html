@@ -2,12 +2,12 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>後台管理 v12.9 (修正版)</title>
+    <title>後台管理 v12.9.1</title>
     <style>
         body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; }
         .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #ccc; }
         select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #fff; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #fff; background:#059669; }
         .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -16,40 +16,25 @@
 <body>
     <div id="loading" class="mask"><div class="spinner"></div><p>處理中...</p></div>
 
-    <div class="card" style="border-top-color: #3b82f6;">
-        <h3>💳 錢包作業</h3>
-        <select id="tUser"><option value="">-- 選擇會員 --</option></select>
-        <select id="tType"><option value="add">加值</option><option value="sub">扣款</option></select>
-        <input type="number" id="tAmt" placeholder="金額">
-        <button class="btn" style="background:#3b82f6;" onclick="doWallet()">確認執行</button>
-    </div>
-
     <div class="card" style="border-top-color: #10b981;">
-        <h3>💰 借還款與部分還款</h3>
-        <select id="pLoan" onchange="autoFill()"><option value="">-- 選擇待還借單 --</option></select>
-        <input type="number" id="pCash" placeholder="本次實際收現金額">
-        <input type="number" id="pBal" placeholder="需由餘額抵扣金額" value="0">
-        <button class="btn" style="background:#059669;" onclick="doPay()">提交還款作業</button>
+        <h3>💰 借還款作業 (支持部分還款)</h3>
+        <select id="pLoan" onchange="autoFill()"><option value="">-- 載入中... --</option></select>
+        <input type="number" id="pCash" placeholder="本次收現金額">
+        <input type="number" id="pBal" placeholder="抵扣餘額" value="0">
+        <button class="btn" onclick="doPay()">提交還款作業</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbysX2JMxr9ej0CU16yCz2PoaCo-b2wEyW1WdzpCvFQhqvVEB0btV9EN0uRpaVbel8le/exec";
-        let userBals = {};
+        const GAS = "https://script.google.com/macros/s/AKfycbxhCaD2tuva3gwpQ46_9oCJewuH2uEVcn6eoY3f391uAijUUxv-bnrbcB38leVGziP5/exec";
 
         async function init() {
             document.getElementById('loading').style.display='flex';
-            try {
-                const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-                u.list.forEach(i => { 
-                    userBals[i.id] = i.bal;
-                    document.getElementById('tUser').innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`; 
-                });
-                
-                const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-                l.list.forEach(i => {
-                    document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (尚欠$${i.remain})</option>`;
-                });
-            } catch (e) { alert("初始化失敗：" + e); }
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
+            const sel = document.getElementById('pLoan');
+            sel.innerHTML = '<option value="">-- 選擇借單 --</option>';
+            res.list.forEach(i => {
+                sel.innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (剩$${i.remain})</option>`;
+            });
             document.getElementById('loading').style.display='none';
         }
 
@@ -60,41 +45,19 @@
 
         async function doPay() {
             const opt = document.getElementById('pLoan').selectedOptions[0];
-            if (!opt.value) return alert("請選擇借單");
-            
-            const cash = parseFloat(document.getElementById('pCash').value) || 0;
-            const bal = parseFloat(document.getElementById('pBal').value) || 0;
-            const uid = opt.dataset.uid;
-
-            if (bal > userBals[uid]) return alert("錯誤：該會員餘額僅剩 $" + userBals[uid] + "，不足以支付抵扣。");
+            if(!opt.value) return alert("請選擇借單");
             
             document.getElementById('loading').style.display='flex';
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
                 action:'adminAction',
                 type:'pay_loan',
-                loanId: opt.value, // 這裡傳遞的是 A 欄的時間戳記字串
-                uid: uid,
-                cashPart: cash,
-                balPart: bal
+                loanId: opt.value, 
+                uid: opt.dataset.uid,
+                cashPart: document.getElementById('pCash').value,
+                balPart: document.getElementById('pBal').value
             })}).then(r=>r.json());
             
-            alert(res.message); 
-            location.reload();
-        }
-
-        async function doWallet() {
-            const uid = document.getElementById('tUser').value;
-            const amt = document.getElementById('tAmt').value;
-            if(!uid || !amt) return alert("請填寫完整資訊");
-            
-            document.getElementById('loading').style.display='flex';
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
-                action:'adminAction',
-                type:document.getElementById('tType').value,
-                uid: uid,
-                amount: amt
-            })}).then(r=>r.json());
-            alert(res.message); 
+            alert(res.message);
             location.reload();
         }
 
