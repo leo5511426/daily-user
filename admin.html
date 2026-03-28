@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理後台 v12.6</title>
+    <title>管理後台 v12.7</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; }
@@ -16,13 +16,13 @@
     </style>
 </head>
 <body>
-    <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統處理中，請稍後...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>系統資料同步處理中，請稍後...</p></div>
+    <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統處理中...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>同步資料中...</p></div>
 
     <div class="card">
         <h3>📷 萬用掃描器</h3>
         <div id="qrDiv" style="width:100%; display:none; margin-bottom:10px;"></div>
-        <button class="btn" style="background:#444;" onclick="startScan()">啟動相機掃描</button>
+        <button class="btn" style="background:#444;" onclick="startScan()">啟動相機</button>
     </div>
 
     <div class="card" style="border-top-color: #3b82f6;">
@@ -41,8 +41,8 @@
         <hr>
         <select id="pLoan" onchange="autoFill()"><option value="">-- 選擇待還借單 --</option></select>
         <input type="number" id="pCash" placeholder="實收現金" oninput="recalc()">
-        <input type="number" id="pBal" readonly style="background:#eee;" placeholder="餘額抵扣">
-        <button class="btn" style="background:#059669;" onclick="doPay()">完成還款</button>
+        <input type="number" id="pBal" readonly style="background:#eee;" placeholder="剩餘需由餘額抵扣">
+        <button class="btn" style="background:#059669;" onclick="doPay()">完成還款作業</button>
     </div>
 
     <div class="card" style="border-top-color: #f59e0b;">
@@ -50,21 +50,47 @@
         <select id="cUser"><option value="">-- 選擇收券人 --</option></select>
         <label><input type="checkbox" id="cAll"> 全體發送</label>
         <input type="text" id="cName" placeholder="券名"><input type="text" id="cDesc" placeholder="描述"><input type="text" id="cExp" placeholder="期限">
-        <button class="btn" style="background:#f59e0b;" onclick="doCoupon()">送出優惠券</button>
+        <button class="btn" style="background:#f59e0b;" onclick="doCoupon()">送出</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbxEOgfTcyB0nwWxZKklAhJAVIE_xk5NyTg90OfmdNeu7TReTQcKnZvTStscbbH8G-vf/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbyIT0ka4Vdp71XPV2H9T5FOPKxWAXmiHeUQbCL-_stSm6q7QtGvLRFY_PoO5O1zAkLk/exec";
         const scanner = new Html5Qrcode("qrDiv");
         const mFull = document.getElementById('mFull'), mHalf = document.getElementById('mHalf');
+        let userBals = {}; // 紀錄各會員目前餘額
 
         async function init() {
             mHalf.style.display='flex';
             const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            u.list.forEach(i => { document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.innerHTML += `<option value="${i.id}">${i.name}</option>`); });
+            u.list.forEach(i => { 
+                userBals[i.id] = i.bal;
+                document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`); 
+            });
             const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item}</option>`);
+            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (剩$${i.remain})</option>`);
             mHalf.style.display='none';
+        }
+
+        function recalc() {
+            const opt = document.getElementById('pLoan').selectedOptions[0];
+            if(!opt.dataset.rem) return;
+            const total = parseFloat(opt.dataset.rem);
+            const cash = parseFloat(document.getElementById('pCash').value) || 0;
+            const diff = (total - cash > 0) ? (total - cash) : 0;
+            document.getElementById('pBal').value = diff.toFixed(0);
+        }
+
+        function doPay() {
+            const opt = document.getElementById('pLoan').selectedOptions[0];
+            const uid = opt.dataset.uid;
+            const cash = parseFloat(document.getElementById('pCash').value) || 0;
+            const bal = parseFloat(document.getElementById('pBal').value) || 0;
+
+            if (bal > userBals[uid]) {
+                alert(`⚠️ 無法抵扣！\n該會員餘額僅剩 $${userBals[uid]}，不足以支付抵扣額 $${bal}。\n請增加現金收費或先為會員加值。`);
+                return;
+            }
+            api({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:uid, cashPart:cash, balPart:bal });
         }
 
         async function api(body) {
@@ -73,17 +99,16 @@
             alert(res.message); location.reload();
         }
 
-        function doWallet() { api({ action:'adminAction', type:tType.value, uid:tUser.value, amount:tAmt.value, note:tNote.value }); }
-        function doLoan() { api({ action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value }); }
-        function autoFill() { const opt = pLoan.selectedOptions[0]; if(opt.dataset.rem) { pCash.value = opt.dataset.rem; recalc(); } }
-        function recalc() { const opt = pLoan.selectedOptions[0]; if(!opt.dataset.rem) return; const total = parseFloat(opt.dataset.rem), cash = parseFloat(pCash.value) || 0; document.getElementById('pBal').value = (cash < total) ? (total - cash).toFixed(0) : 0; }
-        function doPay() { const opt = pLoan.selectedOptions[0]; api({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value }); }
-        function doCoupon() { api({ action:'adminAction', type:'send_coupon', all:cAll.checked, uid:cUser.value, cpName:cName.value, cpDesc:cDesc.value, cpExp:cExp.value }); }
+        function doWallet() { api({ action:'adminAction', type:document.getElementById('tType').value, uid:document.getElementById('tUser').value, amount:document.getElementById('tAmt').value, note:document.getElementById('tNote').value }); }
+        function doLoan() { api({ action:'adminAction', type:'create_loan', uid:document.getElementById('lUser').value, loanItem:document.getElementById('lItem').value, amount:document.getElementById('lAmt').value, deadline:document.getElementById('lDeadline').value }); }
+        function autoFill() { const opt = document.getElementById('pLoan').selectedOptions[0]; if(opt.dataset.rem) { document.getElementById('pCash').value = opt.dataset.rem; recalc(); } }
+        function doCoupon() { api({ action:'adminAction', type:'send_coupon', all:document.getElementById('cAll').checked, uid:document.getElementById('cUser').value, cpName:document.getElementById('cName').value, cpDesc:document.getElementById('cDesc').value, cpExp:document.getElementById('cExp').value }); }
+        
         function startScan() {
             document.getElementById('qrDiv').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
                 if(txt.startsWith("CP|")) { api({ action:'adminAction', type:'use_coupon', cpId: txt.split('|')[1] }); }
-                else { document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.value = txt); alert("會員識別: " + txt); }
+                else { document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.value = txt); alert("識別會員成功！"); }
                 scanner.stop(); document.getElementById('qrDiv').style.display='none';
             });
         }
