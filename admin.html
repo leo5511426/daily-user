@@ -2,8 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>後台管理 v12.9</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>後台管理 v12.9 (修正版)</title>
     <style>
         body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; }
         .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #ccc; }
@@ -22,61 +21,81 @@
         <select id="tUser"><option value="">-- 選擇會員 --</option></select>
         <select id="tType"><option value="add">加值</option><option value="sub">扣款</option></select>
         <input type="number" id="tAmt" placeholder="金額">
-        <button class="btn" style="background:#3b82f6;" onclick="doWallet()">確認</button>
+        <button class="btn" style="background:#3b82f6;" onclick="doWallet()">確認執行</button>
     </div>
 
     <div class="card" style="border-top-color: #10b981;">
         <h3>💰 借還款與部分還款</h3>
         <select id="pLoan" onchange="autoFill()"><option value="">-- 選擇待還借單 --</option></select>
-        <p style="font-size:12px; color:#666;">* 輸入本次實際收到的金額，若不夠還清，罰金將繼續計算。</p>
-        <input type="number" id="pCash" placeholder="本次收現金額">
-        <input type="number" id="pBal" placeholder="需由餘額抵扣金額 (選填)" value="0">
-        <button class="btn" style="background:#059669;" onclick="doPay()">提交還款</button>
-    </div>
-
-    <div class="card" style="border-top-color: #f59e0b;">
-        <h3>🎟️ 優惠券發送</h3>
-        <select id="cUser"><option value="">-- 選擇會員 --</option></select>
-        <input type="text" id="cName" placeholder="券名">
-        <button class="btn" style="background:#f59e0b;" onclick="doCoupon()">發送</button>
+        <input type="number" id="pCash" placeholder="本次實際收現金額">
+        <input type="number" id="pBal" placeholder="需由餘額抵扣金額" value="0">
+        <button class="btn" style="background:#059669;" onclick="doPay()">提交還款作業</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyomoOmzCXe9Q_gMrlMN3pvVaL41G143g6ujxfVSrbubyvg9fAgX3xHq1akjrDcDiZ5/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbysX2JMxr9ej0CU16yCz2PoaCo-b2wEyW1WdzpCvFQhqvVEB0btV9EN0uRpaVbel8le/exec";
         let userBals = {};
 
         async function init() {
             document.getElementById('loading').style.display='flex';
-            const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            u.list.forEach(i => { 
-                userBals[i.id] = i.bal;
-                document.querySelectorAll('#tUser, #cUser').forEach(s => s.innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`); 
-            });
-            const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (尚欠$${i.remain})</option>`);
+            try {
+                const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
+                u.list.forEach(i => { 
+                    userBals[i.id] = i.bal;
+                    document.getElementById('tUser').innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`; 
+                });
+                
+                const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
+                l.list.forEach(i => {
+                    document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (尚欠$${i.remain})</option>`;
+                });
+            } catch (e) { alert("初始化失敗：" + e); }
             document.getElementById('loading').style.display='none';
         }
 
         function autoFill() {
             const opt = document.getElementById('pLoan').selectedOptions[0];
-            if(opt.dataset.rem) document.getElementById('pCash').value = opt.dataset.rem;
+            if(opt && opt.dataset.rem) document.getElementById('pCash').value = opt.dataset.rem;
         }
 
         async function doPay() {
             const opt = document.getElementById('pLoan').selectedOptions[0];
+            if (!opt.value) return alert("請選擇借單");
+            
             const cash = parseFloat(document.getElementById('pCash').value) || 0;
             const bal = parseFloat(document.getElementById('pBal').value) || 0;
-            if (bal > userBals[opt.dataset.uid]) return alert("會員餘額不足抵扣！");
+            const uid = opt.dataset.uid;
+
+            if (bal > userBals[uid]) return alert("錯誤：該會員餘額僅剩 $" + userBals[uid] + "，不足以支付抵扣。");
             
             document.getElementById('loading').style.display='flex';
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'adminAction',type:'pay_loan',loanId:opt.value,uid:opt.dataset.uid,cashPart:cash,balPart:bal})}).then(r=>r.json());
-            alert(res.message); location.reload();
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
+                action:'adminAction',
+                type:'pay_loan',
+                loanId: opt.value, // 這裡傳遞的是 A 欄的時間戳記字串
+                uid: uid,
+                cashPart: cash,
+                balPart: bal
+            })}).then(r=>r.json());
+            
+            alert(res.message); 
+            location.reload();
         }
 
         async function doWallet() {
+            const uid = document.getElementById('tUser').value;
+            const amt = document.getElementById('tAmt').value;
+            if(!uid || !amt) return alert("請填寫完整資訊");
+            
             document.getElementById('loading').style.display='flex';
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'adminAction',type:document.getElementById('tType').value,uid:document.getElementById('tUser').value,amount:document.getElementById('tAmt').value})}).then(r=>r.json());
-            alert(res.message); location.reload();
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({
+                action:'adminAction',
+                type:document.getElementById('tType').value,
+                uid: uid,
+                amount: amt
+            })}).then(r=>r.json());
+            alert(res.message); 
+            location.reload();
         }
 
         init();
