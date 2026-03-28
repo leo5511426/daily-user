@@ -2,116 +2,83 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>管理後台 v12.7</title>
+    <title>後台管理 v12.9</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; }
         .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #ccc; }
         select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #fff; }
-        .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.6); z-index:9998; flex-direction:column; justify-content:center; align-items:center; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統處理中...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>同步資料中...</p></div>
-
-    <div class="card">
-        <h3>📷 萬用掃描器</h3>
-        <div id="qrDiv" style="width:100%; display:none; margin-bottom:10px;"></div>
-        <button class="btn" style="background:#444;" onclick="startScan()">啟動相機</button>
-    </div>
+    <div id="loading" class="mask"><div class="spinner"></div><p>處理中...</p></div>
 
     <div class="card" style="border-top-color: #3b82f6;">
         <h3>💳 錢包作業</h3>
         <select id="tUser"><option value="">-- 選擇會員 --</option></select>
-        <select id="tType"><option value="add">加值</option><option value="sub">扣款</option><option value="ref">退款</option></select>
-        <input type="number" id="tAmt" placeholder="金額"><input type="text" id="tNote" placeholder="備註原因">
-        <button class="btn" style="background:#3b82f6;" onclick="doWallet()">確認執行</button>
+        <select id="tType"><option value="add">加值</option><option value="sub">扣款</option></select>
+        <input type="number" id="tAmt" placeholder="金額">
+        <button class="btn" style="background:#3b82f6;" onclick="doWallet()">確認</button>
     </div>
 
     <div class="card" style="border-top-color: #10b981;">
-        <h3>💰 借還款管理</h3>
-        <select id="lUser"><option value="">-- 選擇會員 --</option></select>
-        <input type="text" id="lItem" placeholder="項目"><input type="number" id="lAmt" placeholder="本金"><input type="date" id="lDeadline">
-        <button class="btn" style="background:#10b981;" onclick="doLoan()">撥款</button>
-        <hr>
+        <h3>💰 借還款與部分還款</h3>
         <select id="pLoan" onchange="autoFill()"><option value="">-- 選擇待還借單 --</option></select>
-        <input type="number" id="pCash" placeholder="實收現金" oninput="recalc()">
-        <input type="number" id="pBal" readonly style="background:#eee;" placeholder="剩餘需由餘額抵扣">
-        <button class="btn" style="background:#059669;" onclick="doPay()">完成還款作業</button>
+        <p style="font-size:12px; color:#666;">* 輸入本次實際收到的金額，若不夠還清，罰金將繼續計算。</p>
+        <input type="number" id="pCash" placeholder="本次收現金額">
+        <input type="number" id="pBal" placeholder="需由餘額抵扣金額 (選填)" value="0">
+        <button class="btn" style="background:#059669;" onclick="doPay()">提交還款</button>
     </div>
 
     <div class="card" style="border-top-color: #f59e0b;">
-        <h3>🎟️ 優惠券系統</h3>
-        <select id="cUser"><option value="">-- 選擇收券人 --</option></select>
-        <label><input type="checkbox" id="cAll"> 全體發送</label>
-        <input type="text" id="cName" placeholder="券名"><input type="text" id="cDesc" placeholder="描述"><input type="text" id="cExp" placeholder="期限">
-        <button class="btn" style="background:#f59e0b;" onclick="doCoupon()">送出</button>
+        <h3>🎟️ 優惠券發送</h3>
+        <select id="cUser"><option value="">-- 選擇會員 --</option></select>
+        <input type="text" id="cName" placeholder="券名">
+        <button class="btn" style="background:#f59e0b;" onclick="doCoupon()">發送</button>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyIT0ka4Vdp71XPV2H9T5FOPKxWAXmiHeUQbCL-_stSm6q7QtGvLRFY_PoO5O1zAkLk/exec";
-        const scanner = new Html5Qrcode("qrDiv");
-        const mFull = document.getElementById('mFull'), mHalf = document.getElementById('mHalf');
-        let userBals = {}; // 紀錄各會員目前餘額
+        const GAS = "https://script.google.com/macros/s/AKfycbyomoOmzCXe9Q_gMrlMN3pvVaL41G143g6ujxfVSrbubyvg9fAgX3xHq1akjrDcDiZ5/exec";
+        let userBals = {};
 
         async function init() {
-            mHalf.style.display='flex';
+            document.getElementById('loading').style.display='flex';
             const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
             u.list.forEach(i => { 
                 userBals[i.id] = i.bal;
-                document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`); 
+                document.querySelectorAll('#tUser, #cUser').forEach(s => s.innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`); 
             });
             const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (剩$${i.remain})</option>`);
-            mHalf.style.display='none';
+            l.list.forEach(i => document.getElementById('pLoan').innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (尚欠$${i.remain})</option>`);
+            document.getElementById('loading').style.display='none';
         }
 
-        function recalc() {
+        function autoFill() {
             const opt = document.getElementById('pLoan').selectedOptions[0];
-            if(!opt.dataset.rem) return;
-            const total = parseFloat(opt.dataset.rem);
-            const cash = parseFloat(document.getElementById('pCash').value) || 0;
-            const diff = (total - cash > 0) ? (total - cash) : 0;
-            document.getElementById('pBal').value = diff.toFixed(0);
+            if(opt.dataset.rem) document.getElementById('pCash').value = opt.dataset.rem;
         }
 
-        function doPay() {
+        async function doPay() {
             const opt = document.getElementById('pLoan').selectedOptions[0];
-            const uid = opt.dataset.uid;
             const cash = parseFloat(document.getElementById('pCash').value) || 0;
             const bal = parseFloat(document.getElementById('pBal').value) || 0;
-
-            if (bal > userBals[uid]) {
-                alert(`⚠️ 無法抵扣！\n該會員餘額僅剩 $${userBals[uid]}，不足以支付抵扣額 $${bal}。\n請增加現金收費或先為會員加值。`);
-                return;
-            }
-            api({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:uid, cashPart:cash, balPart:bal });
-        }
-
-        async function api(body) {
-            mFull.style.display='flex';
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
+            if (bal > userBals[opt.dataset.uid]) return alert("會員餘額不足抵扣！");
+            
+            document.getElementById('loading').style.display='flex';
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'adminAction',type:'pay_loan',loanId:opt.value,uid:opt.dataset.uid,cashPart:cash,balPart:bal})}).then(r=>r.json());
             alert(res.message); location.reload();
         }
 
-        function doWallet() { api({ action:'adminAction', type:document.getElementById('tType').value, uid:document.getElementById('tUser').value, amount:document.getElementById('tAmt').value, note:document.getElementById('tNote').value }); }
-        function doLoan() { api({ action:'adminAction', type:'create_loan', uid:document.getElementById('lUser').value, loanItem:document.getElementById('lItem').value, amount:document.getElementById('lAmt').value, deadline:document.getElementById('lDeadline').value }); }
-        function autoFill() { const opt = document.getElementById('pLoan').selectedOptions[0]; if(opt.dataset.rem) { document.getElementById('pCash').value = opt.dataset.rem; recalc(); } }
-        function doCoupon() { api({ action:'adminAction', type:'send_coupon', all:document.getElementById('cAll').checked, uid:document.getElementById('cUser').value, cpName:document.getElementById('cName').value, cpDesc:document.getElementById('cDesc').value, cpExp:document.getElementById('cExp').value }); }
-        
-        function startScan() {
-            document.getElementById('qrDiv').style.display='block';
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                if(txt.startsWith("CP|")) { api({ action:'adminAction', type:'use_coupon', cpId: txt.split('|')[1] }); }
-                else { document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.value = txt); alert("識別會員成功！"); }
-                scanner.stop(); document.getElementById('qrDiv').style.display='none';
-            });
+        async function doWallet() {
+            document.getElementById('loading').style.display='flex';
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'adminAction',type:document.getElementById('tType').value,uid:document.getElementById('tUser').value,amount:document.getElementById('tAmt').value})}).then(r=>r.json());
+            alert(res.message); location.reload();
         }
+
         init();
     </script>
 </body>
