@@ -3,89 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑管理後台 v18.8</title>
+    <title>小佑管理台 v19.5</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --orange: #f59e0b; --red: #ef4444; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; font-weight: bold; }
-        .dashboard { background: var(--dark); color: white; padding: 25px 20px; border-radius: 0 0 25px 25px; text-align: center; }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
-        .menu-btn { background: white; padding: 18px 10px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #eee; font-size: 14px; }
-        .full-btn { grid-column: span 2; background: var(--primary); color: white; border: none; font-size: 1.1rem; }
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:5000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; width: 92%; max-width: 400px; border-radius: 30px; padding: 25px; box-sizing: border-box; text-align: center; }
-        .wiz-input { width: 100%; padding: 16px; font-size: 1.1rem; border-radius: 14px; border: 2px solid #e2e8f0; margin-bottom: 15px; box-sizing: border-box; }
-        .mask { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align: center; padding: 20px; }
-        .btn-main { width: 100%; padding: 16px; border-radius: 14px; background: var(--primary); color: white; border: none; font-weight: bold; margin-top: 10px; }
+        :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f1f5f9; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; font-weight: bold; -webkit-tap-highlight-color: transparent; }
+        .dashboard { background: var(--dark); color: white; padding: 30px 20px; border-radius: 0 0 30px 30px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 25px; }
+        .menu-btn { background: white; padding: 20px 10px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; font-size: 15px; transition: 0.2s; }
+        .menu-btn:active { transform: scale(0.95); background: #f8fafc; }
+        .full-btn { grid-column: span 2; background: var(--primary); color: white; border: none; font-size: 1.1rem; font-weight: 900; }
+        
+        /* 彈窗樣式 */
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:5000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 30px; padding: 25px; box-sizing: border-box; text-align: center; }
+        .wiz-input { width: 100%; padding: 18px; font-size: 1.2rem; border-radius: 15px; border: 2px solid #e2e8f0; margin-bottom: 20px; box-sizing: border-box; outline: none; text-align: center; }
+        
+        /* 相機專用容器 */
+        #qr-reader { width: 100%; min-height: 250px; background: #000; border-radius: 20px; overflow: hidden; margin-bottom: 15px; border: 3px solid #4f46e5; }
+        .mask { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
 
-    <div id="syncMask" class="mask">
-        <div id="loaderText"><b>📡 正在連接雲端資料庫...</b></div>
-    </div>
+    <div id="syncMask" class="mask"><b>📡 雲端資料同步中...</b></div>
 
     <div class="dashboard">
         <h2 style="margin:0;">小佑管理工作台</h2>
-        <p style="margin:5px 0 0; opacity:0.8; font-size:12px;">v18.8 數值導正版</p>
+        <p style="margin:5px 0 0; opacity:0.7; font-size:12px;">v19.5 數值安全穩定版</p>
     </div>
 
     <div class="menu-grid">
-        <button class="menu-btn full-btn" onclick="startScan()">📷 掃描會員 QR</button>
+        <button class="menu-btn full-btn" onclick="startScan()">📷 啟動相機掃描</button>
         <div class="menu-btn" onclick="openWizard('add')">💰 點數加值</div>
         <div class="menu-btn" onclick="openWizard('sub')">🛒 點數扣款</div>
-        <div class="menu-btn" onclick="openWizard('loan')">🏦 借款撥款</div>
-        <div class="menu-btn" onclick="openWizard('pay')">🤝 還款作業</div>
+        <div class="menu-btn" style="grid-column: span 2; background:#64748b; color:white;" onclick="location.reload()">🔄 重新整理資料</div>
     </div>
 
     <div id="wizModal" class="modal">
         <div class="modal-content">
             <div id="wizBody"></div>
-            <button class="btn-main" id="wizNextBtn" onclick="wizNext()">下一步</button>
-            <button onclick="closeModal('wizModal')" style="background:none; border:none; color:#666; margin-top:15px;">取消</button>
+            <button class="menu-btn full-btn" onclick="wizNext()">下一步</button>
+            <p onclick="closeModal('wizModal')" style="color:#94a3b8; margin-top:20px; cursor:pointer;">取消並返回</p>
+        </div>
+    </div>
+
+    <div id="qrModal" class="modal">
+        <div class="modal-content" style="padding:15px;">
+            <h3 style="margin:10px 0;">請對準會員 QR Code</h3>
+            <div id="qr-reader"></div>
+            <button class="menu-btn full-btn" style="background:#ef4444;" onclick="closeQr()">關閉相機</button>
         </div>
     </div>
 
     <script>
-        // 1. 請填入正確網址
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby00qBjsRM-vwKZzrPTvhlr2e4MkyIVc_tFUhxLtwI4fz65ew9PR1IN4h_YnUB0h6Fv/exec"; 
-        let U_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
+        // 請確保此處為你的部署網址
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw6i4wAWBUYPjF20AKNydbRRKJxLj9G7upMB6PKiyerIc7-aK1579WDpARhbGxJ2POr/exec"; 
+        let U_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {}, html5QrCode = null;
 
         window.onload = refreshData;
 
-        // 2. 強化版同步函式
         async function refreshData() {
-            const mask = document.getElementById('syncMask');
-            const text = document.getElementById('loaderText');
             try {
-                const response = await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'fetchData', type: 'users', uid: 'ADMIN' })
-                });
-
-                if (!response.ok) throw new Error(`連線失敗 (HTTP ${response.status})`);
-                
-                const r = await response.json();
-                if (!r.success) throw new Error(r.message);
-
+                const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify({action:'fetchData', type:'users', uid:'ADMIN'})}).then(r=>r.json());
                 U_DB = r.list;
-                mask.style.display = 'none'; // 成功則隱藏遮罩
-            } catch (e) {
-                text.innerHTML = `<b style="color:red;">❌ 同步失敗</b><br><small>${e.message}</small><br>
-                                 <p style="font-size:12px; color:#666;">請確認 GAS 權限已設為「所有人」</p>
-                                 <button class="btn-main" onclick="location.reload()">重新嘗試</button>`;
+                document.getElementById('syncMask').style.display = 'none';
+            } catch(e) { 
+                document.getElementById('syncMask').innerHTML = "<b>連線失敗，請檢查網路或 GAS 權限</b>";
+            }
+        }
+
+        // [相機修復邏輯]
+        function startScan() {
+            document.getElementById('qrModal').style.display = 'flex';
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+            
+            const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+            
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                (txt) => { // 掃描成功
+                    const u = U_DB.find(i => String(i.id).trim() === String(txt).trim());
+                    if(u) {
+                        html5QrCode.stop().then(() => {
+                            document.getElementById('qrModal').style.display = 'none';
+                            alert("已辨識用戶: " + u.name);
+                            openWizard('add', u.id); // 掃完預設進入加值
+                        });
+                    }
+                }
+            ).catch(err => {
+                alert("相機啟動失敗：請確保為 HTTPS 環境並允許權限");
+                closeQr();
+            });
+        }
+
+        function closeQr() {
+            if(html5QrCode) {
+                html5QrCode.stop().finally(() => {
+                    document.getElementById('qrModal').style.display = 'none';
+                });
+            } else {
+                document.getElementById('qrModal').style.display = 'none';
             }
         }
 
         const FLOWS = {
-            add: [{t:"選擇客戶",f:"uid",type:"user"},{t:"加值金額",f:"amt",type:"number"},{t:"備註",f:"note",type:"text"}],
-            sub: [{t:"選擇客戶",f:"uid",type:"user"},{t:"扣款金額",f:"amt",type:"number"},{t:"備註",f:"note",type:"text"}],
-            pay: [{t:"選擇客戶",f:"uid",type:"user"},{t:"收現金額",f:"cash",type:"number"},{t:"扣點金額",f:"bal",type:"number"}]
+            add: [{t:"選擇客戶",f:"uid",type:"user"}, {t:"加值金額",f:"amt",type:"number"}, {t:"備註",f:"note",type:"text"}],
+            sub: [{t:"選擇客戶",f:"uid",type:"user"}, {t:"扣款金額",f:"amt",type:"number"}, {t:"備註",f:"note",type:"text"}]
         };
 
         function openWizard(mode, uid) {
-            CUR_MODE = mode; CUR_STEP = 0; FORM = uid ? { uid: uid } : {};
-            if(uid && FLOWS[mode][0].f === "uid") CUR_STEP = 1;
+            CUR_MODE = mode; CUR_STEP = 0; 
+            FORM = uid ? { uid: uid } : {};
+            if(uid) CUR_STEP = 1; // 如果已經有 UID (掃描來的)，直接跳到金額
             document.getElementById('wizModal').style.display = 'flex';
             renderWiz();
         }
@@ -96,43 +130,45 @@
             if(s.type === 'user') {
                 html += `<select id="win" class="wiz-input">${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
             } else {
-                html += `<input type="${s.type}" id="win" class="wiz-input" autofocus>`;
+                html += `<input type="${s.type}" id="win" class="wiz-input" autofocus placeholder="請輸入...">`;
             }
             document.getElementById('wizBody').innerHTML = html;
-            document.getElementById('wizNextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length-1) ? "確認提交" : "下一步";
         }
 
         function wizNext() {
             const input = document.getElementById('win');
             let val = input.value;
             
-            // 核心修正：如果是數字欄位，強制轉為 Number
+            // 強制數值轉換
             if (FLOWS[CUR_MODE][CUR_STEP].type === "number") {
                 val = Number(val) || 0;
             }
 
             FORM[FLOWS[CUR_MODE][CUR_STEP].f] = val;
             
-            if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { 
+            if(CUR_STEP < FLOWS[CUR_MODE].length - 1) {
                 CUR_STEP++; 
-                renderWiz(); 
-            } else { 
-                submitFinal(); 
+                renderWiz();
+            } else {
+                submitFinal();
             }
         }
 
         async function submitFinal() {
+            if(!confirm("確定要提交這筆交易嗎？")) return;
+            
             document.getElementById('wizModal').style.display = 'none';
             document.getElementById('syncMask').style.display = 'flex';
-            document.getElementById('loaderText').innerText = "正在儲存交易...";
+            
+            // 如果是扣款，後端邏輯會處理，但前端先轉負數更直觀
+            if(CUR_MODE === 'sub') FORM.amt = -Math.abs(FORM.amt);
 
             try {
-                const b = { action: 'adminAction', type: CUR_MODE, ...FORM };
-                const r = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(b) }).then(r => r.json());
+                const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify({action:'adminAction', ...FORM})}).then(r=>r.json());
                 alert(r.message);
                 location.reload();
-            } catch (e) {
-                alert("提交失敗：" + e.message);
+            } catch(e) {
+                alert("提交失敗");
                 document.getElementById('syncMask').style.display = 'none';
             }
         }
