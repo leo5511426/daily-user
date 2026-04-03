@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑會員系統 - 顧客端</title>
+    <title>小佑行動會員 - 顧客端 v16.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -13,10 +13,10 @@
         .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; margin-top: 10px; }
         .btn-small { width: auto; padding: 8px 15px; font-size: 12px; border-radius: 8px; background: #333; color: #aaa; border: none; margin-top: 10px; cursor: pointer; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 13px; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 13px; cursor: pointer; }
         .nav-item.active { color: var(--pink); }
         .detail { max-height: 0; overflow: hidden; transition: 0.3s; font-size: 14px; color: #888; }
-        .detail.show { max-height: 400px; padding-top: 15px; border-top: 1px solid #222; margin-top: 10px; }
+        .detail.show { max-height: 400px; padding-top: 15px; border-top: 1px solid #222; margin-top: 10px; line-height: 1.6; }
         .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9998; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { border: 4px solid #333; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
@@ -44,7 +44,7 @@
         <div id="p1" class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
         <div id="p4" class="page"><h2>借款帳務</h2><div id="loanList"></div></div>
         <div id="p2" class="page"><h2>優惠券</h2><div id="cList"></div></div>
-        <div id="p3" class="page"><h2>設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">登出</button></div>
+        <div id="p3" class="page"><h2>設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">安全登出</button></div>
 
         <div class="nav-bar">
             <div class="nav-item active" onclick="go(0)">首頁</div>
@@ -56,16 +56,15 @@
     </div>
 
     <div id="qrModal">
-        <div style="background:#fff; padding:30px; border-radius:25px; text-align:center;">
-            <p id="qrTitle" style="color:#000; font-weight:bold;"></p>
-            <div id="qrcode"></div>
+        <div style="background:#fff; padding:30px; border-radius:25px; text-align:center; width:280px;">
+            <p id="qrTitle" style="color:#000; font-weight:bold; margin-top:0;"></p>
+            <div id="qrcode" style="display:flex; justify-content:center;"></div>
             <button class="btn" style="background:var(--red); margin-top:20px;" onclick="document.getElementById('qrModal').style.display='none'">關閉</button>
         </div>
     </div>
 
     <script>
-        // 請更換為你的最新部署網址
-        const GAS = "https://script.google.com/macros/s/AKfycbytYWc2EbvrW2Cy2pWw3tN6VQsXOND3fPMJGMMQ9XtxwI8NL4EBeM85DZBv6niJCTZ9/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbwAiY1fgIh13Zy0BLGlqylBfvdni_sZVCZMjGVTD5mmP1MKhrAaA-xgXclRUo1Jj5Jr/exec";
         let user = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
@@ -79,14 +78,16 @@
 
         async function login(){
             document.getElementById('mFull').style.display='flex';
-            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc:acc.value,pw:pw.value})}).then(r=>r.json());
-            if(res.success){ 
-                user = res; 
-                document.getElementById('uName').innerText = user.name; 
-                document.getElementById('uBal').innerText = fmt(user.balance); 
-                document.getElementById('loginView').style.display='none'; 
-                document.getElementById('appView').style.display='block'; 
-            } else alert(res.message);
+            try {
+                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc:acc.value,pw:pw.value})}).then(r=>r.json());
+                if(res.success){ 
+                    user = res; 
+                    document.getElementById('uName').innerText = user.name; 
+                    document.getElementById('uBal').innerText = fmt(user.balance); 
+                    document.getElementById('loginView').style.display='none'; 
+                    document.getElementById('appView').style.display='block'; 
+                } else alert(res.message);
+            } catch(e) { alert("連線失敗"); }
             document.getElementById('mFull').style.display='none';
         }
 
@@ -128,9 +129,17 @@
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
             document.getElementById('loanList').innerHTML = res.list.map((l,i)=>`
                 <div class="card">
-                    <b>${l.item}</b> <span style="float:right; color:var(--pink); font-size:24px;">$${fmt(l.remain)}</span><br>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b>${l.item}</b> 
+                        <span style="color:var(--pink); font-size:24px;">$${fmt(l.remain)}</span>
+                    </div>
                     <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">詳細進度</button>
-                    <div id="ld${i}" class="detail">原始本金: $${fmt(l.principal)}<br>累計已還: $${fmt(l.paid)}<br>還款期限: ${l.deadline}</div>
+                    <div id="ld${i}" class="detail">
+                        原始本金: $${fmt(l.principal)}<br>
+                        累計已還: $${fmt(l.paid)}<br>
+                        <hr style="border:0; border-top:1px dashed #444; margin:10px 0;">
+                        <b>還款期限: ${l.deadline}</b>
+                    </div>
                 </div>`).join('');
         }
 
