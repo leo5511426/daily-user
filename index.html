@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑行動會員 - 顧客端 v16.9</title>
+    <title>小佑行動會員 - 顧客端</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; }
         .page { width: 100vw; min-height: 100vh; padding: 100px 20px 130px; box-sizing: border-box; display: none; }
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #282828; }
-        .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; margin-top: 10px; }
+        .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; margin-top: 10px; cursor: pointer; }
         .btn-small { width: auto; padding: 8px 15px; font-size: 12px; border-radius: 8px; background: #333; color: #aaa; border: none; margin-top: 10px; cursor: pointer; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: #0a0a0a; display: flex; border-top: 1px solid #222; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 13px; cursor: pointer; }
         .nav-item.active { color: var(--pink); }
         .detail { max-height: 0; overflow: hidden; transition: 0.3s; font-size: 14px; color: #888; }
-        .detail.show { max-height: 400px; padding-top: 15px; border-top: 1px solid #222; margin-top: 10px; line-height: 1.6; }
+        .detail.show { max-height: 500px; padding-top: 15px; border-top: 1px solid #222; margin-top: 10px; line-height: 1.6; }
         .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9998; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { border: 4px solid #333; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
@@ -26,7 +26,7 @@
 </head>
 <body>
     <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統連線中...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>同步雲端資料...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>同步雲端帳務...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
         <h1 style="color:var(--pink); font-size:32px; text-align:center;">小佑行動會員</h1>
@@ -44,7 +44,7 @@
         <div id="p1" class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
         <div id="p4" class="page"><h2>借款帳務</h2><div id="loanList"></div></div>
         <div id="p2" class="page"><h2>優惠券</h2><div id="cList"></div></div>
-        <div id="p3" class="page"><h2>設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">安全登出</button></div>
+        <div id="p3" class="page"><h2>設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">登出系統</button></div>
 
         <div class="nav-bar">
             <div class="nav-item active" onclick="go(0)">首頁</div>
@@ -64,7 +64,7 @@
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbwAiY1fgIh13Zy0BLGlqylBfvdni_sZVCZMjGVTD5mmP1MKhrAaA-xgXclRUo1Jj5Jr/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbyz2HLeH7E5NKwaXJ7fqz1-cRZ3NkyXEopE0veANiH-cCP-HCjTfPfW1xxHRLnJus5z/exec";
         let user = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
@@ -76,18 +76,28 @@
 
         function fmt(n) { return safeNum(n).toLocaleString(); }
 
+        // 核心罰金計算引擎 (10元/天)
+        function getOverdue(deadlineStr) {
+            if (!deadlineStr || deadlineStr === "無期限" || deadlineStr === "未設定期限") return { fee: 0, days: 0 };
+            const today = new Date(); today.setHours(0,0,0,0);
+            const due = new Date(deadlineStr); due.setHours(0,0,0,0);
+            if (today > due) {
+                const days = Math.ceil((today - due) / (1000 * 60 * 60 * 24));
+                return { fee: days * 10, days: days };
+            }
+            return { fee: 0, days: 0 };
+        }
+
         async function login(){
             document.getElementById('mFull').style.display='flex';
-            try {
-                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc:acc.value,pw:pw.value})}).then(r=>r.json());
-                if(res.success){ 
-                    user = res; 
-                    document.getElementById('uName').innerText = user.name; 
-                    document.getElementById('uBal').innerText = fmt(user.balance); 
-                    document.getElementById('loginView').style.display='none'; 
-                    document.getElementById('appView').style.display='block'; 
-                } else alert(res.message);
-            } catch(e) { alert("連線失敗"); }
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'login',acc:acc.value,pw:pw.value})}).then(r=>r.json());
+            if(res.success){ 
+                user = res; 
+                document.getElementById('uName').innerText = user.name; 
+                document.getElementById('uBal').innerText = fmt(user.balance); 
+                document.getElementById('loginView').style.display='none'; 
+                document.getElementById('appView').style.display='block'; 
+            } else alert(res.message);
             document.getElementById('mFull').style.display='none';
         }
 
@@ -127,20 +137,29 @@
 
         async function fetchLoans(){
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
-            document.getElementById('loanList').innerHTML = res.list.map((l,i)=>`
+            document.getElementById('loanList').innerHTML = res.list.map((l,i)=>{
+                const ov = getOverdue(l.deadline);
+                const total = l.remain + ov.fee;
+                return `
                 <div class="card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <b>${l.item}</b> 
-                        <span style="color:var(--pink); font-size:24px;">$${fmt(l.remain)}</span>
+                        <span style="color:var(--pink); font-size:24px;">$${fmt(total)}</span>
                     </div>
-                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">詳細進度</button>
+                    <div style="font-size:12px; color:#888;">本金餘額 $${fmt(l.remain)} ${ov.fee > 0 ? '+ 罰金 $'+fmt(ov.fee) : ''}</div>
+                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">展開帳務明細</button>
                     <div id="ld${i}" class="detail">
                         原始本金: $${fmt(l.principal)}<br>
                         累計已還: $${fmt(l.paid)}<br>
                         <hr style="border:0; border-top:1px dashed #444; margin:10px 0;">
-                        <b>還款期限: ${l.deadline}</b>
+                        還款期限: ${l.deadline}<br>
+                        逾期狀態: <span style="color:${ov.days > 0 ? 'var(--red)' : 'var(--green)'}">
+                            ${ov.days > 0 ? '已逾期 ' + ov.days + ' 天' : '正常 (未逾期)'}
+                        </span><br>
+                        <b style="color:var(--red);">逾期罰金合計: $${fmt(ov.fee)} (10元/天)</b>
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
         }
 
         async function fetchCoupons(){
