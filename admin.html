@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑管理後台 v25.0</title>
+    <title>小佑管理後台 v26.5</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --pink: #db2777; --orange: #f59e0b; --green: #10b981; }
@@ -11,34 +11,29 @@
         .dashboard { background: var(--dark); color: white; padding: 25px 20px; border-radius: 0 0 25px 25px; text-align: center; }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
         .menu-btn { background: white; padding: 18px 10px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #eee; font-size: 14px; transition: 0.2s; }
-        .menu-btn:active { transform: scale(0.95); }
         .full-btn { grid-column: span 2; background: var(--primary); color: white; border: none; font-size: 1.1rem; }
-        .coupon-btn { background: var(--pink); color: white; border: none; }
-        .issue-btn { background: var(--orange); color: white; border: none; }
-        
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:5000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; width: 92%; max-width: 400px; border-radius: 30px; padding: 25px; box-sizing: border-box; text-align: center; }
-        .wiz-input { width: 100%; padding: 16px; font-size: 1.2rem; border-radius: 14px; border: 2px solid #e2e8f0; margin-bottom: 15px; box-sizing: border-box; text-align: center; }
-        #qr-reader { width: 100%; min-height: 250px; background: #000; border-radius: 20px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--primary); }
+        .wiz-input { width: 100%; padding: 16px; font-size: 1.2rem; border-radius: 14px; border: 2px solid #e2e8f0; margin-bottom: 15px; box-sizing: border-box; text-align: center; outline:none; }
+        .btn-main { width: 100%; padding: 16px; border-radius: 14px; background: var(--primary); color: white; border: none; font-weight: bold; font-size: 1rem; }
         .mask { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .btn-main { width: 100%; padding: 16px; border-radius: 14px; background: var(--primary); color: white; border: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="syncMask" class="mask"><div id="loaderText"><b>📡 正在同步雲端庫...</b></div></div>
+    <div id="syncMask" class="mask"><b>📡 數據同步中...</b></div>
 
     <div class="dashboard">
         <h2 style="margin:0;">小佑管理工作台</h2>
-        <p style="margin:5px 0 0; opacity:0.8; font-size:11px;">v25.0 欄位對齊整合版</p>
+        <p style="margin:5px 0 0; opacity:0.8; font-size:11px;">v26.5 智慧還款控制系統</p>
     </div>
 
     <div class="menu-grid">
-        <button class="menu-btn full-btn" onclick="startScan()">📷 啟動智能掃描 (會員/券)</button>
+        <button class="menu-btn full-btn" onclick="startScan()">📷 啟動智能掃描</button>
         <div class="menu-btn" onclick="openWizard('add')">💰 點數加值</div>
         <div class="menu-btn" onclick="openWizard('sub')">🛒 點數扣款</div>
-        <button class="menu-btn full-btn issue-btn" onclick="openWizard('issue')">🎁 發放新優惠券</button>
-        <button class="menu-btn full-btn coupon-btn" onclick="openWizard('coupon')">🎫 手動核銷優惠券</button>
+        <button class="menu-btn full-btn" style="background:var(--orange)" onclick="openWizard('issue')">🎁 發放優惠券</button>
+        <button class="menu-btn full-btn" style="background:var(--pink)" onclick="openWizard('coupon')">🎫 優惠券核銷</button>
         <div class="menu-btn" style="color:var(--orange)" onclick="openWizard('loan')">🏦 借款撥款</div>
         <div class="menu-btn" style="color:var(--green)" onclick="openWizard('pay')">🤝 還款作業</div>
     </div>
@@ -51,77 +46,37 @@
         </div>
     </div>
 
-    <div id="qrModal" class="modal">
-        <div class="modal-content" style="padding:15px;">
-            <h3 style="margin-top:0;">請對準 QR Code</h3>
-            <div id="qr-reader"></div>
-            <button class="btn-main" style="background:#666;" onclick="closeQr()">關閉</button>
-        </div>
-    </div>
-
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyTZEK6iqcDHjYBGVtCpUjrbUoG9inrWjJID-90f-RZBV4DIak44F94hjKwzAKnVesh/exec"; 
-        let U_DB = [], CP_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {}, html5QrCode = null;
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzm-1gfB2NX9Mbk4C7Q2afwsCDuC26r4H_mrjkiZ2Zwdf31KlGMv0ieEQjywIuBsjeW/exec"; 
+        let U_DB = [], CP_DB = [], L_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
 
         window.onload = refreshData;
 
         async function refreshData() {
             try {
                 const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify({action:'fetchData', type:'users', uid:'ADMIN'})}).then(r=>r.json());
-                U_DB = r.list; CP_DB = r.coupons || [];
+                U_DB = r.list; CP_DB = r.coupons || []; L_DB = r.loans || [];
                 document.getElementById('syncMask').style.display = 'none';
             } catch(e) { alert("同步失敗"); }
         }
 
-        function startScan() {
-            document.getElementById('qrModal').style.display = 'flex';
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
-                let scanned = String(txt).trim();
-                let cleanId = scanned.startsWith("CP|") ? scanned.split("|")[1] : scanned;
-
-                const cp = CP_DB.find(c => String(c.id) === cleanId);
-                if(cp) {
-                    html5QrCode.stop().then(() => {
-                        document.getElementById('qrModal').style.display = 'none';
-                        if(cp.status === "已核銷") return alert("❌ 此券已核銷！");
-                        if(confirm(`🎫 發現優惠券\nID: ${cp.id}\n是否核銷？`)) {
-                            FORM = { uid: cp.owner, note: cp.id }; CUR_MODE = 'coupon'; submitFinal();
-                        }
-                    });
-                    return;
-                }
-
-                const u = U_DB.find(i => String(i.id).trim() === cleanId || String(i.id).trim() === scanned);
-                if(u) {
-                    html5QrCode.stop().then(() => {
-                        document.getElementById('qrModal').style.display = 'none';
-                        alert("👤 辨識成功: " + u.name); openWizard('sub', u.id); 
-                    });
-                    return;
-                }
-                alert("無法辨識");
-            }).catch(e => { alert("相機啟動失敗"); closeQr(); });
-        }
-
-        function closeQr() {
-            if(html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => { document.getElementById('qrModal').style.display = 'none'; });
-            } else { document.getElementById('qrModal').style.display = 'none'; }
-        }
-
         const FLOWS = {
-            add: [{t:"選擇客戶",f:"uid",type:"user"},{t:"加值金額",f:"amt",type:"number"},{t:"備註",f:"note",type:"text"}],
-            sub: [{t:"選擇客戶",f:"uid",type:"user"},{t:"扣款金額",f:"amt",type:"number"},{t:"備註",f:"note",type:"text"}],
-            loan:[{t:"選擇客戶",f:"uid",type:"user"},{t:"本金金額",f:"amt",type:"number"},{t:"借款項目",f:"note",type:"text"},{t:"還款期限",f:"expiry",type:"text"}],
-            pay: [{t:"選擇客戶",f:"uid",type:"user"},{t:"收現(實收)",f:"cash",type:"number"},{t:"扣點(餘額)",f:"bal",type:"number"},{t:"備註",f:"note",type:"text"}],
-            coupon: [{t:"選擇持有人",f:"uid",type:"user"},{t:"輸入券 ID",f:"note",type:"text"}],
-            issue: [{t:"發放對象",f:"uid",type:"user"},{t:"券名稱",f:"title",type:"text"},{t:"券內容",f:"note",type:"text"},{t:"到期日",f:"expiry",type:"text"}]
+            add: [{t:"選擇客戶",f:"uid",type:"user"},{t:"加值點數",f:"amt",type:"number"},{t:"備註",f:"note",type:"text"}],
+            sub: [{t:"選擇客戶",f:"uid",type:"user"},{t:"扣款點數",f:"amt",type:"number"},{t:"備註",f:"note",type:"text"}],
+            loan:[{t:"選擇客戶",f:"uid",type:"user"},{t:"本金金額",f:"amt",type:"number"},{t:"借款項目",f:"note",type:"text"},{t:"期限",f:"expiry",type:"text"}],
+            pay: [
+                {t:"選擇還款人",f:"uid",type:"user"},
+                {t:"選擇對應借單",f:"loanRef",type:"loanSelect"},
+                {t:"實收現金",f:"cash",type:"number"},
+                {t:"扣除餘額(點數)",f:"bal",type:"number"},
+                {t:"備註",f:"note",type:"text"}
+            ],
+            coupon: [{t:"選擇持有人",f:"uid",type:"user"},{t:"券 ID",f:"note",type:"text"}],
+            issue: [{t:"發放對象",f:"uid",type:"user"},{t:"名稱",f:"title",type:"text"},{t:"內容",f:"note",type:"text"},{t:"到期日",f:"expiry",type:"text"}]
         };
 
         function openWizard(mode, uid) {
             CUR_MODE = mode; CUR_STEP = 0; FORM = uid ? { uid: uid } : {};
-            if(uid && FLOWS[mode][0].f === "uid") CUR_STEP = 1;
             document.getElementById('wizModal').style.display = 'flex';
             renderWiz();
         }
@@ -131,9 +86,17 @@
             let html = `<h3>${s.t}</h3>`;
             if(s.type === 'user') {
                 html += `<select id="win" class="wiz-input">${U_DB.map(u=>`<option value="${u.id}">${u.name} (餘:${u.bal})</option>`).join('')}</select>`;
-            } else {
-                let ph = (s.f === 'expiry') ? "2026/05/18" : "請輸入...";
-                html += `<input type="${s.type}" id="win" class="wiz-input" autofocus placeholder="${ph}">`;
+            } 
+            else if(s.type === 'loanSelect') {
+                const myLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid));
+                if(myLoans.length === 0) {
+                    html += `<p style="color:red">⚠️ 該用戶無「還款中」的借單</p><input type="hidden" id="win" value="0">`;
+                } else {
+                    html += `<select id="win" class="wiz-input">${myLoans.map(l=>`<option value="${l.row}">${l.item} (剩餘:${l.total - l.paid})</option>`).join('')}</select>`;
+                }
+            }
+            else {
+                html += `<input type="${s.type}" id="win" class="wiz-input" autofocus placeholder="請輸入...">`;
             }
             document.getElementById('wizBody').innerHTML = html;
             document.getElementById('wizNextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length-1) ? "確認提交" : "下一步";
@@ -152,7 +115,7 @@
                 const b = { action: 'adminAction', type: CUR_MODE, ...FORM };
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(b) }).then(r => r.json());
                 alert(res.message); location.reload();
-            } catch (e) { alert("傳輸失敗"); location.reload(); }
+            } catch (e) { alert("連線失敗"); location.reload(); }
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
