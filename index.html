@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑行動會員 - v28.5</title>
+    <title>小佑行動會員 - v29.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -26,25 +26,26 @@
 </head>
 <body>
     <div id="mFull" class="mask-full"><div class="spinner"></div><p>身分驗證中...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>更新雲端帳務...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>更新帳務資訊...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
         <h1 style="color:var(--pink); font-size:32px;">小佑行動會員</h1>
         <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="ID 或 帳號">
         <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="登入密碼">
-        <button class="btn" onclick="login()">登入系統</button>
+        <button class="btn" onclick="login()">進入系統</button>
     </div>
 
     <div id="appView" style="display:none;">
         <div id="p0" class="page" style="display:block;">
-            <h2>你好，<span id="uName">...</span></h2>
+            <h2 style="margin-bottom:5px;">你好，<span id="uName">...</span></h2>
+            <p style="color:#666; margin-top:0; font-size:14px;">歡迎回來小佑會員中心</p>
             <div class="card" style="text-align:center;"><div style="font-size:55px; color:var(--pink); font-weight:900;">$ <span id="uBal">0</span></div></div>
             <button class="btn" onclick="showQR('USER', user.id)">📘 個人識別碼</button>
         </div>
         <div id="p1" class="page"><h2>交易紀錄</h2><div id="tList"></div></div>
         <div id="p4" class="page"><h2>借款帳務</h2><div id="loanList"></div></div>
         <div id="p2" class="page"><h2>優惠券</h2><div id="cList"></div></div>
-        <div id="p3" class="page"><h2>設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">登出系統</button></div>
+        <div id="p3" class="page"><h2>設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">安全登出</button></div>
 
         <div class="nav-bar">
             <div class="nav-item active" onclick="go(0)">首頁</div>
@@ -64,13 +65,23 @@
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyamsclpB5nxl8LAZ66aHPZs8cpL3nolE6rRFJwXMSeZJ5Ny5tYy_2JF5my5QpnMx4M/exec"; 
+        const GAS = "https://script.google.com/macros/s/AKfycbysoyC2NQYKewWzWkMc4hb668oDli1GFQuKEHYYwh978bEbe1g02WtzoOOKQo3jxHoP/exec"; 
         let user = null;
         let ALL_DATA = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
         function safeNum(v) { return isNaN(parseFloat(v)) ? 0 : parseFloat(v); }
         function fmt(n) { return safeNum(n).toLocaleString(); }
+        
+        // 前端日期格式化保險：如果後端沒轉好，這裡強制切掉後面的時區資訊
+        function cleanDate(dStr) {
+            if (!dStr || dStr === "null") return "無";
+            if (dStr.includes("GMT")) {
+                const d = new Date(dStr);
+                return d.getFullYear() + "/" + (d.getMonth()+1).toString().padStart(2,'0') + "/" + d.getDate().toString().padStart(2,'0');
+            }
+            return dStr;
+        }
 
         async function login(){
             const inputAcc = document.getElementById('acc').value.trim();
@@ -91,7 +102,7 @@
                         document.getElementById('appView').style.display='block'; 
                     } else { alert("帳號或密碼錯誤"); }
                 }
-            } catch(e) { alert("連線失敗"); }
+            } catch(e) { alert("伺服器連線失敗"); }
             document.getElementById('mFull').style.display='none';
         }
 
@@ -123,10 +134,17 @@
                 const remain = l.total - l.paid;
                 return `
                 <div class="card">
-                    <div style="display:flex; justify-content:space-between;"><b>${l.item}</b> <b style="color:var(--pink); font-size:22px;">$${fmt(remain)}</b></div>
-                    <div style="font-size:12px; color:#888;">本金 $${fmt(l.total)} | 已還 $${fmt(l.paid)}</div>
-                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">詳細明細</button>
-                    <div id="ld${i}" class="detail">期限: ${l.expiry}<br>借款日: ${l.loanDate}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b>${l.item}</b> 
+                        <b style="color:var(--pink); font-size:24px;">$${fmt(remain)}</b>
+                    </div>
+                    <div style="font-size:12px; color:#888; margin-top:5px;">本金 $${fmt(l.total)} | 已還 $${fmt(l.paid)}</div>
+                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">展開帳務明細</button>
+                    <div id="ld${i}" class="detail">
+                        <span style="color:#bbb;">還款期限：</span>${cleanDate(l.expiry)}<br>
+                        <span style="color:#bbb;">借款日期：</span>${cleanDate(l.loanDate)}<br>
+                        <span style="color:#bbb;">當前狀態：</span><span style="color:var(--green)">${l.status}</span>
+                    </div>
                 </div>`;
             }).join('') || '<p style="text-align:center; opacity:0.5;">目前無借款紀錄</p>';
         }
@@ -136,15 +154,16 @@
             document.getElementById('cList').innerHTML = myCP.map(c => `
                 <div class="card">
                     <b style="color:var(--pink);">${c.name}</b>
-                    <p style="font-size:13px; opacity:0.7;">${c.desc}</p>
-                    <button class="btn" style="background:var(--green); font-size:14px;" onclick="showQR('CP', '${c.id}')">出示核銷碼</button>
-                </div>`).join('') || '<p style="text-align:center; opacity:0.5;">暫無優惠券</p>';
+                    <p style="font-size:13px; opacity:0.7; margin:5px 0;">${c.desc}</p>
+                    <small style="color:#666;">有效期限：${cleanDate(c.exp)}</small>
+                    <button class="btn" style="background:var(--green); font-size:14px; padding:12px;" onclick="showQR('CP', '${c.id}')">出示券條碼</button>
+                </div>`).join('') || '<p style="text-align:center; opacity:0.5;">暫無可用優惠券</p>';
         }
 
         function showQR(type, val){
             qrc.clear(); 
             qrc.makeCode(type === 'USER' ? val : "CP|" + val); 
-            document.getElementById('qrTitle').innerText = (type === 'USER') ? "會員識別碼" : "核銷條碼";
+            document.getElementById('qrTitle').innerText = (type === 'USER') ? "會員個人識別碼" : "優惠券核銷碼";
             document.getElementById('qrModal').style.display='flex';
         }
     </script>
