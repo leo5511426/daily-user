@@ -3,71 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑智慧管理後台 v41.0</title>
+    <title>小佑智慧管理後台 v44.0</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --accent: #db2777; --green: #10b981; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; font-weight: bold; }
-        
-        /* 遮罩樣式 */
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-weight: bold; }
         #globalMask { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .m-btn { background: white; padding: 18px; border-radius: 12px; text-align: center; border: 1px solid #ddd; cursor: pointer; font-size: 14px; }
-        .full-btn { grid-column: span 2; background: var(--dark); color: white; border: none; }
-        
-        input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-
-        /* 掃描器彈窗 */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .m-btn { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #ddd; cursor: pointer; font-size: 15px; }
+        .full-btn { grid-column: span 2; background: var(--dark); color: white; border: none; font-size: 18px; }
+        input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; font-weight: bold; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; }
         #reader-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:5000; flex-direction:column; }
         #reader { width: 100%; flex: 1; }
-        
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 20px; text-align: center; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; text-align: center; }
+        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .q-btn { padding: 15px; border-radius: 12px; border: none; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="globalMask"><div class="spinner"></div><b id="maskText">同步中...</b></div>
+<div id="globalMask"><div class="spinner"></div><b id="maskText">同步雲端資料...</b></div>
 
 <div id="reader-modal">
     <div id="reader"></div>
-    <button onclick="stopScan()" style="background:red; border-radius:0; margin:0; height:80px;">關閉掃描器</button>
+    <button onclick="stopScan()" style="background:#ff5252; border-radius:0; margin:0; height:80px; font-size:20px; color:white; border:none; width:100%;">關閉相機</button>
 </div>
 
-<h2 style="text-align:center;">小佑智慧後台</h2>
+<div id="quickActionModal" class="modal">
+    <div class="modal-content">
+        <h2 id="targetName" style="margin-top:0; color:var(--primary);"></h2>
+        <p id="targetDesc" style="white-space: pre-line; color:#666; line-height:1.6;"></p>
+        <div id="quickBtns" class="quick-grid">
+            <button class="q-btn" style="background:var(--primary)" onclick="quickGo('add')">💰 加值</button>
+            <button class="q-btn" style="background:var(--dark)" onclick="quickGo('sub')">🛒 扣款</button>
+            <button class="q-btn" style="background:var(--green)" onclick="quickGo('pay')">🤝 還款</button>
+            <button class="q-btn" style="background:var(--accent)" onclick="quickGo('redeem')">🎟️ 核銷</button>
+        </div>
+        <div id="couponRedeemBtn" style="display:none;">
+            <button onclick="submitRedeem()" style="background:var(--accent); font-size:18px; padding:20px;">立即核銷此券</button>
+        </div>
+        <button onclick="closeQuick()" style="background:none; color:#999; margin-top:15px; border:none; font-size:14px;">取消</button>
+    </div>
+</div>
+
+<h2 style="text-align:center; letter-spacing:1px;">小佑管理後台</h2>
 
 <div class="menu-grid">
-    <button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描器</button>
-    <div class="m-btn" onclick="openWiz('add')">💰 點數加值</div>
-    <div class="m-btn" onclick="openWiz('sub')">🛒 點數扣款</div>
-    <div class="m-btn" style="color:var(--green)" onclick="openWiz('pay')">🤝 還款處理</div>
-    <div class="m-btn" style="color:var(--accent)" onclick="openWiz('redeem')">🎟️ 核銷優惠券</div>
+    <button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (人/券自動識別)</button>
+    <div class="m-btn" onclick="openWiz('add')">💰 手動加值</div>
+    <div class="m-btn" onclick="openWiz('sub')">🛒 手動扣款</div>
+    <div class="m-btn" onclick="openWiz('pay')">🤝 還款入帳</div>
+    <div class="m-btn" onclick="openWiz('redeem')">🎟️ 優惠核銷</div>
 </div>
 
 <div class="card">
-    <h3 style="margin:0 0 10px;">🏦 快速撥款 (Loans)</h3>
+    <h3 style="margin:0 0 10px;">🏦 快速撥款</h3>
     <select id="l_uid"></select>
-    <input type="text" id="l_item" placeholder="項目內容">
+    <input type="text" id="l_item" placeholder="項目 (如: 午餐借支)">
     <input type="number" id="l_amt" placeholder="金額">
-    <input type="date" id="l_exp" placeholder="還款期限">
+    <input type="date" id="l_exp">
     <button onclick="addLoan()" style="background:var(--accent)">發放借款</button>
 </div>
 
 <div id="wizModal" class="modal">
-    <div class="modal-content">
-        <div id="wizBody"></div>
-        <button onclick="wizNext()" id="nextBtn">下一步</button>
-        <p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:10px;">取消</p>
-    </div>
+    <div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div>
 </div>
 
 <script>
-    const GAS = "https://script.google.com/macros/s/AKfycbxjyVKX83PQJMiFN9ERh7QxjVzjDXk6ecnWZHOqWsCMy-t94_QjeCZzPRPtWaGHt0m6/exec";
+    const GAS = "https://script.google.com/macros/s/AKfycbxE-fzq1nINRjAUIocdzeyIbRC3807JHxQqRiAg52AychNLIM0wxPHSEJfu1_TAFnJF/exec"; 
     let U_DB = [], L_DB = [], CP_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode;
 
@@ -77,90 +85,123 @@
     function hideMask() { document.getElementById('globalMask').style.display = 'none'; }
 
     async function refresh() {
-        showMask("載入資料...");
-        const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'fetchData', uid:'ADMIN'})}).then(r=>r.json());
-        U_DB = res.list; L_DB = res.loans; CP_DB = res.coupons;
-        document.getElementById('l_uid').innerHTML = U_DB.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-        hideMask();
+        showMask("讀取雲端資料...");
+        try {
+            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'fetchData', uid:'ADMIN'})}).then(r=>r.json());
+            U_DB = res.list; L_DB = res.loans; CP_DB = res.coupons;
+            document.getElementById('l_uid').innerHTML = U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('');
+            hideMask();
+        } catch(e) { alert("同步失敗"); hideMask(); }
     }
 
-    // --- 掃描功能 ---
+    // --- 智能過濾與掃描 ---
     function startScan() {
         document.getElementById('reader-modal').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+        html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, 
         (decodedText) => {
+            let code = decodedText.trim();
+            
+            // 【重要】過濾 "CP|" 前綴
+            if (code.includes("CP|")) {
+                code = code.split("CP|")[1]; 
+            }
+            
             stopScan();
-            // 掃描成功後的邏輯：嘗試匹配 UID
-            const found = U_DB.find(u => u.id === decodedText.trim());
-            if(found) {
-                const act = confirm(`掃描成功：${found.name}\n按「確定」進行扣款，按「取消」進行加值`);
-                openWiz(act ? 'sub' : 'add', found.id);
-            } else {
-                alert("無效的 QR Code: " + decodedText);
+            
+            // 判斷是券還是人
+            if (code.startsWith("CP")) {
+                const cp = CP_DB.find(c => String(c.id) === code);
+                if (cp) {
+                    if (cp.status !== "未使用") { alert("此券已核銷過！"); return; }
+                    FORM.cpId = code;
+                    const owner = U_DB.find(u => u.id === cp.uid);
+                    document.getElementById('targetName').innerText = "🎟️ 識別到優惠券";
+                    document.getElementById('targetDesc').innerText = `券名：${cp.title}\n持有人：${owner ? owner.name : '未知'}`;
+                    document.getElementById('quickBtns').style.display = 'none';
+                    document.getElementById('couponRedeemBtn').style.display = 'block';
+                    document.getElementById('quickActionModal').style.display = 'flex';
+                } else { alert("查無此券號：" + code); }
+            } 
+            else {
+                const user = U_DB.find(u => u.id === code);
+                if (user) {
+                    FORM.uid = code;
+                    document.getElementById('targetName').innerText = user.name;
+                    document.getElementById('targetDesc').innerText = `目前餘額：$${user.bal}\n請選擇操作項目`;
+                    document.getElementById('quickBtns').style.display = 'grid';
+                    document.getElementById('couponRedeemBtn').style.display = 'none';
+                    document.getElementById('quickActionModal').style.display = 'flex';
+                } else { alert("查無此使用者 UID：" + code); }
             }
         });
     }
 
-    function stopScan() {
-        if(html5QrCode) {
-            html5QrCode.stop().then(() => {
-                document.getElementById('reader-modal').style.display = 'none';
-            });
-        }
+    async function submitRedeem() {
+        closeQuick();
+        showMask("正在核銷...");
+        try {
+            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:'redeem', cpId: FORM.cpId})}).then(r=>r.json());
+            alert(res.message);
+            location.reload();
+        } catch(e) { alert("連線錯誤"); hideMask(); }
     }
+
+    function stopScan() { if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{document.getElementById('reader-modal').style.display = 'none';}); }
+    function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
+    function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
 
     // --- Wizard 邏輯 ---
     const FLOWS = {
-        add: [{t:"加值對象",f:"uid",type:"user"},{t:"加值金額",f:"amt",type:"number"}],
-        sub: [{t:"扣款對象",f:"uid",type:"user"},{t:"扣款金額",f:"amt",type:"number"}],
-        pay: [{t:"還款人",f:"uid",type:"user"},{t:"單號",f:"loanRef",type:"loan"},{t:"收現",f:"cash",type:"number"},{t:"扣點",f:"bal",type:"number"}],
-        issue: [{t:"發放對象",f:"uid",type:"user"},{t:"券名",f:"title",type:"text"},{t:"期限",f:"expiry",type:"date"}],
-        redeem: [{t:"持券人",f:"uid",type:"user"},{t:"選券",f:"cpId",type:"cpSelect"}]
+        add: [{t:"選擇對象",f:"uid",type:"user"},{t:"加值金額",f:"amt",type:"number"}],
+        sub: [{t:"選擇對象",f:"uid",type:"user"},{t:"扣款金額",f:"amt",type:"number"}],
+        pay: [{t:"還款人",f:"uid",type:"user"},{t:"選擇帳單",f:"loanRef",type:"loan"},{t:"收現金",f:"cash",type:"number"},{t:"扣點數",f:"bal",type:"number"}],
+        redeem: [{t:"持券人",f:"uid",type:"user"},{t:"選擇核銷券",f:"cpId",type:"cpSelect"}]
     };
 
     function openWiz(m, prefilledUid = null) {
-        CUR_MODE=m; CUR_STEP=0; FORM={};
-        if(prefilledUid) FORM.uid = prefilledUid; // 如果是掃描過來的，預填 UID
-        document.getElementById('wizModal').style.display='flex';
+        CUR_MODE = m; CUR_STEP = 0;
+        if(prefilledUid) { FORM.uid = prefilledUid; CUR_STEP = 1; } else { FORM = {}; }
+        document.getElementById('wizModal').style.display = 'flex';
         renderWiz();
     }
 
     function renderWiz() {
         const s = FLOWS[CUR_MODE][CUR_STEP];
-        // 如果已經預填了 UID 且目前步驟是選人，直接跳下一步
-        if(s.f === 'uid' && FORM.uid) { CUR_STEP++; renderWiz(); return; }
-
-        let h = `<h3>${s.t}</h3>`;
-        if(s.type==='user') h += `<select id="win">${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
-        else if(s.type==='loan') {
-            const myL = L_DB.filter(l=>l.uid===FORM.uid && l.status==='還款中');
-            h += myL.length ? `<select id="win">${myL.map(l=>`<option value="${l.row}">${l.item}($${l.total-l.paid})</option>`).join('')}</select>` : `<p>無欠款</p>`;
-        } else if(s.type==='cpSelect') {
-            const myCP = CP_DB.filter(c=>c.uid===FORM.uid && c.status==='未使用');
-            h += myCP.length ? `<select id="win">${myCP.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select>` : `<p>無可用券</p>`;
-        } else h += `<input id="win" type="${s.type}" autofocus>`;
-        
+        let h = `<h3 style="color:var(--primary)">${s.t}</h3>`;
+        if(s.type === 'user') h += `<select id="win">${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
+        else if(s.type === 'loan') {
+            const myL = L_DB.filter(l => l.uid === FORM.uid && l.status === '還款中');
+            h += myL.length ? `<select id="win">${myL.map(l=>`<option value="${l.row}">${l.item} ($${l.total-l.paid})</option>`).join('')}</select>` : `<p>目前無欠款紀錄</p>`;
+        } else if(s.type === 'cpSelect') {
+            const myCP = CP_DB.filter(c => c.uid === FORM.uid && c.status === '未使用');
+            h += myCP.length ? `<select id="win">${myCP.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select>` : `<p>無可用優惠券</p>`;
+        } else h += `<input id="win" type="${s.type}" autofocus placeholder="請輸入...">`;
         document.getElementById('wizBody').innerHTML = h;
-        document.getElementById('nextBtn').innerText = (CUR_STEP===FLOWS[CUR_MODE].length-1)?"確認提交":"下一步";
+        document.getElementById('nextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length - 1) ? "確認執行" : "下一步";
     }
 
     async function wizNext() {
-        if(document.getElementById('win')) FORM[FLOWS[CUR_MODE][CUR_STEP].f] = document.getElementById('win').value;
-        if(CUR_STEP < FLOWS[CUR_MODE].length-1) { CUR_STEP++; renderWiz(); }
-        else { 
+        const inputEl = document.getElementById('win');
+        if(inputEl) FORM[FLOWS[CUR_MODE][CUR_STEP].f] = inputEl.value;
+        if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { CUR_STEP++; renderWiz(); }
+        else {
             closeModal();
-            showMask("處理中...");
-            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:CUR_MODE, ...FORM})}).then(r=>r.json());
-            alert(res.message); location.reload();
+            showMask("執行中...");
+            try {
+                const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:CUR_MODE, ...FORM})}).then(r=>r.json());
+                alert(res.message); location.reload();
+            } catch(e) { alert("執行失敗"); hideMask(); }
         }
     }
 
     async function addLoan() {
         const data = { uid: document.getElementById('l_uid').value, item: document.getElementById('l_item').value, total: document.getElementById('l_amt').value, loanDate: new Date(), expiry: document.getElementById('l_exp').value };
         showMask("更新借帳中...");
-        await fetch(GAS, {method:'POST', body:JSON.stringify({action:'addLoan', data})});
-        alert("撥款完成"); location.reload();
+        try {
+            await fetch(GAS, {method:'POST', body:JSON.stringify({action:'addLoan', data})});
+            alert("撥款成功"); location.reload();
+        } catch(e) { alert("錯誤"); hideMask(); }
     }
     function closeModal() { document.getElementById('wizModal').style.display='none'; }
 </script>
