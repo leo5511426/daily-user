@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑行動會員 - 顧客端</title>
+    <title>小佑行動會員 - 帳務防護版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -26,7 +26,7 @@
 </head>
 <body>
     <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統連線中...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>同步雲端帳務...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>同步最新帳務...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
         <h1 style="color:var(--pink); font-size:32px; text-align:center;">小佑行動會員</h1>
@@ -64,11 +64,13 @@
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbyz2HLeH7E5NKwaXJ7fqz1-cRZ3NkyXEopE0veANiH-cCP-HCjTfPfW1xxHRLnJus5z/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbwz-DUvjV_SO-qxsFjMaP0u3t96KYGw-4h1Fu8ZeJBPHtnnEemmEQlyhbmiVR_UyR9B/exec";
         let user = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
+        // [核心修復] 前端二次防禦：攔截後端漏抓的錯誤字串
         function safeNum(v) {
+            if (v === null || v === undefined) return 0;
             if (typeof v === 'string' && v.includes('#')) return 0;
             const n = parseFloat(v);
             return isNaN(n) ? 0 : n;
@@ -76,11 +78,12 @@
 
         function fmt(n) { return safeNum(n).toLocaleString(); }
 
-        // 核心罰金計算引擎 (10元/天)
+        // 罰金計算引擎 (10元/天)
         function getOverdue(deadlineStr) {
             if (!deadlineStr || deadlineStr === "無期限" || deadlineStr === "未設定期限") return { fee: 0, days: 0 };
             const today = new Date(); today.setHours(0,0,0,0);
             const due = new Date(deadlineStr); due.setHours(0,0,0,0);
+            if (isNaN(due.getTime())) return { fee: 0, days: 0 };
             if (today > due) {
                 const days = Math.ceil((today - due) / (1000 * 60 * 60 * 24));
                 return { fee: days * 10, days: days };
@@ -139,14 +142,16 @@
             const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:user.id})}).then(r=>r.json());
             document.getElementById('loanList').innerHTML = res.list.map((l,i)=>{
                 const ov = getOverdue(l.deadline);
-                const total = l.remain + ov.fee;
+                const remain = safeNum(l.remain); // 強制清洗剩餘金額
+                const totalDebt = remain + ov.fee; // 確保這裡不會出現 NaN
+                
                 return `
                 <div class="card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <b>${l.item}</b> 
-                        <span style="color:var(--pink); font-size:24px;">$${fmt(total)}</span>
+                        <span style="color:var(--pink); font-size:24px;">$${fmt(totalDebt)}</span>
                     </div>
-                    <div style="font-size:12px; color:#888;">本金餘額 $${fmt(l.remain)} ${ov.fee > 0 ? '+ 罰金 $'+fmt(ov.fee) : ''}</div>
+                    <div style="font-size:12px; color:#888;">尚未歸還 $${fmt(remain)} ${ov.fee > 0 ? '+ 罰金 $'+fmt(ov.fee) : ''}</div>
                     <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">展開帳務明細</button>
                     <div id="ld${i}" class="detail">
                         原始本金: $${fmt(l.principal)}<br>
@@ -154,9 +159,9 @@
                         <hr style="border:0; border-top:1px dashed #444; margin:10px 0;">
                         還款期限: ${l.deadline}<br>
                         逾期狀態: <span style="color:${ov.days > 0 ? 'var(--red)' : 'var(--green)'}">
-                            ${ov.days > 0 ? '已逾期 ' + ov.days + ' 天' : '正常 (未逾期)'}
+                            ${ov.days > 0 ? '已逾期 ' + ov.days + ' 天' : '正常'}
                         </span><br>
-                        <b style="color:var(--red);">逾期罰金合計: $${fmt(ov.fee)} (10元/天)</b>
+                        <b style="color:var(--red);">預估逾期罰金: $${fmt(ov.fee)} (10元/天)</b>
                     </div>
                 </div>`;
             }).join('');
