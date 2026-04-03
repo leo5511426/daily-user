@@ -1,41 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智慧管理工作台 v15.7</title>
+    <title>小佑管理後台 v15.8</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #4f46e5; --bg: #f8fafc; --dark: #0f172a; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; font-weight: bold; }
-        .dashboard { background: var(--dark); color: white; padding: 25px 20px; border-radius: 0 0 25px 25px; }
+        :root { --primary: #4f46e5; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --dark: #0f172a; --bg: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; color: var(--dark); font-weight: bold; }
+        .dashboard { background: var(--dark); color: white; padding: 30px 20px; border-radius: 0 0 30px 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
-        .menu-btn { background: white; padding: 20px 10px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #eee; }
+        .menu-btn { background: #fff; padding: 22px 10px; border-radius: 24px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.03); cursor: pointer; border: 1px solid #eee; transition: 0.2s; }
+        .menu-btn:active { transform: scale(0.95); background: #f1f5f9; }
         .full-btn { grid-column: span 2; background: var(--primary); color: white; border: none; }
-        
         .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:5000; align-items: flex-end; }
-        .modal-content { background: white; width: 100%; border-radius: 25px 25px 0 0; padding: 25px; box-sizing: border-box; animation: slideUp 0.3s; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); z-index:5000; align-items: flex-end; backdrop-filter: blur(4px); }
+        .modal-content { background: white; width: 100%; border-radius: 32px 32px 0 0; padding: 30px 20px; box-sizing: border-box; animation: slideUp 0.3s; max-height: 85vh; overflow-y: auto; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .wiz-input { width: 100%; padding: 15px; font-size: 1.1rem; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 15px; box-sizing: border-box; }
-        .btn-group { display: flex; gap: 10px; }
-        .btn-main { flex: 2; padding: 15px; border-radius: 12px; background: var(--primary); color: white; border: none; }
-        .btn-sec { flex: 1; padding: 15px; border-radius: 12px; background: #f1f5f9; color: #64748b; border: none; }
+        .wiz-input { width: 100%; padding: 18px; font-size: 1.2rem; border-radius: 16px; border: 2px solid #e2e8f0; background: #f8fafc; box-sizing: border-box; margin-bottom: 20px; outline: none; }
+        .btn-group { display: flex; gap: 12px; }
+        .btn-main { flex: 2; padding: 18px; border-radius: 18px; border: none; font-weight: 800; background: var(--primary); color: white; }
+        .btn-sec { flex: 1; padding: 18px; border-radius: 18px; border: none; font-weight: 800; background: #f1f5f9; color: #64748b; }
     </style>
 </head>
 <body>
 
-    <div id="syncMask" class="mask" style="display: flex;"><div class="spinner"></div><p>系統資料同步處理中...</p></div>
+    <div id="syncMask" class="mask" style="display: flex;"><div class="spinner"></div><b>資料同步處理中...</b></div>
 
     <div class="dashboard">
-        <h2 style="margin:0;">小佑管理台</h2>
-        <div style="display:flex; gap:20px; margin-top:10px; font-size:14px; opacity:0.8;">
-            <span>餘額: <b id="statBal">$0</b></span>
-            <span>待收: <b id="statLoan">$0</b></span>
+        <h2 style="margin:0;">Dashboard</h2>
+        <div style="display:flex; gap:15px; margin-top:10px;">
+            <div style="background:rgba(255,255,255,0.1); padding:10px; border-radius:12px; flex:1;">
+                <small style="opacity:0.6; display:block;">流通總額</small><b id="statBal" style="color:var(--warning); font-size:1.2rem;">$0</b>
+            </div>
+            <div style="background:rgba(255,255,255,0.1); padding:10px; border-radius:12px; flex:1;">
+                <small style="opacity:0.6; display:block;">外借總額</small><b id="statLoan" style="color:var(--danger); font-size:1.2rem;">$0</b>
+            </div>
         </div>
     </div>
 
@@ -43,18 +45,20 @@
         <div class="menu-btn full-btn" onclick="startScan()">📷 掃描會員 (智慧識別)</div>
         <div class="menu-btn" onclick="openWizard('add')">💰 點數加值</div>
         <div class="menu-btn" onclick="openWizard('sub')">🛒 點數扣款</div>
-        <div class="menu-btn" onclick="openWizard('loan')">🏦 撥款作業</div>
+        <div class="menu-btn" onclick="openWizard('loan')">🏦 執行撥款</div>
         <div class="menu-btn" onclick="openWizard('pay')">🤝 還款作業</div>
         <div class="menu-btn full-btn" style="background:#f59e0b;" onclick="openWizard('coupon')">🎟️ 發送優惠券</div>
     </div>
 
-    <div id="qrArea" style="display:none; padding:0 20px;"><div id="qrDiv"></div></div>
+    <div id="qrArea" style="display:none; padding:0 20px;"><div id="qrDiv" style="border-radius:20px; overflow:hidden;"></div></div>
 
     <div id="smartModal" class="modal">
         <div class="modal-content">
-            <h3 id="sName" style="margin-top:0;">會員姓名</h3>
-            <p>餘額: <span id="sBal">$0</span></p>
-            <div id="sAlert" style="background:#fee2e2; color:#ef4444; padding:10px; border-radius:10px; margin-bottom:15px; display:none;"></div>
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="font-size:1.5rem;" id="sName">---</div>
+                <div style="color:var(--primary); margin-top:5px;">餘額: <b id="sBal">$0</b></div>
+            </div>
+            <div id="sAlert" style="background:#fff1f2; color:var(--danger); padding:15px; border-radius:15px; margin-bottom:20px; display:none;"></div>
             <div class="btn-group">
                 <button class="btn-sec" onclick="closeModal('smartModal')">關閉</button>
                 <button class="btn-main" id="sActionBtn">快速作業</button>
@@ -73,29 +77,31 @@
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxVtczWpVYjJWYhJ2a0f4m5fsJNGLmuMAxRRYnXHsS0Cawah4D055Vmxh1Jp5UPvotQ/exec"; 
+        const GAS = "https://script.google.com/macros/s/AKfycbxXAo2_3obStyRL3ITxCNh_AmPc1cui-nOXtxriQGrR-onynyeGgvLkr5aimgK92Yv3/exec"; // <--- 請填入你的網址
         let U_DB = [], L_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
 
-        // 初始化同步
-        window.onload = async () => {
+        window.onload = refreshData;
+
+        async function refreshData() {
             try {
                 const [ur, lr] = await Promise.all([
-                    fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json()),
-                    fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json())
+                    fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json()),
+                    fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json())
                 ]);
                 U_DB = ur.list; L_DB = lr.list;
-                document.getElementById('statBal').innerText = "$" + U_DB.reduce((a,b)=>a+parseFloat(b.bal), 0);
-                document.getElementById('statLoan').innerText = "$" + L_DB.reduce((a,b)=>a+b.remain, 0);
-            } catch(e) { alert("同步失敗，請檢查網址"); }
+                document.getElementById('statBal').innerText = "$" + U_DB.reduce((a,b)=>a+b.bal, 0).toLocaleString();
+                document.getElementById('statLoan').innerText = "$" + L_DB.reduce((a,b)=>a+b.remain, 0).toLocaleString();
+            } catch(e) { console.error(e); }
             document.getElementById('syncMask').style.display = 'none';
-        };
+        }
 
         function startScan() {
             document.getElementById('qrArea').style.display='block';
-            new Html5Qrcode("qrDiv").start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                const u = U_DB.find(i => String(i.id) === String(txt));
+            const html5QrCode = new Html5Qrcode("qrDiv");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                const u = U_DB.find(i => String(i.id).trim() === String(txt).trim());
                 if(u) {
-                    document.getElementById('qrArea').style.display='none';
+                    html5QrCode.stop(); document.getElementById('qrArea').style.display='none';
                     showSmart(u);
                 }
             });
@@ -104,11 +110,11 @@
         function showSmart(u) {
             document.getElementById('sName').innerText = u.name;
             document.getElementById('sBal').innerText = "$" + u.bal;
-            const uLoans = L_DB.filter(l => String(l.uid) === String(u.id));
+            const uLoans = L_DB.filter(l => String(l.uid).trim() === String(u.id).trim());
             const alertBox = document.getElementById('sAlert');
             if(uLoans.length > 0) {
                 alertBox.style.display = 'block';
-                alertBox.innerText = `⚠️ 注意：該會員有 ${uLoans.length} 筆待還借單！`;
+                alertBox.innerHTML = `⚠️ 此會員有 ${uLoans.length} 筆未結清借單！`;
                 document.getElementById('sActionBtn').onclick = () => { closeModal('smartModal'); openWizard('pay', u.id); };
             } else {
                 alertBox.style.display = 'none';
@@ -120,8 +126,8 @@
         const FLOWS = {
             add: [{t:"選擇會員",f:"uid",type:"user"},{t:"加值金額",f:"amt",type:"number"},{t:"備註",f:"note",type:"text"}],
             sub: [{t:"選擇會員",f:"uid",type:"user"},{t:"扣款金額",f:"amt",type:"number"},{t:"備註",f:"note",type:"text"}],
-            loan:[{t:"選擇借款人",f:"uid",type:"user"},{t:"項目",f:"item",type:"text"},{t:"本金",f:"amt",type:"number"},{t:"期限",f:"date",type:"date"}],
-            pay: [{t:"選擇借單",f:"loanId",type:"loan"},{t:"收現金額",f:"cash",type:"number"},{t:"抵扣點數",f:"bal",type:"number"}],
+            loan:[{t:"選擇會員",f:"uid",type:"user"},{t:"項目",f:"item",type:"text"},{t:"本金",f:"amt",type:"number"},{t:"日期",f:"date",type:"date"}],
+            pay: [{t:"選擇借單",f:"loanId",type:"loan"},{t:"收現金額",f:"cash",type:"number"},{t:"扣點抵扣",f:"bal",type:"number"}],
             coupon:[{t:"對象",f:"uid",type:"user_all"},{t:"券名",f:"name",type:"text"},{t:"描述",f:"desc",type:"text"}]
         };
 
@@ -136,30 +142,30 @@
             const s = FLOWS[CUR_MODE][CUR_STEP];
             let html = `<h3 style="margin-top:0;">${s.t}</h3>`;
             if(s.type === 'user') html += `<select id="win" class="wiz-input">${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
-            else if(s.type === 'user_all') html += `<select id="win" class="wiz-input"><option value="ALL">全體</option>${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
+            else if(s.type === 'user_all') html += `<select id="win" class="wiz-input"><option value="ALL">全體會員</option>${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
             else if(s.type === 'loan') {
-                const ds = L_DB.filter(l => String(l.uid) === String(FORM.uid));
-                if(ds.length === 0) html += `<p style="color:red;">查無待還借單</p>`;
-                else html += `<select id="win" class="wiz-input">${ds.map(d=>`<option value="${d.id}" data-rem="${d.remain}">${d.item}($${d.remain})</option>`).join('')}</select>`;
+                const ds = L_DB.filter(l => String(l.uid).trim() === String(FORM.uid).trim());
+                if(ds.length === 0) html += `<p style="color:red;">❌ 查無待還借單 (ID: ${FORM.uid})</p>`;
+                else html += `<select id="win" class="wiz-input">${ds.map(d=>`<option value="${d.id}" data-rem="${d.remain}">${d.item} (剩$${d.remain})</option>`).join('')}</select>`;
             } else html += `<input type="${s.type}" id="win" class="wiz-input" autofocus>`;
             
             document.getElementById('wizBody').innerHTML = html;
-            document.getElementById('wizNextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length-1) ? "提交" : "下一步";
+            document.getElementById('wizNextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length-1) ? "確認執行" : "下一步";
         }
 
         function wizNext() {
-            const val = document.getElementById('win')?.value;
-            if(!val && CUR_MODE === 'pay' && CUR_STEP === 0) return alert("無有效借單");
-            FORM[FLOWS[CUR_MODE][CUR_STEP].f] = val;
+            const input = document.getElementById('win');
+            if(!input && CUR_MODE === 'pay') return;
+            FORM[FLOWS[CUR_MODE][CUR_STEP].f] = input.value;
             if(FLOWS[CUR_MODE][CUR_STEP].type === 'loan') {
-                FORM.rem = document.getElementById('win').selectedOptions[0].dataset.rem;
+                FORM.rem = input.selectedOptions[0].dataset.rem;
                 setTimeout(()=> document.getElementById('win').value = FORM.rem, 50);
             }
             if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { CUR_STEP++; renderWiz(); }
-            else submit();
+            else submitAction();
         }
 
-        async function submit() {
+        async function submitAction() {
             document.getElementById('wizModal').style.display = 'none';
             document.getElementById('syncMask').style.display = 'flex';
             let b = { action: 'adminAction', type: CUR_MODE };
@@ -168,8 +174,10 @@
             if(CUR_MODE==='pay'){ b.type='pay_loan'; b.loanId=FORM.loanId; b.uid=FORM.uid; b.cashPart=FORM.cash; b.balPart=FORM.bal; }
             if(CUR_MODE==='coupon'){ b.type='send_coupon'; b.all=(FORM.uid==='ALL'); b.uid=FORM.uid; b.cpName=FORM.name; b.cpDesc=FORM.desc; b.cpExp=""; }
 
-            const res = await fetch(GAS_URL,{method:'POST',body:JSON.stringify(b)}).then(r=>r.json());
-            alert(res.message); location.reload();
+            try {
+                const r = await fetch(GAS,{method:'POST',body:JSON.stringify(b)}).then(r=>r.json());
+                alert(r.message); location.reload();
+            } catch(e) { alert("系統出錯，請檢查網路"); }
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
