@@ -3,119 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑行動服務 | 智慧管理工作台</title>
+    <title>小佑管理台 | 智慧導引系統 v15.6</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
             --primary: #4f46e5; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
             --dark: #0f172a; --bg: #f8fafc;
         }
-        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; color: var(--dark); }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; color: var(--dark); overflow-x: hidden; }
 
-        /* 頂部儀表板 */
-        .dashboard { background: var(--dark); color: white; padding: 30px 20px; border-radius: 0 0 30px 30px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        .stat-card { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; }
-        .stat-card small { font-size: 11px; opacity: 0.7; display: block; }
-        .stat-card b { font-size: 1.2rem; color: var(--warning); }
+        /* 儀表板 */
+        .dashboard { background: var(--dark); color: white; padding: 30px 20px; border-radius: 0 0 30px 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .stat-card { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-card small { font-size: 11px; opacity: 0.7; display: block; margin-bottom: 4px; }
+        .stat-card b { font-size: 1.3rem; color: var(--warning); }
 
-        /* 功能網格選單 */
+        /* 功能網格 */
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; }
         .menu-btn { 
-            background: #fff; padding: 25px 15px; border-radius: 20px; text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid rgba(0,0,0,0.05);
+            background: #fff; padding: 22px 10px; border-radius: 24px; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03); cursor: pointer; border: 1px solid rgba(0,0,0,0.05);
+            transition: 0.2s;
         }
-        .menu-btn:active { transform: scale(0.95); background: #f1f5f9; }
-        .menu-icon { font-size: 30px; display: block; margin-bottom: 8px; }
-        .menu-label { font-weight: bold; font-size: 14px; }
-        .full-btn { grid-column: span 2; background: var(--primary); color: white; }
+        .menu-btn:active { transform: scale(0.92); background: #f1f5f9; }
+        .menu-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+        .menu-label { font-weight: 800; font-size: 14px; color: #334155; }
+        .full-btn { grid-column: span 2; background: var(--primary); color: white; border: none; }
+        .full-btn .menu-label { color: white; }
 
-        /* 遮罩層 */
+        /* 遮罩層樣式 */
         .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* 智慧提醒彈窗 (Modal) */
+        /* 彈窗樣式 */
         .modal { 
             display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-            background:rgba(0,0,0,0.5); z-index:5000; justify-content:center; align-items:flex-end;
+            background:rgba(15, 23, 42, 0.6); z-index:5000; align-items: flex-end; backdrop-filter: blur(4px);
         }
         .modal-content { 
-            background: white; width: 100%; border-radius: 25px 25px 0 0; padding: 30px 20px; box-sizing: border-box;
-            animation: slideUp 0.3s ease-out;
+            background: white; width: 100%; border-radius: 32px 32px 0 0; padding: 30px 20px 50px; box-sizing: border-box;
+            animation: slideUp 0.3s cubic-bezier(0, 0.5, 0.5, 1); max-height: 85vh; overflow-y: auto;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* 精靈引導樣式 */
-        .wiz-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; }
-        .wiz-input { width: 100%; padding: 15px; font-size: 1.1rem; border-radius: 12px; border: 2px solid #e2e8f0; box-sizing: border-box; margin-bottom: 15px; }
-        .wiz-footer { display: flex; gap: 10px; }
-        .btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }
+        /* 引導輸入樣式 */
+        .wiz-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 20px; text-align: center; }
+        .wiz-input { width: 100%; padding: 18px; font-size: 1.2rem; border-radius: 16px; border: 2px solid #e2e8f0; background: #f8fafc; box-sizing: border-box; margin-bottom: 20px; outline: none; }
+        .wiz-input:focus { border-color: var(--primary); }
+        .btn-group { display: flex; gap: 12px; }
+        .btn-main { flex: 2; padding: 18px; border-radius: 18px; border: none; font-weight: 800; background: var(--primary); color: white; }
+        .btn-sec { flex: 1; padding: 18px; border-radius: 18px; border: none; font-weight: 800; background: #f1f5f9; color: #64748b; }
 
-        .alert-box { background: #fee2e2; border: 1px solid #fecaca; color: var(--danger); padding: 15px; border-radius: 15px; margin-bottom: 15px; }
+        .alert-card { background: #fff1f2; border: 1px solid #fecaca; color: var(--danger); padding: 15px; border-radius: 20px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="syncMask" class="mask" style="display: flex;">
-        <div class="spinner"></div>
-        <p><b>系統資料同步處理中，請稍後...</b></p>
-    </div>
-
-    <div id="actionMask" class="mask">
-        <div class="spinner"></div>
-        <p id="actionMsg">執行中...</p>
-    </div>
+    <div id="syncMask" class="mask" style="display: flex;"><div class="spinner"></div><p><b>系統資料同步處理中，請稍後...</b></p></div>
+    <div id="actionMask" class="mask"><div class="spinner"></div><p id="actionMsg">處理中...</p></div>
 
     <div class="dashboard">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 style="margin:0;">小佑管理台</h2>
-            <small id="syncTime" style="opacity:0.6;">未同步</small>
+            <h2 style="margin:0; letter-spacing: 1px;">Admin Dashboard</h2>
+            <small id="syncTime" style="opacity:0.5;">Wait...</small>
         </div>
         <div class="stats-grid">
-            <div class="stat-card"><small>流通總餘額</small><b id="statBal">$0</b></div>
-            <div class="stat-card"><small>待收借款額</small><b id="statLoan">$0</b></div>
+            <div class="stat-card"><small>流通點數總額</small><b id="statBal">$0</b></div>
+            <div class="stat-card"><small>待收借款總額</small><b id="statLoan">$0</b></div>
         </div>
     </div>
 
     <div class="menu-grid">
-        <div class="menu-btn full-btn" onclick="startScan()">
-            <span class="menu-icon">📷</span><span class="menu-label">掃描會員條碼 (自動提醒)</span>
-        </div>
-        <div class="menu-btn" onclick="openWizard('add')"><span class="menu-icon">➕</span><span class="menu-label">加值點數</span></div>
-        <div class="menu-btn" onclick="openWizard('sub')"><span class="menu-icon">➖</span><span class="menu-label">點數扣款</span></div>
-        <div class="menu-btn" onclick="openWizard('loan')"><span class="menu-icon">🏦</span><span class="menu-label">撥款作業</span></div>
+        <button class="menu-btn full-btn" onclick="startScan()">
+            <span class="menu-icon">📷</span><span class="menu-label">掃描條碼 (智慧識別)</span>
+        </button>
+        <div class="menu-btn" onclick="openWizard('add')"><span class="menu-icon">💰</span><span class="menu-label">點數加值</span></div>
+        <div class="menu-btn" onclick="openWizard('sub')"><span class="menu-icon">🛒</span><span class="menu-label">點數扣款</span></div>
+        <div class="menu-btn" onclick="openWizard('loan')"><span class="menu-icon">🏦</span><span class="menu-label">執行撥款</span></div>
         <div class="menu-btn" onclick="openWizard('pay')"><span class="menu-icon">🤝</span><span class="menu-label">還款作業</span></div>
+        <div class="menu-btn" onclick="openWizard('coupon')" style="grid-column: span 2; border-top: 2px solid #fef3c7;">
+            <span class="menu-icon">🎟️</span><span class="menu-label">發送優惠券 / 禮券</span>
+        </div>
     </div>
 
-    <div id="qrArea" style="display:none; padding:0 20px;"><div id="qrDiv" style="border-radius:15px; overflow:hidden;"></div></div>
+    <div id="qrArea" style="display:none; padding:0 20px;"><div id="qrDiv" style="border-radius:24px; overflow:hidden;"></div></div>
 
     <div id="smartModal" class="modal">
         <div class="modal-content">
-            <div style="text-align:center; margin-bottom:20px;">
-                <div style="font-size:1.5rem; font-weight:bold;" id="sName">---</div>
-                <div style="color:#64748b;">餘額: <span id="sBal">$0</span></div>
+            <div style="text-align:center; margin-bottom:25px;">
+                <div style="font-size:1.6rem; font-weight:900;" id="sName">---</div>
+                <div style="color:#64748b; margin-top:5px;">當前餘額: <b id="sBal" style="color:var(--primary);">$0</b></div>
             </div>
-            
-            <div id="sAlertArea" class="alert-box" style="display:none;">
-                <b>⚠️ 注意事項：</b>
-                <div id="sAlertMsg" style="font-size:14px; margin-top:5px;"></div>
+            <div id="sAlertArea" class="alert-card" style="display:none;">
+                <div id="sAlertMsg" style="font-size:14px; line-height:1.5;"></div>
             </div>
-
-            <div class="wiz-footer">
-                <button class="btn" style="background:#f1f5f9; color:#64748b;" onclick="closeModal('smartModal')">關閉</button>
-                <button class="btn" style="background:var(--primary); color:white;" id="sActionBtn">快速作業</button>
+            <div class="btn-group">
+                <button class="btn-sec" onclick="closeModal('smartModal')">關閉</button>
+                <button class="btn-main" id="sActionBtn">快速作業</button>
             </div>
         </div>
     </div>
 
     <div id="wizModal" class="modal">
         <div class="modal-content">
-            <div id="wizBody">
-                </div>
-            <div class="wiz-footer">
-                <button class="btn" style="background:#f1f5f9; color:#64748b;" onclick="closeModal('wizModal')">取消</button>
-                <button class="btn" style="background:var(--primary); color:white;" id="wizNextBtn" onclick="wizNext()">下一步</button>
+            <div id="wizBody"></div>
+            <div class="btn-group">
+                <button class="btn-sec" onclick="closeModal('wizModal')">取消</button>
+                <button class="btn-main" id="wizNextBtn" onclick="wizNext()">下一步</button>
             </div>
         </div>
     </div>
@@ -123,117 +119,108 @@
     <script>
         const GAS = "https://script.google.com/macros/s/AKfycbwm8IJGX_r1c_yU1Udk4kcO3QFuoWGxsL0qPeEyv2qx-yRISy2_96h5XMfiNkJxbUP0/exec";
         const scanner = new Html5Qrcode("qrDiv");
-        let users = [], loans = [], curU = null, curMode = "", curStep = 0, form = {};
+        let U_DB = [], L_DB = [], CUR_U_ID = "", CUR_MODE = "", CUR_STEP = 0, FORM = {};
 
-        // 1. 開啟自動同步資料
+        // 啟動自動同步
         window.onload = async () => {
             try {
                 const [ur, lr] = await Promise.all([
                     fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json()),
                     fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json())
                 ]);
-                users = ur.list; loans = lr.list;
-                
-                // 更新儀表板
-                document.getElementById('statBal').innerText = "$" + users.reduce((a,b)=>a+parseFloat(b.bal), 0);
-                document.getElementById('statLoan').innerText = "$" + loans.reduce((a,b)=>a+b.remain, 0);
-                document.getElementById('syncTime').innerText = "最後同步: " + new Date().toLocaleTimeString();
-            } catch(e) { alert("同步失敗，請檢查網路連接"); }
+                U_DB = ur.list; L_DB = lr.list;
+                document.getElementById('statBal').innerText = "$" + U_DB.reduce((a,b)=>a+parseFloat(b.bal), 0).toLocaleString();
+                document.getElementById('statLoan').innerText = "$" + L_DB.reduce((a,b)=>a+b.remain, 0).toLocaleString();
+                document.getElementById('syncTime').innerText = "Sync: " + new Date().toLocaleTimeString();
+            } catch(e) { alert("同步失敗"); }
             document.getElementById('syncMask').style.display = 'none';
         };
 
-        // 2. 智慧掃描識別
+        // 智慧掃描
         function startScan() {
             document.getElementById('qrArea').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
                 scanner.stop(); document.getElementById('qrArea').style.display='none';
-                const user = users.find(u => String(u.id) === String(txt));
-                if(user) showSmartModal(user); else alert("找不到會員 ID: " + txt);
+                const u = U_DB.find(i => String(i.id) === String(txt));
+                if(u) showSmart(u); else alert("查無此會員: " + txt);
             });
         }
 
-        function showSmartModal(u) {
-            curU = u;
+        function showSmart(u) {
+            CUR_U_ID = u.id;
             document.getElementById('sName').innerText = u.name;
             document.getElementById('sBal').innerText = "$" + u.bal;
-            
-            const userLoans = loans.filter(l => String(l.uid) === String(u.id));
+            const uLoans = L_DB.filter(l => String(l.uid) === String(u.id));
             const alertArea = document.getElementById('sAlertArea');
             const actionBtn = document.getElementById('sActionBtn');
 
-            if(userLoans.length > 0) {
+            if(uLoans.length > 0) {
                 alertArea.style.display = 'block';
-                document.getElementById('sAlertMsg').innerHTML = `偵測到 ${userLoans.length} 筆待還借單，總額 $${userLoans.reduce((a,b)=>a+b.remain, 0)}。`;
-                actionBtn.innerText = "立即處理還款";
+                document.getElementById('sAlertMsg').innerHTML = `<b>⚠️ 欠款提醒：</b><br>偵測到 ${uLoans.length} 筆未結清借單，剩餘總額 $${uLoans.reduce((a,b)=>a+b.remain, 0)}。`;
+                actionBtn.innerText = "處理還款作業";
                 actionBtn.onclick = () => { closeModal('smartModal'); openWizard('pay', u.id); };
-            } else if(u.bal < 50) {
-                alertArea.style.display = 'block';
-                document.getElementById('sAlertMsg').innerText = "會員餘額低於 $50，建議提醒加值。";
-                actionBtn.innerText = "快速加值";
-                actionBtn.onclick = () => { closeModal('smartModal'); openWizard('add', u.id); };
             } else {
                 alertArea.style.display = 'none';
-                actionBtn.innerText = "點數作業";
+                actionBtn.innerText = "進行點數加值";
                 actionBtn.onclick = () => { closeModal('smartModal'); openWizard('add', u.id); };
             }
             document.getElementById('smartModal').style.display = 'flex';
         }
 
-        // 3. 精靈引導系統
-        const FLOW = {
-            add: [{t:"存入金額", f:"amt", type:"number"}, {t:"備註原因", f:"note", type:"text"}],
-            sub: [{t:"扣除金額", f:"amt", type:"number"}, {t:"備註原因", f:"note", type:"text"}],
-            loan: [{t:"借款項目", f:"item", type:"text"}, {t:"借款本金", f:"amt", type:"number"}, {t:"還款期限", f:"date", type:"date"}],
-            pay: [{t:"選擇借單", f:"loanId", type:"l_select"}, {t:"實收現金", f:"cash", type:"number"}, {t:"扣除點數", f:"bal", type:"number"}]
+        // 引導系統配置
+        const FLOWS = {
+            add: [{t:"選擇會員",f:"uid",type:"user"},{t:"存入金額",f:"amt",type:"number"},{t:"備註原因",f:"note",type:"text"}],
+            sub: [{t:"選擇會員",f:"uid",type:"user"},{t:"扣除金額",f:"amt",type:"number"},{t:"備註原因",f:"note",type:"text"}],
+            loan:[{t:"選擇借款人",f:"uid",type:"user"},{t:"項目名稱",f:"item",type:"text"},{t:"本金金額",f:"amt",type:"number"},{t:"還款期限",f:"date",type:"date"}],
+            pay: [{t:"選擇借單",f:"loanId",type:"loan"},{t:"本次收現",f:"cash",type:"number"},{t:"扣點抵扣",f:"bal",type:"number"}],
+            coupon:[{t:"收券對象",f:"uid",type:"user_all"},{t:"優惠券名稱",f:"name",type:"text"},{t:"描述/日期",f:"desc",type:"text"}]
         };
 
         function openWizard(mode, uid) {
-            curMode = mode; curStep = 0; form = { uid: uid || "" };
+            CUR_MODE = mode; CUR_STEP = 0; FORM = uid ? { uid: uid } : {};
             document.getElementById('wizModal').style.display = 'flex';
-            if(!uid) { /* 可以在這增加選人的步驟，目前以掃描後帶入為主 */ }
+            if(uid && FLOWS[mode][0].f === "uid") CUR_STEP = 1; // 已掃描則跳過選人
             renderWiz();
         }
 
         function renderWiz() {
-            const s = FLOW[curMode][curStep];
+            const s = FLOWS[CUR_MODE][CUR_STEP];
             let html = `<div class="wiz-title">${s.t}</div>`;
-            if(s.type === 'l_select') {
-                const uLoans = loans.filter(l => String(l.uid) === String(form.uid));
-                html += `<select id="win" class="wiz-input">${uLoans.map(l=>`<option value="${l.id}" data-rem="${l.remain}">${l.item} (剩$${l.remain})</option>`).join('')}</select>`;
-            } else {
-                html += `<input type="${s.type}" id="win" class="wiz-input" placeholder="請輸入...">`;
-            }
+            if(s.type === 'user') html += `<select id="win" class="wiz-input">${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
+            else if(s.type === 'user_all') html += `<select id="win" class="wiz-input"><option value="ALL">全體會員</option>${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
+            else if(s.type === 'loan') {
+                const ds = L_DB.filter(l => String(l.uid) === String(FORM.uid));
+                html += `<select id="win" class="wiz-input">${ds.map(d=>`<option value="${d.id}" data-rem="${d.remain}">${d.item} (剩$${d.remain})</option>`).join('')}</select>`;
+            } else html += `<input type="${s.type}" id="win" class="wiz-input" autofocus>`;
+            
             document.getElementById('wizBody').innerHTML = html;
-            document.getElementById('wizNextBtn').innerText = (curStep === FLOW[curMode].length-1) ? "確認提交" : "下一步";
+            document.getElementById('wizNextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length-1) ? "確認發送/執行" : "下一步";
         }
 
         function wizNext() {
-            const val = document.getElementById('win').value;
-            form[FLOW[curMode][curStep].f] = val;
-            
-            // 自動帶入還款金額
-            if(FLOW[curMode][curStep].type === 'l_select') {
-                form.rem = document.getElementById('win').selectedOptions[0].dataset.rem;
-                setTimeout(()=>document.getElementById('win').value = form.rem, 50);
+            const input = document.getElementById('win');
+            FORM[FLOWS[CUR_MODE][CUR_STEP].f] = input.value;
+            if(FLOWS[CUR_MODE][CUR_STEP].type === 'loan') {
+                FORM.rem = input.selectedOptions[0].dataset.rem;
+                setTimeout(()=> { if(document.getElementById('win')) document.getElementById('win').value = FORM.rem; }, 50);
             }
-
-            if(curStep < FLOW[curMode].length - 1) { curStep++; renderWiz(); }
-            else { submitForm(); }
+            if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { CUR_STEP++; renderWiz(); }
+            else submitAction();
         }
 
-        async function submitForm() {
+        async function submitAction() {
             document.getElementById('wizModal').style.display = 'none';
             document.getElementById('actionMask').style.display = 'flex';
-            
             let b = { action: 'adminAction' };
-            if(curMode === 'add' || curMode === 'sub') { b.type=curMode; b.uid=form.uid; b.amount=form.amt; b.note=form.note; }
-            if(curMode === 'loan') { b.type='create_loan'; b.uid=form.uid; b.loanItem=form.item; b.amount=form.amt; b.deadline=form.date; }
-            if(curMode === 'pay') { b.type='pay_loan'; b.loanId=form.loanId; b.uid=form.uid; b.cashPart=form.cash; b.balPart=form.bal; }
+            if(CUR_MODE==='add'||CUR_MODE==='sub'){ b.type=CUR_MODE; b.uid=FORM.uid; b.amount=FORM.amt; b.note=FORM.note; }
+            if(CUR_MODE==='loan'){ b.type='create_loan'; b.uid=FORM.uid; b.loanItem=FORM.item; b.amount=FORM.amt; b.deadline=FORM.date; }
+            if(CUR_MODE==='pay'){ b.type='pay_loan'; b.loanId=FORM.loanId; b.uid=FORM.uid; b.cashPart=FORM.cash; b.balPart=FORM.bal; }
+            if(CUR_MODE==='coupon'){ b.type='send_coupon'; b.all=(FORM.uid==='ALL'); b.uid=FORM.uid; b.cpName=FORM.name; b.cpDesc=FORM.desc; b.cpExp=""; }
 
             try {
                 const res = await fetch(GAS,{method:'POST',body:JSON.stringify(b)}).then(r=>r.json());
                 alert(res.message); location.reload();
-            } catch(e) { alert("提交失敗"); }
+            } catch(e) { alert("系統發生錯誤"); }
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
