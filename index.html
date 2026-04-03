@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑行動會員 - v27.5</title>
+    <title>小佑行動會員 - v28.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -25,13 +25,13 @@
     </style>
 </head>
 <body>
-    <div id="mFull" class="mask-full"><div class="spinner"></div><p>登入中...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>同步帳務...</p></div>
+    <div id="mFull" class="mask-full"><div class="spinner"></div><p>身分驗證中...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>更新雲端帳務...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
         <h1 style="color:var(--pink); font-size:32px;">小佑行動會員</h1>
-        <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="帳號">
-        <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="密碼">
+        <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="ID 或 帳號">
+        <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="登入密碼">
         <button class="btn" onclick="login()">登入系統</button>
     </div>
 
@@ -64,56 +64,35 @@
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbw6wIkAPCbMGKxT2zkIVtgFSh68mNTm3wJ2SxCNa6LJO44T68h8RWpv5XveKlEmsIUI/exec";
+        const GAS = "https://script.google.com/macros/s/AKfycbyamsclpB5nxl8LAZ66aHPZs8cpL3nolE6rRFJwXMSeZJ5Ny5tYy_2JF5my5QpnMx4M/exec"; 
         let user = null;
         let ALL_DATA = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
-        function safeNum(v) {
-            if (v === null || v === undefined) return 0;
-            const n = parseFloat(v);
-            return isNaN(n) ? 0 : n;
-        }
-
+        function safeNum(v) { return isNaN(parseFloat(v)) ? 0 : parseFloat(v); }
         function fmt(n) { return safeNum(n).toLocaleString(); }
-
-        function getOverdue(deadlineStr) {
-            if (!deadlineStr || deadlineStr.includes("無期限")) return { fee: 0, days: 0 };
-            const today = new Date(); today.setHours(0,0,0,0);
-            const due = new Date(deadlineStr); due.setHours(0,0,0,0);
-            if (isNaN(due.getTime())) return { fee: 0, days: 0 };
-            if (today > due) {
-                const days = Math.ceil((today - due) / (1000 * 60 * 60 * 24));
-                return { fee: days * 10, days: days };
-            }
-            return { fee: 0, days: 0 };
-        }
 
         async function login(){
             const inputAcc = document.getElementById('acc').value.trim();
+            const inputPw = document.getElementById('pw').value.trim();
+            if(!inputAcc) return alert("請輸入帳號");
+
             document.getElementById('mFull').style.display='flex';
             try {
                 const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:inputAcc})}).then(r=>r.json());
                 if(res.success){
-                    const found = res.list.find(u => String(u.id).trim() === inputAcc);
-                    if(found){
+                    const found = res.list.find(u => (u.id === inputAcc || u.account === inputAcc));
+                    if(found && String(found.pw) === inputPw){
                         user = found;
                         ALL_DATA = res;
                         document.getElementById('uName').innerText = user.name; 
                         document.getElementById('uBal').innerText = fmt(user.bal); 
                         document.getElementById('loginView').style.display='none'; 
                         document.getElementById('appView').style.display='block'; 
-                    } else alert("帳號不存在");
+                    } else { alert("帳號或密碼錯誤"); }
                 }
-            } catch(e) { alert("連線異常"); }
+            } catch(e) { alert("連線失敗"); }
             document.getElementById('mFull').style.display='none';
-        }
-
-        function showQR(type, val){
-            qrc.clear(); 
-            qrc.makeCode(type === 'USER' ? val : "CP|" + val); 
-            document.getElementById('qrTitle').innerText = (type === 'USER') ? "會員識別碼" : "核銷條碼";
-            document.getElementById('qrModal').style.display='flex';
         }
 
         async function go(idx){
@@ -124,15 +103,16 @@
 
             if(idx!==0 && idx!==3){ 
                 document.getElementById('mHalf').style.display='flex'; 
-                // 每次切換分頁都重新同步最新數據
-                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:user.id})}).then(r=>r.json());
-                if(res.success) {
-                    ALL_DATA = res;
-                    const me = res.list.find(u => u.id === user.id);
-                    document.getElementById('uBal').innerText = fmt(me.bal);
-                    if(idx===4) renderLoans();
-                    if(idx===2) renderCoupons();
-                }
+                try {
+                    const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:user.id})}).then(r=>r.json());
+                    if(res.success) {
+                        ALL_DATA = res;
+                        const me = res.list.find(u => u.id === user.id);
+                        document.getElementById('uBal').innerText = fmt(me.bal);
+                        if(idx===4) renderLoans();
+                        if(idx===2) renderCoupons();
+                    }
+                } catch(e) { console.error(e); }
                 document.getElementById('mHalf').style.display='none'; 
             }
         }
@@ -140,20 +120,15 @@
         function renderLoans(){
             const myLoans = ALL_DATA.loans.filter(l => l.uid === user.id && l.status === "還款中");
             document.getElementById('loanList').innerHTML = myLoans.map((l,i)=>{
-                const ov = getOverdue(l.expiry);
                 const remain = l.total - l.paid;
                 return `
                 <div class="card">
-                    <div style="display:flex; justify-content:space-between;"><b>${l.item}</b> <b style="color:var(--pink); font-size:22px;">$${fmt(remain + ov.fee)}</b></div>
-                    <div style="font-size:12px; color:#888; margin-top:5px;">本金 $${fmt(l.total)} | 已還 $${fmt(l.paid)}</div>
-                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">帳務明細</button>
-                    <div id="ld${i}" class="detail">
-                        期限: ${l.expiry}<br>
-                        逾期罰金: $${fmt(ov.fee)} (${ov.days}天)<br>
-                        狀態: 還款中
-                    </div>
+                    <div style="display:flex; justify-content:space-between;"><b>${l.item}</b> <b style="color:var(--pink); font-size:22px;">$${fmt(remain)}</b></div>
+                    <div style="font-size:12px; color:#888;">本金 $${fmt(l.total)} | 已還 $${fmt(l.paid)}</div>
+                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">詳細明細</button>
+                    <div id="ld${i}" class="detail">期限: ${l.expiry}<br>借款日: ${l.loanDate}</div>
                 </div>`;
-            }).join('') || '<p style="text-align:center; opacity:0.5;">暫無還款中項目</p>';
+            }).join('') || '<p style="text-align:center; opacity:0.5;">目前無借款紀錄</p>';
         }
 
         function renderCoupons(){
@@ -162,8 +137,15 @@
                 <div class="card">
                     <b style="color:var(--pink);">${c.name}</b>
                     <p style="font-size:13px; opacity:0.7;">${c.desc}</p>
-                    <button class="btn" style="background:var(--green); font-size:14px; padding:12px;" onclick="showQR('CP', '${c.id}')">出示券條碼</button>
-                </div>`).join('') || '<p style="text-align:center; opacity:0.5;">暫無可用優惠券</p>';
+                    <button class="btn" style="background:var(--green); font-size:14px;" onclick="showQR('CP', '${c.id}')">出示核銷碼</button>
+                </div>`).join('') || '<p style="text-align:center; opacity:0.5;">暫無優惠券</p>';
+        }
+
+        function showQR(type, val){
+            qrc.clear(); 
+            qrc.makeCode(type === 'USER' ? val : "CP|" + val); 
+            document.getElementById('qrTitle').innerText = (type === 'USER') ? "會員識別碼" : "核銷條碼";
+            document.getElementById('qrModal').style.display='flex';
         }
     </script>
 </body>
