@@ -3,36 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑行動會員 - v34.0 紀錄修復版</title>
+    <title>小佑行動會員 - v35.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
         body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; }
-        
         .page { width: 100vw; min-height: 100vh; padding: 100px 20px 130px; box-sizing: border-box; display: none; }
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #282828; }
-        
         .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; margin-top: 10px; cursor: pointer; }
         .btn-small { width: auto; padding: 8px 15px; font-size: 12px; border-radius: 8px; background: #333; color: #aaa; border: none; margin-top: 10px; cursor: pointer; }
-        
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: #0a0a0a; display: flex; border-top: 1px solid #222; z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 13px; cursor: pointer; }
         .nav-item.active { color: var(--pink); }
-
         .detail { max-height: 0; overflow: hidden; transition: 0.3s; font-size: 14px; color: #888; }
         .detail.show { max-height: 500px; padding-top: 15px; border-top: 1px solid #222; margin-top: 15px; }
         .detail-row { display: flex; margin-bottom: 6px; line-height: 1.4; }
         .detail-label { width: 75px; color: #666; flex-shrink: 0; }
         .detail-val { color: #bbb; }
-
         .mask-full, .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .mask-full { background:var(--bg); }
         .mask-half { background:rgba(0,0,0,0.7); }
         .spinner { border: 4px solid #333; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        
         #qrModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
-        
         .tx-amt { font-weight: bold; font-size: 18px; }
         .tx-up { color: var(--green); }
         .tx-down { color: var(--red); }
@@ -44,7 +37,7 @@
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
         <h1 style="color:var(--pink); font-size:32px; margin-bottom:5px;">小佑行動會員</h1>
-        <p style="color:#555; margin-bottom:30px;">V34.0 紀錄修復版</p>
+        <p style="color:#555; margin-bottom:30px;">V35.0 完整版</p>
         <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="帳號 / ID">
         <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="密碼">
         <button class="btn" onclick="login()">登入系統</button>
@@ -61,11 +54,8 @@
         </div>
 
         <div id="p1" class="page"><h2>歷史紀錄</h2><div id="tList"></div></div>
-        
         <div id="p4" class="page"><h2>待還帳務</h2><div id="loanList"></div></div>
-        
         <div id="p2" class="page"><h2>優惠券</h2><div id="cList"></div></div>
-        
         <div id="p3" class="page"><h2>設定</h2><button class="btn" style="background:var(--red);" onclick="location.reload()">登出系統</button></div>
 
         <div class="nav-bar">
@@ -86,7 +76,6 @@
     </div>
 
     <script>
-        // 請確保此網址為你最新部署的 GAS 網址
         const GAS = "https://script.google.com/macros/s/AKfycbxE-fzq1nINRjAUIocdzeyIbRC3807JHxQqRiAg52AychNLIM0wxPHSEJfu1_TAFnJF/exec"; 
         let user = null;
         let ALL_DATA = null;
@@ -97,43 +86,26 @@
         function cleanD(s) {
             if (!s || s === "null") return "無資料";
             const d = new Date(s);
-            if (!isNaN(d.getTime())) {
-                return `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`;
-            }
-            return s;
+            return !isNaN(d.getTime()) ? `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}` : s;
         }
 
         async function login(){
             const acc = document.getElementById('acc').value.trim();
             const pw = document.getElementById('pw').value.trim();
             if(!acc || !pw) return alert("請輸入完整");
-            
             document.getElementById('mFull').style.display='flex';
             try {
-                const res = await fetch(GAS, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'fetchData', uid: acc })
-                }).then(r => r.json());
-
+                const res = await fetch(GAS, { method: 'POST', body: JSON.stringify({ action: 'fetchData', uid: acc }) }).then(r => r.json());
                 if(res.success){
-                    // 在回傳的清單中尋找匹配的帳號或 ID
                     const found = res.list.find(u => (u.id === acc || u.account === acc));
                     if(found && String(found.pw) === pw){
-                        user = found; 
-                        ALL_DATA = res;
+                        user = found; ALL_DATA = res;
                         document.getElementById('uName').innerText = user.name;
                         document.getElementById('uBal').innerText = fmt(user.bal);
-                        document.getElementById('loginView').style.display='none'; 
-                        document.getElementById('appView').style.display='block'; 
-                    } else { 
-                        alert("帳號或密碼錯誤"); 
-                    }
-                } else {
-                    alert(res.message || "登入失敗");
-                }
-            } catch(e) { 
-                alert("連線失敗，請檢查網路"); 
-            }
+                        document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block'; 
+                    } else { alert("帳號或密碼錯誤"); }
+                } else { alert(res.message || "登入失敗"); }
+            } catch(e) { alert("連線失敗"); }
             document.getElementById('mFull').style.display='none';
         }
 
@@ -141,102 +113,65 @@
             document.querySelectorAll('.page').forEach(p => p.style.display='none');
             document.getElementById('p'+idx).style.display='block';
             document.querySelectorAll('.nav-item').forEach((n,i) => i===idx ? n.classList.add('active') : n.classList.remove('active'));
-
             if(idx !== 0 && idx !== 3){ 
                 document.getElementById('mHalf').style.display='flex'; 
                 try {
-                    const res = await fetch(GAS, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'fetchData', uid: user.id })
-                    }).then(r => r.json());
-                    
+                    const res = await fetch(GAS, { method: 'POST', body: JSON.stringify({ action: 'fetchData', uid: user.id }) }).then(r => r.json());
                     if(res.success) {
-                        ALL_DATA = res;
-                        document.getElementById('uBal').innerText = fmt(res.bal); // 同步更新餘額
+                        ALL_DATA = res; document.getElementById('uBal').innerText = fmt(res.bal);
                         if(idx === 1) renderTransactions();
                         if(idx === 4) renderLoans();
                         if(idx === 2) renderCoupons();
                     }
-                } catch(e) { console.error("刷新資料失敗"); }
+                } catch(e) {}
                 document.getElementById('mHalf').style.display='none'; 
             }
         }
 
-        // 【核心修正：渲染真正的 Transactions】
         function renderTransactions() {
             const history = ALL_DATA.history || [];
             document.getElementById('tList').innerHTML = history.map(t => {
                 const isPlus = parseFloat(t.amt) >= 0;
-                return `
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b style="font-size:18px;">${t.item}</b>
-                        <span class="tx-amt ${isPlus ? 'tx-up' : 'tx-down'}">
-                            ${isPlus ? '+' : ''}${fmt(t.amt)}
-                        </span>
-                    </div>
-                    <div style="font-size:14px; color:#888; margin:8px 0;">餘額：$${fmt(t.bal)}</div>
-                    <div style="font-size:11px; color:#555; line-height:1.4;">
-                        時間：${t.time} ${t.note ? '<br>備註：' + t.note : ''}
-                    </div>
-                </div>`;
-            }).join('') || '<p style="text-align:center; opacity:0.5; margin-top:50px;">目前尚無交易紀錄</p>';
+                return `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><b style="font-size:18px;">${t.item}</b><span class="tx-amt ${isPlus ? 'tx-up' : 'tx-down'}">${isPlus ? '+' : ''}${fmt(t.amt)}</span></div><div style="font-size:14px; color:#888; margin:8px 0;">餘額：$${fmt(t.bal)}</div><div style="font-size:11px; color:#555; line-height:1.4;">時間：${t.time}${t.note ? '<br>備註：' + t.note : ''}</div></div>`;
+            }).join('') || '<p style="text-align:center; opacity:0.5; margin-top:50px;">尚無紀錄</p>';
         }
 
         function renderLoans() {
             const loans = ALL_DATA.loans.filter(l => l.uid === user.id && l.status === "還款中");
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const today = new Date(); today.setHours(0, 0, 0, 0);
 
             document.getElementById('loanList').innerHTML = loans.map((l, i) => {
                 const principal = l.total - l.paid;
-                const expDate = new Date(l.expiry);
-                expDate.setHours(0, 0, 0, 0);
-                
-                let curOverdueFee = 0;
-                let curOverdueDays = 0;
-
-                if (today > expDate) {
-                    const diff = Math.abs(today - expDate);
-                    curOverdueDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                    curOverdueFee = curOverdueDays * 10;
-                }
-
+                const expDate = new Date(l.expiry); expDate.setHours(0, 0, 0, 0);
+                let curOverdueFee = (today > expDate) ? Math.ceil(Math.abs(today - expDate) / (1000 * 60 * 60 * 24)) * 10 : 0;
                 const due = principal + curOverdueFee;
 
                 return `
                 <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b style="font-size:18px;">${l.item}</b> 
-                        <b style="color:var(--pink); font-size:26px;">$${fmt(due)}</b>
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div><b style="font-size:18px;">${l.item}</b><div style="font-size:12px; color:#666; margin-top:4px;">原始總額 $${fmt(l.total)}</div></div>
+                        <div style="text-align:right;">
+                            <b style="color:var(--pink); font-size:26px;">$${fmt(due)}</b>
+                            <div style="font-size:11px; color:var(--green); font-weight:bold;">已還 $${fmt(l.paid)}</div>
+                        </div>
                     </div>
-                    <div style="font-size:12px; color:#666; margin-top:5px;">
-                        本金 $${fmt(principal)} ${curOverdueFee > 0 ? `<span style="color:var(--red); font-weight:bold;"> + 罰金 $${fmt(curOverdueFee)}</span>` : ''}
-                    </div>
+                    <div style="font-size:12px; color:#888; margin-top:10px; padding-top:10px; border-top:1px solid #222;">未還本金 $${fmt(principal)} ${curOverdueFee > 0 ? `<span style="color:var(--red); font-weight:bold;"> + 罰金 $${fmt(curOverdueFee)}</span>` : ''}</div>
                     <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">展開明細</button>
                     <div id="ld${i}" class="detail">
                         <div class="detail-row"><div class="detail-label">還款期限</div><div class="detail-val">${cleanD(l.expiry)}</div></div>
-                        <div class="detail-row"><div class="detail-label">逾期狀態</div><div class="detail-val" style="color:${curOverdueDays > 0 ? 'var(--red)' : 'var(--green)'}">${curOverdueDays > 0 ? '⚠️ 已逾期 ' + curOverdueDays + ' 天' : '正常'}</div></div>
+                        <div class="detail-row"><div class="detail-label">逾期狀態</div><div class="detail-val" style="color:${curOverdueFee > 0 ? 'var(--red)' : 'var(--green)'}">${curOverdueFee > 0 ? '⚠️ 已逾期' : '正常'}</div></div>
                     </div>
                 </div>`;
             }).join('') || '<p style="text-align:center; opacity:0.5; margin-top:50px;">無欠款紀錄</p>';
         }
 
         function renderCoupons() {
-            // 對齊後端欄位 c.owner
             const cp = ALL_DATA.coupons.filter(c => c.owner === user.id && c.status === "未使用");
-            document.getElementById('cList').innerHTML = cp.map(c => `
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b>${c.name}</b>
-                        <button class="btn" style="background:var(--green); font-size:14px; width:auto; padding:10px 20px;" onclick="showQR('CP', '${c.id}')">使用</button>
-                    </div>
-                </div>`).join('') || '<p style="text-align:center; opacity:0.5; margin-top:50px;">目前沒有可用的優惠券</p>';
+            document.getElementById('cList').innerHTML = cp.map(c => `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><b>${c.name}</b><button class="btn" style="background:var(--green); font-size:14px; width:auto; padding:10px 20px;" onclick="showQR('CP', '${c.id}')">使用</button></div></div>`).join('') || '<p style="text-align:center; opacity:0.5; margin-top:50px;">無優惠券</p>';
         }
 
         function showQR(type, val){
-            qrc.clear(); 
-            qrc.makeCode(type === 'USER' ? val : "CP|" + val); 
+            qrc.clear(); qrc.makeCode(type === 'USER' ? val : "CP|" + val); 
             document.getElementById('qrTitle').innerText = (type === 'USER') ? "個人識別碼" : "核銷碼";
             document.getElementById('qrModal').style.display='flex';
         }
