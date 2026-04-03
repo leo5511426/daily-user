@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑管理後台 v21.0</title>
+    <title>小佑管理後台 v23.5</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --pink: #db2777; --orange: #f59e0b; }
@@ -14,7 +14,7 @@
         .menu-btn:active { transform: scale(0.95); background: #f1f5f9; }
         .full-btn { grid-column: span 2; background: var(--primary); color: white; border: none; font-size: 1.1rem; }
         .coupon-btn { background: var(--pink); color: white; border: none; }
-        .issue-btn { background: var(--orange); color: white; border: none; } /* 新增發放按鈕樣式 */
+        .issue-btn { background: var(--orange); color: white; border: none; }
         
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:5000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; width: 92%; max-width: 400px; border-radius: 30px; padding: 25px; box-sizing: border-box; text-align: center; }
@@ -27,19 +27,19 @@
 </head>
 <body>
 
-    <div id="syncMask" class="mask"><div id="loaderText"><b>📡 正在讀取資料庫...</b></div></div>
+    <div id="syncMask" class="mask"><div id="loaderText"><b>📡 數據同步中...</b></div></div>
 
     <div class="dashboard">
         <h2 style="margin:0;">小佑管理工作台</h2>
-        <p style="margin:5px 0 0; opacity:0.8; font-size:11px;">v21.0 發放與核銷整合版</p>
+        <p style="margin:5px 0 0; opacity:0.8; font-size:11px;">v23.5 智能核銷整合版</p>
     </div>
 
     <div class="menu-grid">
-        <button class="menu-btn full-btn" onclick="startScan()">📷 掃描會員 QR</button>
+        <button class="menu-btn full-btn" onclick="startScan()">📷 啟動智能掃描 (會員/券)</button>
         <div class="menu-btn" onclick="openWizard('add')">💰 點數加值</div>
         <div class="menu-btn" onclick="openWizard('sub')">🛒 點數扣款</div>
         <button class="menu-btn full-btn issue-btn" onclick="openWizard('issue')">🎁 發放優惠券</button>
-        <button class="menu-btn full-btn coupon-btn" onclick="openWizard('coupon')">🎫 優惠券核銷</button>
+        <button class="menu-btn full-btn coupon-btn" onclick="openWizard('coupon')">🎫 手動核銷優惠券</button>
         <div class="menu-btn" onclick="openWizard('loan')">🏦 借款撥款</div>
         <div class="menu-btn" onclick="openWizard('pay')">🤝 還款作業</div>
     </div>
@@ -54,7 +54,7 @@
 
     <div id="qrModal" class="modal">
         <div class="modal-content" style="padding:15px;">
-            <h3 style="margin-top:0;">請對準用戶 QR</h3>
+            <h3 style="margin-top:0;">請對準 QR Code</h3>
             <div id="qr-reader"></div>
             <button class="btn-main" style="background:#666;" onclick="closeQr()">關閉</button>
         </div>
@@ -62,7 +62,7 @@
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwekS9-_PltrB-Fnzpiv-LSeOLnT0coD7HHVd2JYxbs2c3X4viBTzc-kSKdZPElRopB/exec"; 
-        let U_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {}, html5QrCode = null;
+        let U_DB = [], CP_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {}, html5QrCode = null;
 
         window.onload = refreshData;
 
@@ -70,6 +70,7 @@
             try {
                 const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify({action:'fetchData', type:'users', uid:'ADMIN'})}).then(r=>r.json());
                 U_DB = r.list;
+                CP_DB = r.coupons || []; 
                 document.getElementById('syncMask').style.display = 'none';
             } catch(e) { alert("同步失敗，請檢查網址或權限"); }
         }
@@ -78,14 +79,40 @@
             document.getElementById('qrModal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
-                const u = U_DB.find(i => String(i.id).trim() === String(txt).trim());
+                let scanned = String(txt).trim();
+                // 自動處理帶有 CP| 前綴的條碼
+                let cleanId = scanned.startsWith("CP|") ? scanned.split("|")[1] : scanned;
+
+                // 1. 優先識別是否為優惠券 ID
+                const cp = CP_DB.find(c => String(c.id) === cleanId);
+                if(cp) {
+                    html5QrCode.stop().then(() => {
+                        document.getElementById('qrModal').style.display = 'none';
+                        if(cp.status === "已核銷") {
+                            alert("❌ 此券已於先前核銷過！");
+                            return;
+                        }
+                        if(confirm(`🎫 偵測到優惠券！\n券ID: ${cp.id}\n持有人: ${cp.owner}\n是否立即核銷？`)) {
+                            FORM = { uid: cp.owner, note: cp.id };
+                            CUR_MODE = 'coupon';
+                            submitFinal();
+                        }
+                    });
+                    return;
+                }
+
+                // 2. 識別是否為會員 ID
+                const u = U_DB.find(i => String(i.id).trim() === cleanId || String(i.id).trim() === scanned);
                 if(u) {
                     html5QrCode.stop().then(() => {
                         document.getElementById('qrModal').style.display = 'none';
-                        alert("辨識成功: " + u.name);
+                        alert("👤 辨識成功: " + u.name);
                         openWizard('sub', u.id); 
                     });
+                    return;
                 }
+                
+                alert("⚠️ 無法辨識此內容: " + scanned);
             }).catch(e => { alert("相機啟動失敗"); closeQr(); });
         }
 
@@ -101,9 +128,8 @@
             loan:[{t:"選擇客戶",f:"uid",type:"user"},{t:"借款金額",f:"amt",type:"number"},{t:"項目名稱",f:"note",type:"text"}],
             pay: [{t:"選擇客戶",f:"uid",type:"user"},{t:"收現金額",f:"cash",type:"number"},{t:"扣點金額",f:"bal",type:"number"}],
             coupon: [{t:"選擇持有者",f:"uid",type:"user"},{t:"輸入券 ID",f:"note",type:"text"}],
-            // 新增發放流程
             issue: [
-                {t:"選擇發放對象",f:"uid",type:"user"},
+                {t:"發放對象",f:"uid",type:"user"},
                 {t:"優惠券名稱",f:"title",type:"text"},
                 {t:"內容說明",f:"note",type:"text"},
                 {t:"到期日 (YYYY/MM/DD)",f:"expiry",type:"text"}
@@ -124,7 +150,7 @@
                 html += `<select id="win" class="wiz-input">${U_DB.map(u=>`<option value="${u.id}">${u.name} (餘:${u.bal})</option>`).join('')}</select>`;
             } else {
                 let placeholder = "請輸入內容...";
-                if(s.f === 'expiry') placeholder = "例如: 2026/12/31";
+                if(s.f === 'expiry') placeholder = "例如: 2026/05/18";
                 html += `<input type="${s.type}" id="win" class="wiz-input" autofocus placeholder="${placeholder}">`;
             }
             document.getElementById('wizBody').innerHTML = html;
