@@ -2,92 +2,232 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小佑系統 - 管理後台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小佑行動會員 - v32.9</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .admin-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        h2 { border-bottom: 2px solid #FF8FA3; padding-bottom: 10px; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 14px; color: #666; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn-submit { width: 100%; padding: 15px; background: #FF8FA3; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .btn-submit:active { background: #ff758f; }
+        :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: var(--bg); color: #fff; margin: 0; font-weight: 900; }
+        
+        /* 頁面結構 */
+        .page { width: 100vw; min-height: 100vh; padding: 100px 20px 130px; box-sizing: border-box; display: none; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #282828; }
+        
+        /* 按鈕與輸入框 */
+        .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; margin-top: 10px; cursor: pointer; }
+        .btn-small { width: auto; padding: 8px 15px; font-size: 12px; border-radius: 8px; background: #333; color: #aaa; border: none; margin-top: 10px; cursor: pointer; }
+        
+        /* 導航列 */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: #0a0a0a; display: flex; border-top: 1px solid #222; z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 13px; cursor: pointer; }
+        .nav-item.active { color: var(--pink); }
+
+        /* 明細展開樣式 */
+        .detail { max-height: 0; overflow: hidden; transition: 0.3s; font-size: 14px; color: #888; }
+        .detail.show { max-height: 500px; padding-top: 15px; border-top: 1px solid #222; margin-top: 15px; }
+        .detail-row { display: flex; margin-bottom: 6px; line-height: 1.4; }
+        .detail-label { width: 75px; color: #666; flex-shrink: 0; }
+        .detail-val { color: #bbb; }
+
+        /* 讀取遮罩 */
+        .mask-full, .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
+        .mask-full { background:var(--bg); }
+        .mask-half { background:rgba(0,0,0,0.7); }
+        .spinner { border: 4px solid #333; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        #qrModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; flex-direction:column; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
+    <div id="mFull" class="mask-full"><div class="spinner"></div><p>連線通訊中...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>更新最新帳務...</p></div>
 
-<div class="admin-card">
-    <h2>新增借款項目</h2>
-    
-    <div class="form-group">
-        <label>對象 ID (例如: user01)</label>
-        <input type="text" id="loan_uid" placeholder="請輸入使用者 ID">
+    <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
+        <h1 style="color:var(--pink); font-size:32px; margin-bottom:5px;">小佑行動會員</h1>
+        <p style="color:#555; margin-bottom:30px;">V32.9 穩定版</p>
+        <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="帳號 / ID">
+        <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="密碼">
+        <button class="btn" onclick="login()">登入系統</button>
     </div>
 
-    <div class="form-group">
-        <label>借款項目名稱</label>
-        <input type="text" id="loan_item" placeholder="例如: 蝦皮訂單、午餐借支">
+    <div id="appView" style="display:none;">
+        <div id="p0" class="page" style="display:block;">
+            <h2 style="font-size:28px;">你好，<span id="uName" style="color:var(--pink);">...</span></h2>
+            <div class="card" style="text-align:center; padding:40px 20px;">
+                <div style="font-size:14px; color:#666; margin-bottom:10px;">可用餘額 (點數)</div>
+                <div style="font-size:55px; color:var(--pink); font-weight:900;">$ <span id="uBal">0</span></div>
+            </div>
+            <button class="btn" onclick="showQR('USER', user.id)">📘 出示個人識別碼</button>
+        </div>
+
+        <div id="p1" class="page">
+            <h2 style="margin-bottom:20px;">歷史紀錄</h2>
+            <div id="tList"></div>
+        </div>
+
+        <div id="p4" class="page">
+            <h2 style="margin-bottom:20px;">待還帳務</h2>
+            <div id="loanList"></div>
+        </div>
+
+        <div id="p2" class="page">
+            <h2 style="margin-bottom:20px;">我的優惠</h2>
+            <div id="cList"></div>
+        </div>
+
+        <div id="p3" class="page">
+            <h2>系統設定</h2>
+            <div class="card" style="color:#888; font-size:14px;">
+                系統版本：v32.9<br>
+                最後同步：<span id="syncTime">尚未同步</span>
+            </div>
+            <button class="btn" style="background:var(--red);" onclick="location.reload()">登出並清除快取</button>
+        </div>
+
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="go(0)">首頁</div>
+            <div class="nav-item" onclick="go(1)">紀錄</div>
+            <div class="nav-item" onclick="go(4)">借款</div>
+            <div class="nav-item" onclick="go(2)">優惠</div>
+            <div class="nav-item" onclick="go(3)">設定</div>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>借款本金 (金額)</label>
-        <input type="number" id="loan_total" placeholder="0">
+    <div id="qrModal">
+        <div style="background:#fff; padding:30px; border-radius:25px; text-align:center; width:280px;">
+            <p id="qrTitle" style="color:#000; font-weight:bold; margin-top:0; font-size:18px;"></p>
+            <div id="qrcode" style="display:flex; justify-content:center; margin:20px 0;"></div>
+            <button class="btn" style="background:var(--red); margin-top:10px;" onclick="document.getElementById('qrModal').style.display='none'">關閉視窗</button>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>借款日期</label>
-        <input type="date" id="loan_start"> </div>
+    <script>
+        const GAS = "https://script.google.com/macros/s/AKfycbzDV8UV6Nj2JMczwe52jgeFKD2sfX42xreJA3XwMGnlVtWXRacLXh3v-tieCQIF2uOe/exec"; 
+        let user = null;
+        let ALL_DATA = null;
+        const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
-    <div class="form-group">
-        <label>還款期限</label>
-        <input type="date" id="loan_expiry"> </div>
-
-    <button class="btn-submit" onclick="submitLoan()">確認新增借款</button>
-</div>
-
-<script>
-    const GAS = "您的_GAS_部署網址";
-
-    // 自動預填今日日期
-    window.onload = () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('loan_start').value = today;
-    };
-
-    async function submitLoan() {
-        const data = {
-            uid: document.getElementById('loan_uid').value.trim(),
-            item: document.getElementById('loan_item').value.trim(),
-            total: document.getElementById('loan_total').value,
-            loanDate: document.getElementById('loan_start').value,
-            expiry: document.getElementById('loan_expiry').value,
-        };
-
-        if(!data.uid || !data.item || !data.total || !data.expiry) {
-            alert("請填寫所有欄位！");
-            return;
+        function safeNum(v) { return isNaN(parseFloat(v)) ? 0 : parseFloat(v); }
+        function fmt(n) { return safeNum(n).toLocaleString(); }
+        
+        // 處理日期顯示格式
+        function cleanD(s) {
+            if(!s || s==="null" || s==="undefined") return "無期限";
+            return s; // 後端已統一格式 yyyy/MM/dd
         }
 
-        if(!confirm(`確認要幫 ${data.uid} 新增一筆 $${data.total} 的借款嗎？`)) return;
+        async function login(){
+            const inputAcc = document.getElementById('acc').value.trim();
+            const inputPw = document.getElementById('pw').value.trim();
+            if(!inputAcc || !inputPw) return alert("請輸入帳號密碼");
 
-        try {
-            const res = await fetch(GAS, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'addLoan', data: data })
-            }).then(r => r.json());
+            document.getElementById('mFull').style.display='flex';
+            try {
+                const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:inputAcc})}).then(r=>r.json());
+                if(res.success){
+                    const found = res.list.find(u => (u.id === inputAcc || u.account === inputAcc));
+                    if(found && String(found.pw) === inputPw){
+                        user = found; 
+                        ALL_DATA = res;
+                        document.getElementById('uName').innerText = user.name;
+                        document.getElementById('uBal').innerText = fmt(user.bal);
+                        document.getElementById('loginView').style.display='none'; 
+                        document.getElementById('appView').style.display='block'; 
+                    } else { alert("帳號或密碼錯誤"); }
+                }
+            } catch(e) { alert("無法連線到伺服器"); }
+            document.getElementById('mFull').style.display='none';
+        }
 
-            if(res.success) {
-                alert("✅ 新增成功！");
-                location.reload(); // 重新整理清空欄位
-            } else {
-                alert("❌ 失敗：" + res.message);
+        async function go(idx){
+            document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+            document.getElementById('p'+idx).style.display='block';
+            
+            const navs = document.querySelectorAll('.nav-item');
+            navs.forEach((n, i) => i === idx ? n.classList.add('active') : n.classList.remove('active'));
+
+            if(idx!==0 && idx!==3){ 
+                document.getElementById('mHalf').style.display='flex'; 
+                try {
+                    const res = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:user.id})}).then(r=>r.json());
+                    if(res.success) {
+                        ALL_DATA = res;
+                        const me = res.list.find(u => u.id === user.id);
+                        document.getElementById('uBal').innerText = fmt(me.bal);
+                        document.getElementById('syncTime').innerText = new Date().toLocaleTimeString();
+                        
+                        if(idx===1) renderTransactions();
+                        if(idx===4) renderLoans();
+                        if(idx===2) renderCoupons();
+                    }
+                } catch(e) { console.error(e); }
+                document.getElementById('mHalf').style.display='none'; 
             }
-        } catch(e) {
-            alert("連線異常，請檢查網路或 GAS 網址");
         }
-    }
-</script>
 
+        // 渲染所有歷史紀錄
+        function renderTransactions(){
+            const myHistory = ALL_DATA.loans.filter(l => l.uid === user.id);
+            document.getElementById('tList').innerHTML = myHistory.reverse().map(l => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b style="font-size:18px;">${l.item}</b>
+                        <span style="color:${l.status==='已結清'?'var(--green)':'var(--accent)'}; font-size:11px; border:1px solid; padding:2px 8px; border-radius:8px;">${l.status}</span>
+                    </div>
+                    <div style="font-size:24px; color:var(--pink); margin-top:10px; font-weight:900;">$${fmt(l.total)}</div>
+                    <div style="font-size:12px; color:#555; margin-top:8px;">交易日期：${cleanD(l.loanDate)}</div>
+                </div>`).join('') || '<p style="text-align:center; opacity:0.5; padding:20px;">目前尚無紀錄</p>';
+        }
+
+        // 渲染借款與罰金
+        function renderLoans(){
+            const myLoans = ALL_DATA.loans.filter(l => l.uid === user.id && l.status === "還款中");
+            document.getElementById('loanList').innerHTML = myLoans.map((l,i)=>{
+                const principal = l.total - l.paid;
+                const totalDue = principal + l.overdueFee;
+                return `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                        <b style="font-size:20px;">${l.item}</b> 
+                        <b style="color:var(--pink); font-size:28px;">$${fmt(totalDue)}</b>
+                    </div>
+                    <div style="font-size:13px; color:#666; margin-top:8px;">
+                        未還本金 $${fmt(principal)} 
+                        ${l.overdueFee > 0 ? `<span style="color:var(--red); font-weight:bold;"> + 罰金 $${fmt(l.overdueFee)}</span>` : ''}
+                    </div>
+                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">查看還款詳情</button>
+                    <div id="ld${i}" class="detail">
+                        <div class="detail-row"><div class="detail-label">還款期限</div><div class="detail-val">${cleanD(l.expiry)}</div></div>
+                        <div class="detail-row">
+                            <div class="detail-label">逾期狀態</div>
+                            <div class="detail-val" style="color:${l.overdueDays>0?'var(--red)':'var(--green)'}">
+                                ${l.overdueDays>0 ? '⚠️ 已逾期 ' + l.overdueDays + ' 天' : '正常'}
+                            </div>
+                        </div>
+                        <div class="detail-row"><div class="detail-label">借款日期</div><div class="detail-val">${cleanD(l.loanDate)}</div></div>
+                    </div>
+                </div>`;
+            }).join('') || '<p style="text-align:center; opacity:0.5; padding:40px;">恭喜！目前無待還帳務</p>';
+        }
+
+        function renderCoupons(){
+            const myCP = ALL_DATA.coupons.filter(c => c.owner === user.id && c.status === "未使用");
+            document.getElementById('cList').innerHTML = myCP.map(c => `
+                <div class="card">
+                    <b style="color:var(--pink); font-size:18px;">${c.name}</b>
+                    <p style="font-size:14px; color:#888; margin:10px 0;">${c.desc}</p>
+                    <div style="font-size:11px; color:#555;">有效期至：${cleanD(c.exp)}</div>
+                    <button class="btn" style="background:var(--green); font-size:16px; padding:12px;" onclick="showQR('CP', '${c.id}')">使用優惠券</button>
+                </div>`).join('') || '<p style="text-align:center; opacity:0.5; padding:20px;">暫無可用優惠</p>';
+        }
+
+        function showQR(type, val){
+            qrc.clear(); 
+            qrc.makeCode(type === 'USER' ? val : "CP|" + val); 
+            document.getElementById('qrTitle').innerText = (type === 'USER') ? "個人身分識別" : "優惠核銷碼";
+            document.getElementById('qrModal').style.display='flex';
+        }
+    </script>
 </body>
 </html>
