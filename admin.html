@@ -3,246 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑日常 | 標籤化管理台</title>
+    <title>小佑行動服務 | 導航管理系統</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
             --primary: #3b82f6;
             --success: #10b981;
             --warning: #f59e0b;
-            --danger: #ef4444;
             --dark: #1e293b;
-            --gray: #f1f5f9;
+            --bg: #f8fafc;
         }
-        body { font-family: 'PingFang TC', sans-serif; background: #fff; margin: 0; padding: 0; padding-bottom: 80px; overflow-x: hidden; }
+        body { font-family: 'PingFang TC', sans-serif; background: var(--bg); margin: 0; overflow-x: hidden; }
 
-        /* 頂部數據列 */
-        .header { background: var(--dark); color: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; }
-        .stats-row { display: flex; justify-content: space-between; font-size: 13px; opacity: 0.9; margin-top: 5px; }
-        .stats-row b { color: var(--warning); }
+        /* 頂部看板 */
+        .dashboard-header { background: var(--dark); color: white; padding: 25px 20px; border-radius: 0 0 25px 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .stats { display: flex; gap: 20px; margin-top: 10px; font-size: 14px; opacity: 0.8; }
+        .stats b { color: var(--warning); }
 
-        /* 分區內容 */
-        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 卡片樣式 */
-        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #eee; }
-        h3 { margin: 0 0 15px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
-
-        /* 表單設計 */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: #64748b; font-weight: bold; }
-        select, input { 
-            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; 
-            box-sizing: border-box; font-size: 1rem; background: var(--gray);
+        /* 功能網格 */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+        .menu-item { 
+            background: white; padding: 25px 15px; border-radius: 20px; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s;
+            border: 1px solid #eee;
         }
+        .menu-item:active { transform: scale(0.95); background: #f1f5f9; }
+        .menu-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+        .menu-text { font-weight: bold; color: var(--dark); font-size: 15px; }
 
-        /* 底部導覽列 */
-        .nav-bar { 
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; 
-            background: #fff; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); border-top: 1px solid #eee; z-index: 1000;
+        /* 導引彈窗 (Wizard Overlay) */
+        .wizard-overlay { 
+            display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+            background:white; z-index:2000; flex-direction:column;
         }
-        .nav-item { 
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            font-size: 11px; color: #94a3b8; cursor: pointer; transition: 0.2s;
+        .wizard-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .wizard-body { flex: 1; padding: 30px 20px; display: flex; flex-direction: column; justify-content: center; }
+        .step-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: var(--dark); }
+        
+        /* 輸入元件美化 */
+        .wizard-input { 
+            width: 100%; padding: 15px; font-size: 1.2rem; border-radius: 12px; 
+            border: 2px solid #e2e8f0; background: #f8fafc; box-sizing: border-box;
         }
-        .nav-item.active { color: var(--primary); font-weight: bold; }
-        .nav-icon { font-size: 20px; margin-bottom: 4px; }
+        .wizard-input:focus { outline: none; border-color: var(--primary); }
 
-        /* 按鈕 */
-        .btn { 
-            width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: bold; 
-            font-size: 1rem; color: #fff; cursor: pointer; margin-top: 10px;
-        }
+        /* 按鈕控制 */
+        .wizard-footer { padding: 20px; display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 18px; border: none; border-radius: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-next { background: var(--primary); color: white; }
+        .btn-cancel { background: #f1f5f9; color: #64748b; }
 
-        .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:2000; flex-direction:column; justify-content:center; align-items:center; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loading-mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:3000; justify-content:center; align-items:center; flex-direction:column; }
     </style>
 </head>
 <body>
-    <div id="loader" class="mask"><div class="spinner"></div><p>同步中...</p></div>
 
-    <div class="header">
-        <div style="font-size: 1.1rem; font-weight: 800;">Xiao You Admin v13.5</div>
-        <div class="stats-row">
-            <span>餘額總計: <b id="statBal">$0</b></span>
+    <div id="loading" class="loading-mask"><p>系統處理中...</p></div>
+
+    <div class="dashboard-header">
+        <div style="font-size: 1.3rem; font-weight: 800;">Xiao You Admin</div>
+        <div class="stats">
+            <span>餘額總額: <b id="statBal">$0</b></span>
             <span>待收借款: <b id="statLoans">$0</b></span>
         </div>
     </div>
 
-    <div id="tab-wallet" class="tab-content active">
-        <div class="card" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
-            <div id="qrDiv" style="width:100%; display:none; margin-bottom:15px; border-radius:12px; overflow:hidden;"></div>
-            <button class="btn" style="background: var(--dark);" onclick="startScan()">📷 開啟相機掃描會員</button>
+    <div class="menu-grid">
+        <div class="menu-item" onclick="startWizard('add')">
+            <span class="menu-icon">💰</span><span class="menu-text">點數存入</span>
         </div>
-
-        <div class="card">
-            <h3>💳 錢包加扣款</h3>
-            <div class="form-group">
-                <label>選擇對象</label>
-                <select id="tUser"><option value="">-- 請掃描或選擇 --</option></select>
-            </div>
-            <div class="form-group">
-                <label>作業類型</label>
-                <select id="tType">
-                    <option value="add">➕ 存入點數 (加值)</option>
-                    <option value="sub">➖ 支出點數 (扣款)</option>
-                    <option value="ref">↩️ 退款處理</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>變動金額</label>
-                <input type="number" id="tAmt" placeholder="請輸入金額">
-            </div>
-            <div class="form-group">
-                <label>備註原因</label>
-                <input type="text" id="tNote" placeholder="例如：合作獎勵">
-            </div>
-            <button class="btn" style="background: var(--primary);" onclick="doWallet()">確認提交變動</button>
+        <div class="menu-item" onclick="startWizard('sub')">
+            <span class="menu-icon">🛒</span><span class="menu-text">點數扣款</span>
+        </div>
+        <div class="menu-item" onclick="startWizard('loan')">
+            <span class="menu-icon">🏦</span><span class="menu-text">撥款作業</span>
+        </div>
+        <div class="menu-item" onclick="startWizard('pay')">
+            <span class="menu-icon">🤝</span><span class="menu-text">歸還借款</span>
+        </div>
+        <div class="menu-item" onclick="startWizard('coupon')">
+            <span class="menu-icon">🎟️</span><span class="menu-text">發送優惠券</span>
+        </div>
+        <div class="menu-item" onclick="startScan()">
+            <span class="menu-icon">📷</span><span class="menu-text">核銷/識別</span>
         </div>
     </div>
 
-    <div id="tab-loan" class="tab-content">
-        <div class="card">
-            <h3>💰 撥款作業</h3>
-            <div class="form-group">
-                <label>借款人</label>
-                <select id="lUser"><option value="">-- 選擇會員 --</option></select>
-            </div>
-            <div class="form-group">
-                <label>借款項目</label>
-                <input type="text" id="lItem" placeholder="例如：午餐費">
-            </div>
-            <div class="form-group">
-                <label>本金金額</label>
-                <input type="number" id="lAmt" placeholder="0">
-            </div>
-            <div class="form-group">
-                <label>還款期限</label>
-                <input type="date" id="lDeadline">
-            </div>
-            <button class="btn" style="background: var(--dark);" onclick="doLoan()">執行撥款</button>
-        </div>
+    <div id="qrDiv" style="width:100%; display:none; padding:10px; box-sizing:border-box;"></div>
 
-        <div class="card" style="border-top: 4px solid var(--success);">
-            <h3>✅ 還款處理</h3>
-            <div class="form-group">
-                <label>選擇待還單據</label>
-                <select id="pLoan" onchange="autoFill()"><option value="">-- 載入中 --</option></select>
-            </div>
-            <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:1;">
-                    <label>實收現金</label>
-                    <input type="number" id="pCash">
-                </div>
-                <div class="form-group" style="flex:1;">
-                    <label>餘額抵扣</label>
-                    <input type="number" id="pBal" value="0">
-                </div>
-            </div>
-            <button class="btn" style="background: var(--success);" onclick="doPay()">提交還款確認</button>
+    <div id="wizard" class="wizard-overlay">
+        <div class="wizard-header">
+            <span id="wizardTitle" style="font-weight:bold;">作業中</span>
+            <span onclick="closeWizard()" style="cursor:pointer; font-size:20px;">✕</span>
         </div>
-    </div>
-
-    <div id="tab-coupon" class="tab-content">
-        <div class="card">
-            <h3>🎟️ 優惠券系統</h3>
-            <div class="form-group">
-                <label>發送對象</label>
-                <select id="cUser"><option value="">-- 單人發送 --</option></select>
+        <div class="wizard-body" id="wizardBody">
             </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="cAll"> 廣播給全體會員</label>
-            </div>
-            <div class="form-group">
-                <label>優惠券名稱</label>
-                <input type="text" id="cName" placeholder="例如：飲料兌換券">
-            </div>
-            <button class="btn" style="background: var(--warning);" onclick="doCoupon()">確認發送</button>
-        </div>
-    </div>
-
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('wallet', this)">
-            <div class="nav-icon">💳</div><div>錢包/掃描</div>
-        </div>
-        <div class="nav-item" onclick="switchTab('loan', this)">
-            <div class="nav-icon">💰</div><div>借還/撥款</div>
-        </div>
-        <div class="nav-item" onclick="switchTab('coupon', this)">
-            <div class="nav-icon">🎟️</div><div>優惠券</div>
+        <div class="wizard-footer">
+            <button class="btn btn-cancel" onclick="closeWizard()">取消</button>
+            <button class="btn btn-next" id="nextBtn" onclick="nextStep()">下一步</button>
         </div>
     </div>
 
     <script>
         const GAS = "https://script.google.com/macros/s/AKfycbwm8IJGX_r1c_yU1Udk4kcO3QFuoWGxsL0qPeEyv2qx-yRISy2_96h5XMfiNkJxbUP0/exec";
         const scanner = new Html5Qrcode("qrDiv");
-        const loader = document.getElementById('loader');
-
-        // 標籤切換邏輯
-        function switchTab(tabId, el) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            el.classList.add('active');
-            window.scrollTo(0,0);
-        }
+        let allUsers = [], allLoans = [];
+        let currentMode = "", currentStep = 0, formData = {};
 
         async function init() {
-            loader.style.display='flex';
-            try {
-                const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-                let totalBal = 0;
-                u.list.forEach(i => {
-                    totalBal += parseFloat(i.bal || 0);
-                    document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`);
-                });
-                document.getElementById('statBal').innerText = `$${totalBal}`;
-
-                const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-                let totalDebt = 0;
-                const loanSel = document.getElementById('pLoan');
-                loanSel.innerHTML = '<option value="">-- 選擇借單 --</option>';
-                l.list.forEach(i => {
-                    totalDebt += i.remain;
-                    loanSel.innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (欠$${i.remain})</option>`;
-                });
-                document.getElementById('statLoans').innerText = `$${totalDebt}`;
-            } catch (e) { console.log(e); }
-            loader.style.display='none';
+            const resU = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
+            allUsers = resU.list;
+            const resL = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
+            allLoans = resL.list;
+            
+            document.getElementById('statBal').innerText = "$" + allUsers.reduce((a,b)=>a+parseFloat(b.bal),0);
+            document.getElementById('statLoans').innerText = "$" + allLoans.reduce((a,b)=>a+b.remain,0);
         }
 
-        async function api(body) {
-            loader.style.display='flex';
-            try {
-                const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
-                alert(res.message); if(res.success) location.reload();
-            } catch (e) { alert("通訊出錯"); }
-            loader.style.display='none';
+        // 引導流程配置
+        const flow = {
+            add: [
+                { t: "選擇會員", f: "uid", type: "select", opt: () => allUsers.map(u=>({v:u.id, n:u.name})) },
+                { t: "存入金額", f: "amt", type: "number" },
+                { t: "備註(選填)", f: "note", type: "text" }
+            ],
+            sub: [
+                { t: "選擇會員", f: "uid", type: "select", opt: () => allUsers.map(u=>({v:u.id, n:u.name})) },
+                { t: "扣除金額", f: "amt", type: "number" },
+                { t: "備註(選填)", f: "note", type: "text" }
+            ],
+            loan: [
+                { t: "借款人", f: "uid", type: "select", opt: () => allUsers.map(u=>({v:u.id, n:u.name})) },
+                { t: "借款項目", f: "item", type: "text" },
+                { t: "本金金額", f: "amt", type: "number" },
+                { t: "期限", f: "date", type: "date" }
+            ],
+            pay: [
+                { t: "選擇借單", f: "loanId", type: "select", opt: () => allLoans.map(l=>({v:l.id, n:`${l.uid} | ${l.item} (欠$${l.remain})`, rem: l.remain, uid: l.uid})) },
+                { t: "實收現金", f: "cash", type: "number" },
+                { t: "抵扣點數", f: "bal", type: "number" }
+            ],
+            coupon: [
+                { t: "發送券名", f: "name", type: "text" },
+                { t: "對象", f: "uid", type: "select", opt: () => [{v:"ALL", n:"全體會員"}, ...allUsers.map(u=>({v:u.id, n:u.name}))] }
+            ]
+        };
+
+        function startWizard(mode) {
+            currentMode = mode; currentStep = 0; formData = {};
+            document.getElementById('wizard').style.display = "flex";
+            renderStep();
         }
 
-        function doWallet() { api({ action:'adminAction', type:tType.value, uid:tUser.value, amount:tAmt.value, note:tNote.value }); }
-        function doLoan() { api({ action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value }); }
-        function autoFill() { const opt = pLoan.selectedOptions[0]; if(opt.dataset.rem) pCash.value = opt.dataset.rem; }
-        function doPay() { 
-            const opt = pLoan.selectedOptions[0];
-            api({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value }); 
+        function renderStep() {
+            const step = flow[currentMode][currentStep];
+            document.getElementById('wizardTitle').innerText = `步驟 ${currentStep + 1} / ${flow[currentMode].length}`;
+            let html = `<div class="step-title">${step.t}</div>`;
+            
+            if(step.type === "select") {
+                html += `<select id="wizIn" class="wizard-input">`;
+                step.opt().forEach(o => html += `<option value="${o.v}" data-rem="${o.rem||''}" data-uid="${o.uid||''}">${o.n}</option>`);
+                html += `</select>`;
+            } else {
+                html += `<input type="${step.type}" id="wizIn" class="wizard-input" placeholder="請輸入...">`;
+            }
+            document.getElementById('wizardBody').innerHTML = html;
+            document.getElementById('nextBtn').innerText = (currentStep === flow[currentMode].length - 1) ? "確認提交" : "下一步";
         }
-        function doCoupon() { api({ action:'adminAction', type:'send_coupon', all:cAll.checked, uid:cUser.value, cpName:cName.value, cpDesc:"", cpExp:"" }); }
+
+        function nextStep() {
+            const input = document.getElementById('wizIn');
+            const step = flow[currentMode][currentStep];
+            
+            // 儲存資料
+            formData[step.f] = input.value;
+            if(step.f === "loanId") formData.uid = input.selectedOptions[0].dataset.uid;
+
+            if(currentStep < flow[currentMode].length - 1) {
+                currentStep++;
+                renderStep();
+                // 如果是還款，自動填入金額
+                if(currentMode === "pay" && currentStep === 1) {
+                    const rem = document.querySelector('#wizIn option:checked')?.dataset.rem;
+                    setTimeout(()=>document.getElementById('wizIn').value = rem, 10);
+                }
+            } else {
+                submitFinal();
+            }
+        }
+
+        async function submitFinal() {
+            document.getElementById('loading').style.display = "flex";
+            let body = { action: "adminAction" };
+            if(currentMode === "add" || currentMode === "sub") { body.type = currentMode; body.uid = formData.uid; body.amount = formData.amt; body.note = formData.note; }
+            if(currentMode === "loan") { body.type = "create_loan"; body.uid = formData.uid; body.loanItem = formData.item; body.amount = formData.amt; body.deadline = formData.date; }
+            if(currentMode === "pay") { body.type = "pay_loan"; body.loanId = formData.loanId; body.uid = formData.uid; body.cashPart = formData.cash; body.balPart = formData.bal; }
+            if(currentMode === "coupon") { body.type = "send_coupon"; body.all = (formData.uid==="ALL"); body.uid = formData.uid; body.cpName = formData.name; body.cpDesc = ""; body.cpExp = ""; }
+
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
+            alert(res.message); location.reload();
+        }
+
+        function closeWizard() { document.getElementById('wizard').style.display = "none"; }
 
         function startScan() {
             document.getElementById('qrDiv').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                if(txt.startsWith("CP|")) { api({ action:'adminAction', type:'use_coupon', cpId: txt.split('|')[1] }); }
-                else {
-                    const found = document.querySelector(`#tUser option[value="${txt}"]`);
-                    if(found) { document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.value = txt); alert("已識別: " + found.text); }
+                if(txt.startsWith("CP|")) { 
+                    submitFinalApi({ action:'adminAction', type:'use_coupon', cpId: txt.split('|')[1] }); 
+                } else {
+                    alert("掃描到會員 ID: " + txt + "，請接著選擇作業功能。");
                 }
                 scanner.stop(); document.getElementById('qrDiv').style.display='none';
             });
         }
+        async function submitFinalApi(b) {
+            document.getElementById('loading').style.display = "flex";
+            const res = await fetch(GAS,{method:'POST',body:JSON.stringify(b)}).then(r=>r.json());
+            alert(res.message); location.reload();
+        }
+
         init();
     </script>
 </body>
