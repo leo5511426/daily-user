@@ -1,181 +1,218 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>小佑的日常生活行動會員－後台端</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小佑行動服務 | 專業管理後台</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f7f9; padding: 20px; font-weight: bold; }
-        .card { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #ccc; }
-        select, input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #fff; }
+        :root {
+            --primary: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --bg: #f8fafc;
+        }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); color: var(--dark); margin: 0; padding: 20px; }
         
-        /* 遮罩層樣式 */
-        .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.6); z-index:9998; flex-direction:column; justify-content:center; align-items:center; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        /* 儀表板卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid var(--primary); }
+        .stat-card h4 { margin: 0; color: #64748b; font-size: 0.9rem; }
+        .stat-card .val { font-size: 1.8rem; font-weight: 800; margin-top: 8px; color: var(--dark); }
+
+        /* 主容器 */
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: #fff; padding: 25px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+        .card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary); }
+        .card.loan::after { background: var(--success); }
+        .card.coupon::after { background: var(--warning); }
+
+        h3 { margin-top: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem; }
+        
+        /* 表單元素美化 */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: #475569; }
+        select, input { 
+            width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; 
+            box-sizing: border-box; font-size: 1rem; transition: all 0.2s; background: #fdfdfd;
+        }
+        select:focus, input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        /* 按鈕美化 */
+        .btn { 
+            width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; 
+            font-weight: 700; font-size: 1rem; color: #fff; transition: transform 0.1s, opacity 0.2s;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn:hover { opacity: 0.9; }
+
+        /* 狀態標籤 */
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .badge-red { background: #fee2e2; color: var(--danger); }
+
+        /* 遮罩 */
+        .mask { 
+            display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+            background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; justify-content:center; align-items:center; 
+        }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
-        .info-text { font-size: 12px; color: #666; margin-bottom: 5px; }
+
+        @media (max-width: 600px) { body { padding: 10px; } .stats-grid { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
 <body>
-    <div id="mFull" class="mask-full"><div class="spinner"></div><p>系統處理中，請稍後...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>系統資料同步處理中，請稍後...</p></div>
+    <div id="loader" class="mask"><div class="spinner"></div><p>同步資料中...</p></div>
 
-    <div class="card">
-        <h3>📷 萬用掃描器</h3>
-        <div id="qrDiv" style="width:100%; display:none; margin-bottom:10px;"></div>
-        <button class="btn" style="background:#444;" onclick="startScan()">啟動相機掃描</button>
-    </div>
+    <div class="container">
+        <header style="margin-bottom: 20px;">
+            <h2 style="margin:0;">🚀 管理工作台</h2>
+            <p style="color:#64748b; margin:5px 0 0 0;">歡迎回來，管理員 Xiao You</p>
+        </header>
 
-    <div class="card" style="border-top-color: #3b82f6;">
-        <h3>💳 錢包作業</h3>
-        <select id="tUser"><option value="">-- 選擇會員 --</option></select>
-        <select id="tType">
-            <option value="add">加值 (增加餘額)</option>
-            <option value="sub">扣款 (減少餘額)</option>
-            <option value="ref">退款</option>
-        </select>
-        <input type="number" id="tAmt" placeholder="金額">
-        <input type="text" id="tNote" placeholder="備註原因">
-        <button class="btn" style="background:#3b82f6;" onclick="doWallet()">確認執行</button>
-    </div>
+        <div class="stats-grid">
+            <div class="stat-card"><h4>總會員數</h4><div class="val" id="statUsers">--</div></div>
+            <div class="stat-card" style="border-left-color: var(--success);"><h4>流通點數</h4><div class="val" id="statBal">--</div></div>
+            <div class="stat-card" style="border-left-color: var(--danger);"><h4>待收借款</h4><div class="val" id="statLoans">--</div></div>
+        </div>
 
-    <div class="card" style="border-top-color: #10b981;">
-        <h3>💰 借還款管理 (支持部分還款)</h3>
-        <p class="info-text">【撥款作業】</p>
-        <select id="lUser"><option value="">-- 選擇會員 --</option></select>
-        <input type="text" id="lItem" placeholder="借款項目 (如: 午餐費)">
-        <input type="number" id="lAmt" placeholder="借款本金">
-        <input type="date" id="lDeadline">
-        <button class="btn" style="background:#10b981;" onclick="doLoan()">確認撥款</button>
-        
-        <hr>
-        
-        <p class="info-text">【還款作業】*支持僅支付部分金額，未清餘額將持續計罰</p>
-        <select id="pLoan" onchange="autoFill()"><option value="">-- 載入中... --</option></select>
-        <input type="number" id="pCash" placeholder="本次收現金額" oninput="recalc()">
-        <input type="number" id="pBal" placeholder="需由點數餘額抵扣 (選填)" value="0">
-        <button class="btn" style="background:#059669;" onclick="doPay()">提交還款紀錄</button>
-    </div>
+        <div class="card" style="border-left: none;">
+            <h3>🔍 快速識別</h3>
+            <div id="qrDiv" style="width:100%; display:none; margin-bottom:15px; border-radius: 12px; overflow: hidden;"></div>
+            <button class="btn" style="background: var(--dark);" onclick="startScan()">📷 開啟相機掃描</button>
+        </div>
 
-    <div class="card" style="border-top-color: #f59e0b;">
-        <h3>🎟️ 優惠券系統</h3>
-        <select id="cUser"><option value="">-- 選擇收券人 --</option></select>
-        <label style="font-size: 14px;"><input type="checkbox" id="cAll"> 全體發送</label>
-        <input type="text" id="cName" placeholder="優惠券名稱">
-        <input type="text" id="cDesc" placeholder="使用描述 (如: 兌換飲料一杯)">
-        <input type="text" id="cExp" placeholder="到期日 (如: 2026/12/31)">
-        <button class="btn" style="background:#f59e0b;" onclick="doCoupon()">送出優惠券</button>
+        <div class="card">
+            <h3>💳 錢包帳務</h3>
+            <div class="form-group">
+                <label>目標對象</label>
+                <select id="tUser"><option value="">-- 請選擇或掃描會員 --</option></select>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label>作業類型</label>
+                    <select id="tType">
+                        <option value="add">➕ 加值點數</option>
+                        <option value="sub">➖ 扣除點數</option>
+                        <option value="ref">↩️ 系統退款</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>金額</label>
+                    <input type="number" id="tAmt" placeholder="0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>備註內容</label>
+                <input type="text" id="tNote" placeholder="例如：協助打掃獎勵">
+            </div>
+            <button class="btn" style="background: var(--primary);" onclick="doWallet()">確認提交變動</button>
+        </div>
+
+        <div class="card loan">
+            <h3>💰 借還款與罰金</h3>
+            <div class="form-group">
+                <label>待還款清單 (已自動計算罰金)</label>
+                <select id="pLoan" onchange="autoFill()"><option value="">-- 載入借單中 --</option></select>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label>本次實收現金</label>
+                    <input type="number" id="pCash" placeholder="0">
+                </div>
+                <div style="flex: 1;">
+                    <label>點數餘額抵扣</label>
+                    <input type="number" id="pBal" value="0">
+                </div>
+            </div>
+            <button class="btn" style="background: var(--success);" onclick="doPay()">✅ 完成還款作業</button>
+        </div>
+
+        <div class="card coupon">
+            <h3>🎟️ 優惠券發送</h3>
+            <div class="form-group">
+                <label>收券人</label>
+                <select id="cUser"><option value="">-- 選擇收券人 --</option></select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <input type="checkbox" id="cAll" style="width: auto;"> <label style="display: inline;" for="cAll">全體會員同時發送</label>
+            </div>
+            <div class="form-group">
+                <input type="text" id="cName" placeholder="優惠券名稱">
+            </div>
+            <button class="btn" style="background: var(--warning);" onclick="doCoupon()">🚀 立即發券</button>
+        </div>
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbwm8IJGX_r1c_yU1Udk4kcO3QFuoWGxsL0qPeEyv2qx-yRISy2_96h5XMfiNkJxbUP0/exec"; // <--- 請務必替換為您的 GAS 部署網址
+        const GAS = "https://script.google.com/macros/s/AKfycbwm8IJGX_r1c_yU1Udk4kcO3QFuoWGxsL0qPeEyv2qx-yRISy2_96h5XMfiNkJxbUP0/exec";
         const scanner = new Html5Qrcode("qrDiv");
-        const mFull = document.getElementById('mFull'), mHalf = document.getElementById('mHalf');
+        const loader = document.getElementById('loader');
 
-        // 初始化資料 (載入會員與借單)
         async function init() {
-            mHalf.style.display='flex';
+            loader.style.display='flex';
             try {
-                // 載入會員列表
+                // 抓取會員
                 const u = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-                const userSelectors = document.querySelectorAll('#tUser, #lUser, #cUser');
+                let totalBal = 0;
                 u.list.forEach(i => { 
-                    userSelectors.forEach(s => s.innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`); 
+                    totalBal += parseFloat(i.bal || 0);
+                    document.querySelectorAll('#tUser, #cUser').forEach(s => s.innerHTML += `<option value="${i.id}">${i.name} ($${i.bal})</option>`); 
                 });
+                document.getElementById('statUsers').innerText = u.list.length;
+                document.getElementById('statBal').innerText = `$${totalBal.toLocaleString()}`;
 
-                // 載入待還借單
+                // 抓取借單
                 const l = await fetch(GAS,{method:'POST',body:JSON.stringify({action:'fetchData',type:'loans',uid:'ADMIN_LIST'})}).then(r=>r.json());
-                const loanSelector = document.getElementById('pLoan');
-                loanSelector.innerHTML = '<option value="">-- 選擇待還借單 --</option>';
+                const loanSel = document.getElementById('pLoan');
+                loanSel.innerHTML = '<option value="">-- 選擇待還借單 --</option>';
+                let totalDebt = 0;
                 l.list.forEach(i => {
-                    // i.id 此時已經是數位化毫秒字串，保證匹配
-                    loanSelector.innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (剩$${i.remain})</option>`;
+                    totalDebt += i.remain;
+                    loanSel.innerHTML += `<option value="${i.id}" data-uid="${i.uid}" data-rem="${i.remain}">${i.uid} | ${i.item} (尚欠 $${i.remain})</option>`;
                 });
-            } catch (e) {
-                alert("初始化失敗，請檢查網路或 GAS 網址是否正確。");
-            }
-            mHalf.style.display='none';
+                document.getElementById('statLoans').innerText = `$${totalDebt.toLocaleString()}`;
+
+            } catch (e) { alert("初始化連線失敗"); }
+            loader.style.display='none';
         }
 
-        // 萬用 API 呼叫
         async function api(body) {
-            mFull.style.display='flex';
+            loader.style.display='flex';
             try {
                 const res = await fetch(GAS,{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
                 alert(res.message); 
                 if(res.success) location.reload();
-            } catch (e) {
-                alert("伺服器回應錯誤: " + e);
-            }
-            mFull.style.display='none';
+            } catch (e) { alert("通訊失敗"); }
+            loader.style.display='none';
         }
 
-        // 錢包作業
-        function doWallet() { 
-            if(!tUser.value || !tAmt.value) return alert("請填寫會員與金額");
-            api({ action:'adminAction', type:tType.value, uid:tUser.value, amount:tAmt.value, note:tNote.value }); 
-        }
-
-        // 撥款作業
-        function doLoan() { 
-            if(!lUser.value || !lAmt.value || !lDeadline.value) return alert("請填寫完整撥款資訊");
-            api({ action:'adminAction', type:'create_loan', uid:lUser.value, loanItem:lItem.value, amount:lAmt.value, deadline:lDeadline.value }); 
-        }
-
-        // 還款自動填寫金額
-        function autoFill() { 
-            const opt = pLoan.selectedOptions[0]; 
-            if(opt && opt.dataset.rem) { 
-                pCash.value = opt.dataset.rem; 
-                pBal.value = 0; // 預設只收現金，不扣點
-            } 
-        }
-
-        // 提交還款
+        function doWallet() { api({ action:'adminAction', type:tType.value, uid:tUser.value, amount:tAmt.value, note:tNote.value }); }
+        function autoFill() { const opt = pLoan.selectedOptions[0]; if(opt.dataset.rem) pCash.value = opt.dataset.rem; }
         function doPay() { 
             const opt = pLoan.selectedOptions[0]; 
-            if(!opt || !opt.value) return alert("請選擇借單");
-            api({ 
-                action:'adminAction', 
-                type:'pay_loan', 
-                loanId: opt.value, 
-                uid: opt.dataset.uid, 
-                cashPart: document.getElementById('pCash').value || 0, 
-                balPart: document.getElementById('pBal').value || 0 
-            }); 
+            if(!opt.value) return alert("請選單");
+            api({ action:'adminAction', type:'pay_loan', loanId:opt.value, uid:opt.dataset.uid, cashPart:pCash.value, balPart:pBal.value }); 
         }
+        function doCoupon() { api({ action:'adminAction', type:'send_coupon', all:cAll.checked, uid:cUser.value, cpName:cName.value, cpDesc: "", cpExp: "" }); }
 
-        // 發送優惠券
-        function doCoupon() { 
-            if(!cAll.checked && !cUser.value) return alert("請選擇收券人");
-            api({ action:'adminAction', type:'send_coupon', all:cAll.checked, uid:cUser.value, cpName:cName.value, cpDesc:cDesc.value, cpExp:cExp.value }); 
-        }
-
-        // 掃描器邏輯
         function startScan() {
             document.getElementById('qrDiv').style.display='block';
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                if(txt.startsWith("CP|")) { 
-                    api({ action:'adminAction', type:'use_coupon', cpId: txt.split('|')[1] }); 
-                } else { 
-                    // 掃描後嘗試匹配所有會員選單
+                if(txt.startsWith("CP|")) { api({ action:'adminAction', type:'use_coupon', cpId: txt.split('|')[1] }); }
+                else { 
                     const found = document.querySelector(`#tUser option[value="${txt}"]`);
                     if(found) {
-                        document.querySelectorAll('#tUser, #lUser, #cUser').forEach(s => s.value = txt); 
-                        alert("已選取會員: " + found.text); 
-                    } else {
-                        alert("掃描結果: " + txt + " (未能在會員清單中找到匹配ID)");
+                        document.querySelectorAll('#tUser, #cUser').forEach(s => s.value = txt);
+                        alert("已定位會員: " + found.text);
                     }
                 }
-                scanner.stop(); 
-                document.getElementById('qrDiv').style.display='none';
+                scanner.stop(); document.getElementById('qrDiv').style.display='none';
             });
         }
-
         init();
     </script>
 </body>
