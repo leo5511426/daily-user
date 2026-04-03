@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑行動會員 - v35.0</title>
+    <title>小佑行動會員 - v36.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -19,7 +19,6 @@
         .detail.show { max-height: 500px; padding-top: 15px; border-top: 1px solid #222; margin-top: 15px; }
         .detail-row { display: flex; margin-bottom: 6px; line-height: 1.4; }
         .detail-label { width: 75px; color: #666; flex-shrink: 0; }
-        .detail-val { color: #bbb; }
         .mask-full, .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .mask-full { background:var(--bg); }
         .mask-half { background:rgba(0,0,0,0.7); }
@@ -37,7 +36,7 @@
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
         <h1 style="color:var(--pink); font-size:32px; margin-bottom:5px;">小佑行動會員</h1>
-        <p style="color:#555; margin-bottom:30px;">V35.0 完整版</p>
+        <p style="color:#555; margin-bottom:30px;">V36.0 罰金精算版</p>
         <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="帳號 / ID">
         <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="密碼">
         <button class="btn" onclick="login()">登入系統</button>
@@ -52,7 +51,6 @@
             </div>
             <button class="btn" onclick="showQR('USER', user.id)">📘 個人識別碼</button>
         </div>
-
         <div id="p1" class="page"><h2>歷史紀錄</h2><div id="tList"></div></div>
         <div id="p4" class="page"><h2>待還帳務</h2><div id="loanList"></div></div>
         <div id="p2" class="page"><h2>優惠券</h2><div id="cList"></div></div>
@@ -76,13 +74,11 @@
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbxE-fzq1nINRjAUIocdzeyIbRC3807JHxQqRiAg52AychNLIM0wxPHSEJfu1_TAFnJF/exec"; 
-        let user = null;
-        let ALL_DATA = null;
+        const GAS = "https://script.google.com/macros/s/AKfycbyzJrwngC_8osqRitBXfa4LxZfYNrxtpxNfNOrrff5Kll0GCpIWQSKqBN2y7SxIBhjv/exec"; 
+        let user = null, ALL_DATA = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
         function fmt(n) { return (isNaN(parseFloat(n)) ? 0 : parseFloat(n)).toLocaleString(); }
-
         function cleanD(s) {
             if (!s || s === "null") return "無資料";
             const d = new Date(s);
@@ -143,31 +139,27 @@
             document.getElementById('loanList').innerHTML = loans.map((l, i) => {
                 const principal = l.total - l.paid;
                 const expDate = new Date(l.expiry); expDate.setHours(0, 0, 0, 0);
-                let curOverdueFee = (today > expDate) ? Math.ceil(Math.abs(today - expDate) / (1000 * 60 * 60 * 24)) * 10 : 0;
+                let curOverdueFee = (today > expDate) ? Math.ceil(Math.abs(today - expDate) / 86400000) * 10 : 0;
                 const due = principal + curOverdueFee;
 
-                return `
-                <div class="card">
+                return `<div class="card">
                     <div style="display:flex; justify-content:space-between; align-items:start;">
                         <div><b style="font-size:18px;">${l.item}</b><div style="font-size:12px; color:#666; margin-top:4px;">原始總額 $${fmt(l.total)}</div></div>
-                        <div style="text-align:right;">
-                            <b style="color:var(--pink); font-size:26px;">$${fmt(due)}</b>
-                            <div style="font-size:11px; color:var(--green); font-weight:bold;">已還 $${fmt(l.paid)}</div>
-                        </div>
+                        <div style="text-align:right;"><b style="color:var(--pink); font-size:26px;">$${fmt(due)}</b><div style="font-size:11px; color:var(--green); font-weight:bold;">已還 $${fmt(l.paid)}</div></div>
                     </div>
                     <div style="font-size:12px; color:#888; margin-top:10px; padding-top:10px; border-top:1px solid #222;">未還本金 $${fmt(principal)} ${curOverdueFee > 0 ? `<span style="color:var(--red); font-weight:bold;"> + 罰金 $${fmt(curOverdueFee)}</span>` : ''}</div>
                     <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">展開明細</button>
                     <div id="ld${i}" class="detail">
-                        <div class="detail-row"><div class="detail-label">還款期限</div><div class="detail-val">${cleanD(l.expiry)}</div></div>
-                        <div class="detail-row"><div class="detail-label">逾期狀態</div><div class="detail-val" style="color:${curOverdueFee > 0 ? 'var(--red)' : 'var(--green)'}">${curOverdueFee > 0 ? '⚠️ 已逾期' : '正常'}</div></div>
+                        <div class="detail-row"><span>還款期限</span><span>${cleanD(l.expiry)}</span></div>
+                        <div class="detail-row"><span>逾期狀態</span><span style="color:${curOverdueFee > 0 ? 'var(--red)' : 'var(--green)'}">${curOverdueFee > 0 ? '⚠️ 已逾期' : '正常'}</span></div>
                     </div>
                 </div>`;
             }).join('') || '<p style="text-align:center; opacity:0.5; margin-top:50px;">無欠款紀錄</p>';
         }
 
         function renderCoupons() {
-            const cp = ALL_DATA.coupons.filter(c => c.owner === user.id && c.status === "未使用");
-            document.getElementById('cList').innerHTML = cp.map(c => `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><b>${c.name}</b><button class="btn" style="background:var(--green); font-size:14px; width:auto; padding:10px 20px;" onclick="showQR('CP', '${c.id}')">使用</button></div></div>`).join('') || '<p style="text-align:center; opacity:0.5; margin-top:50px;">無優惠券</p>';
+            const cp = ALL_DATA.coupons.filter(c => c.uid === user.id && c.status === "未使用");
+            document.getElementById('cList').innerHTML = cp.map(c => `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><b>${c.title}</b><button class="btn" style="background:var(--green); font-size:14px; width:auto; padding:10px 20px;" onclick="showQR('CP', '${c.id}')">使用</button></div></div>`).join('') || '<p style="text-align:center; opacity:0.5; margin-top:50px;">無優惠券</p>';
         }
 
         function showQR(type, val){
