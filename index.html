@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑行動會員 - v30.0</title>
+    <title>小佑行動會員 - v31.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #000; --pink: #FFD1DC; --accent: #FF8FA3; --card: #151515; --red: #ff5252; --green: #2ecc71; }
@@ -16,7 +16,7 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 13px; cursor: pointer; }
         .nav-item.active { color: var(--pink); }
         .detail { max-height: 0; overflow: hidden; transition: 0.3s; font-size: 14px; color: #888; }
-        .detail.show { max-height: 500px; padding-top: 15px; border-top: 1px solid #222; margin-top: 10px; line-height: 1.6; }
+        .detail.show { max-height: 500px; padding-top: 15px; border-top: 1px solid #222; margin-top: 10px; line-height: 2; }
         .mask-full { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .mask-half { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9998; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { border: 4px solid #333; border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
@@ -26,12 +26,12 @@
 </head>
 <body>
     <div id="mFull" class="mask-full"><div class="spinner"></div><p>身分驗證中...</p></div>
-    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>更新帳務資訊...</p></div>
+    <div id="mHalf" class="mask-half"><div class="spinner"></div><p>同步帳務中...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:30px;">
         <h1 style="color:var(--pink); font-size:32px;">小佑行動會員</h1>
         <input type="text" id="acc" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="ID 或 帳號">
-        <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="密碼">
+        <input type="password" id="pw" style="width:100%; padding:18px; margin:10px; background:#222; border:none; color:#fff; border-radius:12px; box-sizing:border-box;" placeholder="請輸入密碼">
         <button class="btn" onclick="login()">登入系統</button>
     </div>
 
@@ -64,13 +64,23 @@
     </div>
 
     <script>
-        const GAS = "https://script.google.com/macros/s/AKfycbxrALXKGcQ-HZMwM21F-BnxvY92yf7AbdX3qx5n4SCXHDjx9jM9ApUEOrg5QuQUf49P/exec"; 
+        const GAS = "https://script.google.com/macros/s/AKfycbwy9LYHrh5LtVJUOCUXjWE4Bco8xwoEsUNbeofpisXLcej39xkXCcIuB2Dy-f216xmI/exec"; 
         let user = null;
         let ALL_DATA = null;
         const qrc = new QRCode(document.getElementById("qrcode"), { width: 220, height: 220 });
 
         function safeNum(v) { return isNaN(parseFloat(v)) ? 0 : parseFloat(v); }
         function fmt(n) { return safeNum(n).toLocaleString(); }
+        
+        // 日期終極保險：裁切掉時區資訊
+        function cleanD(s) {
+            if(!s || s==="null") return "無期限";
+            if(s.includes("GMT")) {
+                const d = new Date(s);
+                return d.getFullYear() + "/" + (d.getMonth()+1).toString().padStart(2,'0') + "/" + d.getDate().toString().padStart(2,'0');
+            }
+            return s.split('T')[0];
+        }
 
         async function login(){
             const inputAcc = document.getElementById('acc').value.trim();
@@ -81,8 +91,7 @@
                 if(res.success){
                     const found = res.list.find(u => (u.id === inputAcc || u.account === inputAcc));
                     if(found && String(found.pw) === inputPw){
-                        user = found;
-                        ALL_DATA = res;
+                        user = found; ALL_DATA = res;
                         document.getElementById('uName').innerText = user.name; 
                         document.getElementById('uBal').innerText = fmt(user.bal); 
                         document.getElementById('loginView').style.display='none'; 
@@ -115,23 +124,24 @@
         function renderLoans(){
             const myLoans = ALL_DATA.loans.filter(l => l.uid === user.id && l.status === "還款中");
             document.getElementById('loanList').innerHTML = myLoans.map((l,i)=>{
-                const principalRemain = l.total - l.paid;
-                const totalPayable = principalRemain + l.overdueFee;
+                const principal = l.total - l.paid;
+                const total = principal + l.overdueFee;
                 return `
                 <div class="card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <b>${l.item}</b> 
-                        <b style="color:var(--pink); font-size:24px;">$${fmt(totalPayable)}</b>
+                        <b style="color:var(--pink); font-size:24px;">$${fmt(total)}</b>
                     </div>
                     <div style="font-size:12px; color:#888; margin-top:5px;">
-                        本金餘額 $${fmt(principalRemain)} 
-                        ${l.overdueFee > 0 ? `<span style="color:var(--red);"> + 罰金 $${fmt(l.overdueFee)}</span>` : ''}
+                        剩餘本金 $${fmt(principal)} 
+                        ${l.overdueFee > 0 ? `<span style="color:var(--red);"> + 逾期罰金 $${fmt(l.overdueFee)}</span>` : ''}
                     </div>
-                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">帳務明細</button>
+                    <button class="btn-small" onclick="document.getElementById('ld${i}').classList.toggle('show')">展開帳務詳細</button>
                     <div id="ld${i}" class="detail">
-                        期限：${l.expiry}<br>
-                        狀態：${l.overdueDays > 0 ? `<span style="color:var(--red);">已逾期 ${l.overdueDays} 天</span>` : '正常'}<br>
-                        借款日：${l.loanDate}
+                        <div style="display:flex; justify-content:space-between;"><span>還款期限</span><span>${cleanD(l.expiry)}</span></div>
+                        <div style="display:flex; justify-content:space-between;"><span>逾期狀態</span><span style="color:${l.overdueDays>0?'var(--red)':'var(--green)'}">${l.overdueDays>0?'已逾期 '+l.overdueDays+' 天':'正常'}</span></div>
+                        <div style="display:flex; justify-content:space-between;"><span>借款日期</span><span>${cleanD(l.loanDate)}</span></div>
+                        <div style="display:flex; justify-content:space-between;"><span>目前狀態</span><span>${l.status}</span></div>
                     </div>
                 </div>`;
             }).join('') || '<p style="text-align:center; opacity:0.5;">目前無借款紀錄</p>';
@@ -140,13 +150,18 @@
         function renderCoupons(){
             const myCP = ALL_DATA.coupons.filter(c => c.owner === user.id && c.status === "未使用");
             document.getElementById('cList').innerHTML = myCP.map(c => `
-                <div class="card"><b style="color:var(--pink);">${c.name}</b><p style="font-size:13px; opacity:0.7;">${c.desc}</p><button class="btn" style="background:var(--green); font-size:14px;" onclick="showQR('CP', '${c.id}')">出示核銷碼</button></div>`).join('');
+                <div class="card">
+                    <b style="color:var(--pink);">${c.name}</b>
+                    <p style="font-size:13px; opacity:0.7;">${c.desc}</p>
+                    <small style="color:#666;">有效至 ${cleanD(c.exp)}</small>
+                    <button class="btn" style="background:var(--green); font-size:14px;" onclick="showQR('CP', '${c.id}')">出示優惠券</button>
+                </div>`).join('') || '<p style="text-align:center; opacity:0.5;">暫無優惠券</p>';
         }
 
         function showQR(type, val){
             qrc.clear(); 
             qrc.makeCode(type === 'USER' ? val : "CP|" + val); 
-            document.getElementById('qrTitle').innerText = (type === 'USER') ? "個人識別碼" : "核銷碼";
+            document.getElementById('qrTitle').innerText = (type === 'USER') ? "個人識別碼" : "核銷條碼";
             document.getElementById('qrModal').style.display='flex';
         }
     </script>
