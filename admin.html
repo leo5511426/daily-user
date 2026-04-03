@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>管理後台 v16.6</title>
+    <title>管理後台 v18.6 - 防護加強版</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --orange: #f59e0b; --red: #ef4444; }
@@ -32,11 +32,11 @@
 
     <div class="dashboard">
         <h2 style="margin:0;">小佑管理工作台</h2>
-        <p style="margin:5px 0 0; opacity:0.8; font-size:13px;">v16.6 債務優先提示版</p>
+        <p style="margin:5px 0 0; opacity:0.8; font-size:13px;">v18.6 數值導正修復版</p>
     </div>
 
     <div class="menu-grid">
-        <button class="menu-btn full-btn" onclick="startScan()">📷 掃描條碼</button>
+        <button class="menu-btn full-btn" onclick="startScan()">📷 掃描條碼識別</button>
         <div class="menu-btn" onclick="openWizard('add')">💰 點數加值</div>
         <div class="menu-btn" onclick="openWizard('sub')">🛒 點數扣款</div>
         <div class="menu-btn" onclick="openWizard('loan')">🏦 借款撥款</div>
@@ -66,18 +66,27 @@
         </div>
     </div>
 
-    <div id="qrModal" class="modal"><div class="modal-content"><h3>請對準 QR</h3><div id="qrDiv"></div><button class="btn-sec" style="width:100%; margin-top:15px;" onclick="closeQr()">取消</button></div></div>
+    <div id="qrModal" class="modal">
+        <div class="modal-content">
+            <h3>請對準用戶 QR</h3>
+            <div id="qrDiv"></div>
+            <button class="btn-sec" style="width:100%; margin-top:15px;" onclick="closeQr()">取消掃描</button>
+        </div>
+    </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwtfJRfSO89yl1k3Zs2HIXFB6kaVN7CLb408ajRGt292LPbp5TSNk-ippu0aUfwMvyh/exec"; 
+        // 請確保此處為你最新的 GAS 網址
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwHHBV_mF389jwByNCrHIUnC_bO9dF9sAC1GeJ5Um8lTgTJlUnsgV-B99cQ87MzcTaD/exec"; 
         let U_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {}, html5QrCode = null;
 
         window.onload = refreshData;
 
         async function refreshData() {
-            const r = await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
-            U_DB = r.list;
-            document.getElementById('syncMask').style.display = 'none';
+            try {
+                const r = await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'fetchData',type:'users',uid:'ADMIN'})}).then(r=>r.json());
+                U_DB = r.list;
+                document.getElementById('syncMask').style.display = 'none';
+            } catch(e) { alert("同步資料失敗，請檢查網路"); }
         }
 
         function startScan() {
@@ -86,12 +95,11 @@
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 220 }, (txt) => {
                 const u = U_DB.find(i => String(i.id).trim() === String(txt).trim());
                 if(u) { closeQr(); showSmart(u); }
-            });
+            }).catch(err => { alert("相機啟動失敗"); closeQr(); });
         }
 
         function closeQr() { if(html5QrCode) html5QrCode.stop(); document.getElementById('qrModal').style.display = 'none'; }
 
-        // 智慧提示邏輯：債務優先
         function showSmart(u) {
             document.getElementById('sName').innerText = u.name;
             document.getElementById('sBal').innerText = `(個人餘額: $${u.bal})`;
@@ -99,21 +107,19 @@
             const btn = document.getElementById('sActionBtn');
             
             if (u.nearest) {
-                // 有欠債優先顯示
                 hint.style.background = "#fef2f2"; hint.style.borderColor = "#fecaca";
                 hint.innerHTML = `<b style="color:var(--red);">⚠️ 待還款提醒</b><br>項目：${u.nearest.item}<br><b>尚餘需還：$${u.nearest.rem}</b><br>期限：${u.nearest.date}`;
                 btn.innerText = "前往還款";
                 btn.onclick = () => { closeModal('smartModal'); openWizard('pay', u.id); };
             } else if (u.bal <= 0) {
-                // 沒錢次之
                 hint.style.background = "#fff7ed"; hint.style.borderColor = "#ffedd5";
-                hint.innerHTML = `<b style="color:var(--orange);">💡 餘額建議</b><br>客戶餘額為 0，是否需要辦理加值？`;
+                hint.innerHTML = `<b style="color:var(--orange);">💡 餘額建議</b><br>客戶餘額為 0，建議進行點數加值。`;
                 btn.innerText = "辦理加值";
                 btn.onclick = () => { closeModal('smartModal'); openWizard('add', u.id); };
             } else {
                 hint.style.background = "#f0fdf4"; hint.style.borderColor = "#bbf7d0";
-                hint.innerHTML = `✅ 客戶狀態良好，無待還款項。`;
-                btn.innerText = "查看功能";
+                hint.innerHTML = `✅ 客戶狀態良好，目前無逾期欠款。`;
+                btn.innerText = "完成查看";
                 btn.onclick = () => closeModal('smartModal');
             }
             document.getElementById('smartModal').style.display = 'flex';
@@ -141,41 +147,70 @@
             if(s.type === 'user') {
                 html += `<select id="win" class="wiz-input">${U_DB.map(u=>`<option value="${u.id}">${u.name}${u.nearest?' (有欠款)':''}</option>`).join('')}</select>`;
             } else if(s.type === 'loan') {
-                // 自動撈取借單，讓後台不用填 ID
                 html += `<div id="lLoad">載入未結清借單中...</div><select id="win" class="wiz-input" style="display:none;"></select>`;
                 document.getElementById('wizBody').innerHTML = html;
                 const r = await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'fetchData',type:'user_loans',uid:FORM.uid})}).then(r=>r.json());
                 const sel = document.getElementById('win');
-                if(r.list.length > 0) {
-                    sel.innerHTML = r.list.map(l => `<option value="${l.id}">${l.item} ($${l.rem} - ${l.date}到期)</option>`).join('');
+                if(r.list && r.list.length > 0) {
+                    sel.innerHTML = r.list.map(l => `<option value="${l.id}">${l.item} ($${l.rem} - ${l.date})</option>`).join('');
                     sel.style.display = 'block';
                     document.getElementById('lLoad').style.display = 'none';
                 } else {
-                    document.getElementById('lLoad').innerHTML = `<p style="color:red;">❌ 無未結清借單</p>`;
+                    document.getElementById('lLoad').innerHTML = `<p style="color:red;">❌ 該用戶無待還借單</p>`;
                 }
                 return;
             } else {
-                html += `<input type="${s.type}" id="win" class="wiz-input" autofocus>`;
+                html += `<input type="${s.type}" id="win" class="wiz-input" autofocus placeholder="請輸入內容...">`;
             }
             document.getElementById('wizBody').innerHTML = html;
-            document.getElementById('wizNextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length-1) ? "提交" : "下一步";
+            document.getElementById('wizNextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length-1) ? "確認提交" : "下一步";
         }
 
         function wizNext() {
             const input = document.getElementById('win');
-            if(!input || input.style.display === 'none') return;
-            FORM[FLOWS[CUR_MODE][CUR_STEP].f] = input.value;
-            if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { CUR_STEP++; renderWiz(); } 
-            else submitFinal();
+            if(!input || (input.tagName === 'SELECT' && input.style.display === 'none')) return;
+            
+            const field = FLOWS[CUR_MODE][CUR_STEP];
+            let val = input.value;
+
+            // [關鍵修正]：若為數字欄位，強制轉換為 Number 以避免試算表 #NUM!
+            if (field.type === "number") {
+                val = val === "" ? 0 : Number(val);
+                if (isNaN(val)) val = 0;
+            }
+
+            FORM[field.f] = val;
+            
+            if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { 
+                CUR_STEP++; 
+                renderWiz(); 
+            } else { 
+                submitFinal(); 
+            }
         }
 
         async function submitFinal() {
+            if(!confirm("確定要提交此筆交易資料嗎？")) return;
+            
             document.getElementById('wizModal').style.display = 'none';
             document.getElementById('syncMask').style.display = 'flex';
+
+            // 最後安全性檢查：確保所有數值欄位（amt, cash, bal）絕不為字串
+            ['amt', 'cash', 'bal'].forEach(key => {
+                if(FORM[key] !== undefined) FORM[key] = Number(FORM[key]) || 0;
+            });
+
             let b = { action: 'adminAction', type: CUR_MODE, ...FORM };
             if(CUR_MODE==='pay') b.type='pay_loan';
-            const r = await fetch(GAS_URL,{method:'POST',body:JSON.stringify(b)}).then(r=>r.json());
-            alert(r.message); location.reload();
+
+            try {
+                const r = await fetch(GAS_URL,{method:'POST',body:JSON.stringify(b)}).then(r=>r.json());
+                alert(r.message); 
+                location.reload();
+            } catch(e) {
+                alert("提交失敗，請檢查試算表連線");
+                document.getElementById('syncMask').style.display = 'none';
+            }
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
