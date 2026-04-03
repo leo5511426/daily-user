@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小佑智慧管理後台 v44.0</title>
+    <title>小佑管理後台 v46.0</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --accent: #db2777; --green: #10b981; }
+        :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --accent: #db2777; --green: #10b981; --red: #ff5252; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-weight: bold; }
         #globalMask { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
         .m-btn { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #ddd; cursor: pointer; font-size: 15px; }
@@ -31,7 +31,7 @@
 
 <div id="reader-modal">
     <div id="reader"></div>
-    <button onclick="stopScan()" style="background:#ff5252; border-radius:0; margin:0; height:80px; font-size:20px; color:white; border:none; width:100%;">關閉相機</button>
+    <button onclick="stopScan()" style="background:var(--red); border-radius:0; margin:0; height:80px; font-size:20px; color:white; border:none; width:100%;">關閉相機</button>
 </div>
 
 <div id="quickActionModal" class="modal">
@@ -75,7 +75,8 @@
 </div>
 
 <script>
-    const GAS = "https://script.google.com/macros/s/AKfycbwNngW4OBWNtp_v0qKHw2LRK8nUeONvO0a5oVvJEusS8BZzkzDQqYkUCoa8AaRPS4sZ/exec"; 
+    // 請替換為您的 GAS 部署網址
+    const GAS = "https://script.google.com/macros/s/AKfycbyzJrwngC_8osqRitBXfa4LxZfYNrxtpxNfNOrrff5Kll0GCpIWQSKqBN2y7SxIBhjv/exec"; 
     let U_DB = [], L_DB = [], CP_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode;
 
@@ -87,29 +88,20 @@
     async function refresh() {
         showMask("讀取雲端資料...");
         try {
-            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'fetchData', uid:'ADMIN'})}).then(r=>r.json());
+            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'fetchData', uid:'admin'})}).then(r=>r.json());
             U_DB = res.list; L_DB = res.loans; CP_DB = res.coupons;
             document.getElementById('l_uid').innerHTML = U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('');
             hideMask();
         } catch(e) { alert("同步失敗"); hideMask(); }
     }
 
-    // --- 智能過濾與掃描 ---
     function startScan() {
         document.getElementById('reader-modal').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, 
-        (decodedText) => {
+        html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (decodedText) => {
             let code = decodedText.trim();
-            
-            // 【重要】過濾 "CP|" 前綴
-            if (code.includes("CP|")) {
-                code = code.split("CP|")[1]; 
-            }
-            
+            if (code.includes("CP|")) code = code.split("CP|")[1];
             stopScan();
-            
-            // 判斷是券還是人
             if (code.startsWith("CP")) {
                 const cp = CP_DB.find(c => String(c.id) === code);
                 if (cp) {
@@ -121,9 +113,8 @@
                     document.getElementById('quickBtns').style.display = 'none';
                     document.getElementById('couponRedeemBtn').style.display = 'block';
                     document.getElementById('quickActionModal').style.display = 'flex';
-                } else { alert("查無此券號：" + code); }
-            } 
-            else {
+                } else { alert("查無券號：" + code); }
+            } else {
                 const user = U_DB.find(u => u.id === code);
                 if (user) {
                     FORM.uid = code;
@@ -132,26 +123,15 @@
                     document.getElementById('quickBtns').style.display = 'grid';
                     document.getElementById('couponRedeemBtn').style.display = 'none';
                     document.getElementById('quickActionModal').style.display = 'flex';
-                } else { alert("查無此使用者 UID：" + code); }
+                } else { alert("查無使用者：" + code); }
             }
         });
     }
 
-    async function submitRedeem() {
-        closeQuick();
-        showMask("正在核銷...");
-        try {
-            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:'redeem', cpId: FORM.cpId})}).then(r=>r.json());
-            alert(res.message);
-            location.reload();
-        } catch(e) { alert("連線錯誤"); hideMask(); }
-    }
-
-    function stopScan() { if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{document.getElementById('reader-modal').style.display = 'none';}); }
+    function stopScan() { if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{}); }
     function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
     function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
 
-    // --- Wizard 邏輯 ---
     const FLOWS = {
         add: [{t:"選擇對象",f:"uid",type:"user"},{t:"加值金額",f:"amt",type:"number"}],
         sub: [{t:"選擇對象",f:"uid",type:"user"},{t:"扣款金額",f:"amt",type:"number"}],
@@ -172,22 +152,46 @@
         if(s.type === 'user') h += `<select id="win">${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
         else if(s.type === 'loan') {
             const myL = L_DB.filter(l => l.uid === FORM.uid && l.status === '還款中');
-            h += myL.length ? `<select id="win">${myL.map(l=>`<option value="${l.row}">${l.item} ($${l.total-l.paid})</option>`).join('')}</select>` : `<p>目前無欠款紀錄</p>`;
+            h += myL.length ? `<select id="win" onchange="checkOverdue(this.value)"><option value="">-- 請選擇 --</option>${myL.map(l=>`<option value="${l.row}">${l.item} ($${l.total-l.paid})</option>`).join('')}</select>` : `<p>無欠款紀錄</p>`;
         } else if(s.type === 'cpSelect') {
             const myCP = CP_DB.filter(c => c.uid === FORM.uid && c.status === '未使用');
-            h += myCP.length ? `<select id="win">${myCP.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select>` : `<p>無可用優惠券</p>`;
-        } else h += `<input id="win" type="${s.type}" autofocus placeholder="請輸入...">`;
+            h += myCP.length ? `<select id="win">${myCP.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select>` : `<p>無優惠券</p>`;
+        } else {
+            // 自動帶入邏輯：如果是還款模式且到輸入現金這一步，自動填入建議金額
+            const preVal = (CUR_MODE === 'pay' && s.f === 'cash') ? (FORM.suggestedAmt || "") : "";
+            h += `<input id="win" type="${s.type}" value="${preVal}" autofocus placeholder="請輸入...">`;
+        }
         document.getElementById('wizBody').innerHTML = h;
         document.getElementById('nextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length - 1) ? "確認執行" : "下一步";
+    }
+
+    function checkOverdue(row) {
+        if(!row) return;
+        const l = L_DB.find(x => String(x.row) === String(row));
+        const today = new Date(); today.setHours(0,0,0,0);
+        const exp = new Date(l.expiry); exp.setHours(0,0,0,0);
+        const principalLeft = l.total - l.paid; // 剩餘本金
+        
+        let penalty = 0;
+        if(today > exp) {
+            const days = Math.ceil(Math.abs(today - exp) / 86400000);
+            penalty = days * 10;
+            alert(`🚨 逾期提醒：\n此筆已逾期 ${days} 天，罰金 $${penalty}。\n目前總額(本金+罰金)：$${principalLeft + penalty}`);
+            FORM.suggestedAmt = principalLeft + penalty; // 存入建議值
+        } else {
+            FORM.suggestedAmt = principalLeft;
+        }
     }
 
     async function wizNext() {
         const inputEl = document.getElementById('win');
         if(inputEl) FORM[FLOWS[CUR_MODE][CUR_STEP].f] = inputEl.value;
-        if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { CUR_STEP++; renderWiz(); }
-        else {
-            closeModal();
-            showMask("執行中...");
+        
+        if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { 
+            CUR_STEP++; 
+            renderWiz(); 
+        } else {
+            closeModal(); showMask("執行中...");
             try {
                 const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:CUR_MODE, ...FORM})}).then(r=>r.json());
                 alert(res.message); location.reload();
@@ -197,13 +201,23 @@
 
     async function addLoan() {
         const data = { uid: document.getElementById('l_uid').value, item: document.getElementById('l_item').value, total: document.getElementById('l_amt').value, loanDate: new Date(), expiry: document.getElementById('l_exp').value };
-        showMask("更新借帳中...");
+        if(!data.item || !data.total || !data.expiry) return alert("請填寫完整");
+        showMask("撥款中...");
         try {
             await fetch(GAS, {method:'POST', body:JSON.stringify({action:'addLoan', data})});
             alert("撥款成功"); location.reload();
         } catch(e) { alert("錯誤"); hideMask(); }
     }
+    
     function closeModal() { document.getElementById('wizModal').style.display='none'; }
+    
+    async function submitRedeem() {
+        closeQuick(); showMask("核銷中...");
+        try {
+            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:'redeem', cpId: FORM.cpId})}).then(r=>r.json());
+            alert(res.message); location.reload();
+        } catch(e) { alert("錯誤"); hideMask(); }
+    }
 </script>
 </body>
 </html>
