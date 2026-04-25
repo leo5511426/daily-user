@@ -17,18 +17,18 @@
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; font-weight: 900; transition: 0.3s; overflow-x: hidden; font-size: var(--fs); }
         .page { width: 100vw; min-height: 100vh; padding: 100px 20px 130px; box-sizing: border-box; display: none; }
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; }
-        .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; cursor: pointer; }
+        .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 1.1em; font-weight: 900; cursor: pointer; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 11px; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.7em; }
         .nav-item.active { color: var(--pink); }
         .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
-        input { width:100%; padding:18px; margin:10px 0; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 16px; }
-        .overdue-tag { position: absolute; top: 10px; right: 10px; background: var(--red); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 10px; }
-        .note-box { font-size: 12px; color: #888; margin-top: 8px; border-top: 1px dashed #333; padding-top: 5px; font-weight: normal; }
+        input { width:100%; padding:18px; margin:10px 0; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 1em; }
+        .overdue-tag { position: absolute; top: 10px; right: 10px; background: var(--red); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 0.7em; }
+        .note-box { font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px dashed #333; padding-top: 5px; font-weight: normal; }
     </style>
 </head>
 <body data-theme="light">
-    <div id="loading" class="mask"><p>與後臺資料同步中，請耐心等候...   ⚠️版本更新資訊：加入了「字體大小調整功能」！</p></div>
+    <div id="loading" class="mask"><p>與後台同步資料中，請耐心等候...（將會受到裝置網路連率影響）</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; justify-content:center; padding:40px; box-sizing: border-box;">
         <h1 style="color:var(--pink); text-align:center;">小佑的日常生活行動會員</h1>
@@ -41,7 +41,7 @@
         <div id="p0" class="page" style="display:block;">
             <h2 style="font-size: 1.5em;">你好，<span id="uName" style="color:var(--pink);">...</span></h2>
             <div class="card" style="text-align:center; padding: 40px 20px;">
-                <div style="font-size:0.8em; opacity:0.6;">可用積分餘額</div>
+                <div style="font-size:0.8em; opacity:0.6;">可用餘額</div>
                 <div style="font-size:2.5em; color:var(--pink);">$ <span id="uBal">0</span></div>
             </div>
             <button class="btn" onclick="showQR()">顯示個人識別碼</button>
@@ -49,23 +49,23 @@
 
         <div id="p1" class="page"><h2>交易明細</h2><div id="hList"></div></div>
         <div id="p2" class="page"><h2>訂單狀態</h2><div id="oList"></div></div>
-        <div id="p3" class="page"><h2>待還帳單</h2><div id="lList"></div></div>
+        <div id="p3" class="page"><h2>待還借款帳單</h2><div id="lList"></div></div>
         <div id="p4" class="page">
             <h2>更多設定</h2>
             <div class="card">
                 <label style="display:block; margin-bottom:10px;">字體大小調整</label>
                 <input type="range" min="12" max="24" value="16" oninput="document.documentElement.style.setProperty('--fs', this.value + 'px')">
             </div>
-            <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
+            <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">淺色／深色模式切換</button>
             <button class="btn" onclick="location.reload()" style="background:var(--red);">登出</button>
         </div>
 
         <div class="nav-bar">
-            <div class="nav-item active" onclick="tab(0)">首頁</div>
-            <div class="nav-item" onclick="tab(1)">紀錄</div>
-            <div class="nav-item" onclick="tab(2)">訂單</div>
-            <div class="nav-item" onclick="tab(3)">帳單</div>
-            <div class="nav-item" onclick="tab(4)">設定</div>
+            <div class="nav-item active" onclick="openTab(0)">首頁</div>
+            <div class="nav-item" onclick="openTab(1)">紀錄</div>
+            <div class="nav-item" onclick="openTab(2)">訂單</div>
+            <div class="nav-item" onclick="openTab(3)">帳單</div>
+            <div class="nav-item" onclick="openTab(4)">設定</div>
         </div>
     </div>
 
@@ -75,7 +75,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIEHFhO4bmcWkHcLKtMTeB5RA2RCgykkpBKC7RCgPtvR7EeZHKDDGPmT_Hd3cMQzQ1/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMOfT7xTo2ELSs6CnBK2D2RWQxIM5CXUll4A0XXLaM0XY0sntoO-BPpFN_yhjBCgt7/exec"; 
         let store = null;
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
 
@@ -106,7 +106,7 @@
             document.getElementById('uName').innerText = u.name;
             document.getElementById('uBal').innerText = u.bal.toLocaleString();
             
-            // 渲染交易紀錄 (新增顯示餘額)
+            // 交易紀錄
             document.getElementById('hList').innerHTML = store.history.map(h => `
                 <div class="card">
                     <div style="display:flex; justify-content:space-between;">
@@ -121,19 +121,21 @@
                 </div>
             `).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
 
-            // 渲染借款
+            // 渲染借款 (帳單)
             document.getElementById('lList').innerHTML = store.loans.map(l => `
                 <div class="card">
-                    ${l.penalty > 0 ? `<span class="overdue-tag">罰金 $${l.penalty}</span>` : ''}
+                    ${l.status === '已結清' ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}
                     <div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div>
                     <div style="display:flex; justify-content:space-between;">
                         <small style="opacity:0.6;">期限: ${l.expiry}</small>
-                        <b style="color:var(--red); font-size:1.2em;">$${l.totalDue}</b>
+                        <b style="color:${l.status === '已結清' ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">
+                            ${l.status === '已結清' ? '已結清' : '$' + l.totalDue}
+                        </b>
                     </div>
                 </div>
-            `).join('') || '<p style="text-align:center; opacity:0.3;">目前無欠款</p>';
+            `).join('') || '<p style="text-align:center; opacity:0.3;">目前無帳單</p>';
 
-            // 渲染訂單
+            // 訂單
             document.getElementById('oList').innerHTML = store.orders.map(o => `
                 <div class="card">
                     <div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div>
@@ -146,7 +148,8 @@
             `).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
         }
 
-        function tab(i) {
+        // 統一頁面切換功能
+        function openTab(i) {
             document.querySelectorAll('.page').forEach(p => p.style.display='none');
             document.getElementById('p'+i).style.display='block';
             document.querySelectorAll('.nav-item').forEach((n,idx) => idx===i?n.classList.add('active'):n.classList.remove('active'));
