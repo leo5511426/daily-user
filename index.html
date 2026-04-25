@@ -6,26 +6,25 @@
     <title>小佑的日常生活行動會員</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #000; --text: #fff; --pink: #FFD1DC; --accent: #FF8FA3; --card: #121212; --border: #252525; --nav: #080808; --red: #ff5252; --green: #2ecc71; }
-        [data-theme='light'] { --bg: #ffffff; --text: #000; --pink: #FF8FA3; --accent: #FF8FA3; --card: #f5f5f5; --border: #e0e0e0; --nav: #fafafa; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; font-weight: 900; transition: 0.3s; overflow-x: hidden; }
+        :root { --bg: #ffffff; --text: #000; --pink: #FF8FA3; --accent: #FF8FA3; --card: #f5f5f5; --border: #e0e0e0; --nav: #fafafa; --red: #ff5252; --green: #2ecc71; --fs: 16px; }
+        [data-theme='dark'] { --bg: #000; --text: #fff; --card: #121212; --border: #252525; --nav: #080808; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; font-weight: 900; font-size: var(--fs); transition: 0.3s; }
         .page { width: 100vw; min-height: 100vh; padding: 100px 20px 130px; box-sizing: border-box; display: none; }
-        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
         .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 18px; font-weight: 900; cursor: pointer; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 11px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; }
         .nav-item.active { color: var(--pink); }
         .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
-        input { width:100%; padding:18px; margin:10px 0; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 16px; }
-        .overdue-tag { position: absolute; top: 10px; right: 10px; background: var(--red); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 10px; }
-        .note-box { font-size: 12px; color: #888; margin-top: 8px; border-top: 1px dashed #333; padding-top: 5px; font-weight: normal; }
+        input { width:100%; padding:18px; margin:10px 0; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; }
+        .note-box { font-size: 12px; color: #888; margin-top: 8px; border-top: 1px dashed #333; padding-top: 5px; }
     </style>
 </head>
-<body data-theme="dark">
-    <div id="loading" class="mask"><p>與後台同步最新資料中，請耐心等候...</p></div>
+<body data-theme="light">
+    <div id="loading" class="mask"><p>資料同步中...</p></div>
 
-    <div id="loginView" style="display:flex; height:100vh; flex-direction:column; justify-content:center; padding:40px; box-sizing: border-box;">
-        <h1 style="color:var(--pink); text-align:center;">小佑的日常生活行動會員</h1>
+    <div id="loginView" style="display:flex; height:100vh; flex-direction:column; justify-content:center; padding:40px;">
+        <h1 style="color:var(--pink); text-align:center;">小佑行動會員</h1>
         <input type="text" id="acc" placeholder="帳號 / ID">
         <input type="password" id="pw" placeholder="密碼">
         <button class="btn" onclick="doLogin()">登入</button>
@@ -33,120 +32,109 @@
 
     <div id="appView" style="display:none;">
         <div id="p0" class="page" style="display:block;">
-            <h2 style="font-size: 28px;">你好，<span id="uName" style="color:var(--pink);">...</span></h2>
-            <div class="card" style="text-align:center; padding: 40px 20px;">
+            <h2 style="font-size: 28px;">你好，<span id="uName">...</span></h2>
+            <div class="card" style="text-align:center;">
                 <div style="font-size:14px; opacity:0.6;">可用積分餘額</div>
                 <div style="font-size:55px; color:var(--pink);">$ <span id="uBal">0</span></div>
             </div>
             <button class="btn" onclick="showQR()">顯示個人識別碼</button>
         </div>
 
-        <div id="p1" class="page"><h2>交易明細</h2><div id="hList"></div></div>
+        <div id="p1" class="page">
+            <h2>交易明細</h2>
+            <div id="hList"></div>
+        </div>
+
         <div id="p2" class="page"><h2>訂單狀態</h2><div id="oList"></div></div>
-        <div id="p3" class="page"><h2>待還帳單</h2><div id="lList"></div></div>
-        <div id="p4" class="page">
-            <h2>更多設定</h2>
-            <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
+        
+        <div id="p3" class="page">
+            <h2>個人設定</h2>
+            <div class="card">
+                <p>調整字體大小</p>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="adjustFont(-1)">A-</button>
+                    <button class="btn" onclick="adjustFont(1)">A+</button>
+                </div>
+            </div>
+            <button class="btn" onclick="changeTheme()" style="margin-bottom:10px;">切換深/淺模式</button>
             <button class="btn" onclick="location.reload()" style="background:var(--red);">登出</button>
         </div>
 
         <div class="nav-bar">
             <div class="nav-item active" onclick="tab(0)">首頁</div>
-            <div class="nav-item" onclick="tab(1)">紀錄</div>
+            <div class="nav-item" onclick="tab(1)">明細</div>
             <div class="nav-item" onclick="tab(2)">訂單</div>
-            <div class="nav-item" onclick="tab(3)">帳單</div>
-            <div class="nav-item" onclick="tab(4)">設定</div>
+            <div class="nav-item" onclick="tab(3)">設定</div>
         </div>
     </div>
 
     <div id="qrBox" class="mask" onclick="this.style.display='none'">
         <div style="background:#fff; padding:20px; border-radius:20px;"><div id="qrcode"></div></div>
-        <p style="margin-top:20px;">點擊任何處關閉</p>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNu35lCKV2RiUDAKOQT8vjCFY7uxS_MqY3t22gtuVifdlbydkhNRXDjTArURZhsOLf/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdgJeNNFRVGj7n1MnzjSnO3qG4kXsKLduaN-Wd89_oT0ZWMogLTuO3UP1i_wrM4vFI/exec"; 
         let store = null;
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
 
         async function doLogin() {
             const uid = document.getElementById('acc').value.trim();
             const upw = document.getElementById('pw').value.trim();
-            if(!uid || !upw) return alert("請輸入完整資料");
-
             document.getElementById('loading').style.display='flex';
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchData', uid: uid }) }).then(r => r.json());
-                if (res.success && String(res.userData.pw) === upw) {
-                    store = res;
-                    render();
-                    document.getElementById('loginView').style.display='none';
-                    document.getElementById('appView').style.display='block';
-                } else { alert(res.success ? "密碼有誤" : res.msg); }
-            } catch(e) { alert("連線異常"); }
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchData', uid: uid }) }).then(r => r.json());
+            if (res.userData && res.userData.pw == upw) {
+                store = res; render();
+                document.getElementById('loginView').style.display='none';
+                document.getElementById('appView').style.display='block';
+            } else { alert("登入失敗"); }
             document.getElementById('loading').style.display='none';
         }
 
         function render() {
-            const u = store.userData;
-            document.getElementById('uName').innerText = u.name;
-            document.getElementById('uBal').innerText = u.bal.toLocaleString();
+            document.getElementById('uName').innerText = store.userData.name;
+            document.getElementById('uBal').innerText = store.userData.bal.toLocaleString();
             
-            // 交易紀錄 (顯示備註)
+            // 交易明細 (顯示 bal)
             document.getElementById('hList').innerHTML = store.history.map(h => `
                 <div class="card">
                     <div style="display:flex; justify-content:space-between;">
                         <b>${h.item}</b>
                         <span style="color:${h.amt>=0?'var(--green)':'var(--red)'}">${h.amt>=0?'+':''}${h.amt}</span>
                     </div>
-                    <small style="opacity:0.5;">${h.time}</small>
+                    <div style="font-size:12px; opacity:0.6;">${h.time} | 餘額: $${h.bal}</div>
                     ${h.note ? `<div class="note-box">備註：${h.note}</div>` : ''}
                 </div>
-            `).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
+            `).join('');
 
-            // 借款 (顯示罰金)
-            document.getElementById('lList').innerHTML = store.loans.map(l => `
-                <div class="card">
-                    ${l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : ''}
-                    <div style="font-size:18px; margin-bottom:5px;">${l.item}</div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <small style="opacity:0.6;">期限: ${l.expiry}</small>
-                        <b style="color:var(--red); font-size:20px;">$${l.totalDue}</b>
-                    </div>
-                    <div style="font-size:11px; opacity:0.4; margin-top:5px;">
-                        (本金餘額: ${l.principal - l.paid} + 罰金: ${l.penalty})
-                    </div>
-                </div>
-            `).join('') || '<p style="text-align:center; opacity:0.3;">目前無欠款</p>';
-
-            // 訂單
+            // 訂單 (修正欄位對應)
             document.getElementById('oList').innerHTML = store.orders.map(o => `
                 <div class="card">
-                    <div style="color:var(--pink); font-size:12px;">單號: ${o.id}</div>
-                    <div style="margin:5px 0;"><b>狀態: ${o.status}</b></div>
-                    <div style="font-size:13px; opacity:0.8;">${o.desc}</div>
-                    <div style="font-size:11px; margin-top:8px; border-top:1px solid #222; padding-top:5px; opacity:0.5;">
-                        ${o.ship} | 物流編號: ${o.track || '無'}
-                    </div>
+                    <div style="color:var(--pink);">單號: ${o.id}</div>
+                    <div><b>${o.status}</b></div>
+                    <div style="font-size:13px;">${o.detail}</div>
+                    <div style="font-size:11px; opacity:0.5;">${o.ship} | 單號: ${o.track || '無'}</div>
                 </div>
-            `).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
+            `).join('');
         }
 
-        function tab(i) {
-            document.querySelectorAll('.page').forEach(p => p.style.display='none');
-            document.getElementById('p'+i).style.display='block';
-            document.querySelectorAll('.nav-item').forEach((n,idx) => idx===i?n.classList.add('active'):n.classList.remove('active'));
-        }
-
-        function showQR() {
-            qr.clear();
-            qr.makeCode(store.userData.id);
-            document.getElementById('qrBox').style.display='flex';
+        function adjustFont(delta) {
+            let current = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fs'));
+            document.documentElement.style.setProperty('--fs', (current + delta) + 'px');
         }
 
         function changeTheme() {
             const b = document.body;
             b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+        }
+
+        function tab(i) {
+            document.querySelectorAll('.page').forEach((p,idx) => p.style.display = idx===i ? 'block':'none');
+            document.querySelectorAll('.nav-item').forEach((n,idx) => idx===i ? n.classList.add('active'):n.classList.remove('active'));
+        }
+
+        function showQR() {
+            qr.clear(); qr.makeCode(store.userData.id);
+            document.getElementById('qrBox').style.display='flex';
         }
     </script>
 </body>
