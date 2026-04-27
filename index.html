@@ -75,7 +75,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMOfT7xTo2ELSs6CnBK2D2RWQxIM5CXUll4A0XXLaM0XY0sntoO-BPpFN_yhjBCgt7/exec"; 
+        const SCRIPT_URL = ""; 
         let store = null;
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
 
@@ -97,7 +97,7 @@
                     document.getElementById('loginView').style.display='none';
                     document.getElementById('appView').style.display='block';
                 } else { alert(res.message); }
-            } catch(e) { alert("連線異常"); }
+            } catch(e) { alert("系統維護中！因系統異常，4/27 18:30~21:00進行系統訂單服務緊急維修作業，請稍後再試。"); }
             document.getElementById('loading').style.display='none';
         }
 
