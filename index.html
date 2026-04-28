@@ -28,7 +28,7 @@
     </style>
 </head>
 <body data-theme="light">
-    <div id="loading" class="mask"><p>與後台同步資料中，請耐心等候...（將會受到裝置網路連率影響）</p></div>
+    <div id="loading" class="mask"><p>資料同步中...</p></div>
 
     <div id="loginView" style="display:flex; height:100vh; flex-direction:column; justify-content:center; padding:40px; box-sizing: border-box;">
         <h1 style="color:var(--pink); text-align:center;">小佑的日常生活行動會員</h1>
@@ -41,7 +41,7 @@
         <div id="p0" class="page" style="display:block;">
             <h2 style="font-size: 1.5em;">你好，<span id="uName" style="color:var(--pink);">...</span></h2>
             <div class="card" style="text-align:center; padding: 40px 20px;">
-                <div style="font-size:0.8em; opacity:0.6;">可用餘額</div>
+                <div style="font-size:0.8em; opacity:0.6;">可用積分餘額</div>
                 <div style="font-size:2.5em; color:var(--pink);">$ <span id="uBal">0</span></div>
             </div>
             <button class="btn" onclick="showQR()">顯示個人識別碼</button>
@@ -49,14 +49,14 @@
 
         <div id="p1" class="page"><h2>交易明細</h2><div id="hList"></div></div>
         <div id="p2" class="page"><h2>訂單狀態</h2><div id="oList"></div></div>
-        <div id="p3" class="page"><h2>待還借款帳單</h2><div id="lList"></div></div>
+        <div id="p3" class="page"><h2>待還帳單</h2><div id="lList"></div></div>
         <div id="p4" class="page">
             <h2>更多設定</h2>
             <div class="card">
                 <label style="display:block; margin-bottom:10px;">字體大小調整</label>
                 <input type="range" min="12" max="24" value="16" oninput="document.documentElement.style.setProperty('--fs', this.value + 'px')">
             </div>
-            <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">淺色／深色模式切換</button>
+            <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
             <button class="btn" onclick="location.reload()" style="background:var(--red);">登出</button>
         </div>
 
@@ -75,7 +75,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMOfT7xTo2ELSs6CnBK2D2RWQxIM5CXUll4A0XXLaM0XY0sntoO-BPpFN_yhjBCgt7/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNu35lCKV2RiUDAKOQT8vjCFY7uxS_MqY3t22gtuVifdlbydkhNRXDjTArURZhsOLf/exec"; 
         let store = null;
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
 
@@ -97,7 +97,7 @@
                     document.getElementById('loginView').style.display='none';
                     document.getElementById('appView').style.display='block';
                 } else { alert(res.message); }
-            } catch(e) { alert("很抱歉！與伺服器連線失敗！若持續無法連線，請洽客服中心"); }
+            } catch(e) { alert("連線異常"); }
             document.getElementById('loading').style.display='none';
         }
 
@@ -148,7 +148,6 @@
             `).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
         }
 
-        // 統一頁面切換功能
         function openTab(i) {
             document.querySelectorAll('.page').forEach(p => p.style.display='none');
             document.getElementById('p'+i).style.display='block';
