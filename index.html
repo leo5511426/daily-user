@@ -19,7 +19,7 @@
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; }
         .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 1.1em; font-weight: 900; cursor: pointer; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.7em; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.7em; cursor: pointer; }
         .nav-item.active { color: var(--pink); }
         .mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
         input { width:100%; padding:18px; margin:10px 0; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 1em; }
@@ -50,7 +50,8 @@
         <div id="p1" class="page"><h2>交易明細</h2><div id="hList"></div></div>
         <div id="p2" class="page"><h2>訂單狀態</h2><div id="oList"></div></div>
         <div id="p3" class="page"><h2>待還帳單</h2><div id="lList"></div></div>
-        <div id="p4" class="page">
+        <div id="p4" class="page"><h2>我的優惠券</h2><div id="cpList"></div></div>
+        <div id="p5" class="page">
             <h2>更多設定</h2>
             <div class="card">
                 <label style="display:block; margin-bottom:10px;">字體大小調整</label>
@@ -65,7 +66,8 @@
             <div class="nav-item" onclick="openTab(1)">紀錄</div>
             <div class="nav-item" onclick="openTab(2)">訂單</div>
             <div class="nav-item" onclick="openTab(3)">帳單</div>
-            <div class="nav-item" onclick="openTab(4)">設定</div>
+            <div class="nav-item" onclick="openTab(4)">優惠券</div>
+            <div class="nav-item" onclick="openTab(5)">設定</div>
         </div>
     </div>
 
@@ -75,7 +77,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysaoZM9mqMPUQigQ-iyAjZcCJ6LqOhTE2n5LE7OJXrAHKsXV0la8IuAipwENFvYytT/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzslVEGPNuJrCyEe865_dw2YfdKqgKBYtfVXOLqtl3PCtPk2omdoVodQUEZqKaLkWU/exec"; 
         let store = null;
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
 
@@ -146,6 +148,19 @@
                     </div>
                 </div>
             `).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
+
+            // 優惠券頁面渲染
+            document.getElementById('cpList').innerHTML = store.coupons.map(c => `
+                <div class="card" style="opacity: ${c.status === '已核銷' ? '0.6' : '1'};">
+                    ${c.status === '已核銷' ? '<span class="overdue-tag" style="background:var(--green);">已核銷</span>' : '<span class="overdue-tag" style="background:var(--pink);">可使用</span>'}
+                    <div style="font-size:1.1em; margin-bottom:5px; padding-right:60px;"><b>${c.name}</b></div>
+                    <div style="font-size:0.9em; opacity:0.8; margin-bottom:10px; white-space: pre-line;">${c.content}</div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.75em; opacity:0.5; border-top:1px dashed var(--border); padding-top:8px;">
+                        <span>到期日: ${c.expiry}</span>
+                        ${c.useTime ? `<span>核銷時間: ${c.useTime}</span>` : `<span>券ID: ${c.id}</span>`}
+                    </div>
+                </div>
+            `).join('') || '<p style="text-align:center; opacity:0.3;">目前無優惠券</p>';
         }
 
         function openTab(i) {
