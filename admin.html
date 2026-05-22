@@ -70,13 +70,23 @@
     <button onclick="addLoan()" style="background:var(--accent)">發放借款</button>
 </div>
 
+<div class="card">
+    <h3 style="margin:0 0 10px;">🎟️ 發送優惠券</h3>
+    <select id="cp_uid"></select>
+    <input type="text" id="cp_id" placeholder="券ID (例如: CP1001)">
+    <input type="text" id="cp_title" placeholder="優惠券名稱 (例如: 甜點免費兌換券)">
+    <input type="text" id="cp_content" placeholder="優惠詳細說明 (例如: 憑券可享大杯鮮奶茶乙杯)">
+    <input type="date" id="cp_exp">
+    <button onclick="sendCouponSubmit()" style="background:var(--primary)">確認發送優惠券</button>
+</div>
+
 <div id="wizModal" class="modal">
     <div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div>
 </div>
 
 <script>
     // 請確保此處為最新佈署的 GAS 網址
-    const GAS = "https://script.google.com/macros/s/AKfycbwHJfF-qvPfjVWuxTNNzvUB1FK4O2B_ZQXfSyW20iaJjBtjmcrJZFqa4mzwS-b4Sxfs/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbzslVEGPNuJrCyEe865_dw2YfdKqgKBYtfVXOLqtl3PCtPk2omdoVodQUEZqKaLkWU/exec"; 
     let U_DB = [], L_DB = [], CP_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode;
 
@@ -89,10 +99,14 @@
         showMask("讀取雲端資料...");
         try {
             const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'fetchData', uid:'admin'})}).then(r=>r.json());
-            U_DB = res.list; L_DB = res.loans; CP_DB = res.coupons;
-            document.getElementById('l_uid').innerHTML = U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('');
+            U_DB = res.list || []; L_DB = res.loans || []; CP_DB = res.coupons || [];
+            
+            // 同步渲染快速撥款與優惠券發送的下拉選單
+            const userOptions = U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('');
+            document.getElementById('l_uid').innerHTML = userOptions;
+            document.getElementById('cp_uid').innerHTML = userOptions;
             hideMask();
-        } catch(e) { alert("同步失敗"); hideMask(); }
+        } catch(e) { alert("同步失敗: " + e); hideMask(); }
     }
 
     function startScan() {
@@ -132,7 +146,6 @@
     function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
     function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
 
-    // --- 核心修正：僅在加值與扣款增加備註欄位 ---
     const FLOWS = {
         add: [{t:"選擇對象",f:"uid",type:"user"},{t:"加值金額",f:"amt",type:"number"},{t:"備註 (選填)",f:"note",type:"text"}],
         sub: [{t:"選擇對象",f:"uid",type:"user"},{t:"扣款金額",f:"amt",type:"number"},{t:"備註 (選填)",f:"note",type:"text"}],
@@ -207,6 +220,27 @@
             await fetch(GAS, {method:'POST', body:JSON.stringify({action:'addLoan', data})});
             alert("撥款成功"); location.reload();
         } catch(e) { alert("錯誤"); hideMask(); }
+    }
+
+    // 新增：前端發送優惠券資料的函數流程
+    async function sendCouponSubmit() {
+        const uid = document.getElementById('cp_uid').value;
+        const cpId = document.getElementById('cp_id').value.trim();
+        const title = document.getElementById('cp_title').value.trim();
+        const content = document.getElementById('cp_content').value.trim();
+        const expiry = document.getElementById('cp_exp').value;
+
+        if(!cpId || !title || !content || !expiry) return alert("請填寫完整優惠券資訊！");
+        
+        showMask("正在發送優惠券...");
+        try {
+            const res = await fetch(GAS, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry })
+            }).then(r => r.json());
+            alert(res.message);
+            location.reload();
+        } catch(e) { alert("連線發送失敗，請確認後端 GAS 是否已正確發佈。"); hideMask(); }
     }
     
     function closeModal() { document.getElementById('wizModal').style.display='none'; }
