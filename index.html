@@ -29,7 +29,6 @@
             justify-content: center;
         }
 
-        /* 結構優化：讓主容器具備獨立視窗管理能力，防止撐高整體網頁 */
         .app-container {
             width: 100%;
             max-width: 500px; 
@@ -48,7 +47,6 @@
             box-shadow: none;
         }
 
-        /* 頁面優化：使各別分頁獨立內部滾動，這樣不論資料再多，都不會把底部的選單擠走 */
         .page { 
             width: 100%; 
             height: 100%;
@@ -61,12 +59,13 @@
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; }
         .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 1.1em; font-weight: 900; cursor: pointer; }
         
-        /* 選單位置修正核心：改為 fixed (固定定位) 或讓其相對於主容器固定在最下方，不再跟著資料滾動 */
         .nav-bar { 
-            position: absolute; 
+            position: fixed; 
             bottom: 0; 
-            left: 0; 
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%; 
+            max-width: 500px; 
             height: 90px; 
             background: var(--nav); 
             display: flex; 
@@ -74,7 +73,14 @@
             z-index: 100; 
             padding-bottom: env(safe-area-inset-bottom); 
             box-sizing: border-box; 
+            transition: max-width 0.3s ease;
         }
+
+        .app-container.full-desktop ~ .nav-bar,
+        .full-desktop .nav-bar {
+            max-width: 100% !important;
+        }
+
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.85em; cursor: pointer; }
         .nav-item.active { color: var(--pink); }
         .mask { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
@@ -82,21 +88,17 @@
         .overdue-tag { position: absolute; top: 10px; right: 10px; background: var(--red); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 0.75em; }
         .note-box { font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px dashed #333; padding-top: 5px; font-weight: normal; }
 
-        /* 優惠券與帳單分類小頁籤樣式 */
         .coupon-tabs, .loan-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 5px; margin-bottom: 15px; border: 1px solid var(--border); }
         .coupon-tab, .loan-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 0.9em; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; }
         .coupon-tab.active, .loan-tab.active { background: var(--pink); color: #fff; }
         
-        /* 密碼顯示切換區域樣式 */
         .pwd-toggle-container { display: flex; align-items: center; margin: 5px 0 15px; font-size: 0.9em; cursor: pointer; user-select: none; }
         .pwd-toggle-container input { width: auto; margin: 0 8px 0 0; transform: scale(1.2); }
 
-        /* SweetAlert2 暗黑模式配飾適應微調 */
         .swal2-popup { font-family: -apple-system, sans-serif; font-weight: 900; border-radius: 20px !important; }
         [data-theme='dark'] .swal2-popup { background-color: #121212 !important; color: #fff !important; }
         [data-theme='dark'] .swal2-title, [data-theme='dark'] .swal2-html-container { color: #fff !important; }
 
-        /* 新增：左上角靜默同步提示器與小圓圈旋轉動畫 */
         .sync-indicator {
             position: absolute;
             top: 12px;
@@ -108,7 +110,7 @@
             background: rgba(0, 0, 0, 0.05);
             padding: 4px 8px;
             border-radius: 20px;
-            pointer-events: none; /* 穿透點擊，確保不擋住下方任何操作 */
+            pointer-events: none;
         }
         [data-theme='dark'] .sync-indicator {
             background: rgba(255, 255, 255, 0.1);
@@ -129,6 +131,15 @@
         @keyframes sync-spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        .settings-section-title {
+            font-size: 1.1em;
+            margin: 20px 0 10px 5px;
+            color: var(--pink);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
     </style>
 </head>
@@ -155,7 +166,7 @@
             </div>
 
             <div id="p0" class="page" style="display:block;">
-                <h2 style="font-size: 1.5em;">你好，<span id="uName" style="color:var(--pink);">...</span></h2>
+                <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
                 <div class="card" style="text-align:center; padding: 40px 20px;">
                     <div style="font-size:0.8em; opacity:0.6;">可用積分餘額</div>
                     <div style="font-size:2.5em; color:var(--pink);">$ <span id="uBal">0</span></div>
@@ -188,13 +199,22 @@
             
             <div id="p5" class="page">
                 <h2>更多設定</h2>
+                
+                <div class="settings-section-title">👤 個人資料管理</div>
+                <div class="card" style="display: flex; flex-direction: column; gap: 10px; padding: 15px;">
+                    <button class="btn" onclick="updateProfileName()" style="background:#0284c7; font-size: 1em; padding: 14px;">修改基本資料 (變更姓名)</button>
+                    <button class="btn" onclick="updateUserPassword()" style="background:#0f172a; font-size: 1em; padding: 14px;">變更登入密碼</button>
+                    <button class="btn" onclick="showQR()" style="background:var(--accent); font-size: 1em; padding: 14px;">顯示個人識別碼</button>
+                    <button class="btn" onclick="triggerLogout()" style="background:var(--red); font-size: 1em; padding: 14px;">安全登出系統</button>
+                </div>
+
+                <div class="settings-section-title">🎨 介面與顯示設定</div>
                 <div class="card">
                     <label style="display:block; margin-bottom:10px;">字體大小調整</label>
                     <input type="range" min="14" max="28" value="18" oninput="document.documentElement.style.setProperty('--fs', this.value + 'px')">
                 </div>
                 <button class="btn" onclick="toggleLayoutMode()" style="background:#4f46e5; margin-bottom:10px;">🖥️ 電腦版 / 📱 手機版 寬度切換</button>
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
-                <button class="btn" onclick="location.reload()" style="background:var(--red);">登出</button>
             </div>
 
             <div class="nav-bar">
@@ -222,23 +242,118 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzslVEGPNuJrCyEe865_dw2YfdKqgKBYtfVXOLqtl3PCtPk2omdoVodQUEZqKaLkWU/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFY-1dYMKLJ6y6uWUpW3337w0EjlDhdimY3dmpYkAGHi4EaCnMJ7cSRiIJFAV9qH4/exec"; 
         let store = null;
         let currentCouponTab = 0; 
-        let currentLoanTab = 0; // 目前選擇的帳單分類頁籤 (0: 未結清, 1: 已結清, 2: 已逾期)
-        let savedPw = "";      // 新增：獨立記憶體儲存變數，防止瀏覽器登入後自動清空輸入框導致同步失效
+        let currentLoanTab = 0; 
+        let savedPw = "";      
         
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
         const couponQr = new QRCode(document.getElementById("couponQrcode"), { width: 200, height: 200 });
 
-        // 封裝通用 SweetAlert2 彈窗提示，確保套用品牌主色系
         function showAlert(title, text, icon = 'info') {
+            if (icon === 'error') {
+                showCustomerServiceAlert(title, text);
+            } else {
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    confirmButtonColor: 'var(--pink)',
+                    confirmButtonText: '確定'
+                });
+            }
+        }
+
+        function showCustomerServiceAlert(title, text) {
             Swal.fire({
                 title: title,
-                text: text,
-                icon: icon,
+                html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`,
+                icon: 'error',
+                showCancelButton: true,
                 confirmButtonColor: 'var(--pink)',
-                confirmButtonText: '確定'
+                cancelButtonColor: '#7f8c8d',
+                confirmButtonText: '聯絡線上客服',
+                cancelButtonText: '關閉'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    openCustomerServiceMenu();
+                }
+            });
+        }
+
+        function openCustomerServiceMenu() {
+            Swal.fire({
+                title: '選擇聯絡客服方式',
+                html: `
+                    <div style="text-align: left; font-size: 0.9em; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 10px;">
+                        請選擇您方便的管道與客服聯絡：<br>
+                        LINE 客服：@536waome<br>
+                        客服信箱：j1210217@kusjh.kh.edu.tw<br>
+                        客服電話：0966-236-830
+                    </div>
+                `,
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonColor: '#2ecc71',
+                denyButtonColor: '#3498db',
+                cancelButtonColor: '#f39c12',
+                confirmButtonText: 'LINE 客服',
+                denyButtonText: '客服信箱',
+                cancelButtonText: '客服電話',
+                allowOutsideClick: false
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    window.open('https://line.me/R/ti/p/@536waome', '_blank');
+                } else if (res.isDenied) {
+                    const mailtoUrl = 'mailto:j1210217@kusjh.kh.edu.tw?subject=小佑的日常生活行動會員-問題回報';
+                    const startTime = Date.now();
+                    window.location.href = mailtoUrl;
+                    
+                    setTimeout(() => {
+                        if (Date.now() - startTime < 1500) {
+                            Swal.fire({
+                                title: '客服信箱資訊',
+                                text: 'j1210217@kusjh.kh.edu.tw',
+                                confirmButtonText: '複製信箱',
+                                confirmButtonColor: 'var(--pink)'
+                            }).then(() => {
+                                navigator.clipboard.writeText('j1210217@kusjh.kh.edu.tw');
+                                Swal.fire({ title: '已複製信箱！', icon: 'success', timer: 1000, showConfirmButton: false });
+                            });
+                        }
+                    }, 500);
+                } else if (res.dismiss === Swal.DismissReason.cancel) {
+                    Swal.fire({
+                        title: '確定撥打付費電話？',
+                        html: '<span style="color: red; font-weight: bold;">【若您選擇撥打付費客服專線，語音電話費率將依照您的電信業者方案資費計收（通常為0.3元/秒）】</span>',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: 'var(--pink)',
+                        cancelButtonText: '取消',
+                        confirmButtonText: '撥打/顯示號碼'
+                    }).then((phoneChoice) => {
+                        if (phoneChoice.isConfirmed) {
+                            const telUrl = 'tel:0966-236-830';
+                            const startTime = Date.now();
+                            window.location.href = telUrl;
+                            
+                            setTimeout(() => {
+                                if (Date.now() - startTime < 1500) {
+                                    Swal.fire({
+                                        title: '客服電話資訊',
+                                        text: '0966-236-830',
+                                        confirmButtonText: '複製電話',
+                                        confirmButtonColor: 'var(--pink)'
+                                    }).then(() => {
+                                        navigator.clipboard.writeText('0966-236-830');
+                                        Swal.fire({ title: '已複製電話！', icon: 'success', timer: 1000, showConfirmButton: false });
+                                    });
+                                }
+                            }, 500);
+                        }
+                    });
+                }
             });
         }
 
@@ -253,7 +368,6 @@
             const upw = document.getElementById('pw').value.trim();
             if(!uid || !upw) return showAlert("提示", "請輸入完整資料", "warning");
 
-            // 登入轉圈圈改用 SweetAlert2 風格
             Swal.fire({
                 title: '登入中',
                 text: '驗證身份中，請稍候...',
@@ -270,44 +384,41 @@
                 }).then(r => r.json());
 
                 if (res.success) {
-                    savedPw = upw; // 登入成功時，立將密碼安全寫入全域變數記憶體中，供後續同步調用
+                    savedPw = upw; 
                     store = res;
                     render();
                     document.getElementById('loginView').style.display='none';
                     document.getElementById('appView').style.display='block';
-                    Swal.close(); // 關閉轉圈圈
+                    Swal.close(); 
                 } else { 
-                    showAlert("登入失敗", res.message, "error"); 
+                    showCustomerServiceAlert("登入失敗", res.message); 
                 }
             } catch(e) { 
-                showAlert("錯誤", "連線異常，請稍後再試", "error"); 
+                showCustomerServiceAlert("錯誤", "連線異常，請稍後再試"); 
             }
         }
 
-        // 靜態靜默同步資料函式 (使用記憶體中的密碼安全同步，徹底解決無法同步的問題)
         async function silentSyncData() {
             if (!store || !store.userData || !store.userData.id || !savedPw) return;
             
             const uid = store.userData.id;
             const indicator = document.getElementById('syncIndicator');
             
-            // 顯示左上角靜默提示器（不加阻擋遮罩，完全不影響操作）
             if (indicator) indicator.style.display = 'flex';
 
             try {
                 const res = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'login', uid: uid, pw: savedPw }) // 使用獨立記憶體中的密碼，不依賴網頁輸入框
+                    body: JSON.stringify({ action: 'login', uid: uid, pw: savedPw }) 
                 }).then(r => r.json());
 
                 if (res.success) {
                     store = res;
-                    render(); // 背景悄悄刷新完成，重新渲染各畫面數據
+                    render(); 
                 }
             } catch (e) {
                 console.log("背景資料同步失敗，保持現有數據呈現");
             } finally {
-                // 不論請求成功或失敗，結束時自動隱藏左上角提示器
                 if (indicator) indicator.style.display = 'none';
             }
         }
@@ -317,7 +428,6 @@
             document.getElementById('uName').innerText = u.name;
             document.getElementById('uBal').innerText = u.bal.toLocaleString();
             
-            // 交易紀錄
             document.getElementById('hList').innerHTML = store.history.map(h => `
                 <div class="card">
                     <div style="display:flex; justify-content:space-between;">
@@ -332,11 +442,9 @@
                 </div>
             `).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
 
-            // 呼叫獨立的帳單與優惠券渲染函式
             renderLoans();
             renderCoupons();
 
-            // 訂單
             document.getElementById('oList').innerHTML = store.orders.map(o => `
                 <div class="card">
                     <div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div>
@@ -349,7 +457,6 @@
             `).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
         }
 
-        // 獨立出渲染借款 (帳單) 的邏輯，以便配合頁籤篩選
         function renderLoans() {
             if (!store || !store.loans) return;
 
@@ -358,11 +465,11 @@
                 const isOverdue = (!isCleared && l.penalty > 0);
 
                 if (currentLoanTab === 1) {
-                    return isCleared;      // 已結清
+                    return isCleared;      
                 } else if (currentLoanTab === 2) {
-                    return isOverdue;      // 已逾期
+                    return isOverdue;      
                 } else {
-                    return !isCleared && !isOverdue; // 未結清 (排除已逾期)
+                    return !isCleared && !isOverdue; 
                 }
             });
 
@@ -373,14 +480,13 @@
                     <div style="display:flex; justify-content:space-between;">
                         <small style="opacity:0.6;">期限: ${l.expiry}</small>
                         <b style="color:${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">
-                            ${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' ? '已結清' : '$' + l.totalDue}
+                            ${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' ? 'App結清' : '$' + l.totalDue}
                         </b>
                     </div>
                 </div>
             `).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無帳單</p>';
         }
 
-        // 切換帳單小頁籤
         function switchLoanTab(tabIndex) {
             currentLoanTab = tabIndex;
             document.querySelectorAll('.loan-tab').forEach((el, idx) => {
@@ -388,7 +494,7 @@
                 else el.classList.remove('active');
             });
             renderLoans();
-            silentSyncData(); // 客戶點選小頁籤操作，觸發靜默同步最新資料
+            silentSyncData(); 
         }
 
         function renderCoupons() {
@@ -455,7 +561,7 @@
                 else el.classList.remove('active');
             });
             renderCoupons();
-            silentSyncData(); // 客戶點選小頁籤操作，觸發靜默同步最新資料
+            silentSyncData(); 
         }
 
         function showCouponQR(couponId, couponName) {
@@ -470,7 +576,7 @@
             document.querySelectorAll('.page').forEach(p => p.style.display='none');
             document.getElementById('p'+i).style.display='block';
             document.querySelectorAll('.nav-item').forEach((n,idx) => idx===i?n.classList.add('active'):n.classList.remove('active'));
-            silentSyncData(); // 客戶切換底部導覽選單（有操作畫面），觸發背景靜默同步最新資料
+            silentSyncData(); 
         }
 
         function showQR() {
@@ -487,6 +593,221 @@
         function toggleLayoutMode() {
             const container = document.getElementById('appContainer');
             container.classList.toggle('full-desktop');
+        }
+
+        /* ==================== 以下為【修正後】具備嚴格兩次前置確認的控制區 ==================== */
+
+        // 修改基本資料 (變更姓名) -> 嚴格包含：1. 進入確認、2. 輸入後二度確認、3. 執行後提示
+        async function updateProfileName() {
+            if (!store || !store.userData) return;
+
+            // 【第一層前置確認】：詢問是否要修改
+            const confirmStep1 = await Swal.fire({
+                title: '確定要修改基本資料嗎？',
+                text: '您即將變更您的會員個人資料。',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--pink)',
+                cancelButtonText: '取消',
+                confirmButtonText: '確定前往'
+            });
+
+            if (!confirmStep1.isConfirmed) return;
+
+            // 彈出輸入框供使用者填寫
+            const { value: newName } = await Swal.fire({
+                title: '修改個人資料',
+                input: 'text',
+                inputLabel: '請輸入新的姓名',
+                inputValue: store.userData.name,
+                showCancelButton: true,
+                confirmButtonColor: 'var(--pink)',
+                cancelButtonText: '取消',
+                confirmButtonText: '下一步',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) return '姓名不能為空！';
+                }
+            });
+
+            if (!newName || newName.trim() === store.userData.name) return;
+            const finalizedName = newName.trim();
+
+            // 【第二層前置確認】：輸入完成後的最終確認
+            const confirmStep2 = await Swal.fire({
+                title: '最後確認：確定變更名稱？',
+                html: `您確定要將會員名稱從「<span style="color:var(--red);">${store.userData.name}</span>」<br>正式修改為「<span style="color:var(--green);">${finalizedName}</span>」嗎？`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--pink)',
+                cancelButtonText: '返回修改',
+                confirmButtonText: '確認修改，不回頭'
+            });
+
+            if (!confirmStep2.isConfirmed) return;
+
+            // 兩次確認皆通過，開始執行連線
+            Swal.fire({
+                title: '資料更新中',
+                text: '請稍候...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'updateProfile',
+                        uid: store.userData.id,
+                        pw: savedPw,
+                        newName: finalizedName
+                    })
+                }).then(r => r.json());
+
+                if (res.success) {
+                    store.userData.name = finalizedName;
+                    render(); 
+                    
+                    // 【修改後結果提示（成功）】
+                    await Swal.fire({
+                        title: '基本資料變更成功！',
+                        text: `您的姓名已成功更新為：${finalizedName}`,
+                        icon: 'success',
+                        confirmButtonColor: 'var(--pink)',
+                        confirmButtonText: '確定'
+                    });
+                } else {
+                    // 【修改後結果提示（失敗）】
+                    showCustomerServiceAlert("基本資料更新失敗", res.message || "伺服器更新拒絕，請稍後再試");
+                }
+            } catch (e) {
+                // 【修改後結果提示（異常）】
+                showCustomerServiceAlert("錯誤", "網路連線異常，無法完成基本資料變更");
+            }
+        }
+
+        // 變更登入密碼 -> 嚴格包含：1. 進入確認、2. 輸入完成後二度確認、3. 執行後提示
+        async function updateUserPassword() {
+            if (!store || !store.userData) return;
+
+            // 【第一層前置確認】：詢問是否變更密碼
+            const confirmStep1 = await Swal.fire({
+                title: '確定要變更登入密碼嗎？',
+                text: '密碼變更成功後，系統將強制安全登出，您需要使用新密碼重新登入。',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--red)',
+                cancelButtonText: '取消',
+                confirmButtonText: '確定前往'
+            });
+
+            if (!confirmStep1.isConfirmed) return;
+
+            // 彈出表單讓使用者填寫
+            const { value: formValues } = await Swal.fire({
+                title: '變更登入密碼',
+                html:
+                    '<input id="swal-old-pw" class="swal2-input" type="password" placeholder="請輸入舊密碼">' +
+                    '<input id="swal-new-pw" class="swal2-input" type="password" placeholder="請輸入新密碼">' +
+                    '<input id="swal-confirm-pw" class="swal2-input" type="password" placeholder="再次確認新密碼">',
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonColor: 'var(--red)',
+                cancelButtonText: '取消',
+                confirmButtonText: '下一步',
+                preConfirm: () => {
+                    const oldPw = document.getElementById('swal-old-pw').value.trim();
+                    const newPw = document.getElementById('swal-new-pw').value.trim();
+                    const confirmPw = document.getElementById('swal-confirm-pw').value.trim();
+
+                    if (!oldPw || !newPw || !confirmPw) {
+                        Swal.showValidationMessage('所有密碼欄位皆為必填！');
+                        return false;
+                    }
+                    if (newPw !== confirmPw) {
+                        Swal.showValidationMessage('兩次輸入的新密碼不一致！');
+                        return false;
+                    }
+                    return { oldPw: oldPw, newPw: newPw };
+                }
+            });
+
+            if (!formValues) return;
+
+            // 【第二層前置確認】：輸入完畢後的最終確認
+            const confirmStep2 = await Swal.fire({
+                title: '您確定要寫入新密碼嗎？',
+                text: '請確保您記住了剛才輸入的新密碼。按下確定後將立即向伺服器提交變更申請！',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--red)',
+                cancelButtonText: '返回修改',
+                confirmButtonText: '確認提交變更'
+            });
+
+            if (!confirmStep2.isConfirmed) return;
+
+            // 兩次前置確認皆通過，開始執行網路發送
+            Swal.fire({
+                title: '密碼變更中',
+                text: '請稍候...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'updatePassword',
+                        uid: store.userData.id,
+                        oldPw: formValues.oldPw,
+                        newPw: formValues.newPw
+                    })
+                }).then(r => r.json());
+
+                if (res.success) {
+                    // 【修改後結果提示（成功）】
+                    await Swal.fire({
+                        title: '密碼變更成功！',
+                        text: '帳戶安全密碼已成功變更，請點擊確認以安全登出並重新登入。',
+                        icon: 'success',
+                        confirmButtonColor: 'var(--pink)',
+                        confirmButtonText: '登出系統'
+                    });
+                    location.reload(); 
+                } else {
+                    // 【修改後結果提示（失敗）】
+                    showCustomerServiceAlert("密碼變更失敗", res.message || "請檢查您的舊密碼是否輸入正確");
+                }
+            } catch (e) {
+                // 【修改後結果提示（異常）】
+                showCustomerServiceAlert("錯誤", "網路連線異常，變更密碼失敗");
+            }
+        }
+
+        // 安全登出系統 -> 包含登出前、登出後確認
+        async function triggerLogout() {
+            const confirmResult = await Swal.fire({
+                title: '確認要登出系統嗎？',
+                text: '登出後需要重新輸入您的帳號與密碼才能存取行動會員。',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--red)',
+                cancelButtonText: '取消',
+                confirmButtonText: '安全登出'
+            });
+
+            if (confirmResult.isConfirmed) {
+                await Swal.fire({
+                    title: '登出成功',
+                    text: '您已安全登出本系統，再見！',
+                    icon: 'success',
+                    confirmButtonColor: 'var(--pink)',
+                    confirmButtonText: '回到登入頁'
+                });
+                location.reload(); 
+            }
         }
     </script>
 </body>
