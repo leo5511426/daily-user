@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小佑的日常生活行動會員－後台</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --accent: #db2777; --green: #10b981; --red: #ff5252; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-weight: bold; }
-        #globalMask { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; justify-content:center; align-items:center; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
         .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
         .m-btn { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #ddd; cursor: pointer; font-size: 15px; }
@@ -23,11 +21,12 @@
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; text-align: center; }
         .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .q-btn { padding: 15px; border-radius: 12px; border: none; color: white; font-weight: bold; }
+        
+        /* 讓 SweetAlert2 的字體與粗體符合系統規範 */
+        .swal2-popup { font-family: -apple-system, sans-serif; font-weight: bold; border-radius: 20px !important; }
     </style>
 </head>
 <body>
-
-<div id="globalMask"><div class="spinner"></div><b id="maskText">同步雲端資料...</b></div>
 
 <div id="reader-modal">
     <div id="reader"></div>
@@ -85,15 +84,35 @@
 </div>
 
 <script>
-    // 請確保此處為最新佈署的 GAS 網址
-    const GAS = "https://script.google.com/macros/s/AKfycbzslVEGPNuJrCyEe865_dw2YfdKqgKBYtfVXOLqtl3PCtPk2omdoVodQUEZqKaLkWU/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbzjLpoEQND1fS_c0IRk70t6TE4R5INgxPQiscdKwoNB86o8XYI9cjVL-4URrvk1KGEJ/exec"; 
     let U_DB = [], L_DB = [], CP_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode;
 
     window.onload = refresh;
 
-    function showMask(text) { document.getElementById('maskText').innerText = text; document.getElementById('globalMask').style.display = 'flex'; }
-    function hideMask() { document.getElementById('globalMask').style.display = 'none'; }
+    function showMask(text) { 
+        Swal.fire({
+            title: text,
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    }
+    
+    function hideMask() { 
+        Swal.close(); 
+    }
+
+    function showAlert(title, text, icon = 'info') {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            confirmButtonColor: 'var(--primary)',
+            confirmButtonText: '確定'
+        });
+    }
 
     async function refresh() {
         showMask("讀取雲端資料...");
@@ -101,12 +120,11 @@
             const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'fetchData', uid:'admin'})}).then(r=>r.json());
             U_DB = res.list || []; L_DB = res.loans || []; CP_DB = res.coupons || [];
             
-            // 同步渲染快速撥款與優惠券發送的下拉選單
             const userOptions = U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('');
             document.getElementById('l_uid').innerHTML = userOptions;
             document.getElementById('cp_uid').innerHTML = userOptions;
             hideMask();
-        } catch(e) { alert("同步失敗: " + e); hideMask(); }
+        } catch(e) { showAlert("同步失敗", e, "error"); }
     }
 
     function startScan() {
@@ -119,7 +137,10 @@
             if (code.startsWith("CP")) {
                 const cp = CP_DB.find(c => String(c.id) === code);
                 if (cp) {
-                    if (cp.status !== "未使用") { alert("此券已核銷過！"); return; }
+                    if (cp.status === "已核銷" || cp.status === "已使用") { 
+                        showAlert("提示", "此券已核銷過！", "warning"); 
+                        return; 
+                    }
                     FORM.cpId = code;
                     const owner = U_DB.find(u => u.id === cp.uid);
                     document.getElementById('targetName').innerText = "🎟️ 識別到優惠券";
@@ -127,7 +148,7 @@
                     document.getElementById('quickBtns').style.display = 'none';
                     document.getElementById('couponRedeemBtn').style.display = 'block';
                     document.getElementById('quickActionModal').style.display = 'flex';
-                } else { alert("查無券號：" + code); }
+                } else { showAlert("查無此券", "找不到券號：" + code, "error"); }
             } else {
                 const user = U_DB.find(u => u.id === code);
                 if (user) {
@@ -137,7 +158,7 @@
                     document.getElementById('quickBtns').style.display = 'grid';
                     document.getElementById('couponRedeemBtn').style.display = 'none';
                     document.getElementById('quickActionModal').style.display = 'flex';
-                } else { alert("查無使用者：" + code); }
+                } else { showAlert("查無此人", "找不到使用者識別碼：" + code, "error"); }
             }
         });
     }
@@ -165,11 +186,11 @@
         let h = `<h3 style="color:var(--primary)">${s.t}</h3>`;
         if(s.type === 'user') h += `<select id="win">${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
         else if(s.type === 'loan') {
-            const myL = L_DB.filter(l => l.uid === FORM.uid && l.status === '還款中');
-            h += myL.length ? `<select id="win" onchange="checkOverdue(this.value)"><option value="">-- 請選擇 --</option>${myL.map(l=>`<option value="${l.row}">${l.item} ($${l.total-l.paid})</option>`).join('')}</select>` : `<p>無欠款紀錄</p>`;
+            const myL = L_DB.filter(l => l.uid === FORM.uid && l.status !== '已結清' && l.status !== 'processed_cleared');
+            h += myL.length ? `<select id="win" onchange="checkOverdue(this.value)"><option value="">-- 請選擇 --</option>${myL.map(l=>`<option value="${l.row}">${l.item} ($${l.total-l.paid})</option>`).join('')}</select>` : `<p>目前無任何欠款或待結清帳單紀錄</p>`;
         } else if(s.type === 'cpSelect') {
-            const myCP = CP_DB.filter(c => c.uid === FORM.uid && c.status === '未使用');
-            h += myCP.length ? `<select id="win">${myCP.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select>` : `<p>無優惠券</p>`;
+            const myCP = CP_DB.filter(c => c.uid === FORM.uid && c.status !== '已核銷' && c.status !== '已使用');
+            h += myCP.length ? `<select id="win">${myCP.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select>` : `<p>目前無有效未使用之優惠券</p>`;
         } else {
             const preVal = (CUR_MODE === 'pay' && s.f === 'cash') ? (FORM.suggestedAmt || "") : "";
             h += `<input id="win" type="${s.type}" value="${preVal}" autofocus placeholder="請在此輸入...">`;
@@ -189,7 +210,12 @@
         if(today > exp) {
             const days = Math.ceil(Math.abs(today - exp) / 86400000);
             penalty = days * 10;
-            alert(`🚨 逾期提醒：\n此筆已逾期 ${days} 天，罰金 $${penalty}。\n目前總額(本金+罰金)：$${principalLeft + penalty}`);
+            Swal.fire({
+                title: '🚨 逾期催收警告',
+                html: `此筆款項已逾期 <b style="color:var(--red);">${days}</b> 天！<br>衍生追加罰金：<b>$${penalty}</b><br>目前應付總額(剩餘本金+罰金)：<b style="color:var(--accent); font-size:1.2em;">$${principalLeft + penalty}</b>`,
+                icon: 'warning',
+                confirmButtonColor: 'var(--red)'
+            });
             FORM.suggestedAmt = principalLeft + penalty;
         } else {
             FORM.suggestedAmt = principalLeft;
@@ -204,25 +230,52 @@
             CUR_STEP++; 
             renderWiz(); 
         } else {
+            // 還款模式客製化註記與金額修正
+            if(CUR_MODE === 'pay') {
+                const targetLoan = L_DB.find(l => String(l.row) === String(FORM.loanRef));
+                const loanName = targetLoan ? targetLoan.item : "未知帳單";
+                
+                let payDetails = [];
+                let cashAmt = parseFloat(FORM.cash) || 0;
+                let balAmt = parseFloat(FORM.bal) || 0;
+                
+                if(cashAmt > 0) payDetails.push(`現金收款:$${cashAmt}`);
+                if(balAmt > 0) payDetails.push(`餘額扣款:$${balAmt}`);
+                
+                // 動態組合：還款紀錄 (帳單名稱) (支付明細)
+                FORM.note = `還款紀錄 (${loanName})` + (payDetails.length > 0 ? ` (${payDetails.join(',')})` : '');
+                
+                // 重要修正：確保變動數值傳遞給後端時既設定點數變動量為 0，同時提供必要欄位供後端 Transactions 寫入
+                FORM.amt = 0; 
+                FORM.item = FORM.note; // 同步綁定項目欄位名稱，防範後端 GAS 僅讀取 item 而不讀取 note 的狀況
+            }
+
             closeModal(); showMask("執行中...");
             try {
                 const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:CUR_MODE, ...FORM})}).then(r=>r.json());
-                alert(res.message); location.reload();
-            } catch(e) { alert("執行失敗"); hideMask(); }
+                
+                Swal.fire({
+                    title: res.success ? '執行成功' : '執行回報',
+                    text: res.message,
+                    icon: res.success ? 'success' : 'info',
+                    confirmButtonColor: 'var(--primary)'
+                }).then(() => {
+                    location.reload();
+                });
+            } catch(e) { showAlert("錯誤", "後台端發送失敗，請確認網路連線。", "error"); }
         }
     }
 
     async function addLoan() {
         const data = { uid: document.getElementById('l_uid').value, item: document.getElementById('l_item').value, total: document.getElementById('l_amt').value, loanDate: new Date(), expiry: document.getElementById('l_exp').value };
-        if(!data.item || !data.total || !data.expiry) return alert("請填寫完整");
+        if(!data.item || !data.total || !data.expiry) return showAlert("提示", "請填寫完整借貸撥款欄位資訊！", "warning");
         showMask("撥款中...");
         try {
             await fetch(GAS, {method:'POST', body:JSON.stringify({action:'addLoan', data})});
-            alert("撥款成功"); location.reload();
-        } catch(e) { alert("錯誤"); hideMask(); }
+            Swal.fire({ title: '發放借款成功', text: '款項與還款期限已正式記入該會員帳下。', icon: 'success', confirmButtonColor: 'var(--primary)' }).then(() => { location.reload(); });
+        } catch(e) { showAlert("發放失敗", "連線錯誤，無法完成撥款手續。", "error"); }
     }
 
-    // 新增：前端發送優惠券資料的函數流程
     async function sendCouponSubmit() {
         const uid = document.getElementById('cp_uid').value;
         const cpId = document.getElementById('cp_id').value.trim();
@@ -230,7 +283,7 @@
         const content = document.getElementById('cp_content').value.trim();
         const expiry = document.getElementById('cp_exp').value;
 
-        if(!cpId || !title || !content || !expiry) return alert("請填寫完整優惠券資訊！");
+        if(!cpId || !title || !content || !expiry) return showAlert("提示", "請填寫完整優惠券資訊！", "warning");
         
         showMask("正在發送優惠券...");
         try {
@@ -238,9 +291,9 @@
                 method: 'POST',
                 body: JSON.stringify({ action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry })
             }).then(r => r.json());
-            alert(res.message);
-            location.reload();
-        } catch(e) { alert("連線發送失敗，請確認後端 GAS 是否已正確發佈。"); hideMask(); }
+            
+            Swal.fire({ title: '發送完畢', text: res.message, icon: 'success', confirmButtonColor: 'var(--primary)' }).then(() => { location.reload(); });
+        } catch(e) { showAlert("發送失敗", "連線發送失敗，請確認後端 GAS 是否已正確佈署與發佈。", "error"); }
     }
     
     function closeModal() { document.getElementById('wizModal').style.display='none'; }
@@ -249,8 +302,8 @@
         closeQuick(); showMask("核銷中...");
         try {
             const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:'redeem', cpId: FORM.cpId})}).then(r=>r.json());
-            alert(res.message); location.reload();
-        } catch(e) { alert("錯誤"); hideMask(); }
+            Swal.fire({ title: '核銷結果', text: res.message, icon: res.success ? 'success' : 'info', confirmButtonColor: 'var(--primary)' }).then(() => { location.reload(); });
+        } catch(e) { showAlert("核銷失敗", "連線異常，無法寫入核銷狀態。", "error"); }
     }
 </script>
 </body>
