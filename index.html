@@ -141,6 +141,80 @@
             align-items: center;
             gap: 6px;
         }
+
+        /* 📍 物流時間線垂直架構與時間樣式 */
+        .order-timeline {
+            margin: 15px 0 5px 5px;
+            padding-left: 5px;
+        }
+        .timeline-node {
+            position: relative;
+            padding-left: 24px;
+            padding-bottom: 18px;
+        }
+        .timeline-node:last-child {
+            padding-bottom: 5px;
+        }
+        /* 垂直軸線 */
+        .timeline-node::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 6px;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+        .timeline-node:last-child::before {
+            display: none;
+        }
+        /* 歷史進度小圓點 */
+        .timeline-node::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #a1a1aa;
+        }
+        /* 最新進度頂部高亮亮點與發光樣式 */
+        .timeline-node.latest-node::after {
+            background: var(--pink);
+            box-shadow: 0 0 0 4px rgba(255, 143, 163, 0.35);
+        }
+        .timeline-node.latest-node::before {
+            background: var(--pink);
+        }
+        .timeline-node-title {
+            font-size: 1em;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .timeline-node.latest-node .timeline-node-title {
+            color: var(--pink);
+        }
+        /* 🔧 時間紀錄字體與樣式設定 */
+        .timeline-node-time {
+            font-size: 0.75em;
+            font-weight: bold;
+            opacity: 0.6;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+        .timeline-node.latest-node .timeline-node-time {
+            opacity: 0.85;
+            color: var(--pink);
+        }
+        .timeline-node-desc {
+            font-size: 0.8em;
+            font-weight: normal;
+            opacity: 0.75;
+            color: var(--text);
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -242,8 +316,7 @@
     </div>
 
     <script>
-        //https://script.google.com/macros/s/AKfycbwBZOdiX0F0V1GCWiULgER1g-ofefnWdnbOGH9i-sW5F6p5y3oTJlgjSd4iX7GtApYe/exec
-        const SCRIPT_URL = ""; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXHZBEhaN7rxJQ1PRfWYiD74CiSmmwO_zN-k0tdvtfkfoo_Yp64biBVV-74p6AtKHu/exec"; 
         let store = null;
         let currentCouponTab = 0; 
         let currentLoanTab = 0; 
@@ -395,7 +468,7 @@
                     showCustomerServiceAlert("登入失敗", res.message); 
                 }
             } catch(e) { 
-                showCustomerServiceAlert("很抱歉", "伺服器維護中，請稍後再試"); 
+                showCustomerServiceAlert("錯誤", "連線異常，請稍後再試"); 
             }
         }
 
@@ -446,16 +519,123 @@
             renderLoans();
             renderCoupons();
 
-            document.getElementById('oList').innerHTML = store.orders.map(o => `
+            document.getElementById('oList').innerHTML = store.orders.map((o, idx) => `
                 <div class="card">
                     <div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div>
                     <div style="margin:5px 0;"><b>狀態: ${o.status}</b></div>
-                    <div style="font-size:0.9em; opacity:0.8;">${o.desc}</div>
-                    <div style="font-size:0.7em; margin-top:8px; border-top:1px solid #222; padding-top:5px; opacity:0.5;">
-                        ${o.ship} | 單號: ${o.track || '無'}
+                    <div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${o.desc || o.item || '無商品明細'}</div>
+                    <div style="font-size:1.1em; color:var(--red); margin:5px 0;"><b>訂單總金額: $${o.total || o.totalAmount || 0}</b></div>
+                    <div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">
+                        ${o.ship || '未知物流'} | 單號: ${o.track || '無'}
                     </div>
+                    <button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup(${idx})">🔍 查看訂單詳細資訊</button>
                 </div>
             `).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
+        }
+
+        // 🔧 修正擴充點：生成包含精密時間紀錄的物流時間線資訊
+        function showOrderDetailPopup(index) {
+            if(!store || !store.orders || !store.orders[index]) return;
+            const o = store.orders[index];
+            
+            let timelineHtml = "";
+            const currentStatus = o.status || "訂單處理中";
+            const currentNote = o.note || "尚無備註描述";
+            
+            // 修正點：若後端沒有傳回具體時間紀錄，改為顯示「暫無時間紀錄」，不使用 new Date() 來抓取當下時間
+            const updateTime = o.time || '暫無時間紀錄';
+
+            // 🛠️ 檢查後端是否有傳送完整的時間線陣列紀錄，若有則直接依據最新在上渲染
+            if (o.timeline && Array.isArray(o.timeline) && o.timeline.length > 0) {
+                // 後端回傳的時間線假設已經排序好，若無則在此確保最新在最上方
+                const sortedTimeline = [...o.timeline].sort((a, b) => new Date(b.time) - new Date(a.time));
+                timelineHtml = sortedTimeline.map((node, nIdx) => `
+                    <div class="timeline-node ${nIdx === 0 ? 'latest-node' : ''}">
+                        <div class="timeline-node-title">${node.status}</div>
+                        <div class="timeline-node-time">⏱️ ${node.time}</div>
+                        <div class="timeline-node-desc">${node.note || '動態物流程序記錄正常'}</div>
+                    </div>
+                `).join('');
+            } else {
+                // 💡 備援防呆方案：若後端尚未提供完整時間線陣列，則自動以當前狀態做帶時間紀錄的向下階梯動態推導
+                timelineHtml += `
+                    <div class="timeline-node latest-node">
+                        <div class="timeline-node-title">${currentStatus}</div>
+                        <div class="timeline-node-time">⏱️ ${updateTime}</div>
+                        <div class="timeline-node-desc">${currentNote}</div>
+                    </div>
+                `;
+
+                if (currentStatus.includes("已取貨") || currentStatus.includes("已完成")) {
+                    timelineHtml += `
+                        <div class="timeline-node">
+                            <div class="timeline-node-title">包裹已抵達門市</div>
+                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
+                            <div class="timeline-node-desc">商品已抵達指定收件門市，待買家前往領取</div>
+                        </div>
+                        <div class="timeline-node">
+                            <div class="timeline-node-title">包裹運送中</div>
+                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
+                            <div class="timeline-node-desc">包裹已由物流中心發出，正前往目的地門市</div>
+                        </div>
+                    `;
+                } else if (currentStatus.includes("抵達門市") || currentStatus.includes("待領取") || currentStatus.includes("已到貨") || currentStatus.includes("待取貨")) {
+                    timelineHtml += `
+                        <div class="timeline-node">
+                            <div class="timeline-node-title">包裹運送中</div>
+                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
+                            <div class="timeline-node-desc">包裹已由物流中心發出，正前往目的地門市</div>
+                        </div>
+                        <div class="timeline-node">
+                            <div class="timeline-node-title">訂單已出貨</div>
+                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
+                            <div class="timeline-node-desc">賣家已交寄包裹，物流中心成功接收</div>
+                        </div>
+                    `;
+                } else if (currentStatus.includes("出貨") || currentStatus.includes("運送中") || currentStatus.includes("已發貨")) {
+                    timelineHtml += `
+                        <div class="timeline-node">
+                            <div class="timeline-node-title">訂單成立</div>
+                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
+                            <div class="timeline-node-desc">買家下單成功，系統已成立網購委託單</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            let htmlContent = `
+                <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
+                    <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px;"><span style="color:var(--pink);">📦 訂單編號：</span>${o.id || '無'}</p>
+                    <p><span style="color:var(--pink);">🚦 訂單狀態：</span><b>${currentStatus}</b></p>
+                    <p><span style="color:var(--pink);">🛍️ 商品明細：</span><br><span style="opacity:0.8;">${o.desc || o.item || '無'}</span></p>
+                    
+                    <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px; margin: 10px 0; border: 1px solid var(--border);">
+                        <p style="margin: 3px 0;">💰 商品小計：$${o.subtotal || 0}</p>
+                        <p style="margin: 3px 0;">🚚 運費金額：$${o.shipFee || 0}</p>
+                        <p style="margin: 3px 0; color: var(--green);">🎟️ 運費折扣：-$${o.discShip || 0}</p>
+                        <p style="margin: 3px 0; color: var(--green);">🎟️ 賣家折扣：-$${o.discSeller || 0}</p>
+                        <p style="margin: 3px 0; color: var(--green);">🪙 蝦幣折扣：-$${o.discCoin || 0}</p>
+                        <p style="margin: 5px 0 0 0; font-size: 1.1em; color: var(--red); border-top: 1px solid var(--border); padding-top: 5px;">🚨 應付總金額：$${o.total || o.totalAmount || 0}</p>
+                    </div>
+
+                    <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${o.code || '尚未發佈'}</span></p>
+                    <p><span style="color:var(--pink);">🛣️ 物流方式：</span>${o.ship || '無'}</p>
+                    <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${{address: o.address || '無'}.address}</p>
+                    <p><span style="color:var(--pink);">📦 物流追蹤單號：</span>${o.track || '無'}</p>
+                    
+                    <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📍 物流動態時間線 (包含時間紀錄)：</span></p>
+                    <div class="order-timeline">
+                        ${timelineHtml}
+                    </div>
+                </div>
+            `;
+
+            Swal.fire({
+                title: '📋 訂單完整詳細資訊',
+                html: htmlContent,
+                confirmButtonColor: 'var(--pink)',
+                confirmButtonText: '關閉視窗'
+            });
         }
 
         function renderLoans() {
@@ -596,13 +776,9 @@
             container.classList.toggle('full-desktop');
         }
 
-        /* ==================== 以下為【修正後】具備嚴格兩次前置確認的控制區 ==================== */
-
-        // 修改基本資料 (變更姓名) -> 嚴格包含：1. 進入確認、2. 輸入後二度確認、3. 執行後提示
         async function updateProfileName() {
             if (!store || !store.userData) return;
 
-            // 【第一層前置確認】：詢問是否要修改
             const confirmStep1 = await Swal.fire({
                 title: '確定要修改基本資料嗎？',
                 text: '您即將變更您的會員個人資料。',
@@ -615,7 +791,6 @@
 
             if (!confirmStep1.isConfirmed) return;
 
-            // 彈出輸入框供使用者填寫
             const { value: newName } = await Swal.fire({
                 title: '修改個人資料',
                 input: 'text',
@@ -633,7 +808,6 @@
             if (!newName || newName.trim() === store.userData.name) return;
             const finalizedName = newName.trim();
 
-            // 【第二層前置確認】：輸入完成後的最終確認
             const confirmStep2 = await Swal.fire({
                 title: '最後確認：確定變更名稱？',
                 html: `您確定要將會員名稱從「<span style="color:var(--red);">${store.userData.name}</span>」<br>正式修改為「<span style="color:var(--green);">${finalizedName}</span>」嗎？`,
@@ -646,7 +820,6 @@
 
             if (!confirmStep2.isConfirmed) return;
 
-            // 兩次確認皆通過，開始執行連線
             Swal.fire({
                 title: '資料更新中',
                 text: '請稍候...',
@@ -669,7 +842,6 @@
                     store.userData.name = finalizedName;
                     render(); 
                     
-                    // 【修改後結果提示（成功）】
                     await Swal.fire({
                         title: '基本資料變更成功！',
                         text: `您的姓名已成功更新為：${finalizedName}`,
@@ -678,20 +850,16 @@
                         confirmButtonText: '確定'
                     });
                 } else {
-                    // 【修改後結果提示（失敗）】
                     showCustomerServiceAlert("基本資料更新失敗", res.message || "伺服器更新拒絕，請稍後再試");
                 }
             } catch (e) {
-                // 【修改後結果提示（異常）】
                 showCustomerServiceAlert("錯誤", "網路連線異常，無法完成基本資料變更");
             }
         }
 
-        // 變更登入密碼 -> 嚴格包含：1. 進入確認、2. 輸入完成後二度確認、3. 執行後提示
         async function updateUserPassword() {
             if (!store || !store.userData) return;
 
-            // 【第一層前置確認】：詢問是否變更密碼
             const confirmStep1 = await Swal.fire({
                 title: '確定要變更登入密碼嗎？',
                 text: '密碼變更成功後，系統將強制安全登出，您需要使用新密碼重新登入。',
@@ -704,7 +872,6 @@
 
             if (!confirmStep1.isConfirmed) return;
 
-            // 彈出表單讓使用者填寫
             const { value: formValues } = await Swal.fire({
                 title: '變更登入密碼',
                 html:
@@ -735,7 +902,6 @@
 
             if (!formValues) return;
 
-            // 【第二層前置確認】：輸入完畢後的最終確認
             const confirmStep2 = await Swal.fire({
                 title: '您確定要寫入新密碼嗎？',
                 text: '請確保您記住了剛才輸入的新密碼。按下確定後將立即向伺服器提交變更申請！',
@@ -748,7 +914,6 @@
 
             if (!confirmStep2.isConfirmed) return;
 
-            // 兩次前置確認皆通過，開始執行網路發送
             Swal.fire({
                 title: '密碼變更中',
                 text: '請稍候...',
@@ -768,7 +933,6 @@
                 }).then(r => r.json());
 
                 if (res.success) {
-                    // 【修改後結果提示（成功）】
                     await Swal.fire({
                         title: '密碼變更成功！',
                         text: '帳戶安全密碼已成功變更，請點擊確認以安全登出並重新登入。',
@@ -778,16 +942,13 @@
                     });
                     location.reload(); 
                 } else {
-                    // 【修改後結果提示（失敗）】
                     showCustomerServiceAlert("密碼變更失敗", res.message || "請檢查您的舊密碼是否輸入正確");
                 }
             } catch (e) {
-                // 【修改後結果提示（異常）】
                 showCustomerServiceAlert("錯誤", "網路連線異常，變更密碼失敗");
             }
         }
 
-        // 安全登出系統 -> 包含登出前、登出後確認
         async function triggerLogout() {
             const confirmResult = await Swal.fire({
                 title: '確認要登出系統嗎？',
