@@ -22,8 +22,28 @@
         .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .q-btn { padding: 15px; border-radius: 12px; border: none; color: white; font-weight: bold; }
         
-        /* 讓 SweetAlert2 的字體與粗體符合系統規範 */
+        .section-label { font-size: 0.85em; opacity: 0.7; margin-top: 10px; display: block; color: var(--dark); }
+        .calc-box { background: #f1f5f9; padding: 12px; border-radius: 10px; margin: 8px 0; font-size: 0.95em; color: var(--dark); }
+        .item-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+        .item-row input { padding: 10px; margin: 0; font-size: 14px; }
+        .btn-mini { width: auto; padding: 8px 12px; margin: 0; font-size: 13px; border-radius: 8px; }
+        
         .swal2-popup { font-family: -apple-system, sans-serif; font-weight: bold; border-radius: 20px !important; }
+
+        /* 📍 管理端時間線專屬樣式 */
+        .admin-timeline { margin-top: 15px; padding-left: 5px; }
+        .admin-node { position: relative; padding-left: 24px; padding-bottom: 15px; cursor: pointer; transition: 0.2s; }
+        .admin-node:hover { background: #f1f5f9; border-radius: 8px; }
+        .admin-node::before { content: ''; position: absolute; left: 4px; top: 6px; bottom: 0; width: 2px; background: #cbd5e1; }
+        .admin-node:last-child::before { display: none; }
+        .admin-node::after { content: ''; position: absolute; left: 0; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: #94a3b8; }
+        .admin-node.latest-node::after { background: var(--accent); box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.2); }
+        .admin-node.latest-node::before { background: var(--accent); }
+        .admin-node-title { font-size: 0.95em; font-weight: bold; color: var(--dark); margin-bottom: 2px; }
+        .admin-node.latest-node .admin-node-title { color: var(--accent); }
+        .admin-node-time { font-size: 0.75em; font-weight: bold; opacity: 0.6; color: var(--dark); margin-bottom: 3px; }
+        .admin-node.latest-node .admin-node-time { color: var(--accent); opacity: 0.85; }
+        .admin-node-desc { font-size: 0.8em; opacity: 0.75; color: var(--dark); line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -79,52 +99,380 @@
     <button onclick="sendCouponSubmit()" style="background:var(--primary)">確認發送優惠券</button>
 </div>
 
+<div class="card">
+    <h3 style="margin:0 0 10px;">📦 手動新增訂單</h3>
+    
+    <label class="section-label">訂單編號 / 單號：</label>
+    <input type="text" id="o_new_id" placeholder="例如: ORD2026053001">
+    
+    <label class="section-label">選擇購買對象 (會員ID)：</label>
+    <select id="o_new_uid"></select>
+    
+    <label class="section-label">初始訂單狀態 (同步試算表 C 欄 物流狀態)：</label>
+    <select id="o_new_status" onchange="toggleVerificationCodeField()"></select>
+
+    <div id="v_code_container" style="display: none;">
+        <label class="section-label" style="color: var(--accent);">🔑 取件驗證碼 (非強制填寫)：</label>
+        <input type="text" id="o_new_vcode" placeholder="例如: 8852">
+    </div>
+
+    <label class="section-label">🛍️ 商品明細填寫：</label>
+    <div id="order_items_container">
+        <div class="item-row">
+            <input type="text" class="item-name" placeholder="商品名稱" style="flex: 2;">
+            <input type="text" class="item-spec" placeholder="規格/選項" style="flex: 1.5;">
+            <input type="number" class="item-qty" placeholder="數量" min="1" value="1" style="flex: 1;" oninput="calculateTotalOrderAmount()">
+            <input type="number" class="item-price" placeholder="價格" min="0" value="0" style="flex: 1.2;" oninput="calculateTotalOrderAmount()">
+            <button type="button" class="btn-mini" style="background: var(--red);" onclick="removeOrderItemRow(this)">刪</button>
+        </div>
+    </div>
+    <button type="button" class="btn-mini" style="background: var(--dark); margin-bottom: 12px; width: 100%;" onclick="addOrderItemRow()">＋ 新增商品品項</button>
+
+    <div class="calc-box">
+        💰 商品小計：$ <span id="lbl_subtotal">0</span>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+        <div>
+            <label class="section-label">運費：</label>
+            <input type="number" id="o_new_shipping" value="0" min="0" oninput="calculateTotalOrderAmount()">
+        </div>
+        <div>
+            <label class="section-label">運費折扣：</label>
+            <input type="number" id="o_new_ship_discount" value="0" min="0" oninput="calculateTotalOrderAmount()">
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 6px;">
+        <div>
+            <label class="section-label">賣家折扣：</label>
+            <input type="number" id="o_new_seller_discount" value="0" min="0" oninput="calculateTotalOrderAmount()">
+        </div>
+        <div>
+            <label class="section-label">蝦幣折扣：</label>
+            <input type="number" id="o_new_coin_discount" value="0" min="0" oninput="calculateTotalOrderAmount()">
+        </div>
+    </div>
+
+    <div class="calc-box" style="background: #fee2e2; color: #b91c1c; font-size: 1.1em;">
+        🚨 訂單總金額 (自動計算)：$ <span id="lbl_total_amount">0</span>
+    </div>
+
+    <label class="section-label">🚚 物流方式 (同步試算表 A 欄 物流方式)：</label>
+    <select id="o_new_log_method"></select>
+
+    <label class="section-label">🏪 收件門市 / 配送地址快速選擇 (同步試算表 B 欄 門市清單)：</label>
+    <select id="o_new_address_select" onchange="syncAddressSelectToInput()"></select>
+    <input type="text" id="o_new_address" placeholder="或在此處手動輸入修改門市/配送地址">
+
+    <label class="section-label">📦 物流追蹤編號：</label>
+    <input type="text" id="o_new_log_id" placeholder="請輸入包裹物流單號">
+
+    <label class="section-label">📝 物流狀態註記 / 備註：</label>
+    <input type="text" id="o_new_log_note" placeholder="例如：包裹已抵達高雄鼓山門市">
+
+    <label class="section-label">📅 訂單成立時間：</label>
+    <input type="datetime-local" id="o_new_time">
+    
+    <button onclick="createNewOrderSubmit()" style="background:var(--green)">確認建立全新訂單</button>
+</div>
+
+<div class="card">
+    <h3 style="margin:0 0 10px;">⏳ 編輯訂單物流時間線</h3>
+    <label style="font-size:0.85em; opacity:0.7;">選擇目標訂單：</label>
+    <select id="t_order_id" onchange="renderAdminTimeline()"></select>
+    
+    <div id="admin_timeline_container" style="margin: 15px 0; max-height: 250px; overflow-y: auto; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0;">
+        <p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">請先選擇訂單以查看時間線</p>
+    </div>
+
+    <div style="border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
+        <h4 style="margin: 0 0 10px 0; color: var(--primary);">➕ 發佈最新物流進度</h4>
+        <label style="font-size:0.85em; opacity:0.7;">更新時間節點：</label>
+        <input type="datetime-local" id="t_log_time">
+        
+        <label style="font-size:0.85em; opacity:0.7;">變更物流狀態 (同步試算表 C 欄)：</label>
+        <select id="t_log_status"></select>
+
+        <label style="font-size:0.85em; opacity:0.7;">狀態備註 / 註記：</label>
+        <input type="text" id="t_log_note" placeholder="例如：買家已取件，感謝購買">
+        
+        <button onclick="updateOrderTimelineSubmit()" style="background:var(--dark)">發佈最新節點紀錄</button>
+    </div>
+</div>
+
 <div id="wizModal" class="modal">
-    <div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div>
+    <div class="modal-content">
+        <div id="wizBody"></div>
+        <button onclick="wizNext()" id="nextBtn">下一步</button>
+        <p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p>
+    </div>
 </div>
 
 <script>
-    const GAS = "https://script.google.com/macros/s/AKfycbzjLpoEQND1fS_c0IRk70t6TE4R5INgxPQiscdKwoNB86o8XYI9cjVL-4URrvk1KGEJ/exec"; 
-    let U_DB = [], L_DB = [], CP_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
+    // ⚠️ 請確保此處為您自己發佈的應用程式網址
+    const GAS = "https://script.google.com/macros/s/AKfycbzXHZBEhaN7rxJQ1PRfWYiD74CiSmmwO_zN-k0tdvtfkfoo_Yp64biBVV-74p6AtKHu/exec"; 
+    
+    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode;
 
     window.onload = refresh;
 
-    function showMask(text) { 
-        Swal.fire({
-            title: text,
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-    }
-    
-    function hideMask() { 
-        Swal.close(); 
-    }
+    function showMask(text) { Swal.fire({ title: text, allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } }); }
+    function hideMask() { Swal.close(); }
+    function showAlert(title, text, icon = 'info') { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: 'var(--primary)', confirmButtonText: '確定' }); }
 
-    function showAlert(title, text, icon = 'info') {
-        Swal.fire({
-            title: title,
-            text: text,
-            icon: icon,
-            confirmButtonColor: 'var(--primary)',
-            confirmButtonText: '確定'
-        });
+    function getNowDateTimeString() {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
     }
 
     async function refresh() {
-        showMask("讀取雲端資料...");
+        showMask("正在載入系統資料...");
         try {
             const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'fetchData', uid:'admin'})}).then(r=>r.json());
-            U_DB = res.list || []; L_DB = res.loans || []; CP_DB = res.coupons || [];
+            U_DB = res.list || []; 
+            L_DB = res.loans || [];
+            CP_DB = res.coupons || [];
+            O_DB = res.orders || [];
+            SETTINGS = res.settings || {};
             
-            const userOptions = U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('');
-            document.getElementById('l_uid').innerHTML = userOptions;
-            document.getElementById('cp_uid').innerHTML = userOptions;
+            updateSelects();
+            renderAdminTimeline(); // 重新渲染時間線區塊
+            
+            const nowTime = getNowDateTimeString();
+            document.getElementById('t_log_time').value = nowTime;
+            document.getElementById('o_new_time').value = nowTime; 
+            
             hideMask();
-        } catch(e) { showAlert("同步失敗", e, "error"); }
+        } catch(e) {
+            hideMask();
+            showAlert("錯誤", "載入失敗", "error");
+        }
+    }
+
+    function updateSelects() {
+        const uOptions = U_DB.map(u => `<option value="${u.id}">${u.name} (ID: ${u.id})</option>`).join('');
+        document.getElementById('l_uid').innerHTML = uOptions;
+        document.getElementById('cp_uid').innerHTML = uOptions;
+        document.getElementById('o_new_uid').innerHTML = uOptions;
+
+        const statusOptions = (SETTINGS.orderStatuses || SETTINGS["物流狀態"] || []).map(s => `<option value="${s}">${s}</option>`).join('');
+        document.getElementById('o_new_status').innerHTML = statusOptions;
+        document.getElementById('t_log_status').innerHTML = statusOptions;
+
+        const logOptions = (SETTINGS.logMethods || SETTINGS["物流方式"] || []).map(m => `<option value="${m}">${m}</option>`).join('');
+        document.getElementById('o_new_log_method').innerHTML = logOptions;
+
+        const addrOptions = (SETTINGS.addresses || SETTINGS["門市清單"] || []).map(a => `<option value="${a}">${a}</option>`).join('');
+        document.getElementById('o_new_address_select').innerHTML = '<option value="">-- 快速選擇地址 --</option>' + addrOptions;
+
+        // 記住當前選取的訂單 ID
+        const currentSelectedOid = document.getElementById('t_order_id').value;
+        const orderOptions = O_DB.map(o => `<option value="${o.id}">單號:${o.id} - ${o.item} (${o.status})</option>`).join('') || '<option value="">目前雲端尚無訂單紀錄</option>';
+        document.getElementById('t_order_id').innerHTML = orderOptions;
+        
+        // 若之前有選取，則恢復選取狀態
+        if (currentSelectedOid && O_DB.find(o => o.id === currentSelectedOid)) {
+            document.getElementById('t_order_id').value = currentSelectedOid;
+        }
+    }
+
+    // 📍 渲染並顯示管理者端之物流時間線
+    function renderAdminTimeline() {
+        const container = document.getElementById('admin_timeline_container');
+        const orderId = document.getElementById('t_order_id').value;
+        if (!orderId) {
+            container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">請先選擇訂單以查看時間線</p>`;
+            return;
+        }
+
+        const order = O_DB.find(o => o.id === orderId);
+        if (order && order.timeline && order.timeline.length > 0) {
+            const html = order.timeline.map((node, idx) => {
+                // 將特殊字元跳脫以策安全
+                const safeRawMsg = String(node.rawMsg).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                const safeTime = String(node.time).replace(/'/g, "\\'");
+                const safeStatus = String(node.status).replace(/'/g, "\\'");
+                const safeNote = String(node.note).replace(/'/g, "\\'");
+                
+                return `
+                <div class="admin-node ${idx === 0 ? 'latest-node' : ''}" onclick="openEditNodeModal('${orderId}', '${safeRawMsg}', '${safeTime}', '${safeStatus}', '${safeNote}')">
+                    <div class="admin-node-title">${node.status}</div>
+                    <div class="admin-node-time">⏱️ ${node.time}</div>
+                    <div class="admin-node-desc">${node.note} <span style="color:#3b82f6; font-size:0.8em; margin-left:5px;">[點擊修改/刪除]</span></div>
+                </div>`;
+            }).join('');
+            container.innerHTML = `<div class="admin-timeline">${html}</div>`;
+        } else {
+            container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">此訂單尚無詳細的雲端歷史軌跡</p>`;
+        }
+    }
+
+    // 📍 開啟編輯特定物流節點的視窗 (新增刪除功能)
+    async function openEditNodeModal(oid, rawMsg, oldTime, oldStatus, oldNote) {
+        // 將 yyyy-MM-dd HH:mm 轉為 datetime-local 支援的 yyyy-MM-ddTHH:mm
+        const isoTime = oldTime.replace(' ', 'T');
+        const statusOptions = (SETTINGS.orderStatuses || SETTINGS["物流狀態"] || []).map(s => 
+            `<option value="${s}" ${s === oldStatus ? 'selected' : ''}>${s}</option>`
+        ).join('');
+
+        const result = await Swal.fire({
+            title: '✏️ 編輯或刪除物流時間線節點',
+            html: `
+                <div style="text-align: left; font-size: 0.9em;">
+                    <label style="display:block; margin-top:10px; color:var(--dark);">更新時間：</label>
+                    <input type="datetime-local" id="edit_log_time" class="swal2-input" value="${isoTime}" style="width: 80%; margin: 5px auto; padding: 10px;">
+                    
+                    <label style="display:block; margin-top:10px; color:var(--dark);">物流狀態：</label>
+                    <select id="edit_log_status" class="swal2-select" style="width: 80%; margin: 5px auto; display:flex; padding: 10px;">
+                        ${statusOptions}
+                    </select>
+                    
+                    <label style="display:block; margin-top:10px; color:var(--dark);">狀態備註：</label>
+                    <input type="text" id="edit_log_note" class="swal2-input" value="${oldNote}" style="width: 80%; margin: 5px auto; padding: 10px;">
+                </div>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonColor: 'var(--primary)',
+            denyButtonColor: 'var(--red)',
+            cancelButtonColor: '#94a3b8',
+            cancelButtonText: '取消',
+            confirmButtonText: '儲存變更',
+            denyButtonText: '🗑️ 刪除此節點',
+            preConfirm: () => {
+                const nt = document.getElementById('edit_log_time').value;
+                const ns = document.getElementById('edit_log_status').value;
+                const nn = document.getElementById('edit_log_note').value;
+                if (!nt) {
+                    Swal.showValidationMessage('請確實填寫時間！');
+                    return false;
+                }
+                return { newTime: nt.replace('T', ' '), newStatus: ns, newNote: nn };
+            }
+        });
+
+        if (result.isConfirmed && result.value) {
+            // 執行編輯更新
+            showMask("正在覆寫修正雲端節點...");
+            try {
+                const res = await fetch(GAS, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'adminAction',
+                        type: 'editTimelineNode',
+                        oid: oid,
+                        oldRawMsg: rawMsg,
+                        newTime: result.value.newTime,
+                        newStatus: result.value.newStatus,
+                        newNote: result.value.newNote
+                    })
+                }).then(r => r.json());
+
+                if (res.success) {
+                    Swal.fire({ title: '修改成功', text: res.message, icon: 'success' }).then(() => refresh());
+                } else {
+                    Swal.fire("錯誤", res.message, "error");
+                }
+            } catch(e) {
+                Swal.fire("網路錯誤", "無法連線至雲端服務", "error");
+            }
+        } else if (result.isDenied) {
+            // 執行刪除流程（加上二次確認防呆）
+            const confirmDel = await Swal.fire({
+                title: '確定要刪除此節點？',
+                text: '刪除後將無法復原！',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--red)',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消'
+            });
+
+            if (confirmDel.isConfirmed) {
+                showMask("正在刪除雲端節點...");
+                try {
+                    const res = await fetch(GAS, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'adminAction',
+                            type: 'deleteTimelineNode',
+                            oid: oid,
+                            rawMsg: rawMsg
+                        })
+                    }).then(r => r.json());
+
+                    if (res.success) {
+                        Swal.fire({ title: '刪除成功', text: res.message, icon: 'success' }).then(() => refresh());
+                    } else {
+                        Swal.fire("錯誤", res.message, "error");
+                    }
+                } catch(e) {
+                    Swal.fire("網路錯誤", "無法連線至雲端服務", "error");
+                }
+            }
+        }
+    }
+
+    function addOrderItemRow() {
+        const container = document.getElementById('order_items_container');
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        div.innerHTML = `
+            <input type="text" class="item-name" placeholder="商品名稱" style="flex: 2;">
+            <input type="text" class="item-spec" placeholder="規格/選項" style="flex: 1.5;">
+            <input type="number" class="item-qty" placeholder="數量" min="1" value="1" style="flex: 1;" oninput="calculateTotalOrderAmount()">
+            <input type="number" class="item-price" placeholder="價格" min="0" value="0" style="flex: 1.2;" oninput="calculateTotalOrderAmount()">
+            <button type="button" class="btn-mini" style="background: var(--red);" onclick="removeOrderItemRow(this)">刪</button>
+        `;
+        container.appendChild(div);
+        calculateTotalOrderAmount();
+    }
+
+    function removeOrderItemRow(btn) {
+        const rows = document.querySelectorAll('.item-row');
+        if(rows.length <= 1) return Swal.fire("提示", "至少必須保留一項商品明細！", "warning");
+        btn.parentElement.remove();
+        calculateTotalOrderAmount();
+    }
+
+    function toggleVerificationCodeField() {
+        const status = document.getElementById('o_new_status').value;
+        const container = document.getElementById('v_code_container');
+        container.style.display = (status && (status.includes("抵達門市") || status.includes("待領取") || status.includes("已到貨"))) ? 'block' : 'none';
+        if(container.style.display === 'none') document.getElementById('o_new_vcode').value = "";
+    }
+
+    function syncAddressSelectToInput() {
+        const selectEl = document.getElementById('o_new_address_select');
+        if(selectEl.value) document.getElementById('o_new_address').value = selectEl.value;
+    }
+
+    function calculateTotalOrderAmount() {
+        let subtotal = 0;
+        document.querySelectorAll('.item-row').forEach(row => {
+            const qty = Number(row.querySelector('.item-qty').value) || 0;
+            const price = Number(row.querySelector('.item-price').value) || 0;
+            subtotal += (qty * price);
+        });
+        document.getElementById('lbl_subtotal').innerText = subtotal;
+        
+        const shipping = Number(document.getElementById('o_new_shipping').value) || 0;
+        const shipDiscount = Number(document.getElementById('o_new_ship_discount').value) || 0;
+        const sellerDiscount = Number(document.getElementById('o_new_seller_discount').value) || 0;
+        const coinDiscount = Number(document.getElementById('o_new_coin_discount').value) || 0;
+        
+        let totalAmount = subtotal + shipping - shipDiscount - sellerDiscount - coinDiscount;
+        document.getElementById('lbl_total_amount').innerText = Math.max(0, totalAmount);
+        return { subtotal: subtotal, totalAmount: Math.max(0, totalAmount) };
     }
 
     function startScan() {
@@ -137,10 +485,7 @@
             if (code.startsWith("CP")) {
                 const cp = CP_DB.find(c => String(c.id) === code);
                 if (cp) {
-                    if (cp.status === "已核銷" || cp.status === "已使用") { 
-                        showAlert("提示", "此券已核銷過！", "warning"); 
-                        return; 
-                    }
+                    if (cp.status === "已使用" || cp.status === "已核銷") return showAlert("提示", "此券已核銷過！", "warning"); 
                     FORM.cpId = code;
                     const owner = U_DB.find(u => u.id === cp.uid);
                     document.getElementById('targetName').innerText = "🎟️ 識別到優惠券";
@@ -148,7 +493,9 @@
                     document.getElementById('quickBtns').style.display = 'none';
                     document.getElementById('couponRedeemBtn').style.display = 'block';
                     document.getElementById('quickActionModal').style.display = 'flex';
-                } else { showAlert("查無此券", "找不到券號：" + code, "error"); }
+                } else {
+                    showAlert("查無此券", "找不到券號：" + code, "error");
+                }
             } else {
                 const user = U_DB.find(u => u.id === code);
                 if (user) {
@@ -158,122 +505,131 @@
                     document.getElementById('quickBtns').style.display = 'grid';
                     document.getElementById('couponRedeemBtn').style.display = 'none';
                     document.getElementById('quickActionModal').style.display = 'flex';
-                } else { showAlert("查無此人", "找不到使用者識別碼：" + code, "error"); }
+                } else {
+                    showAlert("查無此人", "找不到使用者識別碼：" + code, "error");
+                }
             }
         });
     }
 
-    function stopScan() { if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{}); }
-    function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
-    function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
+    function stopScan() {
+        if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{});
+    }
+
+    function quickGo(mode) {
+        document.getElementById('quickActionModal').style.display = 'none';
+        openWiz(mode, FORM.uid);
+    }
+    
+    function closeQuick() {
+        document.getElementById('quickActionModal').style.display = 'none';
+        FORM = {};
+    }
 
     const FLOWS = {
-        add: [{t:"選擇對象",f:"uid",type:"user"},{t:"加值金額",f:"amt",type:"number"},{t:"備註 (選填)",f:"note",type:"text"}],
-        sub: [{t:"選擇對象",f:"uid",type:"user"},{t:"扣款金額",f:"amt",type:"number"},{t:"備註 (選填)",f:"note",type:"text"}],
-        pay: [{t:"還款人",f:"uid",type:"user"},{t:"選擇帳單",f:"loanRef",type:"loan"},{t:"收現金",f:"cash",type:"number"},{t:"扣點數",f:"bal",type:"number"}],
-        redeem: [{t:"持券人",f:"uid",type:"user"},{t:"選擇核銷券",f:"cpId",type:"cpSelect"}]
+        add: [{t:"選擇對象",f:"uid",type:"user"}, {t:"加值金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
+        sub: [{t:"選擇對象",f:"uid",type:"user"}, {t:"扣款項目",f:"item",type:"text"}, {t:"扣款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
+        pay: [{t:"選擇對象",f:"uid",type:"user"}, {t:"還款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
+        redeem: [{t:"請輸入或掃描優惠券ID",f:"cpId",type:"text"}]
     };
 
-    function openWiz(m, prefilledUid = null) {
-        CUR_MODE = m; CUR_STEP = 0;
-        if(prefilledUid) { FORM.uid = prefilledUid; CUR_STEP = 1; } else { FORM = {}; }
+    function openWiz(mode, prefilledUid = null) {
+        CUR_MODE = mode; CUR_STEP = 0; FORM = {};
+        if (prefilledUid) FORM.uid = prefilledUid;
         document.getElementById('wizModal').style.display = 'flex';
-        renderWiz();
+        renderStep();
     }
 
-    function renderWiz() {
-        const s = FLOWS[CUR_MODE][CUR_STEP];
-        let h = `<h3 style="color:var(--primary)">${s.t}</h3>`;
-        if(s.type === 'user') h += `<select id="win">${U_DB.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>`;
-        else if(s.type === 'loan') {
-            const myL = L_DB.filter(l => l.uid === FORM.uid && l.status !== '已結清' && l.status !== 'processed_cleared');
-            h += myL.length ? `<select id="win" onchange="checkOverdue(this.value)"><option value="">-- 請選擇 --</option>${myL.map(l=>`<option value="${l.row}">${l.item} ($${l.total-l.paid})</option>`).join('')}</select>` : `<p>目前無任何欠款或待結清帳單紀錄</p>`;
-        } else if(s.type === 'cpSelect') {
-            const myCP = CP_DB.filter(c => c.uid === FORM.uid && c.status !== '已核銷' && c.status !== '已使用');
-            h += myCP.length ? `<select id="win">${myCP.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select>` : `<p>目前無有效未使用之優惠券</p>`;
-        } else {
-            const preVal = (CUR_MODE === 'pay' && s.f === 'cash') ? (FORM.suggestedAmt || "") : "";
-            h += `<input id="win" type="${s.type}" value="${preVal}" autofocus placeholder="請在此輸入...">`;
-        }
-        document.getElementById('wizBody').innerHTML = h;
-        document.getElementById('nextBtn').innerText = (CUR_STEP === FLOWS[CUR_MODE].length - 1) ? "確認執行" : "下一步";
-    }
+    function closeModal() { document.getElementById('wizModal').style.display = 'none'; }
 
-    function checkOverdue(row) {
-        if(!row) return;
-        const l = L_DB.find(x => String(x.row) === String(row));
-        const today = new Date(); today.setHours(0,0,0,0);
-        const exp = new Date(l.expiry); exp.setHours(0,0,0,0);
-        const principalLeft = l.total - l.paid; 
+    function renderStep() {
+        const flow = FLOWS[CUR_MODE];
+        let stepInfo = flow[CUR_STEP];
         
-        let penalty = 0;
-        if(today > exp) {
-            const days = Math.ceil(Math.abs(today - exp) / 86400000);
-            penalty = days * 10;
-            Swal.fire({
-                title: '🚨 逾期催收警告',
-                html: `此筆款項已逾期 <b style="color:var(--red);">${days}</b> 天！<br>衍生追加罰金：<b>$${penalty}</b><br>目前應付總額(剩餘本金+罰金)：<b style="color:var(--accent); font-size:1.2em;">$${principalLeft + penalty}</b>`,
-                icon: 'warning',
-                confirmButtonColor: 'var(--red)'
-            });
-            FORM.suggestedAmt = principalLeft + penalty;
+        if (CUR_STEP === 0 && FORM.uid && stepInfo.f === "uid") {
+            CUR_STEP++;
+            stepInfo = flow[CUR_STEP];
+        }
+
+        let html = `<h3>${stepInfo.t}</h3>`;
+        if (stepInfo.type === "user") {
+            html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`;
+        } else if (stepInfo.type === "number") {
+            html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`;
         } else {
-            FORM.suggestedAmt = principalLeft;
+            html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
+        }
+        
+        document.getElementById('wizBody').innerHTML = html;
+        document.getElementById('nextBtn').innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步";
+    }
+
+    function wizNext() {
+        const inputEl = document.getElementById('wiz_val');
+        const flow = FLOWS[CUR_MODE];
+        const field = flow[CUR_STEP].f;
+        
+        if (!inputEl.value.trim()) return Swal.fire("提示", "欄位不可為空", "warning");
+        FORM[field] = inputEl.value.trim();
+
+        if (CUR_STEP < flow.length - 1) {
+            CUR_STEP++;
+            renderStep();
+        } else {
+            submitWiz();
         }
     }
 
-    async function wizNext() {
-        const inputEl = document.getElementById('win');
-        if(inputEl) FORM[FLOWS[CUR_MODE][CUR_STEP].f] = inputEl.value;
-        
-        if(CUR_STEP < FLOWS[CUR_MODE].length - 1) { 
-            CUR_STEP++; 
-            renderWiz(); 
-        } else {
-            // 還款模式客製化註記與金額修正
-            if(CUR_MODE === 'pay') {
-                const targetLoan = L_DB.find(l => String(l.row) === String(FORM.loanRef));
-                const loanName = targetLoan ? targetLoan.item : "未知帳單";
-                
-                let payDetails = [];
-                let cashAmt = parseFloat(FORM.cash) || 0;
-                let balAmt = parseFloat(FORM.bal) || 0;
-                
-                if(cashAmt > 0) payDetails.push(`現金收款:$${cashAmt}`);
-                if(balAmt > 0) payDetails.push(`餘額扣款:$${balAmt}`);
-                
-                // 動態組合：還款紀錄 (帳單名稱) (支付明細)
-                FORM.note = `還款紀錄 (${loanName})` + (payDetails.length > 0 ? ` (${payDetails.join(',')})` : '');
-                
-                // 重要修正：確保變動數值傳遞給後端時既設定點數變動量為 0，同時提供必要欄位供後端 Transactions 寫入
-                FORM.amt = 0; 
-                FORM.item = FORM.note; // 同步綁定項目欄位名稱，防範後端 GAS 僅讀取 item 而不讀取 note 的狀況
+    async function submitWiz() {
+        closeModal();
+        showMask("正在提交資料至雲端試算表...");
+        let payload = { action: 'adminAction', type: CUR_MODE, ...FORM };
+        try {
+            const res = await fetch(GAS, { method: 'POST', body: JSON.stringify(payload) }).then(r => r.json());
+            if (res.success) {
+                Swal.fire({ title: '操作成功！', text: res.message, icon: 'success' }).then(() => refresh());
+            } else {
+                showAlert("操作失敗", res.message, "error");
             }
+        } catch(e) { showAlert("網路異常", "無法連線至後端系統", "error"); }
+    }
 
-            closeModal(); showMask("執行中...");
-            try {
-                const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:CUR_MODE, ...FORM})}).then(r=>r.json());
-                
-                Swal.fire({
-                    title: res.success ? '執行成功' : '執行回報',
-                    text: res.message,
-                    icon: res.success ? 'success' : 'info',
-                    confirmButtonColor: 'var(--primary)'
-                }).then(() => {
-                    location.reload();
-                });
-            } catch(e) { showAlert("錯誤", "後台端發送失敗，請確認網路連線。", "error"); }
-        }
+    async function submitRedeem() {
+        closeQuick(); 
+        showMask("正在執行實體優惠券核銷中...");
+        try {
+            const res = await fetch(GAS, { method: 'POST', body: JSON.stringify({ action: 'adminAction', type: 'redeem', cpId: FORM.cpId }) }).then(r => r.json());
+            if(res.success) {
+                Swal.fire({ title: '核銷成功！', text: res.message, icon: 'success' }).then(() => refresh());
+            } else {
+                showAlert("核銷失敗", res.message, "error");
+            }
+        } catch(e) { showAlert("網路異常", "無法完成核銷作業", "error"); }
     }
 
     async function addLoan() {
-        const data = { uid: document.getElementById('l_uid').value, item: document.getElementById('l_item').value, total: document.getElementById('l_amt').value, loanDate: new Date(), expiry: document.getElementById('l_exp').value };
-        if(!data.item || !data.total || !data.expiry) return showAlert("提示", "請填寫完整借貸撥款欄位資訊！", "warning");
-        showMask("撥款中...");
+        const uid = document.getElementById('l_uid').value;
+        const item = document.getElementById('l_item').value.trim();
+        const amt = document.getElementById('l_amt').value.trim();
+        const exp = document.getElementById('l_exp').value;
+        if(!uid || !item || !amt || !exp) return Swal.fire("提示", "撥款表單欄位填寫不完整！", "warning");
+
+        showMask("正在處理借款撥發中...");
         try {
-            await fetch(GAS, {method:'POST', body:JSON.stringify({action:'addLoan', data})});
-            Swal.fire({ title: '發放借款成功', text: '款項與還款期限已正式記入該會員帳下。', icon: 'success', confirmButtonColor: 'var(--primary)' }).then(() => { location.reload(); });
-        } catch(e) { showAlert("發放失敗", "連線錯誤，無法完成撥款手續。", "error"); }
+            const res = await fetch(GAS, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'adminAction', type: 'addLoan', uid: uid, item: item, amt: Number(amt), expiry: exp })
+            }).then(r => r.json());
+            
+            if(res.success) {
+                Swal.fire({ title: '發放完成', text: res.message, icon: 'success' }).then(() => refresh());
+                document.getElementById('l_item').value = "";
+                document.getElementById('l_amt').value = "";
+                document.getElementById('l_exp').value = "";
+            } else {
+                showAlert("發放失敗", res.message, "error");
+            }
+        } catch(e) { showAlert("網路異常", "撥款連線失敗", "error"); }
     }
 
     async function sendCouponSubmit() {
@@ -283,7 +639,7 @@
         const content = document.getElementById('cp_content').value.trim();
         const expiry = document.getElementById('cp_exp').value;
 
-        if(!cpId || !title || !content || !expiry) return showAlert("提示", "請填寫完整優惠券資訊！", "warning");
+        if(!uid || !cpId || !title || !content || !expiry) return Swal.fire("提示", "請填寫完整優惠券資訊！", "warning");
         
         showMask("正在發送優惠券...");
         try {
@@ -292,18 +648,128 @@
                 body: JSON.stringify({ action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry })
             }).then(r => r.json());
             
-            Swal.fire({ title: '發送完畢', text: res.message, icon: 'success', confirmButtonColor: 'var(--primary)' }).then(() => { location.reload(); });
-        } catch(e) { showAlert("發送失敗", "連線發送失敗，請確認後端 GAS 是否已正確佈署與發佈。", "error"); }
+            if (res.success) {
+                Swal.fire({ title: '發送完畢', text: res.message, icon: 'success' }).then(() => refresh());
+                document.getElementById('cp_id').value = "";
+                document.getElementById('cp_title').value = "";
+                document.getElementById('cp_content').value = "";
+                document.getElementById('cp_exp').value = "";
+            } else {
+                showAlert("發送失敗", res.message, "error");
+            }
+        } catch(e) { showAlert("網路異常", "連線發送失敗", "error"); }
     }
-    
-    function closeModal() { document.getElementById('wizModal').style.display='none'; }
-    
-    async function submitRedeem() {
-        closeQuick(); showMask("核銷中...");
+
+    async function createNewOrderSubmit() {
+        const id = document.getElementById('o_new_id').value.trim();
+        const uid = document.getElementById('o_new_uid').value;
+        const status = document.getElementById('o_new_status').value;
+        const vcode = document.getElementById('o_new_vcode').value.trim();
+        const time = document.getElementById('o_new_time').value;
+
+        const itemRows = document.querySelectorAll('.item-row');
+        let itemsArray = [];
+        let itemSummaryText = ""; 
+
+        for (let i = 0; i < itemRows.length; i++) {
+            const name = itemRows[i].querySelector('.item-name').value.trim();
+            const spec = itemRows[i].querySelector('.item-spec').value.trim();
+            const qty = itemRows[i].querySelector('.item-qty').value.trim();
+            const price = itemRows[i].querySelector('.item-price').value.trim();
+
+            if(!name || !qty || !price) {
+                return Swal.fire("提示", `請確實填寫第 ${i+1} 項商品的名稱、數量與價格！`, "warning");
+            }
+            itemsArray.push({ name, spec, qty: Number(qty), price: Number(price) });
+            itemSummaryText += `${name}${spec ? '('+spec+')' : ''} x${qty}; `;
+        }
+
+        const calcData = calculateTotalOrderAmount();
+        const shipping = Number(document.getElementById('o_new_shipping').value) || 0;
+        const shipDiscount = Number(document.getElementById('o_new_ship_discount').value) || 0;
+        const sellerDiscount = Number(document.getElementById('o_new_seller_discount').value) || 0;
+        const coinDiscount = Number(document.getElementById('o_new_coin_discount').value) || 0;
+        
+        const logMethod = document.getElementById('o_new_log_method').value;
+        const address = document.getElementById('o_new_address').value.trim(); 
+        const logId = document.getElementById('o_new_log_id').value.trim();
+        const logNote = document.getElementById('o_new_log_note').value.trim();
+
+        if(!id || !uid || !status || !time || !address) {
+            return Swal.fire("提示", "請填寫或選擇必要欄位（單號、對象、狀態、時間與地址）！", "warning");
+        }
+
+        const formattedTime = time.replace('T', ' '); 
+
+        showMask("正在建立新訂單並上傳雲端...");
         try {
-            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'adminAction', type:'redeem', cpId: FORM.cpId})}).then(r=>r.json());
-            Swal.fire({ title: '核銷結果', text: res.message, icon: res.success ? 'success' : 'info', confirmButtonColor: 'var(--primary)' }).then(() => { location.reload(); });
-        } catch(e) { showAlert("核銷失敗", "連線異常，無法寫入核銷狀態。", "error"); }
+            const res = await fetch(GAS, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'adminAction',
+                    type: 'updateOrder',
+                    oid: id,
+                    uid: uid,
+                    status: status,
+                    item: itemSummaryText,
+                    code: vcode,
+                    subtotal: calcData.subtotal,
+                    shipFee: shipping,
+                    discShip: shipDiscount,
+                    discSeller: sellerDiscount,
+                    discCoin: coinDiscount,
+                    total: calcData.totalAmount,
+                    ship: logMethod,
+                    address: address,
+                    track: logId,
+                    note: logNote,
+                    time: formattedTime 
+                })
+            }).then(r => r.json());
+
+            if (res.success) {
+                Swal.fire({ title: '訂單建立成功！', text: '新訂單與精細明細已寫入雲端。', icon: 'success' }).then(() => refresh());
+            } else {
+                showAlert("建立失敗", res.message, "error");
+            }
+        } catch(e) {
+            showAlert("網路異常", "無法連線至後端建立訂單", "error");
+        }
+    }
+
+    async function updateOrderTimelineSubmit() {
+        const orderId = document.getElementById('t_order_id').value;
+        const logTime = document.getElementById('t_log_time').value; 
+        const logStatus = document.getElementById('t_log_status').value;
+        const logNote = document.getElementById('t_log_note').value; // 新增讀取備註
+
+        if(!orderId) return Swal.fire("提示", "請先選擇有效的訂單！", "warning");
+        if(!logTime) return Swal.fire("提示", "請填寫節點更新時間！", "warning");
+
+        const formattedTime = logTime.replace('T', ' '); 
+
+        showMask("正在同步更新物流時間線...");
+        try {
+            const res = await fetch(GAS, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'adminAction',
+                    type: 'updateTimeline',
+                    oid: orderId,
+                    time: formattedTime, 
+                    status: logStatus,
+                    note: logNote // 傳遞備註
+                })
+            }).then(r => r.json());
+
+            if (res.success) {
+                Swal.fire({ title: '更新成功', text: '最新物流進度已與雲端同步發佈！', icon: 'success' }).then(() => refresh());
+            } else {
+                showAlert("更新失敗", res.message, "error");
+            }
+        } catch(e) {
+            showAlert("網路異常", "連線失敗，請檢查網路。", "error");
+        }
     }
 </script>
 </body>
