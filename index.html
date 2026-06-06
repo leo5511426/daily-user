@@ -133,6 +133,12 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* 🚶 排隊小人跳動動畫 */
+        @keyframes queue-bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-8px); }
+        }
+
         .settings-section-title {
             font-size: 1.1em;
             margin: 20px 0 10px 5px;
@@ -155,7 +161,6 @@
         .timeline-node:last-child {
             padding-bottom: 5px;
         }
-        /* 垂直軸線 */
         .timeline-node::before {
             content: '';
             position: absolute;
@@ -165,10 +170,7 @@
             width: 2px;
             background: var(--border);
         }
-        .timeline-node:last-child::before {
-            display: none;
-        }
-        /* 歷史進度小圓點 */
+        .timeline-node:last-child::before { display: none; }
         .timeline-node::after {
             content: '';
             position: absolute;
@@ -179,24 +181,18 @@
             border-radius: 50%;
             background: #a1a1aa;
         }
-        /* 最新進度頂部高亮亮點與發光樣式 */
         .timeline-node.latest-node::after {
             background: var(--pink);
             box-shadow: 0 0 0 4px rgba(255, 143, 163, 0.35);
         }
-        .timeline-node.latest-node::before {
-            background: var(--pink);
-        }
+        .timeline-node.latest-node::before { background: var(--pink); }
         .timeline-node-title {
             font-size: 1em;
             font-weight: 900;
             color: var(--text);
             margin-bottom: 2px;
         }
-        .timeline-node.latest-node .timeline-node-title {
-            color: var(--pink);
-        }
-        /* 🔧 時間紀錄字體與樣式設定 */
+        .timeline-node.latest-node .timeline-node-title { color: var(--pink); }
         .timeline-node-time {
             font-size: 0.75em;
             font-weight: bold;
@@ -316,7 +312,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXHZBEhaN7rxJQ1PRfWYiD74CiSmmwO_zN-k0tdvtfkfoo_Yp64biBVV-74p6AtKHu/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcYO5YiGadAYCABAlEdq5P90SOUX_GEZquDVTlujqp894y3HZAzPFB5nEd4HunL-Qo/exec"; 
         let store = null;
         let currentCouponTab = 0; 
         let currentLoanTab = 0; 
@@ -324,6 +320,158 @@
         
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
         const couponQr = new QRCode(document.getElementById("couponQrcode"), { width: 200, height: 200 });
+
+        // 🚶 核心引擎：智慧排隊與一般載入切換機制
+        async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
+            let currentAbortController = new AbortController();
+            const signal = currentAbortController.signal;
+
+            // 模擬當前伺服器負載狀況 (隨機 0~8 人)
+            let queuePos = Math.floor(Math.random() * 9); 
+            let queueInterval, queueTimeout;
+            let isPrompting = false;
+            let isFinished = false;
+
+            // 一般模式：當人數小於3人時觸發一般載入視窗
+            const startStandardUI = () => {
+                if (isFinished) return;
+                Swal.fire({
+                    title: loadingTitle,
+                    text: '正在同步資料，請稍候...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            };
+
+            // 排隊模式：當人數大於等於3人時觸發
+            const renderQueueHtml = (pos) => `
+                <div style="margin: 15px 0;">
+                    <div style="font-size: 35px; margin-bottom: 15px; display: flex; justify-content: center; gap: 8px;">
+                        <span style="animation: queue-bounce 0.8s infinite alternate;">🚶</span>
+                        <span style="animation: queue-bounce 0.8s infinite alternate 0.3s;">🚶‍♀️</span>
+                        <span style="animation: queue-bounce 0.8s infinite alternate 0.6s;">🚶</span>
+                    </div>
+                    <div style="font-weight: bold; color: var(--pink, #db2777); font-size: 1.1em;">
+                        系統目前較為繁忙，您已進入排隊序列
+                    </div>
+                    <div style="margin-top: 5px; font-size: 0.95em;">
+                        目前前方還有 <span style="font-size: 1.5em; color: var(--red, #ff5252); margin: 0 5px;">${pos}</span> 人
+                    </div>
+                </div>
+            `;
+
+            const startQueueUI = () => {
+                if (isFinished) return;
+                Swal.fire({
+                    title: '系統排隊中',
+                    html: renderQueueHtml(queuePos),
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        queueInterval = setInterval(() => {
+                            if (queuePos > 1) {
+                                queuePos--;
+                                const content = Swal.getHtmlContainer();
+                                if (content) content.innerHTML = renderQueueHtml(queuePos);
+                            }
+                        }, Math.floor(Math.random() * 1500) + 1500); 
+                    }
+                });
+            };
+
+            // 判斷是否需要啟用排隊UI
+            const isQueueMode = queuePos >= 3;
+
+            if (isQueueMode) {
+                startQueueUI();
+                
+                // 10 秒後跳出是否繼續等待的提示 (僅限排隊模式)
+                queueTimeout = setTimeout(() => {
+                    if (isFinished) return;
+                    isPrompting = true;
+                    clearInterval(queueInterval);
+                    
+                    Swal.fire({
+                        title: '⏳ 等候時間較長',
+                        text: '系統目前連線量較大，是否繼續等待？',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: 'var(--green, #10b981)',
+                        cancelButtonColor: '#94a3b8',
+                        confirmButtonText: '✅ 是，繼續等待',
+                        cancelButtonText: '❌ 否，退出等待',
+                        allowOutsideClick: false
+                    }).then((res) => {
+                        if (isFinished) {
+                            Swal.close();
+                            return;
+                        }
+                        if (res.isConfirmed) {
+                            isPrompting = false;
+                            startQueueUI(); // 恢復排隊
+                        } else {
+                            Swal.fire({
+                                title: '⚠️ 確定離開？',
+                                html: '<span style="color:var(--red, #ff5252); font-weight:bold;">若您選擇離開排隊序列，<br>再次進入時等待時間可能會加長。</span><br><br>確定要放棄當前進度並離開嗎？',
+                                icon: 'error',
+                                showCancelButton: true,
+                                confirmButtonColor: '#94a3b8',
+                                cancelButtonColor: 'var(--red, #ff5252)',
+                                confirmButtonText: '取消，繼續等待',
+                                cancelButtonText: '確定離開',
+                                allowOutsideClick: false
+                            }).then((exitRes) => {
+                                if (isFinished) {
+                                    Swal.close();
+                                    return;
+                                }
+                                if (exitRes.dismiss === Swal.DismissReason.cancel) {
+                                    isFinished = true;
+                                    currentAbortController.abort();
+                                    Swal.fire({ title: '已取消', text: '您已退出排隊序列。', icon: 'info', timer: 1500, showConfirmButton: false});
+                                } else {
+                                    isPrompting = false;
+                                    startQueueUI();
+                                }
+                            });
+                        }
+                    });
+                }, 10000);
+            } else {
+                startStandardUI();
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    signal: signal
+                });
+                const data = await response.json();
+                
+                isFinished = true;
+                if (isQueueMode) {
+                    clearInterval(queueInterval);
+                    clearTimeout(queueTimeout);
+                }
+                
+                if (!isPrompting) Swal.close(); 
+                return data;
+            } catch (err) {
+                isFinished = true;
+                if (isQueueMode) {
+                    clearInterval(queueInterval);
+                    clearTimeout(queueTimeout);
+                }
+                if (err.name === 'AbortError') {
+                    return { success: false, aborted: true };
+                }
+                if (!isPrompting) Swal.close();
+                throw err;
+            }
+        }
 
         function showAlert(title, text, icon = 'info') {
             if (icon === 'error') {
@@ -442,20 +590,9 @@
             const upw = document.getElementById('pw').value.trim();
             if(!uid || !upw) return showAlert("提示", "請輸入完整資料", "warning");
 
-            Swal.fire({
-                title: '登入中',
-                text: '驗證身份中，請稍候...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
             try {
-                const res = await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'login', uid: uid, pw: upw }) 
-                }).then(r => r.json());
+                const res = await fetchWithQueue(SCRIPT_URL, { action: 'login', uid: uid, pw: upw }, '連線與驗證身份中...');
+                if (res.aborted) return; // 如果使用者中途跳出排隊
 
                 if (res.success) {
                     savedPw = upw; 
@@ -463,7 +600,6 @@
                     render();
                     document.getElementById('loginView').style.display='none';
                     document.getElementById('appView').style.display='block';
-                    Swal.close(); 
                 } else { 
                     showCustomerServiceAlert("登入失敗", res.message); 
                 }
@@ -472,6 +608,7 @@
             }
         }
 
+        // 靜默更新不使用排隊 UI
         async function silentSyncData() {
             if (!store || !store.userData || !store.userData.id || !savedPw) return;
             
@@ -509,7 +646,7 @@
                         <span style="color:${h.amt>=0?'var(--green)':'var(--red)'}">${h.amt>=0?'+':''}${h.amt}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-top:5px;">
-                        <small style="opacity:0.5;">${h.time}</small>
+                        <small style="opacity:0.5;">${h.date}</small>
                         <small style="opacity:0.6; font-weight:bold;">餘額: ${h.bal}</small>
                     </div>
                     ${h.note ? `<div class="note-box">備註：${h.note}</div>` : ''}
@@ -519,21 +656,30 @@
             renderLoans();
             renderCoupons();
 
-            document.getElementById('oList').innerHTML = store.orders.map((o, idx) => `
+            document.getElementById('oList').innerHTML = store.orders.map((o, idx) => {
+                let rawItem = o.desc || o.item || '無商品明細';
+                let briefItemHtml = '';
+                if (rawItem.includes(';') && !rawItem.includes('\n')) {
+                    briefItemHtml = rawItem.split(';').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">- ${line.trim()}</div>`).join('');
+                } else {
+                    briefItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">${line}</div>`).join('');
+                }
+
+                return `
                 <div class="card">
                     <div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div>
                     <div style="margin:5px 0;"><b>狀態: ${o.status}</b></div>
-                    <div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${o.desc || o.item || '無商品明細'}</div>
+                    <div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${briefItemHtml}</div>
                     <div style="font-size:1.1em; color:var(--red); margin:5px 0;"><b>訂單總金額: $${o.total || o.totalAmount || 0}</b></div>
                     <div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">
                         ${o.ship || '未知物流'} | 單號: ${o.track || '無'}
                     </div>
                     <button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup(${idx})">🔍 查看訂單詳細資訊</button>
                 </div>
-            `).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
+                `;
+            }).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
         }
 
-        // 🔧 修正擴充點：生成包含精密時間紀錄的物流時間線資訊
         function showOrderDetailPopup(index) {
             if(!store || !store.orders || !store.orders[index]) return;
             const o = store.orders[index];
@@ -541,28 +687,38 @@
             let timelineHtml = "";
             const currentStatus = o.status || "訂單處理中";
             const currentNote = o.note || "尚無備註描述";
-            
-            // 修正點：若後端沒有傳回具體時間紀錄，改為顯示「暫無時間紀錄」，不使用 new Date() 來抓取當下時間
             const updateTime = o.time || '暫無時間紀錄';
 
-            // 🛠️ 檢查後端是否有傳送完整的時間線陣列紀錄，若有則直接依據最新在上渲染
+            let deadlineDisplay = '';
+            if (o.timeline && Array.isArray(o.timeline)) {
+                for (let node of o.timeline) {
+                    if (node.note && node.note.includes('[取件截止日:')) {
+                        const match = node.note.match(/\[取件截止日:(.*?)\]/);
+                        if (match) {
+                            deadlineDisplay = match[1];
+                            break; 
+                        }
+                    }
+                }
+            }
+
             if (o.timeline && Array.isArray(o.timeline) && o.timeline.length > 0) {
-                // 後端回傳的時間線假設已經排序好，若無則在此確保最新在最上方
                 const sortedTimeline = [...o.timeline].sort((a, b) => new Date(b.time) - new Date(a.time));
-                timelineHtml = sortedTimeline.map((node, nIdx) => `
+                timelineHtml = sortedTimeline.map((node, nIdx) => {
+                    const cleanNote = (node.note || '動態物流程序記錄正常').replace(/\[取件截止日:.*?\]/g, '').trim() || '動態物流程序記錄正常';
+                    return `
                     <div class="timeline-node ${nIdx === 0 ? 'latest-node' : ''}">
                         <div class="timeline-node-title">${node.status}</div>
                         <div class="timeline-node-time">⏱️ ${node.time}</div>
-                        <div class="timeline-node-desc">${node.note || '動態物流程序記錄正常'}</div>
+                        <div class="timeline-node-desc">${cleanNote}</div>
                     </div>
-                `).join('');
+                `}).join('');
             } else {
-                // 💡 備援防呆方案：若後端尚未提供完整時間線陣列，則自動以當前狀態做帶時間紀錄的向下階梯動態推導
                 timelineHtml += `
                     <div class="timeline-node latest-node">
                         <div class="timeline-node-title">${currentStatus}</div>
                         <div class="timeline-node-time">⏱️ ${updateTime}</div>
-                        <div class="timeline-node-desc">${currentNote}</div>
+                        <div class="timeline-node-desc">${currentNote.replace(/\[取件截止日:.*?\]/g, '').trim()}</div>
                     </div>
                 `;
 
@@ -603,11 +759,24 @@
                 }
             }
             
+            let rawItem = o.desc || o.item || '無商品明細';
+            let detailItemHtml = '';
+            if (rawItem.includes(';') && !rawItem.includes('\n')) {
+                detailItemHtml = rawItem.split(';').filter(l => l.trim()).map(line => `<div style="margin-top:4px; padding-left:10px; text-indent:-10px;">- ${line.trim()}</div>`).join('');
+            } else {
+                detailItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:4px; padding-left:10px; text-indent:-10px;">${line}</div>`).join('');
+            }
+
+            let deadlineHtml = deadlineDisplay ? `<p><span style="color:var(--red);">📅 取件截止日：</span><b style="color:var(--red); font-size: 1.1em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${deadlineDisplay}</b></p>` : '';
+
             let htmlContent = `
                 <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
                     <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px;"><span style="color:var(--pink);">📦 訂單編號：</span>${o.id || '無'}</p>
                     <p><span style="color:var(--pink);">🚦 訂單狀態：</span><b>${currentStatus}</b></p>
-                    <p><span style="color:var(--pink);">🛍️ 商品明細：</span><br><span style="opacity:0.8;">${o.desc || o.item || '無'}</span></p>
+                    <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${o.code || '尚未發佈'}</span></p>
+                    ${deadlineHtml}
+                    
+                    <p style="margin-top: 15px;"><span style="color:var(--pink);">🛍️ 商品明細：</span><br><span style="opacity:0.8; display:block; margin-top:5px;">${detailItemHtml}</span></p>
                     
                     <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px; margin: 10px 0; border: 1px solid var(--border);">
                         <p style="margin: 3px 0;">💰 商品小計：$${o.subtotal || 0}</p>
@@ -618,7 +787,6 @@
                         <p style="margin: 5px 0 0 0; font-size: 1.1em; color: var(--red); border-top: 1px solid var(--border); padding-top: 5px;">🚨 應付總金額：$${o.total || o.totalAmount || 0}</p>
                     </div>
 
-                    <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${o.code || '尚未發佈'}</span></p>
                     <p><span style="color:var(--pink);">🛣️ 物流方式：</span>${o.ship || '無'}</p>
                     <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${{address: o.address || '無'}.address}</p>
                     <p><span style="color:var(--pink);">📦 物流追蹤單號：</span>${o.track || '無'}</p>
@@ -642,7 +810,7 @@
             if (!store || !store.loans) return;
 
             const filteredLoans = store.loans.filter(l => {
-                const isCleared = (l.status === '已結清');
+                const isCleared = (l.status === '已結清' || l.status === 'Macro已結清');
                 const isOverdue = (!isCleared && l.penalty > 0);
 
                 if (currentLoanTab === 1) {
@@ -656,12 +824,12 @@
 
             document.getElementById('lList').innerHTML = filteredLoans.map(l => `
                 <div class="card">
-                    ${l.status === 'processed_cleared' || l.status === '已結清' ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}
+                    ${l.status === 'processed_cleared' || l.status === '已結清' || l.status === 'Macro已結清' ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}
                     <div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div>
                     <div style="display:flex; justify-content:space-between;">
                         <small style="opacity:0.6;">期限: ${l.expiry}</small>
-                        <b style="color:${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">
-                            ${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' ? 'App結清' : '$' + l.totalDue}
+                        <b style="color:${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' || l.status === 'Macro已結清' ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">
+                            ${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' || l.status === 'Macro已結清' ? '已結清' : '$' + l.totalDue}
                         </b>
                     </div>
                 </div>
@@ -683,7 +851,7 @@
             const todayStr = new Date().toISOString().split('T')[0];
 
             const filteredCoupons = store.coupons.filter(c => {
-                const isUsed = (c.status === '已核銷');
+                const isUsed = (c.status === '已使用' || c.status === '已核銷' || c.status === 'Macro已使用');
                 let isExpired = false;
                 if (c.expiry) {
                     const match = c.expiry.match(/\d{4}-\d{2}-\d{2}/);
@@ -702,7 +870,7 @@
             });
 
             document.getElementById('cpList').innerHTML = filteredCoupons.map(c => {
-                const isUsed = (c.status === '已核銷');
+                const isUsed = (c.status === '已使用' || c.status === '已核銷' || c.status === 'Macro已使用');
                 let isExpired = false;
                 if (c.expiry) {
                     const match = c.expiry.match(/\d{4}-\d{2}-\d{2}/);
@@ -723,7 +891,7 @@
                 return `
                     <div class="card" style="opacity: ${isUsed || isExpired ? '0.6' : '1'};">
                         ${tagHtml}
-                        <div style="font-size:1.1em; margin-bottom:5px; padding-right:60px;"><b>${c.name}</b></div>
+                        <div style="font-size:1.1em; margin-bottom:5px; padding-right:60px;"><b>${c.name || c.title}</b></div>
                         <div style="font-size:0.9em; opacity:0.8; margin-bottom:10px; white-space: pre-line;">${c.content}</div>
                         <div style="display:flex; justify-content:space-between; font-size:0.75em; opacity:0.5; border-top:1px dashed var(--border); padding-top:8px; align-items: center;">
                             <span>到期日: ${c.expiry}</span>
@@ -820,23 +988,15 @@
 
             if (!confirmStep2.isConfirmed) return;
 
-            Swal.fire({
-                title: '資料更新中',
-                text: '請稍候...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
             try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'updateProfile',
-                        uid: store.userData.id,
-                        pw: savedPw,
-                        newName: finalizedName
-                    })
-                }).then(r => r.json());
+                const res = await fetchWithQueue(SCRIPT_URL, {
+                    action: 'updateProfile',
+                    uid: store.userData.id,
+                    pw: savedPw,
+                    newName: finalizedName
+                }, '資料更新與連線中...');
+
+                if (res.aborted) return;
 
                 if (res.success) {
                     store.userData.name = finalizedName;
@@ -914,23 +1074,15 @@
 
             if (!confirmStep2.isConfirmed) return;
 
-            Swal.fire({
-                title: '密碼變更中',
-                text: '請稍候...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
             try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'updatePassword',
-                        uid: store.userData.id,
-                        oldPw: formValues.oldPw,
-                        newPw: formValues.newPw
-                    })
-                }).then(r => r.json());
+                const res = await fetchWithQueue(SCRIPT_URL, {
+                    action: 'updatePassword',
+                    uid: store.userData.id,
+                    oldPw: formValues.oldPw,
+                    newPw: formValues.newPw
+                }, '密碼變更與連線中...');
+                
+                if (res.aborted) return;
 
                 if (res.success) {
                     await Swal.fire({
