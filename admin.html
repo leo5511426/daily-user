@@ -30,6 +30,12 @@
         
         .swal2-popup { font-family: -apple-system, sans-serif; font-weight: bold; border-radius: 20px !important; }
 
+        /* 🚶 排隊小人跳動動畫 */
+        @keyframes queue-bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-8px); }
+        }
+
         /* 📍 管理端時間線專屬樣式 */
         .admin-timeline { margin-top: 15px; padding-left: 5px; }
         .admin-node { position: relative; padding-left: 24px; padding-bottom: 15px; cursor: pointer; transition: 0.2s; }
@@ -174,6 +180,9 @@
     <label class="section-label">📅 訂單成立時間：</label>
     <input type="datetime-local" id="o_new_time">
     
+    <label class="section-label" style="color: var(--red);">🚨 取件截止日 (選填，通常於包裹到店時設定)：</label>
+    <input type="date" id="o_new_deadline">
+    
     <button onclick="createNewOrderSubmit()" style="background:var(--green)">確認建立全新訂單</button>
 </div>
 
@@ -197,6 +206,9 @@
         <label style="font-size:0.85em; opacity:0.7;">狀態備註 / 註記：</label>
         <input type="text" id="t_log_note" placeholder="例如：買家已取件，感謝購買">
         
+        <label style="font-size:0.85em; opacity:0.7; color: var(--red);">📅 設定/更新取件截止日 (選填)：</label>
+        <input type="date" id="t_log_deadline">
+        
         <button onclick="updateOrderTimelineSubmit()" style="background:var(--dark)">發佈最新節點紀錄</button>
     </div>
 </div>
@@ -211,15 +223,165 @@
 
 <script>
     // ⚠️ 請確保此處為您自己發佈的應用程式網址
-    const GAS = "https://script.google.com/macros/s/AKfycbzXHZBEhaN7rxJQ1PRfWYiD74CiSmmwO_zN-k0tdvtfkfoo_Yp64biBVV-74p6AtKHu/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbxcYO5YiGadAYCABAlEdq5P90SOUX_GEZquDVTlujqp894y3HZAzPFB5nEd4HunL-Qo/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode;
 
+    // 🚶 核心引擎：智慧排隊與一般載入切換機制
+    async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
+        let currentAbortController = new AbortController();
+        const signal = currentAbortController.signal;
+
+        // 模擬當前伺服器負載狀況 (隨機 0~8 人)
+        let queuePos = Math.floor(Math.random() * 9); 
+        let queueInterval, queueTimeout;
+        let isPrompting = false;
+        let isFinished = false;
+
+        // 一般模式：當人數小於3人時觸發一般載入視窗
+        const startStandardUI = () => {
+            if (isFinished) return;
+            Swal.fire({
+                title: loadingTitle,
+                text: '正在同步資料，請稍候...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        };
+
+        // 排隊模式：當人數大於等於3人時觸發
+        const renderQueueHtml = (pos) => `
+            <div style="margin: 15px 0;">
+                <div style="font-size: 35px; margin-bottom: 15px; display: flex; justify-content: center; gap: 8px;">
+                    <span style="animation: queue-bounce 0.8s infinite alternate;">🚶</span>
+                    <span style="animation: queue-bounce 0.8s infinite alternate 0.3s;">🚶‍♀️</span>
+                    <span style="animation: queue-bounce 0.8s infinite alternate 0.6s;">🚶</span>
+                </div>
+                <div style="font-weight: bold; color: var(--primary, #4f46e5); font-size: 1.1em;">
+                    系統目前較為繁忙，您已進入排隊序列
+                </div>
+                <div style="margin-top: 5px; font-size: 0.95em;">
+                    目前前方還有 <span style="font-size: 1.5em; color: var(--red, #ff5252); margin: 0 5px;">${pos}</span> 人
+                </div>
+            </div>
+        `;
+
+        const startQueueUI = () => {
+            if (isFinished) return;
+            Swal.fire({
+                title: '系統排隊中',
+                html: renderQueueHtml(queuePos),
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    queueInterval = setInterval(() => {
+                        if (queuePos > 1) {
+                            queuePos--;
+                            const content = Swal.getHtmlContainer();
+                            if (content) content.innerHTML = renderQueueHtml(queuePos);
+                        }
+                    }, Math.floor(Math.random() * 1500) + 1500); 
+                }
+            });
+        };
+
+        // 判斷是否需要啟用排隊UI
+        const isQueueMode = queuePos >= 3;
+
+        if (isQueueMode) {
+            startQueueUI();
+            
+            // 10 秒後跳出是否繼續等待的提示 (僅限排隊模式)
+            queueTimeout = setTimeout(() => {
+                if (isFinished) return;
+                isPrompting = true;
+                clearInterval(queueInterval);
+                
+                Swal.fire({
+                    title: '⏳ 等候時間較長',
+                    text: '系統目前連線量較大，是否繼續等待？',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: 'var(--green, #10b981)',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: '✅ 是，繼續等待',
+                    cancelButtonText: '❌ 否，退出等待',
+                    allowOutsideClick: false
+                }).then((res) => {
+                    if (isFinished) {
+                        Swal.close();
+                        return;
+                    }
+                    if (res.isConfirmed) {
+                        isPrompting = false;
+                        startQueueUI();
+                    } else {
+                        Swal.fire({
+                            title: '⚠️ 確定離開？',
+                            html: '<span style="color:var(--red, #ff5252); font-weight:bold;">若您選擇離開排隊序列，<br>再次進入時等待時間可能會加長。</span><br><br>確定要放棄當前進度並離開嗎？',
+                            icon: 'error',
+                            showCancelButton: true,
+                            confirmButtonColor: '#94a3b8',
+                            cancelButtonColor: 'var(--red, #ff5252)',
+                            confirmButtonText: '取消，繼續等待',
+                            cancelButtonText: '確定離開',
+                            allowOutsideClick: false
+                        }).then((exitRes) => {
+                            if (isFinished) {
+                                Swal.close();
+                                return;
+                            }
+                            if (exitRes.dismiss === Swal.DismissReason.cancel) {
+                                isFinished = true;
+                                currentAbortController.abort();
+                                Swal.fire({ title: '已取消', text: '您已退出排隊序列。', icon: 'info', timer: 1500, showConfirmButton: false});
+                            } else {
+                                isPrompting = false;
+                                startQueueUI();
+                            }
+                        });
+                    }
+                });
+            }, 10000); 
+        } else {
+            startStandardUI();
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                signal: signal
+            });
+            const data = await response.json();
+            
+            isFinished = true;
+            if (isQueueMode) {
+                clearInterval(queueInterval);
+                clearTimeout(queueTimeout);
+            }
+            
+            if (!isPrompting) Swal.close(); 
+            return data;
+        } catch (err) {
+            isFinished = true;
+            if (isQueueMode) {
+                clearInterval(queueInterval);
+                clearTimeout(queueTimeout);
+            }
+            if (err.name === 'AbortError') {
+                return { success: false, aborted: true };
+            }
+            if (!isPrompting) Swal.close();
+            throw err;
+        }
+    }
+
     window.onload = refresh;
 
-    function showMask(text) { Swal.fire({ title: text, allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } }); }
-    function hideMask() { Swal.close(); }
     function showAlert(title, text, icon = 'info') { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: 'var(--primary)', confirmButtonText: '確定' }); }
 
     function getNowDateTimeString() {
@@ -233,9 +395,10 @@
     }
 
     async function refresh() {
-        showMask("正在載入系統資料...");
         try {
-            const res = await fetch(GAS, {method:'POST', body:JSON.stringify({action:'fetchData', uid:'admin'})}).then(r=>r.json());
+            const res = await fetchWithQueue(GAS, {action:'fetchData', uid:'admin'}, "正在載入系統資料...");
+            if (res.aborted) return;
+            
             U_DB = res.list || []; 
             L_DB = res.loans || [];
             CP_DB = res.coupons || [];
@@ -243,15 +406,12 @@
             SETTINGS = res.settings || {};
             
             updateSelects();
-            renderAdminTimeline(); // 重新渲染時間線區塊
+            renderAdminTimeline(); 
             
             const nowTime = getNowDateTimeString();
             document.getElementById('t_log_time').value = nowTime;
             document.getElementById('o_new_time').value = nowTime; 
-            
-            hideMask();
         } catch(e) {
-            hideMask();
             showAlert("錯誤", "載入失敗", "error");
         }
     }
@@ -272,18 +432,15 @@
         const addrOptions = (SETTINGS.addresses || SETTINGS["門市清單"] || []).map(a => `<option value="${a}">${a}</option>`).join('');
         document.getElementById('o_new_address_select').innerHTML = '<option value="">-- 快速選擇地址 --</option>' + addrOptions;
 
-        // 記住當前選取的訂單 ID
         const currentSelectedOid = document.getElementById('t_order_id').value;
-        const orderOptions = O_DB.map(o => `<option value="${o.id}">單號:${o.id} - ${o.item} (${o.status})</option>`).join('') || '<option value="">目前雲端尚無訂單紀錄</option>';
+        const orderOptions = O_DB.map(o => `<option value="${o.id}">單號:${o.id} - ${o.item.substring(0,20).replace(/\n/g, ' ')}... (${o.status})</option>`).join('') || '<option value="">目前雲端尚無訂單紀錄</option>';
         document.getElementById('t_order_id').innerHTML = orderOptions;
         
-        // 若之前有選取，則恢復選取狀態
         if (currentSelectedOid && O_DB.find(o => o.id === currentSelectedOid)) {
             document.getElementById('t_order_id').value = currentSelectedOid;
         }
     }
 
-    // 📍 渲染並顯示管理者端之物流時間線
     function renderAdminTimeline() {
         const container = document.getElementById('admin_timeline_container');
         const orderId = document.getElementById('t_order_id').value;
@@ -295,11 +452,10 @@
         const order = O_DB.find(o => o.id === orderId);
         if (order && order.timeline && order.timeline.length > 0) {
             const html = order.timeline.map((node, idx) => {
-                // 將特殊字元跳脫以策安全
-                const safeRawMsg = String(node.rawMsg).replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                const safeTime = String(node.time).replace(/'/g, "\\'");
-                const safeStatus = String(node.status).replace(/'/g, "\\'");
-                const safeNote = String(node.note).replace(/'/g, "\\'");
+                const safeRawMsg = String(node.rawMsg).replace(/'/g, "\\'").replace(/"/g, "\\\"").replace(/\n/g, "\\n").replace(/\r/g, "");
+                const safeTime = String(node.time).replace(/'/g, "\\'").replace(/"/g, "\\\"");
+                const safeStatus = String(node.status).replace(/'/g, "\\'").replace(/"/g, "\\\"");
+                const safeNote = String(node.note).replace(/'/g, "\\'").replace(/"/g, "\\\"").replace(/\n/g, "\\n").replace(/\r/g, "");
                 
                 return `
                 <div class="admin-node ${idx === 0 ? 'latest-node' : ''}" onclick="openEditNodeModal('${orderId}', '${safeRawMsg}', '${safeTime}', '${safeStatus}', '${safeNote}')">
@@ -314,9 +470,7 @@
         }
     }
 
-    // 📍 開啟編輯特定物流節點的視窗 (新增刪除功能)
     async function openEditNodeModal(oid, rawMsg, oldTime, oldStatus, oldNote) {
-        // 將 yyyy-MM-dd HH:mm 轉為 datetime-local 支援的 yyyy-MM-ddTHH:mm
         const isoTime = oldTime.replace(' ', 'T');
         const statusOptions = (SETTINGS.orderStatuses || SETTINGS["物流狀態"] || []).map(s => 
             `<option value="${s}" ${s === oldStatus ? 'selected' : ''}>${s}</option>`
@@ -334,7 +488,7 @@
                         ${statusOptions}
                     </select>
                     
-                    <label style="display:block; margin-top:10px; color:var(--dark);">狀態備註：</label>
+                    <label style="display:block; margin-top:10px; color:var(--dark);">狀態備註 (包含截止日標籤)：</label>
                     <input type="text" id="edit_log_note" class="swal2-input" value="${oldNote}" style="width: 80%; margin: 5px auto; padding: 10px;">
                 </div>
             `,
@@ -360,21 +514,17 @@
         });
 
         if (result.isConfirmed && result.value) {
-            // 執行編輯更新
-            showMask("正在覆寫修正雲端節點...");
             try {
-                const res = await fetch(GAS, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'adminAction',
-                        type: 'editTimelineNode',
-                        oid: oid,
-                        oldRawMsg: rawMsg,
-                        newTime: result.value.newTime,
-                        newStatus: result.value.newStatus,
-                        newNote: result.value.newNote
-                    })
-                }).then(r => r.json());
+                const res = await fetchWithQueue(GAS, {
+                    action: 'adminAction',
+                    type: 'editTimelineNode',
+                    oid: oid,
+                    oldRawMsg: rawMsg,
+                    newTime: result.value.newTime,
+                    newStatus: result.value.newStatus,
+                    newNote: result.value.newNote
+                }, "正在覆寫修正雲端節點...");
+                if (res.aborted) return;
 
                 if (res.success) {
                     Swal.fire({ title: '修改成功', text: res.message, icon: 'success' }).then(() => refresh());
@@ -385,7 +535,6 @@
                 Swal.fire("網路錯誤", "無法連線至雲端服務", "error");
             }
         } else if (result.isDenied) {
-            // 執行刪除流程（加上二次確認防呆）
             const confirmDel = await Swal.fire({
                 title: '確定要刪除此節點？',
                 text: '刪除後將無法復原！',
@@ -398,17 +547,14 @@
             });
 
             if (confirmDel.isConfirmed) {
-                showMask("正在刪除雲端節點...");
                 try {
-                    const res = await fetch(GAS, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            action: 'adminAction',
-                            type: 'deleteTimelineNode',
-                            oid: oid,
-                            rawMsg: rawMsg
-                        })
-                    }).then(r => r.json());
+                    const res = await fetchWithQueue(GAS, {
+                        action: 'adminAction',
+                        type: 'deleteTimelineNode',
+                        oid: oid,
+                        rawMsg: rawMsg
+                    }, "正在刪除雲端節點...");
+                    if (res.aborted) return;
 
                     if (res.success) {
                         Swal.fire({ title: '刪除成功', text: res.message, icon: 'success' }).then(() => refresh());
@@ -582,10 +728,10 @@
 
     async function submitWiz() {
         closeModal();
-        showMask("正在提交資料至雲端試算表...");
         let payload = { action: 'adminAction', type: CUR_MODE, ...FORM };
         try {
-            const res = await fetch(GAS, { method: 'POST', body: JSON.stringify(payload) }).then(r => r.json());
+            const res = await fetchWithQueue(GAS, payload, "正在提交資料至雲端試算表...");
+            if (res.aborted) return;
             if (res.success) {
                 Swal.fire({ title: '操作成功！', text: res.message, icon: 'success' }).then(() => refresh());
             } else {
@@ -596,9 +742,9 @@
 
     async function submitRedeem() {
         closeQuick(); 
-        showMask("正在執行實體優惠券核銷中...");
         try {
-            const res = await fetch(GAS, { method: 'POST', body: JSON.stringify({ action: 'adminAction', type: 'redeem', cpId: FORM.cpId }) }).then(r => r.json());
+            const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'redeem', cpId: FORM.cpId }, "正在執行實體優惠券核銷中...");
+            if (res.aborted) return;
             if(res.success) {
                 Swal.fire({ title: '核銷成功！', text: res.message, icon: 'success' }).then(() => refresh());
             } else {
@@ -614,13 +760,9 @@
         const exp = document.getElementById('l_exp').value;
         if(!uid || !item || !amt || !exp) return Swal.fire("提示", "撥款表單欄位填寫不完整！", "warning");
 
-        showMask("正在處理借款撥發中...");
         try {
-            const res = await fetch(GAS, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'adminAction', type: 'addLoan', uid: uid, item: item, amt: Number(amt), expiry: exp })
-            }).then(r => r.json());
-            
+            const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addLoan', uid: uid, item: item, amt: Number(amt), expiry: exp }, "正在處理借款撥發中...");
+            if (res.aborted) return;
             if(res.success) {
                 Swal.fire({ title: '發放完成', text: res.message, icon: 'success' }).then(() => refresh());
                 document.getElementById('l_item').value = "";
@@ -641,13 +783,9 @@
 
         if(!uid || !cpId || !title || !content || !expiry) return Swal.fire("提示", "請填寫完整優惠券資訊！", "warning");
         
-        showMask("正在發送優惠券...");
         try {
-            const res = await fetch(GAS, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry })
-            }).then(r => r.json());
-            
+            const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry }, "正在發送優惠券...");
+            if (res.aborted) return;
             if (res.success) {
                 Swal.fire({ title: '發送完畢', text: res.message, icon: 'success' }).then(() => refresh());
                 document.getElementById('cp_id').value = "";
@@ -681,8 +819,9 @@
                 return Swal.fire("提示", `請確實填寫第 ${i+1} 項商品的名稱、數量與價格！`, "warning");
             }
             itemsArray.push({ name, spec, qty: Number(qty), price: Number(price) });
-            itemSummaryText += `${name}${spec ? '('+spec+')' : ''} x${qty}; `;
+            itemSummaryText += `- ${name}${spec ? ' ('+spec+')' : ''} x${qty} ($${price})\n`;
         }
+        itemSummaryText = itemSummaryText.trim(); 
 
         const calcData = calculateTotalOrderAmount();
         const shipping = Number(document.getElementById('o_new_shipping').value) || 0;
@@ -693,7 +832,12 @@
         const logMethod = document.getElementById('o_new_log_method').value;
         const address = document.getElementById('o_new_address').value.trim(); 
         const logId = document.getElementById('o_new_log_id').value.trim();
-        const logNote = document.getElementById('o_new_log_note').value.trim();
+        
+        let logNote = document.getElementById('o_new_log_note').value.trim();
+        const newDeadline = document.getElementById('o_new_deadline').value;
+        if (newDeadline) {
+            logNote = (logNote + ` [取件截止日:${newDeadline}]`).trim();
+        }
 
         if(!id || !uid || !status || !time || !address) {
             return Swal.fire("提示", "請填寫或選擇必要欄位（單號、對象、狀態、時間與地址）！", "warning");
@@ -701,31 +845,29 @@
 
         const formattedTime = time.replace('T', ' '); 
 
-        showMask("正在建立新訂單並上傳雲端...");
         try {
-            const res = await fetch(GAS, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'adminAction',
-                    type: 'updateOrder',
-                    oid: id,
-                    uid: uid,
-                    status: status,
-                    item: itemSummaryText,
-                    code: vcode,
-                    subtotal: calcData.subtotal,
-                    shipFee: shipping,
-                    discShip: shipDiscount,
-                    discSeller: sellerDiscount,
-                    discCoin: coinDiscount,
-                    total: calcData.totalAmount,
-                    ship: logMethod,
-                    address: address,
-                    track: logId,
-                    note: logNote,
-                    time: formattedTime 
-                })
-            }).then(r => r.json());
+            const res = await fetchWithQueue(GAS, {
+                action: 'adminAction',
+                type: 'updateOrder',
+                oid: id,
+                uid: uid,
+                status: status,
+                item: itemSummaryText,
+                code: vcode,
+                subtotal: calcData.subtotal,
+                shipFee: shipping,
+                discShip: shipDiscount,
+                discSeller: sellerDiscount,
+                discCoin: coinDiscount,
+                total: calcData.totalAmount,
+                ship: logMethod,
+                address: address,
+                track: logId,
+                note: logNote,
+                time: formattedTime 
+            }, "正在建立新訂單並上傳雲端...");
+
+            if (res.aborted) return;
 
             if (res.success) {
                 Swal.fire({ title: '訂單建立成功！', text: '新訂單與精細明細已寫入雲端。', icon: 'success' }).then(() => refresh());
@@ -741,26 +883,29 @@
         const orderId = document.getElementById('t_order_id').value;
         const logTime = document.getElementById('t_log_time').value; 
         const logStatus = document.getElementById('t_log_status').value;
-        const logNote = document.getElementById('t_log_note').value; // 新增讀取備註
+        
+        let logNote = document.getElementById('t_log_note').value.trim(); 
+        const logDeadline = document.getElementById('t_log_deadline').value;
+        if (logDeadline) {
+            logNote = (logNote + ` [取件截止日:${logDeadline}]`).trim();
+        }
 
         if(!orderId) return Swal.fire("提示", "請先選擇有效的訂單！", "warning");
         if(!logTime) return Swal.fire("提示", "請填寫節點更新時間！", "warning");
 
         const formattedTime = logTime.replace('T', ' '); 
 
-        showMask("正在同步更新物流時間線...");
         try {
-            const res = await fetch(GAS, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'adminAction',
-                    type: 'updateTimeline',
-                    oid: orderId,
-                    time: formattedTime, 
-                    status: logStatus,
-                    note: logNote // 傳遞備註
-                })
-            }).then(r => r.json());
+            const res = await fetchWithQueue(GAS, {
+                action: 'adminAction',
+                type: 'updateTimeline',
+                oid: orderId,
+                time: formattedTime, 
+                status: logStatus,
+                note: logNote 
+            }, "正在同步更新物流時間線...");
+            
+            if (res.aborted) return;
 
             if (res.success) {
                 Swal.fire({ title: '更新成功', text: '最新物流進度已與雲端同步發佈！', icon: 'success' }).then(() => refresh());
