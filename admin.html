@@ -30,13 +30,11 @@
         
         .swal2-popup { font-family: -apple-system, sans-serif; font-weight: bold; border-radius: 20px !important; }
 
-        /* 🚶 排隊小人跳動動畫 */
         @keyframes queue-bounce {
             0% { transform: translateY(0); }
             100% { transform: translateY(-8px); }
         }
 
-        /* 📍 管理端時間線專屬樣式 */
         .admin-timeline { margin-top: 15px; padding-left: 5px; }
         .admin-node { position: relative; padding-left: 24px; padding-bottom: 15px; cursor: pointer; transition: 0.2s; }
         .admin-node:hover { background: #f1f5f9; border-radius: 8px; }
@@ -171,8 +169,8 @@
     <select id="o_new_address_select" onchange="syncAddressSelectToInput()"></select>
     <input type="text" id="o_new_address" placeholder="或在此處手動輸入修改門市/配送地址">
 
-    <label class="section-label">📦 物流追蹤編號：</label>
-    <input type="text" id="o_new_log_id" placeholder="請輸入包裹物流單號">
+    <label class="section-label" style="color:var(--primary);">📦 物流追蹤編號 (拆單多包裹請用半形逗號 , 分隔)：</label>
+    <input type="text" id="o_new_log_id" placeholder="例如: 98765432, 12345678">
 
     <label class="section-label">📝 物流狀態註記 / 備註：</label>
     <input type="text" id="o_new_log_note" placeholder="例如：包裹已抵達高雄鼓山門市">
@@ -197,6 +195,12 @@
 
     <div style="border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
         <h4 style="margin: 0 0 10px 0; color: var(--primary);">➕ 發佈最新物流進度</h4>
+        
+        <div id="package_selector_container" style="display:none; margin-bottom:10px; background:#fff; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+            <label style="font-size:0.85em; font-weight:bold; color:var(--primary);">📦 選擇要更新的包裹 (拆單作業)：</label>
+            <select id="t_log_package" style="margin-top:5px;"></select>
+        </div>
+
         <label style="font-size:0.85em; opacity:0.7;">更新時間節點：</label>
         <input type="datetime-local" id="t_log_time">
         
@@ -223,23 +227,20 @@
 
 <script>
     // ⚠️ 請確保此處為您自己發佈的應用程式網址
-    const GAS = "https://script.google.com/macros/s/AKfycbxcYO5YiGadAYCABAlEdq5P90SOUX_GEZquDVTlujqp894y3HZAzPFB5nEd4HunL-Qo/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbxcsFyLgCfp2_aPvnhbx7aPy8hk6tHjk5ZHOlngGPr4UNKp7L04lj4f55fGVWeVl9WW/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode;
 
-    // 🚶 核心引擎：智慧排隊與一般載入切換機制
     async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
         let currentAbortController = new AbortController();
         const signal = currentAbortController.signal;
 
-        // 模擬當前伺服器負載狀況 (隨機 0~8 人)
         let queuePos = Math.floor(Math.random() * 9); 
         let queueInterval, queueTimeout;
         let isPrompting = false;
         let isFinished = false;
 
-        // 一般模式：當人數小於3人時觸發一般載入視窗
         const startStandardUI = () => {
             if (isFinished) return;
             Swal.fire({
@@ -252,7 +253,6 @@
             });
         };
 
-        // 排隊模式：當人數大於等於3人時觸發
         const renderQueueHtml = (pos) => `
             <div style="margin: 15px 0;">
                 <div style="font-size: 35px; margin-bottom: 15px; display: flex; justify-content: center; gap: 8px;">
@@ -288,13 +288,10 @@
             });
         };
 
-        // 判斷是否需要啟用排隊UI
         const isQueueMode = queuePos >= 3;
 
         if (isQueueMode) {
             startQueueUI();
-            
-            // 10 秒後跳出是否繼續等待的提示 (僅限排隊模式)
             queueTimeout = setTimeout(() => {
                 if (isFinished) return;
                 isPrompting = true;
@@ -317,7 +314,7 @@
                     }
                     if (res.isConfirmed) {
                         isPrompting = false;
-                        startQueueUI();
+                        startQueueUI(); 
                     } else {
                         Swal.fire({
                             title: '⚠️ 確定離開？',
@@ -356,7 +353,20 @@
                 body: JSON.stringify(payload),
                 signal: signal
             });
-            const data = await response.json();
+            
+            const textData = await response.text();
+            let data;
+            
+            try {
+                data = JSON.parse(textData);
+            } catch(e) {
+                isFinished = true;
+                if (isQueueMode) { clearInterval(queueInterval); clearTimeout(queueTimeout); }
+                Swal.close();
+                let errorSnippet = textData.substring(0, 150);
+                Swal.fire("伺服器端錯誤", "請注意，這通常代表後端 Code.gs 未更新成功，或發生了嚴重崩潰。伺服器原始回傳內容：\n\n" + errorSnippet, "error");
+                return { success: false, aborted: true }; 
+            }
             
             isFinished = true;
             if (isQueueMode) {
@@ -441,40 +451,81 @@
         }
     }
 
+    function generateAdminNodesHtml(logs, orderId) {
+        if(!logs || logs.length === 0) return '<p style="text-align:center; color:#94a3b8; font-size:0.85em;">此包裹尚無獨立紀錄</p>';
+        return logs.map((node, idx) => {
+            const safeRawMsg = btoa(encodeURIComponent(String(node.rawMsg || '')));
+            const safeTime = btoa(encodeURIComponent(String(node.time || '')));
+            const safeStatus = btoa(encodeURIComponent(String(node.status || '')));
+            const safeNote = btoa(encodeURIComponent(String(node.note || '')));
+            
+            return `
+            <div class="admin-node ${idx === 0 ? 'latest-node' : ''}" onclick="openEditNodeModal('${orderId}', '${safeRawMsg}', '${safeTime}', '${safeStatus}', '${safeNote}')">
+                <div class="admin-node-title">${node.status}</div>
+                <div class="admin-node-time">⏱️ ${node.time}</div>
+                <div class="admin-node-desc">${node.note} <span style="color:#3b82f6; font-size:0.8em; margin-left:5px;">[點擊修改/刪除]</span></div>
+            </div>`;
+        }).join('');
+    }
+
     function renderAdminTimeline() {
         const container = document.getElementById('admin_timeline_container');
+        const pkgSelector = document.getElementById('t_log_package');
+        const pkgContainer = document.getElementById('package_selector_container');
         const orderId = document.getElementById('t_order_id').value;
+
         if (!orderId) {
             container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">請先選擇訂單以查看時間線</p>`;
+            pkgContainer.style.display = 'none';
             return;
         }
 
         const order = O_DB.find(o => o.id === orderId);
-        if (order && order.timeline && order.timeline.length > 0) {
-            const html = order.timeline.map((node, idx) => {
-                const safeRawMsg = String(node.rawMsg).replace(/'/g, "\\'").replace(/"/g, "\\\"").replace(/\n/g, "\\n").replace(/\r/g, "");
-                const safeTime = String(node.time).replace(/'/g, "\\'").replace(/"/g, "\\\"");
-                const safeStatus = String(node.status).replace(/'/g, "\\'").replace(/"/g, "\\\"");
-                const safeNote = String(node.note).replace(/'/g, "\\'").replace(/"/g, "\\\"").replace(/\n/g, "\\n").replace(/\r/g, "");
-                
+        if (!order) return;
+
+        const tracks = (order.track || "").split(',').map(t => t.trim()).filter(t => t);
+
+        if (tracks.length > 1) {
+            pkgSelector.innerHTML = '<option value="all">-- 🌐 共用進度 (同步更新給所有包裹) --</option>' + 
+                                    tracks.map((t, i) => `<option value="${t}">包裹 ${i+1} (單號:${t})</option>`).join('');
+            pkgContainer.style.display = 'block';
+
+            let finalHtml = tracks.map((track, i) => {
+                let pkgLogs = (order.timeline || []).filter(n => !n.packageId || n.packageId === track);
+                let nodesHtml = generateAdminNodesHtml(pkgLogs, orderId);
                 return `
-                <div class="admin-node ${idx === 0 ? 'latest-node' : ''}" onclick="openEditNodeModal('${orderId}', '${safeRawMsg}', '${safeTime}', '${safeStatus}', '${safeNote}')">
-                    <div class="admin-node-title">${node.status}</div>
-                    <div class="admin-node-time">⏱️ ${node.time}</div>
-                    <div class="admin-node-desc">${node.note} <span style="color:#3b82f6; font-size:0.8em; margin-left:5px;">[點擊修改/刪除]</span></div>
-                </div>`;
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:12px; padding:12px;">
+                        <h5 style="margin:0 0 12px 0; color:var(--primary); font-size:0.95em; border-bottom:1px solid #f1f5f9; padding-bottom:5px;">📦 包裹 ${i+1} (${track})</h5>
+                        <div class="admin-timeline" style="margin-top:5px;">${nodesHtml}</div>
+                    </div>`;
             }).join('');
-            container.innerHTML = `<div class="admin-timeline">${html}</div>`;
+            container.innerHTML = finalHtml;
+
         } else {
-            container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">此訂單尚無詳細的雲端歷史軌跡</p>`;
+            pkgSelector.innerHTML = '';
+            pkgContainer.style.display = 'none';
+            
+            if (order.timeline && order.timeline.length > 0) {
+                container.innerHTML = `<div class="admin-timeline">${generateAdminNodesHtml(order.timeline, orderId)}</div>`;
+            } else {
+                container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">此訂單尚無詳細的雲端歷史軌跡</p>`;
+            }
         }
     }
 
-    async function openEditNodeModal(oid, rawMsg, oldTime, oldStatus, oldNote) {
+    async function openEditNodeModal(oid, encRawMsg, encTime, encStatus, encNote) {
+        const rawMsg = decodeURIComponent(atob(encRawMsg));
+        const oldTime = decodeURIComponent(atob(encTime));
+        const oldStatus = decodeURIComponent(atob(encStatus));
+        const oldNote = decodeURIComponent(atob(encNote));
+        
         const isoTime = oldTime.replace(' ', 'T');
         const statusOptions = (SETTINGS.orderStatuses || SETTINGS["物流狀態"] || []).map(s => 
             `<option value="${s}" ${s === oldStatus ? 'selected' : ''}>${s}</option>`
         ).join('');
+
+        let pkgMatch = rawMsg.match(/\[包裹:(.*?)\]/);
+        let extractedPkg = pkgMatch ? pkgMatch[1].trim() : "";
 
         const result = await Swal.fire({
             title: '✏️ 編輯或刪除物流時間線節點',
@@ -504,10 +555,13 @@
             preConfirm: () => {
                 const nt = document.getElementById('edit_log_time').value;
                 const ns = document.getElementById('edit_log_status').value;
-                const nn = document.getElementById('edit_log_note').value;
+                let nn = document.getElementById('edit_log_note').value.trim();
                 if (!nt) {
                     Swal.showValidationMessage('請確實填寫時間！');
                     return false;
+                }
+                if (extractedPkg) {
+                    nn = "[包裹:" + extractedPkg + "] " + nn;
                 }
                 return { newTime: nt.replace('T', ' '), newStatus: ns, newNote: nn };
             }
@@ -532,7 +586,7 @@
                     Swal.fire("錯誤", res.message, "error");
                 }
             } catch(e) {
-                Swal.fire("網路錯誤", "無法連線至雲端服務", "error");
+                Swal.fire("連線解析失敗", "無法解析伺服器回應。\n請確認您的 Code.gs 已重新「部署為最新版本」！", "error");
             }
         } else if (result.isDenied) {
             const confirmDel = await Swal.fire({
@@ -562,7 +616,7 @@
                         Swal.fire("錯誤", res.message, "error");
                     }
                 } catch(e) {
-                    Swal.fire("網路錯誤", "無法連線至雲端服務", "error");
+                    Swal.fire("連線解析失敗", "無法解析伺服器回應。\n請確認您的 Code.gs 已重新「部署為最新版本」！", "error");
                 }
             }
         }
@@ -672,10 +726,16 @@
         FORM = {};
     }
 
+    // ★ 變更：新增「選擇應還帳單」流程，讓管理員指定扣款帳單
     const FLOWS = {
         add: [{t:"選擇對象",f:"uid",type:"user"}, {t:"加值金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
         sub: [{t:"選擇對象",f:"uid",type:"user"}, {t:"扣款項目",f:"item",type:"text"}, {t:"扣款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
-        pay: [{t:"選擇對象",f:"uid",type:"user"}, {t:"還款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
+        pay: [
+            {t:"選擇對象",f:"uid",type:"user"}, 
+            {t:"選擇應還帳單",f:"loanRef",type:"loan"}, 
+            {t:"還款金額",f:"amt",type:"number"}, 
+            {t:"備註描述",f:"note",type:"text"}
+        ],
         redeem: [{t:"請輸入或掃描優惠券ID",f:"cpId",type:"text"}]
     };
 
@@ -702,12 +762,29 @@
             html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`;
         } else if (stepInfo.type === "number") {
             html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`;
+        } else if (stepInfo.type === "loan") {
+            // ★ 動態過濾會員的未結清帳單
+            const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清");
+            if (userLoans.length === 0) {
+                html += `<p style="color:var(--red); font-weight:bold;">此會員目前無未結清的帳單</p>`;
+                html += `<input type="hidden" id="wiz_val" value="">`;
+            } else {
+                html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.total - l.paid})</option>`).join('')}</select>`;
+            }
         } else {
             html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
         }
         
         document.getElementById('wizBody').innerHTML = html;
-        document.getElementById('nextBtn').innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步";
+        
+        // ★ 若無未結清帳單，隱藏下一步按鈕進行防呆
+        const nextBtn = document.getElementById('nextBtn');
+        if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清").length === 0) {
+            nextBtn.style.display = 'none';
+        } else {
+            nextBtn.style.display = 'block';
+            nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步";
+        }
     }
 
     function wizNext() {
@@ -715,7 +792,11 @@
         const flow = FLOWS[CUR_MODE];
         const field = flow[CUR_STEP].f;
         
-        if (!inputEl.value.trim()) return Swal.fire("提示", "欄位不可為空", "warning");
+        if (!inputEl.value.trim()) {
+            if (flow[CUR_STEP].type === "loan") return Swal.fire("提示", "無帳單可還款", "warning");
+            return Swal.fire("提示", "欄位不可為空", "warning");
+        }
+        
         FORM[field] = inputEl.value.trim();
 
         if (CUR_STEP < flow.length - 1) {
@@ -890,6 +971,13 @@
             logNote = (logNote + ` [取件截止日:${logDeadline}]`).trim();
         }
 
+        const pkgContainer = document.getElementById('package_selector_container');
+        const pkgSelector = document.getElementById('t_log_package');
+        let selectedPackage = "";
+        if (pkgContainer.style.display !== 'none' && pkgSelector.value !== 'all') {
+            selectedPackage = pkgSelector.value;
+        }
+
         if(!orderId) return Swal.fire("提示", "請先選擇有效的訂單！", "warning");
         if(!logTime) return Swal.fire("提示", "請填寫節點更新時間！", "warning");
 
@@ -902,7 +990,8 @@
                 oid: orderId,
                 time: formattedTime, 
                 status: logStatus,
-                note: logNote 
+                note: logNote,
+                packageId: selectedPackage
             }, "正在同步更新物流時間線...");
             
             if (res.aborted) return;
