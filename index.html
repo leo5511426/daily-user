@@ -133,7 +133,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 🚶 排隊小人跳動動畫 */
         @keyframes queue-bounce {
             0% { transform: translateY(0); }
             100% { transform: translateY(-8px); }
@@ -148,9 +147,31 @@
             gap: 6px;
         }
 
+        /* 📍 排序與標題專用容器 */
+        .header-container { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+        }
+        .header-container h2 { 
+            margin: 0; 
+        }
+        .sort-select { 
+            padding: 6px 10px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border); 
+            background: var(--card); 
+            color: var(--text); 
+            font-size: 0.8em; 
+            font-weight: bold; 
+            outline: none; 
+            cursor: pointer; 
+        }
+
         /* 📍 物流時間線垂直架構與時間樣式 */
         .order-timeline {
-            margin: 15px 0 5px 5px;
+            margin: 5px 0 5px 5px;
             padding-left: 5px;
         }
         .timeline-node {
@@ -211,6 +232,23 @@
             color: var(--text);
             line-height: 1.4;
         }
+
+        /* 📍 版權資訊樣式 */
+        .footer-info {
+            text-align: center;
+            margin-top: 40px;
+            padding-bottom: 20px;
+            font-size: 0.75em;
+            color: #888;
+            line-height: 1.6;
+        }
+        .footer-info .about-link {
+            color: var(--pink);
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -238,17 +276,42 @@
             <div id="p0" class="page" style="display:block;">
                 <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
                 <div class="card" style="text-align:center; padding: 40px 20px;">
-                    <div style="font-size:0.8em; opacity:0.6;">可用積分餘額</div>
+                    <div style="font-size:0.8em; opacity:0.6;">可用餘額</div>
                     <div style="font-size:2.5em; color:var(--pink);">$ <span id="uBal">0</span></div>
                 </div>
-                <button class="btn" onclick="showQR()">顯示個人識別碼</button>
+                <button class="btn" onclick="showQR()">顯示會員條碼</button>
             </div>
 
-            <div id="p1" class="page"><h2>交易明細</h2><div id="hList"></div></div>
-            <div id="p2" class="page"><h2>訂單狀態</h2><div id="oList"></div></div>
+            <div id="p1" class="page">
+                <div class="header-container">
+                    <h2>交易明細</h2>
+                    <select id="sortH" class="sort-select" onchange="render()">
+                        <option value="desc">新到舊</option>
+                        <option value="asc">舊到新</option>
+                    </select>
+                </div>
+                <div id="hList"></div>
+            </div>
+
+            <div id="p2" class="page">
+                <div class="header-container">
+                    <h2>訂單狀態</h2>
+                    <select id="sortO" class="sort-select" onchange="render()">
+                        <option value="desc">新到舊</option>
+                        <option value="asc">舊到新</option>
+                    </select>
+                </div>
+                <div id="oList"></div>
+            </div>
             
             <div id="p3" class="page">
-                <h2>待還帳單</h2>
+                <div class="header-container">
+                    <h2>待還帳單</h2>
+                    <select id="sortL" class="sort-select" onchange="renderLoans()">
+                        <option value="desc">新到舊</option>
+                        <option value="asc">舊到新</option>
+                    </select>
+                </div>
                 <div class="loan-tabs">
                     <div class="loan-tab active" id="tabLn0" onclick="switchLoanTab(0)">未結清</div>
                     <div class="loan-tab" id="tabLn1" onclick="switchLoanTab(1)">已結清</div>
@@ -258,7 +321,13 @@
             </div>
             
             <div id="p4" class="page">
-                <h2>我的優惠券</h2>
+                <div class="header-container">
+                    <h2>我的優惠券</h2>
+                    <select id="sortC" class="sort-select" onchange="renderCoupons()">
+                        <option value="desc">新到舊</option>
+                        <option value="asc">舊到新</option>
+                    </select>
+                </div>
                 <div class="coupon-tabs">
                     <div class="coupon-tab active" id="tabCp0" onclick="switchCouponTab(0)">未使用</div>
                     <div class="coupon-tab" id="tabCp1" onclick="switchCouponTab(1)">已使用</div>
@@ -285,6 +354,14 @@
                 </div>
                 <button class="btn" onclick="toggleLayoutMode()" style="background:#4f46e5; margin-bottom:10px;">🖥️ 電腦版 / 📱 手機版 寬度切換</button>
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
+
+                <!-- 📍 新增：版權與關於資訊區塊 -->
+                <div class="footer-info">
+                    <div>版本：V70.4</div>
+                    <div>更新日期：2026-06-09</div>
+                    <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
+                    <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
+                </div>
             </div>
 
             <div class="nav-bar">
@@ -312,7 +389,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcYO5YiGadAYCABAlEdq5P90SOUX_GEZquDVTlujqp894y3HZAzPFB5nEd4HunL-Qo/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcsFyLgCfp2_aPvnhbx7aPy8hk6tHjk5ZHOlngGPr4UNKp7L04lj4f55fGVWeVl9WW/exec"; 
         let store = null;
         let currentCouponTab = 0; 
         let currentLoanTab = 0; 
@@ -321,18 +398,15 @@
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
         const couponQr = new QRCode(document.getElementById("couponQrcode"), { width: 200, height: 200 });
 
-        // 🚶 核心引擎：智慧排隊與一般載入切換機制
         async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
             let currentAbortController = new AbortController();
             const signal = currentAbortController.signal;
 
-            // 模擬當前伺服器負載狀況 (隨機 0~8 人)
             let queuePos = Math.floor(Math.random() * 9); 
             let queueInterval, queueTimeout;
             let isPrompting = false;
             let isFinished = false;
 
-            // 一般模式：當人數小於3人時觸發一般載入視窗
             const startStandardUI = () => {
                 if (isFinished) return;
                 Swal.fire({
@@ -345,7 +419,6 @@
                 });
             };
 
-            // 排隊模式：當人數大於等於3人時觸發
             const renderQueueHtml = (pos) => `
                 <div style="margin: 15px 0;">
                     <div style="font-size: 35px; margin-bottom: 15px; display: flex; justify-content: center; gap: 8px;">
@@ -353,7 +426,7 @@
                         <span style="animation: queue-bounce 0.8s infinite alternate 0.3s;">🚶‍♀️</span>
                         <span style="animation: queue-bounce 0.8s infinite alternate 0.6s;">🚶</span>
                     </div>
-                    <div style="font-weight: bold; color: var(--pink, #db2777); font-size: 1.1em;">
+                    <div style="font-weight: bold; color: var(--primary, #4f46e5); font-size: 1.1em;">
                         系統目前較為繁忙，您已進入排隊序列
                     </div>
                     <div style="margin-top: 5px; font-size: 0.95em;">
@@ -381,13 +454,10 @@
                 });
             };
 
-            // 判斷是否需要啟用排隊UI
             const isQueueMode = queuePos >= 3;
 
             if (isQueueMode) {
                 startQueueUI();
-                
-                // 10 秒後跳出是否繼續等待的提示 (僅限排隊模式)
                 queueTimeout = setTimeout(() => {
                     if (isFinished) return;
                     isPrompting = true;
@@ -410,7 +480,7 @@
                         }
                         if (res.isConfirmed) {
                             isPrompting = false;
-                            startQueueUI(); // 恢復排隊
+                            startQueueUI(); 
                         } else {
                             Swal.fire({
                                 title: '⚠️ 確定離開？',
@@ -438,7 +508,7 @@
                             });
                         }
                     });
-                }, 10000);
+                }, 10000); 
             } else {
                 startStandardUI();
             }
@@ -579,6 +649,32 @@
             });
         }
 
+        // 📍 顯示「關於系統」彈出視窗
+        function showAboutSystem() {
+            Swal.fire({
+                title: '關於本系統',
+                html: `
+                    <div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);">
+                        <p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p>
+                        <p>本系統包含以下核心模組：</p>
+                        <ul style="padding-left: 20px; margin-bottom: 15px;">
+                            <li>即時餘額與交易紀錄查詢</li>
+                            <li>動態包裹與物流時間線追蹤</li>
+                            <li>借貸與帳單智慧管理</li>
+                            <li>專屬優惠券核銷系統</li>
+                        </ul>
+                        <p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">
+                            系統版本：V70.4<br>
+                            核心架構：Google Apps Script 驅動<br>
+                            UI/UX 設計：最佳化響應式行動介面
+                        </p>
+                    </div>
+                `,
+                confirmButtonColor: 'var(--pink)',
+                confirmButtonText: '關閉'
+            });
+        }
+
         function togglePasswordVisibility() {
             const pwdInput = document.getElementById('pw');
             const checkBox = document.getElementById('showPwdCheck');
@@ -592,7 +688,7 @@
 
             try {
                 const res = await fetchWithQueue(SCRIPT_URL, { action: 'login', uid: uid, pw: upw }, '連線與驗證身份中...');
-                if (res.aborted) return; // 如果使用者中途跳出排隊
+                if (res.aborted) return; 
 
                 if (res.success) {
                     savedPw = upw; 
@@ -608,7 +704,6 @@
             }
         }
 
-        // 靜默更新不使用排隊 UI
         async function silentSyncData() {
             if (!store || !store.userData || !store.userData.id || !savedPw) return;
             
@@ -635,11 +730,20 @@
         }
 
         function render() {
+            if (!store) return;
             const u = store.userData;
             document.getElementById('uName').innerText = u.name;
             document.getElementById('uBal').innerText = u.bal.toLocaleString();
             
-            document.getElementById('hList').innerHTML = store.history.map(h => `
+            const sortH = document.getElementById('sortH').value;
+            let sortedHistory = [...store.history];
+            sortedHistory.sort((a, b) => {
+                const da = new Date(a.date.replace(/-/g, '/')).getTime();
+                const db = new Date(b.date.replace(/-/g, '/')).getTime();
+                return sortH === 'asc' ? da - db : db - da; 
+            });
+
+            document.getElementById('hList').innerHTML = sortedHistory.map(h => `
                 <div class="card">
                     <div style="display:flex; justify-content:space-between;">
                         <b>${h.item}</b>
@@ -656,7 +760,15 @@
             renderLoans();
             renderCoupons();
 
-            document.getElementById('oList').innerHTML = store.orders.map((o, idx) => {
+            const sortO = document.getElementById('sortO').value;
+            let sortedOrders = [...store.orders];
+            sortedOrders.sort((a, b) => {
+                const da = a.time ? new Date(a.time.replace(/-/g, '/')).getTime() : 0;
+                const db = b.time ? new Date(b.time.replace(/-/g, '/')).getTime() : 0;
+                return sortO === 'asc' ? da - db : db - da;
+            });
+
+            document.getElementById('oList').innerHTML = sortedOrders.map((o) => {
                 let rawItem = o.desc || o.item || '無商品明細';
                 let briefItemHtml = '';
                 if (rawItem.includes(';') && !rawItem.includes('\n')) {
@@ -674,26 +786,20 @@
                     <div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">
                         ${o.ship || '未知物流'} | 單號: ${o.track || '無'}
                     </div>
-                    <button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup(${idx})">🔍 查看訂單詳細資訊</button>
+                    <button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup('${o.id}')">🔍 查看訂單詳細資訊</button>
                 </div>
                 `;
             }).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
         }
 
-        function showOrderDetailPopup(index) {
-            if(!store || !store.orders || !store.orders[index]) return;
-            const o = store.orders[index];
-            
-            let timelineHtml = "";
-            const currentStatus = o.status || "訂單處理中";
-            const currentNote = o.note || "尚無備註描述";
-            const updateTime = o.time || '暫無時間紀錄';
-
+        function generateTimelineHtml(logs, fallbackStatus, fallbackNote, fallbackTime) {
+            let html = "";
             let deadlineDisplay = '';
-            if (o.timeline && Array.isArray(o.timeline)) {
-                for (let node of o.timeline) {
-                    if (node.note && node.note.includes('[取件截止日:')) {
-                        const match = node.note.match(/\[取件截止日:(.*?)\]/);
+            
+            if (logs && Array.isArray(logs)) {
+                for (let node of logs) {
+                    if (node.rawMsg && node.rawMsg.includes('[取件截止日:')) {
+                        const match = node.rawMsg.match(/\[取件截止日:(.*?)\]/);
                         if (match) {
                             deadlineDisplay = match[1];
                             break; 
@@ -702,9 +808,9 @@
                 }
             }
 
-            if (o.timeline && Array.isArray(o.timeline) && o.timeline.length > 0) {
-                const sortedTimeline = [...o.timeline].sort((a, b) => new Date(b.time) - new Date(a.time));
-                timelineHtml = sortedTimeline.map((node, nIdx) => {
+            if (logs && Array.isArray(logs) && logs.length > 0) {
+                const sorted = [...logs].sort((a, b) => new Date(b.time) - new Date(a.time));
+                html = sorted.map((node, nIdx) => {
                     const cleanNote = (node.note || '動態物流程序記錄正常').replace(/\[取件截止日:.*?\]/g, '').trim() || '動態物流程序記錄正常';
                     return `
                     <div class="timeline-node ${nIdx === 0 ? 'latest-node' : ''}">
@@ -714,48 +820,53 @@
                     </div>
                 `}).join('');
             } else {
-                timelineHtml += `
+                html += `
                     <div class="timeline-node latest-node">
-                        <div class="timeline-node-title">${currentStatus}</div>
-                        <div class="timeline-node-time">⏱️ ${updateTime}</div>
-                        <div class="timeline-node-desc">${currentNote.replace(/\[取件截止日:.*?\]/g, '').trim()}</div>
+                        <div class="timeline-node-title">${fallbackStatus}</div>
+                        <div class="timeline-node-time">⏱️ ${fallbackTime}</div>
+                        <div class="timeline-node-desc">${fallbackNote.replace(/\[取件截止日:.*?\]/g, '').trim()}</div>
                     </div>
                 `;
+            }
+            return { html: html, deadline: deadlineDisplay };
+        }
 
-                if (currentStatus.includes("已取貨") || currentStatus.includes("已完成")) {
-                    timelineHtml += `
-                        <div class="timeline-node">
-                            <div class="timeline-node-title">包裹已抵達門市</div>
-                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
-                            <div class="timeline-node-desc">商品已抵達指定收件門市，待買家前往領取</div>
-                        </div>
-                        <div class="timeline-node">
-                            <div class="timeline-node-title">包裹運送中</div>
-                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
-                            <div class="timeline-node-desc">包裹已由物流中心發出，正前往目的地門市</div>
-                        </div>
-                    `;
-                } else if (currentStatus.includes("抵達門市") || currentStatus.includes("待領取") || currentStatus.includes("已到貨") || currentStatus.includes("待取貨")) {
-                    timelineHtml += `
-                        <div class="timeline-node">
-                            <div class="timeline-node-title">包裹運送中</div>
-                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
-                            <div class="timeline-node-desc">包裹已由物流中心發出，正前往目的地門市</div>
-                        </div>
-                        <div class="timeline-node">
-                            <div class="timeline-node-title">訂單已出貨</div>
-                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
-                            <div class="timeline-node-desc">賣家已交寄包裹，物流中心成功接收</div>
-                        </div>
-                    `;
-                } else if (currentStatus.includes("出貨") || currentStatus.includes("運送中") || currentStatus.includes("已發貨")) {
-                    timelineHtml += `
-                        <div class="timeline-node">
-                            <div class="timeline-node-title">訂單成立</div>
-                            <div class="timeline-node-time">⏱️ 系統前置紀錄節點</div>
-                            <div class="timeline-node-desc">買家下單成功，系統已成立網購委託單</div>
+        function showOrderDetailPopup(orderId) {
+            if(!store || !store.orders) return;
+            const o = store.orders.find(ord => ord.id === String(orderId));
+            if(!o) return;
+            
+            const currentStatus = o.status || "訂單處理中";
+            const currentNote = o.note || "尚無備註描述";
+            const updateTime = o.time || '暫無時間紀錄';
+
+            let timelinesHtmlOutput = "";
+            let globalDeadlineHtml = "";
+
+            const tracks = (o.track || "").split(',').map(t => t.trim()).filter(t => t);
+            
+            if (tracks.length > 1) {
+                timelinesHtmlOutput = tracks.map((track, i) => {
+                    let pkgLogs = (o.timeline || []).filter(n => !n.packageId || n.packageId === track);
+                    let generatedData = generateTimelineHtml(pkgLogs, currentStatus, currentNote, updateTime);
+                    
+                    let pkgDeadlineHtml = generatedData.deadline ? `<p style="margin:5px 0 0 0;"><span style="color:var(--red); font-size:0.9em;">📅 截止日：</span><b style="color:var(--red); font-size: 0.95em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${generatedData.deadline}</b></p>` : '';
+
+                    return `
+                        <div style="background: rgba(0,0,0,0.03); padding: 12px 12px 2px 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border);">
+                            <p style="margin: 0 0 10px 0; color:var(--primary, #4f46e5); font-weight:bold; font-size: 1.05em; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">📦 包裹 ${i+1} (${track})</p>
+                            ${pkgDeadlineHtml}
+                            <div class="order-timeline">
+                                ${generatedData.html}
+                            </div>
                         </div>
                     `;
+                }).join('');
+            } else {
+                let generatedData = generateTimelineHtml(o.timeline, currentStatus, currentNote, updateTime);
+                timelinesHtmlOutput = `<div class="order-timeline">${generatedData.html}</div>`;
+                if (generatedData.deadline) {
+                    globalDeadlineHtml = `<p><span style="color:var(--red);">📅 取件截止日：</span><b style="color:var(--red); font-size: 1.1em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${generatedData.deadline}</b></p>`;
                 }
             }
             
@@ -767,14 +878,12 @@
                 detailItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:4px; padding-left:10px; text-indent:-10px;">${line}</div>`).join('');
             }
 
-            let deadlineHtml = deadlineDisplay ? `<p><span style="color:var(--red);">📅 取件截止日：</span><b style="color:var(--red); font-size: 1.1em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${deadlineDisplay}</b></p>` : '';
-
             let htmlContent = `
                 <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
                     <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px;"><span style="color:var(--pink);">📦 訂單編號：</span>${o.id || '無'}</p>
-                    <p><span style="color:var(--pink);">🚦 訂單狀態：</span><b>${currentStatus}</b></p>
+                    <p><span style="color:var(--pink);">🚦 主訂單狀態：</span><b>${currentStatus}</b></p>
                     <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${o.code || '尚未發佈'}</span></p>
-                    ${deadlineHtml}
+                    ${globalDeadlineHtml}
                     
                     <p style="margin-top: 15px;"><span style="color:var(--pink);">🛍️ 商品明細：</span><br><span style="opacity:0.8; display:block; margin-top:5px;">${detailItemHtml}</span></p>
                     
@@ -789,12 +898,10 @@
 
                     <p><span style="color:var(--pink);">🛣️ 物流方式：</span>${o.ship || '無'}</p>
                     <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${{address: o.address || '無'}.address}</p>
-                    <p><span style="color:var(--pink);">📦 物流追蹤單號：</span>${o.track || '無'}</p>
+                    <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📦 追蹤單號：</span>${o.track || '無'}</p>
                     
-                    <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📍 物流動態時間線 (包含時間紀錄)：</span></p>
-                    <div class="order-timeline">
-                        ${timelineHtml}
-                    </div>
+                    <p style="margin: 15px 0 5px 0;"><span style="color:var(--pink);">📍 物流動態時間線：</span></p>
+                    ${timelinesHtmlOutput}
                 </div>
             `;
 
@@ -820,6 +927,13 @@
                 } else {
                     return !isCleared && !isOverdue; 
                 }
+            });
+
+            const sortL = document.getElementById('sortL').value;
+            filteredLoans.sort((a, b) => {
+                const da = new Date(a.expiry.replace(/-/g, '/')).getTime();
+                const db = new Date(b.expiry.replace(/-/g, '/')).getTime();
+                return sortL === 'asc' ? da - db : db - da;
             });
 
             document.getElementById('lList').innerHTML = filteredLoans.map(l => `
@@ -867,6 +981,13 @@
                 } else {
                     return !isUsed && !isExpired;
                 }
+            });
+
+            const sortC = document.getElementById('sortC').value;
+            filteredCoupons.sort((a, b) => {
+                const da = new Date(a.expiry.replace(/-/g, '/')).getTime();
+                const db = new Date(b.expiry.replace(/-/g, '/')).getTime();
+                return sortC === 'asc' ? da - db : db - da;
             });
 
             document.getElementById('cpList').innerHTML = filteredCoupons.map(c => {
