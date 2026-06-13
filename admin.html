@@ -7,18 +7,18 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --accent: #db2777; --green: #10b981; --red: #ff5252; }
+        :root { --primary: #4f46e5; --dark: #0f172a; --bg: #f8fafc; --accent: #db2777; --green: #10b981; --red: #ff5252; --orange: #f59e0b; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-weight: bold; }
         .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
         .m-btn { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #ddd; cursor: pointer; font-size: 15px; }
         .full-btn { grid-column: span 2; background: var(--dark); color: white; border: none; font-size: 18px; }
-        input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; font-weight: bold; }
+        input, select, button, textarea { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; font-weight: bold; font-family: inherit; }
         button { background: var(--primary); color: white; border: none; cursor: pointer; }
         #reader-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:5000; flex-direction:column; }
         #reader { width: 100%; flex: 1; }
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; text-align: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; text-align: center; max-height: 90vh; overflow-y: auto; }
         .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .q-btn { padding: 15px; border-radius: 12px; border: none; color: white; font-weight: bold; }
         
@@ -36,18 +36,31 @@
         }
 
         .admin-timeline { margin-top: 15px; padding-left: 5px; }
-        .admin-node { position: relative; padding-left: 24px; padding-bottom: 15px; cursor: pointer; transition: 0.2s; }
+        .admin-node { 
+            --node-color: #94a3b8; 
+            --node-shadow: rgba(148,163,184,0.35);
+            position: relative; 
+            padding-left: 24px; 
+            padding-bottom: 15px; 
+            cursor: move; 
+            transition: 0.2s; 
+        }
         .admin-node:hover { background: #f1f5f9; border-radius: 8px; }
         .admin-node::before { content: ''; position: absolute; left: 4px; top: 6px; bottom: 0; width: 2px; background: #cbd5e1; }
         .admin-node:last-child::before { display: none; }
-        .admin-node::after { content: ''; position: absolute; left: 0; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: #94a3b8; }
-        .admin-node.latest-node::after { background: var(--accent); box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.2); }
-        .admin-node.latest-node::before { background: var(--accent); }
+        .admin-node::after { content: ''; position: absolute; left: 0; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--node-color) !important; }
+        .admin-node.latest-node::after { box-shadow: 0 0 0 4px var(--node-shadow) !important; }
+        .admin-node.latest-node::before { background: var(--node-color) !important; }
         .admin-node-title { font-size: 0.95em; font-weight: bold; color: var(--dark); margin-bottom: 2px; }
-        .admin-node.latest-node .admin-node-title { color: var(--accent); }
+        .admin-node.latest-node .admin-node-title { color: var(--node-color) !important; }
         .admin-node-time { font-size: 0.75em; font-weight: bold; opacity: 0.6; color: var(--dark); margin-bottom: 3px; }
-        .admin-node.latest-node .admin-node-time { color: var(--accent); opacity: 0.85; }
+        .admin-node.latest-node .admin-node-time { color: var(--node-color) !important; opacity: 0.85; }
         .admin-node-desc { font-size: 0.8em; opacity: 0.75; color: var(--dark); line-height: 1.4; }
+        
+        .admin-node.dragging { opacity: 0.4; }
+        .admin-node.over { border-top: 3px dashed var(--primary) !important; padding-top: 15px; margin-top: 10px; }
+
+        .img-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; display: none; margin-top: 10px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -82,6 +95,87 @@
     <div class="m-btn" onclick="openWiz('sub')">🛒 手動扣款</div>
     <div class="m-btn" onclick="openWiz('pay')">🤝 還款入帳</div>
     <div class="m-btn" onclick="openWiz('redeem')">🎟️ 優惠核銷</div>
+    <button class="m-btn full-btn" style="background:var(--orange); font-size:16px;" onclick="scrollToSection('cancel_section')">⚠️ 處理訂單取消 / 不成立</button>
+    <button class="m-btn full-btn" style="background:var(--red); font-size:16px;" onclick="scrollToSection('return_section')">🚨 處理退貨 / 退款申請</button>
+</div>
+
+<div class="card" id="cancel_section" style="border: 2px solid var(--orange);">
+    <h3 style="margin:0 0 10px; color: #d97706;">⚠️ 訂單取消與不成立管理</h3>
+    <p style="font-size:0.85em; color:#666; margin-top:0;">處理買家取消申請或強制判定訂單不成立，並自動退還資金。</p>
+    
+    <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
+        <h4 style="margin:0 0 5px 0; color:var(--dark);">📝 審核買家取消申請</h4>
+        <select id="cancel_request_select"></select>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button onclick="processCancel('approve')" style="background:var(--green); flex:1;">同意取消</button>
+            <button onclick="processCancel('reject')" style="background:var(--dark); flex:1;">拒絕取消</button>
+        </div>
+    </div>
+
+    <div>
+        <h4 style="margin:0 0 5px 0; color:var(--dark);">🔨 強制判定訂單不成立</h4>
+        <select id="force_cancel_select"></select>
+        <input type="text" id="force_cancel_reason" placeholder="輸入不成立原因 (如：缺貨、超材、未實名)">
+        <button onclick="processCancel('force')" style="background:var(--red); margin-top:10px;">強制不成立</button>
+    </div>
+</div>
+
+<div class="card" id="return_section" style="border: 2px solid var(--red);">
+    <h3 style="margin:0 0 10px; color: var(--red);">🚨 處理退貨 / 退款申請</h3>
+    <p style="font-size:0.85em; color:#666; margin-top:0;">將退貨紀錄獨立建檔，可上傳佐證相片並供前台會員查詢進度。</p>
+    
+    <label class="section-label">選擇需退貨的訂單：</label>
+    <select id="r_oid" onchange="loadReturnData()"></select>
+    
+    <label class="section-label">退貨商品明細與數量：</label>
+    <input type="text" id="r_items" placeholder="例如：黑色 T-shirt x1 (部分退貨)">
+    
+    <label class="section-label">退貨原因：</label>
+    <select id="r_reason">
+        <option value="商品瑕疵">商品瑕疵</option>
+        <option value="尺寸/規格不合">尺寸/規格不合</option>
+        <option value="寄錯商品">寄錯商品</option>
+        <option value="商品缺件">商品缺件</option>
+        <option value="個人因素(鑑賞期內)">個人因素(鑑賞期內)</option>
+        <option value="其他原因">其他原因</option>
+    </select>
+    
+    <label class="section-label">詳細退貨描述：</label>
+    <textarea id="r_desc" rows="2" placeholder="詳細說明商品狀況與雙方協調結果..."></textarea>
+    
+    <label class="section-label">📸 上傳/更新佐證相片 (買家已上傳則顯示於下方)：</label>
+    <input type="file" id="r_photo" accept="image/*" onchange="previewImage(event)">
+    <img id="r_photo_preview" class="img-preview" />
+    
+    <div style="display: flex; gap: 8px;">
+        <div style="flex: 1;">
+            <label class="section-label">實際退款金額：</label>
+            <input type="number" id="r_amt" placeholder="應退金額">
+        </div>
+        <div style="flex: 1.5;">
+            <label class="section-label">退款方式：</label>
+            <input type="text" id="r_method" placeholder="如: 信用卡刷退/轉帳" list="methodList">
+            <datalist id="methodList">
+                <option value="信用卡自動刷退">
+                <option value="銀行轉帳">
+                <option value="電子支付 (街口/LINE Pay)">
+                <option value="積分/購物金返還">
+            </datalist>
+        </div>
+    </div>
+    
+    <label class="section-label">退貨物流方式：</label>
+    <select id="r_ship">
+        <option value="超商寄件">超商寄件 (買家自寄)</option>
+        <option value="宅配取件">宅配取件 (物流派收)</option>
+        <option value="賣家自行安排">賣家自行安排</option>
+        <option value="無需退回 (僅退款)">無需退回 (僅退款)</option>
+    </select>
+    
+    <label class="section-label">退貨寄件單號 (填入後可開放前台追蹤)：</label>
+    <input type="text" id="r_track" placeholder="請輸入退貨物流單號 (若有)">
+    
+    <button onclick="submitReturn()" style="background:var(--red); margin-top: 15px;">💾 儲存/更新 退貨建檔</button>
 </div>
 
 <div class="card">
@@ -197,7 +291,7 @@
         <h4 style="margin: 0 0 10px 0; color: var(--primary);">➕ 發佈最新物流進度</h4>
         
         <div id="package_selector_container" style="display:none; margin-bottom:10px; background:#fff; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
-            <label style="font-size:0.85em; font-weight:bold; color:var(--primary);">📦 選擇要更新的包裹 (拆單作業)：</label>
+            <label style="font-size:0.85em; font-weight:bold; color:var(--primary);">📦 選擇要更新的包裹 (拆單/退貨單號)：</label>
             <select id="t_log_package" style="margin-top:5px;"></select>
         </div>
 
@@ -210,8 +304,16 @@
         <label style="font-size:0.85em; opacity:0.7;">狀態備註 / 註記：</label>
         <input type="text" id="t_log_note" placeholder="例如：買家已取件，感謝購買">
         
-        <label style="font-size:0.85em; opacity:0.7; color: var(--red);">📅 設定/更新取件截止日 (選填)：</label>
-        <input type="date" id="t_log_deadline">
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <div style="flex:1;">
+                <label style="font-size:0.85em; opacity:0.7; color: var(--red);">📅 取件截止日 (選填)：</label>
+                <input type="date" id="t_log_deadline" style="margin-top:5px;">
+            </div>
+            <div style="flex:0.5;">
+                <label style="font-size:0.85em; opacity:0.7;">🎨 節點顏色：</label>
+                <input type="color" id="t_log_color" value="#db2777" style="height: 48px; padding: 2px; cursor:pointer;">
+            </div>
+        </div>
         
         <button onclick="updateOrderTimelineSubmit()" style="background:var(--dark)">發佈最新節點紀錄</button>
     </div>
@@ -226,11 +328,100 @@
 </div>
 
 <script>
-    // ⚠️ 請確保此處為您自己發佈的應用程式網址
-    const GAS = "https://script.google.com/macros/s/AKfycbxcsFyLgCfp2_aPvnhbx7aPy8hk6tHjk5ZHOlngGPr4UNKp7L04lj4f55fGVWeVl9WW/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbz23q7WAksiNhvDiNQ_NQ6AM63kJ-F4Ac2ouyDZBN99Ldr6nwmJWA6grf1ccmUcvXg/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode;
+
+    let dragSrcEl = null;
+
+    function handleDragStart(e) {
+        dragSrcEl = this;
+        e.dataTransfer.effectAllowed = 'move';
+        this.classList.add('dragging');
+    }
+
+    function handleDragOver(e) {
+        if (e.preventDefault) e.preventDefault(); 
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    function handleDragEnter(e) {
+        this.classList.add('over');
+    }
+
+    function handleDragLeave(e) {
+        this.classList.remove('over');
+    }
+
+    function handleDrop(e) {
+        if (e.stopPropagation) e.stopPropagation();
+        this.classList.remove('over');
+        
+        if (dragSrcEl !== this) {
+            let oid = dragSrcEl.dataset.oid;
+            let srcRawMsg = decodeURIComponent(atob(dragSrcEl.dataset.rawmsg));
+            let srcStatus = decodeURIComponent(atob(dragSrcEl.dataset.status));
+            let srcNote = decodeURIComponent(atob(dragSrcEl.dataset.note));
+            
+            let targetTimeStr = decodeURIComponent(atob(this.dataset.time)); 
+            
+            let targetDate = new Date(targetTimeStr.replace(/-/g, '/'));
+            targetDate.setMinutes(targetDate.getMinutes() + 1);
+            
+            let yyyy = targetDate.getFullYear();
+            let mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+            let dd = String(targetDate.getDate()).padStart(2, '0');
+            let hh = String(targetDate.getHours()).padStart(2, '0');
+            let min = String(targetDate.getMinutes()).padStart(2, '0');
+            let newTimeFormatted = `${yyyy}-${mm}-${dd} ${hh}:${min}:00`;
+            
+            Swal.fire({
+                title: '確定調整時間線順序嗎？',
+                html: `將節點拖曳至此，系統會將被拖曳的節點時間自動微調為：<br><b style="color:var(--red); font-size:1.1em;">${newTimeFormatted}</b><br>以符合系統的時間排序邏輯！`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--primary)',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: '確定調整',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    updateDraggedNode(oid, srcRawMsg, newTimeFormatted, srcStatus, srcNote);
+                }
+            });
+        }
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        let items = document.querySelectorAll('.admin-node');
+        items.forEach(item => item.classList.remove('over'));
+    }
+
+    async function updateDraggedNode(oid, oldRawMsg, newTime, newStatus, newNote) {
+        try {
+            const res = await fetchWithQueue(GAS, {
+                action: 'adminAction',
+                type: 'editTimelineNode',
+                oid: oid,
+                oldRawMsg: oldRawMsg,
+                newTime: newTime,
+                newStatus: newStatus,
+                newNote: newNote
+            }, "正在更新時間線排序...");
+            if (res.aborted) return;
+            if (res.success) {
+                Swal.fire('排序成功', res.message, 'success').then(() => refresh());
+            } else {
+                Swal.fire('錯誤', res.message, 'error');
+            }
+        } catch (e) {
+            Swal.fire("錯誤", "無法連線至雲端服務", "error");
+        }
+    }
 
     async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
         let currentAbortController = new AbortController();
@@ -404,6 +595,77 @@
         return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
     }
 
+    let currentPhotoBase64 = null;
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const preview = document.getElementById('r_photo_preview');
+        preview.style.display = 'block';
+        preview.src = URL.createObjectURL(file);
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = e => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const max_size = 1000; 
+                
+                if (width > height && width > max_size) {
+                    height *= max_size / width;
+                    width = max_size;
+                } else if (height > max_size) {
+                    width *= max_size / height;
+                    height = max_size;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7); 
+            }
+        }
+    }
+
+    function scrollToSection(id) {
+        document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 🚨 全新：自動帶入退貨資料
+    function loadReturnData() {
+        let oid = document.getElementById('r_oid').value;
+        let order = O_DB.find(o => o.id === oid);
+        if (order && order.returnData) {
+            document.getElementById('r_items').value = order.returnData.items || "";
+            document.getElementById('r_reason').value = order.returnData.reason || "其他原因";
+            document.getElementById('r_desc').value = order.returnData.desc || "";
+            document.getElementById('r_amt').value = order.returnData.amt || order.total || "";
+            document.getElementById('r_method').value = order.returnData.method || "";
+            document.getElementById('r_ship').value = order.returnData.ship || "超商寄件";
+            document.getElementById('r_track').value = order.returnData.track || "";
+            if(order.returnData.photo) {
+                document.getElementById('r_photo_preview').src = order.returnData.photo;
+                document.getElementById('r_photo_preview').style.display = 'block';
+            } else {
+                document.getElementById('r_photo_preview').style.display = 'none';
+            }
+        } else {
+            document.getElementById('r_items').value = "";
+            document.getElementById('r_reason').value = "其他原因";
+            document.getElementById('r_desc').value = "";
+            document.getElementById('r_amt').value = order ? order.total : "";
+            document.getElementById('r_method').value = "";
+            document.getElementById('r_ship').value = "超商寄件";
+            document.getElementById('r_track').value = "";
+            document.getElementById('r_photo_preview').style.display = 'none';
+        }
+    }
+
     async function refresh() {
         try {
             const res = await fetchWithQueue(GAS, {action:'fetchData', uid:'admin'}, "正在載入系統資料...");
@@ -444,26 +706,143 @@
 
         const currentSelectedOid = document.getElementById('t_order_id').value;
         const orderOptions = O_DB.map(o => `<option value="${o.id}">單號:${o.id} - ${o.item.substring(0,20).replace(/\n/g, ' ')}... (${o.status})</option>`).join('') || '<option value="">目前雲端尚無訂單紀錄</option>';
+        
+        let returnOpts = O_DB.map(o => `<option value="${o.id}">${o.status === '申請退貨中' ? '🔴 ' : ''}單號:${o.id} - ${o.item.substring(0,15)}... (${o.status})</option>`).join('');
+
         document.getElementById('t_order_id').innerHTML = orderOptions;
+        document.getElementById('r_oid').innerHTML = returnOpts || '<option value="">無訂單</option>'; 
         
         if (currentSelectedOid && O_DB.find(o => o.id === currentSelectedOid)) {
             document.getElementById('t_order_id').value = currentSelectedOid;
         }
+
+        let cancelReqOpts = O_DB.filter(o => o.status === '申請取消中').map(o => `<option value="${o.id}">${o.id} - ${o.item.substring(0,15)}</option>`).join('');
+        document.getElementById('cancel_request_select').innerHTML = cancelReqOpts || '<option value="">目前無申請中的訂單</option>';
+        
+        let forceCancelOpts = O_DB.filter(o => o.status !== '訂單不成立').map(o => `<option value="${o.id}">${o.id} - ${o.status}</option>`).join('');
+        document.getElementById('force_cancel_select').innerHTML = forceCancelOpts || '<option value="">無可用訂單</option>';
+    }
+
+    async function processCancel(mode) {
+        let oid, reason = "";
+        if (mode === 'approve' || mode === 'reject') {
+            oid = document.getElementById('cancel_request_select').value;
+            if (!oid) return Swal.fire("提示", "目前沒有申請中的訂單", "warning");
+            if (mode === 'reject') {
+                const { value: r } = await Swal.fire({title: '請填寫拒絕原因', input: 'text', inputPlaceholder: '如：商品已包裝並準備寄出...'});
+                if(r === undefined) return;
+                reason = r;
+            } else {
+                reason = "買賣雙方合意取消";
+            }
+        } else if (mode === 'force') {
+            oid = document.getElementById('force_cancel_select').value;
+            reason = document.getElementById('force_cancel_reason').value.trim();
+            if (!oid || !reason) return Swal.fire("提示", "請選擇訂單並確實填寫不成立原因", "warning");
+        }
+        
+        if (mode === 'reject') {
+            sendProcessCancel(oid, mode, reason, false, false);
+            return;
+        }
+        
+        let order = O_DB.find(o => o.id === oid);
+        let dCoin = order.discCoin || 0;
+        let dTotal = order.total || 0;
+        
+        const { value: formValues } = await Swal.fire({
+            title: '退款加回設定',
+            html: `
+                <div style="text-align:left; font-size:16px;">
+                    <p style="color:var(--red); font-weight:bold; margin-bottom:10px;">請勾選欲加回買家「系統可用餘額」的項目：</p>
+                    <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px; cursor:pointer;">
+                        <input type="checkbox" id="chk_coin" style="width:20px; height:20px;" ${dCoin>0?'checked':''}>
+                        退還 蝦幣/點數折扣 ($${dCoin})
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="chk_total" style="width:20px; height:20px;" ${dTotal>0?'checked':''}>
+                        <span>退還 訂單實付金額 ($${dTotal}) <br><span style="font-size:12px; color:#666;">(若買家採貨到付款，請<b>取消勾選</b>此項)</span></span>
+                    </label>
+                </div>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonColor: 'var(--green)',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: '確定執行',
+            cancelButtonText: '取消',
+            preConfirm: () => {
+                return { refundCoin: document.getElementById('chk_coin').checked, refundTotal: document.getElementById('chk_total').checked }
+            }
+        });
+        
+        if (formValues) sendProcessCancel(oid, mode, reason, formValues.refundCoin, formValues.refundTotal);
+    }
+
+    async function sendProcessCancel(oid, mode, reason, refundCoin, refundTotal) {
+        try {
+            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'processCancel', mode, oid, reason, refundCoin, refundTotal }, "正在處理退款與變更狀態...");
+            if (res.aborted) return;
+            if (res.success) {
+                if (mode !== 'reject') {
+                    Swal.fire({
+                        title: '✅ 訂單已取消', text: '資金已退還！請問是否需要退還優惠券？', icon: 'success',
+                        showCancelButton: true, confirmButtonColor: 'var(--primary)', cancelButtonColor: '#94a3b8',
+                        confirmButtonText: '👉 前往退還優惠券', cancelButtonText: '不需要'
+                    }).then((choice) => {
+                        if (choice.isConfirmed) openCouponRevertModal(res.uid); else refresh();
+                    });
+                } else {
+                    Swal.fire('已拒絕', res.message, 'success').then(()=>refresh());
+                }
+            } else { Swal.fire('錯誤', res.message, 'error'); }
+        } catch(e) { Swal.fire('錯誤', '連線異常', 'error'); }
+    }
+
+    function openCouponRevertModal(uid) {
+        let usedCoupons = CP_DB.filter(c => c.uid === uid && (c.status === '已使用' || c.status === 'Macro已使用'));
+        if (usedCoupons.length === 0) {
+            Swal.fire('提示', '此會員近期並無任何已核銷的優惠券。', 'info').then(()=>refresh());
+            return;
+        }
+        let options = usedCoupons.map(c => `<option value="${c.id}">${c.title} (核銷於: ${c.useTime || '近期'})</option>`).join('');
+        Swal.fire({
+            title: '退還優惠券',
+            html: `<p style="font-size:0.9em; color:#666;">請選擇要恢復狀態的優惠券：</p><select id="revert_cpid" class="swal2-select" style="width:90%; font-size:16px;">${options}</select>`,
+            showCancelButton: true, confirmButtonColor: 'var(--accent)', cancelButtonColor: '#94a3b8', confirmButtonText: '🔄 恢復為未使用'
+        }).then(async (res) => {
+            if (res.isConfirmed) {
+                let fetchRes = await fetchWithQueue(GAS, { action: 'adminAction', type: 'revertCoupon', cpid: document.getElementById('revert_cpid').value }, "退還優惠券中...");
+                if (!fetchRes.aborted && fetchRes.success) Swal.fire('退還成功', fetchRes.message, 'success').then(()=>refresh());
+                else Swal.fire('錯誤', fetchRes.message || '連線失敗', 'error');
+            } else { refresh(); }
+        });
     }
 
     function generateAdminNodesHtml(logs, orderId) {
         if(!logs || logs.length === 0) return '<p style="text-align:center; color:#94a3b8; font-size:0.85em;">此包裹尚無獨立紀錄</p>';
-        return logs.map((node, idx) => {
+        return '<p style="text-align: center; color: #94a3b8; font-size: 0.8em; margin: 0 0 10px 0;">💡 提示：可直接上下拖曳節點來微調順序</p>' + logs.map((node, idx) => {
             const safeRawMsg = btoa(encodeURIComponent(String(node.rawMsg || '')));
             const safeTime = btoa(encodeURIComponent(String(node.time || '')));
             const safeStatus = btoa(encodeURIComponent(String(node.status || '')));
             const safeNote = btoa(encodeURIComponent(String(node.note || '')));
             
+            let colorMatch = node.rawMsg ? node.rawMsg.match(/\[顏色:(#[0-9a-fA-F]{3,6})\]/) : null;
+            let defaultColor = idx === 0 ? '#db2777' : '#94a3b8';
+            let nodeColor = colorMatch ? colorMatch[1] : defaultColor;
+            
+            let styleAttr = `style="--node-color: ${nodeColor}; --node-shadow: ${nodeColor}40;"`;
+            let displayNote = (node.note || '').replace(/\[顏色:.*?\]/g, '').trim();
+
             return `
-            <div class="admin-node ${idx === 0 ? 'latest-node' : ''}" onclick="openEditNodeModal('${orderId}', '${safeRawMsg}', '${safeTime}', '${safeStatus}', '${safeNote}')">
-                <div class="admin-node-title">${node.status}</div>
-                <div class="admin-node-time">⏱️ ${node.time}</div>
-                <div class="admin-node-desc">${node.note} <span style="color:#3b82f6; font-size:0.8em; margin-left:5px;">[點擊修改/刪除]</span></div>
+            <div class="admin-node ${idx === 0 ? 'latest-node' : ''}" ${styleAttr} 
+                 draggable="true" data-oid="${orderId}" data-rawmsg="${safeRawMsg}" data-time="${safeTime}" data-status="${safeStatus}" data-note="${safeNote}"
+                 ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+                <div onclick="openEditNodeModal('${orderId}', '${safeRawMsg}', '${safeTime}', '${safeStatus}', '${safeNote}')">
+                    <div class="admin-node-title">${node.status}</div>
+                    <div class="admin-node-time">⏱️ ${node.time}</div>
+                    <div class="admin-node-desc">${displayNote} <span style="color:#3b82f6; font-size:0.8em; margin-left:5px;">[點擊修改/刪除]</span></div>
+                </div>
             </div>`;
         }).join('');
     }
@@ -476,40 +855,30 @@
 
         if (!orderId) {
             container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">請先選擇訂單以查看時間線</p>`;
-            pkgContainer.style.display = 'none';
-            return;
+            pkgContainer.style.display = 'none'; return;
         }
 
         const order = O_DB.find(o => o.id === orderId);
         if (!order) return;
 
-        const tracks = (order.track || "").split(',').map(t => t.trim()).filter(t => t);
+        let allTracks = (order.track || "").split(',').map(t => t.trim()).filter(t => t);
+        if (order.returnData && order.returnData.track) allTracks.push(order.returnData.track.trim());
+        const tracks = [...new Set(allTracks)];
 
         if (tracks.length > 1) {
-            pkgSelector.innerHTML = '<option value="all">-- 🌐 共用進度 (同步更新給所有包裹) --</option>' + 
-                                    tracks.map((t, i) => `<option value="${t}">包裹 ${i+1} (單號:${t})</option>`).join('');
+            pkgSelector.innerHTML = '<option value="all">-- 🌐 共用進度 (同步更新給所有包裹) --</option>' + tracks.map((t, i) => `<option value="${t}">包裹/退貨件 (單號:${t})</option>`).join('');
             pkgContainer.style.display = 'block';
 
             let finalHtml = tracks.map((track, i) => {
                 let pkgLogs = (order.timeline || []).filter(n => !n.packageId || n.packageId === track);
                 let nodesHtml = generateAdminNodesHtml(pkgLogs, orderId);
-                return `
-                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:12px; padding:12px;">
-                        <h5 style="margin:0 0 12px 0; color:var(--primary); font-size:0.95em; border-bottom:1px solid #f1f5f9; padding-bottom:5px;">📦 包裹 ${i+1} (${track})</h5>
-                        <div class="admin-timeline" style="margin-top:5px;">${nodesHtml}</div>
-                    </div>`;
+                return `<div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:12px; padding:12px;"><h5 style="margin:0 0 12px 0; color:var(--primary); font-size:0.95em; border-bottom:1px solid #f1f5f9; padding-bottom:5px;">📦 包裹/退貨件 (${track})</h5><div class="admin-timeline" style="margin-top:5px;">${nodesHtml}</div></div>`;
             }).join('');
             container.innerHTML = finalHtml;
-
         } else {
-            pkgSelector.innerHTML = '';
-            pkgContainer.style.display = 'none';
-            
-            if (order.timeline && order.timeline.length > 0) {
-                container.innerHTML = `<div class="admin-timeline">${generateAdminNodesHtml(order.timeline, orderId)}</div>`;
-            } else {
-                container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">此訂單尚無詳細的雲端歷史軌跡</p>`;
-            }
+            pkgSelector.innerHTML = ''; pkgContainer.style.display = 'none';
+            if (order.timeline && order.timeline.length > 0) container.innerHTML = `<div class="admin-timeline">${generateAdminNodesHtml(order.timeline, orderId)}</div>`;
+            else container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">此訂單尚無詳細的雲端歷史軌跡</p>`;
         }
     }
 
@@ -517,107 +886,55 @@
         const rawMsg = decodeURIComponent(atob(encRawMsg));
         const oldTime = decodeURIComponent(atob(encTime));
         const oldStatus = decodeURIComponent(atob(encStatus));
-        const oldNote = decodeURIComponent(atob(encNote));
+        const rawNote = decodeURIComponent(atob(encNote));
         
         const isoTime = oldTime.replace(' ', 'T');
-        const statusOptions = (SETTINGS.orderStatuses || SETTINGS["物流狀態"] || []).map(s => 
-            `<option value="${s}" ${s === oldStatus ? 'selected' : ''}>${s}</option>`
-        ).join('');
+        const statusOptions = (SETTINGS.orderStatuses || SETTINGS["物流狀態"] || []).map(s => `<option value="${s}" ${s === oldStatus ? 'selected' : ''}>${s}</option>`).join('');
 
         let pkgMatch = rawMsg.match(/\[包裹:(.*?)\]/);
         let extractedPkg = pkgMatch ? pkgMatch[1].trim() : "";
+        let colorMatch = rawMsg.match(/\[顏色:(#[0-9a-fA-F]{3,6})\]/);
+        let extractedColor = colorMatch ? colorMatch[1] : "#db2777";
+        let cleanNote = rawNote.replace(/\[顏色:.*?\]/g, '').trim();
 
         const result = await Swal.fire({
             title: '✏️ 編輯或刪除物流時間線節點',
             html: `
                 <div style="text-align: left; font-size: 0.9em;">
-                    <label style="display:block; margin-top:10px; color:var(--dark);">更新時間：</label>
-                    <input type="datetime-local" id="edit_log_time" class="swal2-input" value="${isoTime}" style="width: 80%; margin: 5px auto; padding: 10px;">
-                    
-                    <label style="display:block; margin-top:10px; color:var(--dark);">物流狀態：</label>
-                    <select id="edit_log_status" class="swal2-select" style="width: 80%; margin: 5px auto; display:flex; padding: 10px;">
-                        ${statusOptions}
-                    </select>
-                    
-                    <label style="display:block; margin-top:10px; color:var(--dark);">狀態備註 (包含截止日標籤)：</label>
-                    <input type="text" id="edit_log_note" class="swal2-input" value="${oldNote}" style="width: 80%; margin: 5px auto; padding: 10px;">
+                    <label style="display:block; margin-top:10px; color:var(--dark);">更新時間：</label><input type="datetime-local" id="edit_log_time" class="swal2-input" value="${isoTime}" style="width: 80%; margin: 5px auto; padding: 10px;">
+                    <label style="display:block; margin-top:10px; color:var(--dark);">物流狀態：</label><select id="edit_log_status" class="swal2-select" style="width: 80%; margin: 5px auto; display:flex; padding: 10px;">${statusOptions}</select>
+                    <label style="display:block; margin-top:10px; color:var(--dark);">狀態備註 (包含截止日標籤)：</label><input type="text" id="edit_log_note" class="swal2-input" value="${cleanNote}" style="width: 80%; margin: 5px auto; padding: 10px;">
+                    <label style="display:block; margin-top:10px; color:var(--dark);">🎨 節點顏色：</label><input type="color" id="edit_log_color" class="swal2-input" value="${extractedColor}" style="width: 80%; margin: 5px auto; padding: 5px; height: 50px; cursor:pointer;">
                 </div>
             `,
-            focusConfirm: false,
-            showCancelButton: true,
-            showDenyButton: true,
-            confirmButtonColor: 'var(--primary)',
-            denyButtonColor: 'var(--red)',
-            cancelButtonColor: '#94a3b8',
-            cancelButtonText: '取消',
-            confirmButtonText: '儲存變更',
-            denyButtonText: '🗑️ 刪除此節點',
+            focusConfirm: false, showCancelButton: true, showDenyButton: true, confirmButtonColor: 'var(--primary)', denyButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', cancelButtonText: '取消', confirmButtonText: '儲存變更', denyButtonText: '🗑️ 刪除此節點',
             preConfirm: () => {
                 const nt = document.getElementById('edit_log_time').value;
                 const ns = document.getElementById('edit_log_status').value;
+                const nc = document.getElementById('edit_log_color').value;
                 let nn = document.getElementById('edit_log_note').value.trim();
-                if (!nt) {
-                    Swal.showValidationMessage('請確實填寫時間！');
-                    return false;
-                }
-                if (extractedPkg) {
-                    nn = "[包裹:" + extractedPkg + "] " + nn;
-                }
+                
+                if (!nt) { Swal.showValidationMessage('請確實填寫時間！'); return false; }
+                if (extractedPkg) nn = "[包裹:" + extractedPkg + "] " + nn;
+                nn = "[顏色:" + nc + "] " + nn;
                 return { newTime: nt.replace('T', ' '), newStatus: ns, newNote: nn };
             }
         });
 
         if (result.isConfirmed && result.value) {
             try {
-                const res = await fetchWithQueue(GAS, {
-                    action: 'adminAction',
-                    type: 'editTimelineNode',
-                    oid: oid,
-                    oldRawMsg: rawMsg,
-                    newTime: result.value.newTime,
-                    newStatus: result.value.newStatus,
-                    newNote: result.value.newNote
-                }, "正在覆寫修正雲端節點...");
+                const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'editTimelineNode', oid: oid, oldRawMsg: rawMsg, newTime: result.value.newTime, newStatus: result.value.newStatus, newNote: result.value.newNote }, "正在覆寫修正雲端節點...");
                 if (res.aborted) return;
-
-                if (res.success) {
-                    Swal.fire({ title: '修改成功', text: res.message, icon: 'success' }).then(() => refresh());
-                } else {
-                    Swal.fire("錯誤", res.message, "error");
-                }
-            } catch(e) {
-                Swal.fire("連線解析失敗", "無法解析伺服器回應。\n請確認您的 Code.gs 已重新「部署為最新版本」！", "error");
-            }
+                if (res.success) Swal.fire({ title: '修改成功', text: res.message, icon: 'success' }).then(() => refresh()); else Swal.fire("錯誤", res.message, "error");
+            } catch(e) { Swal.fire("連線解析失敗", "無法解析伺服器回應。\n請確認您的 Code.gs 已重新「部署為最新版本」！", "error"); }
         } else if (result.isDenied) {
-            const confirmDel = await Swal.fire({
-                title: '確定要刪除此節點？',
-                text: '刪除後將無法復原！',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: 'var(--red)',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: '確定刪除',
-                cancelButtonText: '取消'
-            });
-
+            const confirmDel = await Swal.fire({ title: '確定要刪除此節點？', text: '刪除後將無法復原！', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定刪除', cancelButtonText: '取消' });
             if (confirmDel.isConfirmed) {
                 try {
-                    const res = await fetchWithQueue(GAS, {
-                        action: 'adminAction',
-                        type: 'deleteTimelineNode',
-                        oid: oid,
-                        rawMsg: rawMsg
-                    }, "正在刪除雲端節點...");
+                    const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'deleteTimelineNode', oid: oid, rawMsg: rawMsg }, "正在刪除雲端節點...");
                     if (res.aborted) return;
-
-                    if (res.success) {
-                        Swal.fire({ title: '刪除成功', text: res.message, icon: 'success' }).then(() => refresh());
-                    } else {
-                        Swal.fire("錯誤", res.message, "error");
-                    }
-                } catch(e) {
-                    Swal.fire("連線解析失敗", "無法解析伺服器回應。\n請確認您的 Code.gs 已重新「部署為最新版本」！", "error");
-                }
+                    if (res.success) Swal.fire({ title: '刪除成功', text: res.message, icon: 'success' }).then(() => refresh()); else Swal.fire("錯誤", res.message, "error");
+                } catch(e) { Swal.fire("連線解析失敗", "無法解析伺服器回應。\n請確認您的 Code.gs 已重新「部署為最新版本」！", "error"); }
             }
         }
     }
@@ -626,13 +943,7 @@
         const container = document.getElementById('order_items_container');
         const div = document.createElement('div');
         div.className = 'item-row';
-        div.innerHTML = `
-            <input type="text" class="item-name" placeholder="商品名稱" style="flex: 2;">
-            <input type="text" class="item-spec" placeholder="規格/選項" style="flex: 1.5;">
-            <input type="number" class="item-qty" placeholder="數量" min="1" value="1" style="flex: 1;" oninput="calculateTotalOrderAmount()">
-            <input type="number" class="item-price" placeholder="價格" min="0" value="0" style="flex: 1.2;" oninput="calculateTotalOrderAmount()">
-            <button type="button" class="btn-mini" style="background: var(--red);" onclick="removeOrderItemRow(this)">刪</button>
-        `;
+        div.innerHTML = `<input type="text" class="item-name" placeholder="商品名稱" style="flex: 2;"><input type="text" class="item-spec" placeholder="規格/選項" style="flex: 1.5;"><input type="number" class="item-qty" placeholder="數量" min="1" value="1" style="flex: 1;" oninput="calculateTotalOrderAmount()"><input type="number" class="item-price" placeholder="價格" min="0" value="0" style="flex: 1.2;" oninput="calculateTotalOrderAmount()"><button type="button" class="btn-mini" style="background: var(--red);" onclick="removeOrderItemRow(this)">刪</button>`;
         container.appendChild(div);
         calculateTotalOrderAmount();
     }
@@ -664,12 +975,10 @@
             subtotal += (qty * price);
         });
         document.getElementById('lbl_subtotal').innerText = subtotal;
-        
         const shipping = Number(document.getElementById('o_new_shipping').value) || 0;
         const shipDiscount = Number(document.getElementById('o_new_ship_discount').value) || 0;
         const sellerDiscount = Number(document.getElementById('o_new_seller_discount').value) || 0;
         const coinDiscount = Number(document.getElementById('o_new_coin_discount').value) || 0;
-        
         let totalAmount = subtotal + shipping - shipDiscount - sellerDiscount - coinDiscount;
         document.getElementById('lbl_total_amount').innerText = Math.max(0, totalAmount);
         return { subtotal: subtotal, totalAmount: Math.max(0, totalAmount) };
@@ -693,9 +1002,7 @@
                     document.getElementById('quickBtns').style.display = 'none';
                     document.getElementById('couponRedeemBtn').style.display = 'block';
                     document.getElementById('quickActionModal').style.display = 'flex';
-                } else {
-                    showAlert("查無此券", "找不到券號：" + code, "error");
-                }
+                } else { showAlert("查無此券", "找不到券號：" + code, "error"); }
             } else {
                 const user = U_DB.find(u => u.id === code);
                 if (user) {
@@ -705,119 +1012,56 @@
                     document.getElementById('quickBtns').style.display = 'grid';
                     document.getElementById('couponRedeemBtn').style.display = 'none';
                     document.getElementById('quickActionModal').style.display = 'flex';
-                } else {
-                    showAlert("查無此人", "找不到使用者識別碼：" + code, "error");
-                }
+                } else { showAlert("查無此人", "找不到使用者識別碼：" + code, "error"); }
             }
         });
     }
 
-    function stopScan() {
-        if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{});
-    }
+    function stopScan() { if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{}); }
+    function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
+    function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
 
-    function quickGo(mode) {
-        document.getElementById('quickActionModal').style.display = 'none';
-        openWiz(mode, FORM.uid);
-    }
-    
-    function closeQuick() {
-        document.getElementById('quickActionModal').style.display = 'none';
-        FORM = {};
-    }
-
-    // ★ 變更：新增「選擇應還帳單」流程，讓管理員指定扣款帳單
     const FLOWS = {
         add: [{t:"選擇對象",f:"uid",type:"user"}, {t:"加值金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
         sub: [{t:"選擇對象",f:"uid",type:"user"}, {t:"扣款項目",f:"item",type:"text"}, {t:"扣款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
-        pay: [
-            {t:"選擇對象",f:"uid",type:"user"}, 
-            {t:"選擇應還帳單",f:"loanRef",type:"loan"}, 
-            {t:"還款金額",f:"amt",type:"number"}, 
-            {t:"備註描述",f:"note",type:"text"}
-        ],
+        pay: [{t:"選擇對象",f:"uid",type:"user"}, {t:"選擇應還帳單",f:"loanRef",type:"loan"}, {t:"還款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}],
         redeem: [{t:"請輸入或掃描優惠券ID",f:"cpId",type:"text"}]
     };
 
-    function openWiz(mode, prefilledUid = null) {
-        CUR_MODE = mode; CUR_STEP = 0; FORM = {};
-        if (prefilledUid) FORM.uid = prefilledUid;
-        document.getElementById('wizModal').style.display = 'flex';
-        renderStep();
-    }
-
+    function openWiz(mode, prefilledUid = null) { CUR_MODE = mode; CUR_STEP = 0; FORM = {}; if (prefilledUid) FORM.uid = prefilledUid; document.getElementById('wizModal').style.display = 'flex'; renderStep(); }
     function closeModal() { document.getElementById('wizModal').style.display = 'none'; }
 
     function renderStep() {
-        const flow = FLOWS[CUR_MODE];
-        let stepInfo = flow[CUR_STEP];
-        
-        if (CUR_STEP === 0 && FORM.uid && stepInfo.f === "uid") {
-            CUR_STEP++;
-            stepInfo = flow[CUR_STEP];
-        }
-
+        const flow = FLOWS[CUR_MODE]; let stepInfo = flow[CUR_STEP];
+        if (CUR_STEP === 0 && FORM.uid && stepInfo.f === "uid") { CUR_STEP++; stepInfo = flow[CUR_STEP]; }
         let html = `<h3>${stepInfo.t}</h3>`;
-        if (stepInfo.type === "user") {
-            html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`;
-        } else if (stepInfo.type === "number") {
-            html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`;
-        } else if (stepInfo.type === "loan") {
-            // ★ 動態過濾會員的未結清帳單
+        if (stepInfo.type === "user") html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`;
+        else if (stepInfo.type === "number") html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`;
+        else if (stepInfo.type === "loan") {
             const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清");
-            if (userLoans.length === 0) {
-                html += `<p style="color:var(--red); font-weight:bold;">此會員目前無未結清的帳單</p>`;
-                html += `<input type="hidden" id="wiz_val" value="">`;
-            } else {
-                html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.total - l.paid})</option>`).join('')}</select>`;
-            }
-        } else {
-            html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
-        }
+            if (userLoans.length === 0) { html += `<p style="color:var(--red); font-weight:bold;">此會員目前無未結清的帳單</p><input type="hidden" id="wiz_val" value="">`; }
+            else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.total - l.paid})</option>`).join('')}</select>`;
+        } else { html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`; }
         
         document.getElementById('wizBody').innerHTML = html;
-        
-        // ★ 若無未結清帳單，隱藏下一步按鈕進行防呆
         const nextBtn = document.getElementById('nextBtn');
-        if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清").length === 0) {
-            nextBtn.style.display = 'none';
-        } else {
-            nextBtn.style.display = 'block';
-            nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步";
-        }
+        if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清").length === 0) nextBtn.style.display = 'none';
+        else { nextBtn.style.display = 'block'; nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步"; }
     }
 
     function wizNext() {
-        const inputEl = document.getElementById('wiz_val');
-        const flow = FLOWS[CUR_MODE];
-        const field = flow[CUR_STEP].f;
-        
-        if (!inputEl.value.trim()) {
-            if (flow[CUR_STEP].type === "loan") return Swal.fire("提示", "無帳單可還款", "warning");
-            return Swal.fire("提示", "欄位不可為空", "warning");
-        }
-        
+        const inputEl = document.getElementById('wiz_val'); const flow = FLOWS[CUR_MODE]; const field = flow[CUR_STEP].f;
+        if (!inputEl.value.trim()) { if (flow[CUR_STEP].type === "loan") return Swal.fire("提示", "無帳單可還款", "warning"); return Swal.fire("提示", "欄位不可為空", "warning"); }
         FORM[field] = inputEl.value.trim();
-
-        if (CUR_STEP < flow.length - 1) {
-            CUR_STEP++;
-            renderStep();
-        } else {
-            submitWiz();
-        }
+        if (CUR_STEP < flow.length - 1) { CUR_STEP++; renderStep(); } else submitWiz();
     }
 
     async function submitWiz() {
-        closeModal();
-        let payload = { action: 'adminAction', type: CUR_MODE, ...FORM };
+        closeModal(); let payload = { action: 'adminAction', type: CUR_MODE, ...FORM };
         try {
             const res = await fetchWithQueue(GAS, payload, "正在提交資料至雲端試算表...");
             if (res.aborted) return;
-            if (res.success) {
-                Swal.fire({ title: '操作成功！', text: res.message, icon: 'success' }).then(() => refresh());
-            } else {
-                showAlert("操作失敗", res.message, "error");
-            }
+            if (res.success) Swal.fire({ title: '操作成功！', text: res.message, icon: 'success' }).then(() => refresh()); else showAlert("操作失敗", res.message, "error");
         } catch(e) { showAlert("網路異常", "無法連線至後端系統", "error"); }
     }
 
@@ -826,184 +1070,81 @@
         try {
             const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'redeem', cpId: FORM.cpId }, "正在執行實體優惠券核銷中...");
             if (res.aborted) return;
-            if(res.success) {
-                Swal.fire({ title: '核銷成功！', text: res.message, icon: 'success' }).then(() => refresh());
-            } else {
-                showAlert("核銷失敗", res.message, "error");
-            }
+            if(res.success) Swal.fire({ title: '核銷成功！', text: res.message, icon: 'success' }).then(() => refresh()); else showAlert("核銷失敗", res.message, "error");
         } catch(e) { showAlert("網路異常", "無法完成核銷作業", "error"); }
     }
 
     async function addLoan() {
-        const uid = document.getElementById('l_uid').value;
-        const item = document.getElementById('l_item').value.trim();
-        const amt = document.getElementById('l_amt').value.trim();
-        const exp = document.getElementById('l_exp').value;
+        const uid = document.getElementById('l_uid').value, item = document.getElementById('l_item').value.trim(), amt = document.getElementById('l_amt').value.trim(), exp = document.getElementById('l_exp').value;
         if(!uid || !item || !amt || !exp) return Swal.fire("提示", "撥款表單欄位填寫不完整！", "warning");
-
         try {
             const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addLoan', uid: uid, item: item, amt: Number(amt), expiry: exp }, "正在處理借款撥發中...");
             if (res.aborted) return;
-            if(res.success) {
-                Swal.fire({ title: '發放完成', text: res.message, icon: 'success' }).then(() => refresh());
-                document.getElementById('l_item').value = "";
-                document.getElementById('l_amt').value = "";
-                document.getElementById('l_exp').value = "";
-            } else {
-                showAlert("發放失敗", res.message, "error");
-            }
+            if(res.success) { Swal.fire({ title: '發放完成', text: res.message, icon: 'success' }).then(() => refresh()); document.getElementById('l_item').value = ""; document.getElementById('l_amt').value = ""; document.getElementById('l_exp').value = ""; } else showAlert("發放失敗", res.message, "error");
         } catch(e) { showAlert("網路異常", "撥款連線失敗", "error"); }
     }
 
     async function sendCouponSubmit() {
-        const uid = document.getElementById('cp_uid').value;
-        const cpId = document.getElementById('cp_id').value.trim();
-        const title = document.getElementById('cp_title').value.trim();
-        const content = document.getElementById('cp_content').value.trim();
-        const expiry = document.getElementById('cp_exp').value;
-
+        const uid = document.getElementById('cp_uid').value, cpId = document.getElementById('cp_id').value.trim(), title = document.getElementById('cp_title').value.trim(), content = document.getElementById('cp_content').value.trim(), expiry = document.getElementById('cp_exp').value;
         if(!uid || !cpId || !title || !content || !expiry) return Swal.fire("提示", "請填寫完整優惠券資訊！", "warning");
-        
         try {
             const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry }, "正在發送優惠券...");
             if (res.aborted) return;
-            if (res.success) {
-                Swal.fire({ title: '發送完畢', text: res.message, icon: 'success' }).then(() => refresh());
-                document.getElementById('cp_id').value = "";
-                document.getElementById('cp_title').value = "";
-                document.getElementById('cp_content').value = "";
-                document.getElementById('cp_exp').value = "";
-            } else {
-                showAlert("發送失敗", res.message, "error");
-            }
+            if (res.success) { Swal.fire({ title: '發送完畢', text: res.message, icon: 'success' }).then(() => refresh()); document.getElementById('cp_id').value = ""; document.getElementById('cp_title').value = ""; document.getElementById('cp_content').value = ""; document.getElementById('cp_exp').value = ""; } else showAlert("發送失敗", res.message, "error");
         } catch(e) { showAlert("網路異常", "連線發送失敗", "error"); }
     }
 
     async function createNewOrderSubmit() {
-        const id = document.getElementById('o_new_id').value.trim();
-        const uid = document.getElementById('o_new_uid').value;
-        const status = document.getElementById('o_new_status').value;
-        const vcode = document.getElementById('o_new_vcode').value.trim();
-        const time = document.getElementById('o_new_time').value;
-
-        const itemRows = document.querySelectorAll('.item-row');
-        let itemsArray = [];
-        let itemSummaryText = ""; 
-
+        const id = document.getElementById('o_new_id').value.trim(), uid = document.getElementById('o_new_uid').value, status = document.getElementById('o_new_status').value, vcode = document.getElementById('o_new_vcode').value.trim(), time = document.getElementById('o_new_time').value;
+        const itemRows = document.querySelectorAll('.item-row'); let itemsArray = []; let itemSummaryText = ""; 
         for (let i = 0; i < itemRows.length; i++) {
-            const name = itemRows[i].querySelector('.item-name').value.trim();
-            const spec = itemRows[i].querySelector('.item-spec').value.trim();
-            const qty = itemRows[i].querySelector('.item-qty').value.trim();
-            const price = itemRows[i].querySelector('.item-price').value.trim();
-
-            if(!name || !qty || !price) {
-                return Swal.fire("提示", `請確實填寫第 ${i+1} 項商品的名稱、數量與價格！`, "warning");
-            }
-            itemsArray.push({ name, spec, qty: Number(qty), price: Number(price) });
-            itemSummaryText += `- ${name}${spec ? ' ('+spec+')' : ''} x${qty} ($${price})\n`;
+            const name = itemRows[i].querySelector('.item-name').value.trim(), spec = itemRows[i].querySelector('.item-spec').value.trim(), qty = itemRows[i].querySelector('.item-qty').value.trim(), price = itemRows[i].querySelector('.item-price').value.trim();
+            if(!name || !qty || !price) return Swal.fire("提示", `請確實填寫第 ${i+1} 項商品的名稱、數量與價格！`, "warning");
+            itemsArray.push({ name, spec, qty: Number(qty), price: Number(price) }); itemSummaryText += `- ${name}${spec ? ' ('+spec+')' : ''} x${qty} ($${price})\n`;
         }
         itemSummaryText = itemSummaryText.trim(); 
-
-        const calcData = calculateTotalOrderAmount();
-        const shipping = Number(document.getElementById('o_new_shipping').value) || 0;
-        const shipDiscount = Number(document.getElementById('o_new_ship_discount').value) || 0;
-        const sellerDiscount = Number(document.getElementById('o_new_seller_discount').value) || 0;
-        const coinDiscount = Number(document.getElementById('o_new_coin_discount').value) || 0;
-        
-        const logMethod = document.getElementById('o_new_log_method').value;
-        const address = document.getElementById('o_new_address').value.trim(); 
-        const logId = document.getElementById('o_new_log_id').value.trim();
-        
-        let logNote = document.getElementById('o_new_log_note').value.trim();
-        const newDeadline = document.getElementById('o_new_deadline').value;
-        if (newDeadline) {
-            logNote = (logNote + ` [取件截止日:${newDeadline}]`).trim();
-        }
-
-        if(!id || !uid || !status || !time || !address) {
-            return Swal.fire("提示", "請填寫或選擇必要欄位（單號、對象、狀態、時間與地址）！", "warning");
-        }
-
+        const calcData = calculateTotalOrderAmount(), shipping = Number(document.getElementById('o_new_shipping').value) || 0, shipDiscount = Number(document.getElementById('o_new_ship_discount').value) || 0, sellerDiscount = Number(document.getElementById('o_new_seller_discount').value) || 0, coinDiscount = Number(document.getElementById('o_new_coin_discount').value) || 0;
+        const logMethod = document.getElementById('o_new_log_method').value, address = document.getElementById('o_new_address').value.trim(), logId = document.getElementById('o_new_log_id').value.trim();
+        let logNote = document.getElementById('o_new_log_note').value.trim(); const newDeadline = document.getElementById('o_new_deadline').value;
+        if (newDeadline) logNote = (logNote + ` [取件截止日:${newDeadline}]`).trim();
+        if(!id || !uid || !status || !time || !address) return Swal.fire("提示", "請填寫或選擇必要欄位（單號、對象、狀態、時間與地址）！", "warning");
         const formattedTime = time.replace('T', ' '); 
-
         try {
-            const res = await fetchWithQueue(GAS, {
-                action: 'adminAction',
-                type: 'updateOrder',
-                oid: id,
-                uid: uid,
-                status: status,
-                item: itemSummaryText,
-                code: vcode,
-                subtotal: calcData.subtotal,
-                shipFee: shipping,
-                discShip: shipDiscount,
-                discSeller: sellerDiscount,
-                discCoin: coinDiscount,
-                total: calcData.totalAmount,
-                ship: logMethod,
-                address: address,
-                track: logId,
-                note: logNote,
-                time: formattedTime 
-            }, "正在建立新訂單並上傳雲端...");
-
+            const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText, code: vcode, subtotal: calcData.subtotal, shipFee: shipping, discShip: shipDiscount, discSeller: sellerDiscount, discCoin: coinDiscount, total: calcData.totalAmount, ship: logMethod, address: address, track: logId, note: logNote, time: formattedTime }, "正在建立新訂單並上傳雲端...");
             if (res.aborted) return;
-
-            if (res.success) {
-                Swal.fire({ title: '訂單建立成功！', text: '新訂單與精細明細已寫入雲端。', icon: 'success' }).then(() => refresh());
-            } else {
-                showAlert("建立失敗", res.message, "error");
-            }
-        } catch(e) {
-            showAlert("網路異常", "無法連線至後端建立訂單", "error");
-        }
+            if (res.success) Swal.fire({ title: '訂單建立成功！', text: '新訂單與精細明細已寫入雲端。', icon: 'success' }).then(() => refresh()); else showAlert("建立失敗", res.message, "error");
+        } catch(e) { showAlert("網路異常", "無法連線至後端建立訂單", "error"); }
     }
 
     async function updateOrderTimelineSubmit() {
-        const orderId = document.getElementById('t_order_id').value;
-        const logTime = document.getElementById('t_log_time').value; 
-        const logStatus = document.getElementById('t_log_status').value;
-        
-        let logNote = document.getElementById('t_log_note').value.trim(); 
-        const logDeadline = document.getElementById('t_log_deadline').value;
-        if (logDeadline) {
-            logNote = (logNote + ` [取件截止日:${logDeadline}]`).trim();
-        }
-
-        const pkgContainer = document.getElementById('package_selector_container');
-        const pkgSelector = document.getElementById('t_log_package');
-        let selectedPackage = "";
-        if (pkgContainer.style.display !== 'none' && pkgSelector.value !== 'all') {
-            selectedPackage = pkgSelector.value;
-        }
-
+        const orderId = document.getElementById('t_order_id').value, logTime = document.getElementById('t_log_time').value, logStatus = document.getElementById('t_log_status').value;
+        let logNote = document.getElementById('t_log_note').value.trim(); const logDeadline = document.getElementById('t_log_deadline').value, logColor = document.getElementById('t_log_color').value;
+        if (logDeadline) logNote = (logNote + ` [取件截止日:${logDeadline}]`).trim();
+        if (logColor && logColor !== '#db2777' && logColor !== '#94a3b8') logNote = `[顏色:${logColor}] ` + logNote;
+        const pkgContainer = document.getElementById('package_selector_container'), pkgSelector = document.getElementById('t_log_package');
+        let selectedPackage = ""; if (pkgContainer.style.display !== 'none' && pkgSelector.value !== 'all') selectedPackage = pkgSelector.value;
         if(!orderId) return Swal.fire("提示", "請先選擇有效的訂單！", "warning");
         if(!logTime) return Swal.fire("提示", "請填寫節點更新時間！", "warning");
-
         const formattedTime = logTime.replace('T', ' '); 
-
         try {
-            const res = await fetchWithQueue(GAS, {
-                action: 'adminAction',
-                type: 'updateTimeline',
-                oid: orderId,
-                time: formattedTime, 
-                status: logStatus,
-                note: logNote,
-                packageId: selectedPackage
-            }, "正在同步更新物流時間線...");
-            
+            const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateTimeline', oid: orderId, time: formattedTime, status: logStatus, note: logNote, packageId: selectedPackage }, "正在同步更新物流時間線...");
             if (res.aborted) return;
+            if (res.success) Swal.fire({ title: '更新成功', text: '最新物流進度已與雲端同步發佈！', icon: 'success' }).then(() => refresh()); else showAlert("更新失敗", res.message, "error");
+        } catch(e) { showAlert("網路異常", "連線失敗，請檢查網路。", "error"); }
+    }
 
+    async function submitReturn() {
+        const oid = document.getElementById('r_oid').value, items = document.getElementById('r_items').value.trim(), reason = document.getElementById('r_reason').value, desc = document.getElementById('r_desc').value.trim(), amt = document.getElementById('r_amt').value.trim(), method = document.getElementById('r_method').value.trim(), ship = document.getElementById('r_ship').value, track = document.getElementById('r_track').value.trim();
+        if(!oid || !items || !amt || !method) return Swal.fire("提示", "請確實填寫必要的退貨商品、金額與退款方式！", "warning");
+        try {
+            const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateReturn', oid: oid, items: items, reason: reason, desc: desc, amt: Number(amt) || 0, method: method, ship: ship, track: track, photoBase64: currentPhotoBase64 }, "正在上傳相片並建檔退款資料...");
+            if (res.aborted) return;
             if (res.success) {
-                Swal.fire({ title: '更新成功', text: '最新物流進度已與雲端同步發佈！', icon: 'success' }).then(() => refresh());
-            } else {
-                showAlert("更新失敗", res.message, "error");
-            }
-        } catch(e) {
-            showAlert("網路異常", "連線失敗，請檢查網路。", "error");
-        }
+                Swal.fire({ title: '建檔成功', text: res.message, icon: 'success' }).then(() => {
+                    document.getElementById('r_items').value = ""; document.getElementById('r_desc').value = ""; document.getElementById('r_amt').value = ""; document.getElementById('r_track').value = ""; document.getElementById('r_photo').value = ""; document.getElementById('r_photo_preview').style.display = "none"; currentPhotoBase64 = null; refresh();
+                });
+            } else showAlert("建檔失敗", res.message, "error");
+        } catch(e) { showAlert("網路異常", "無法連線至雲端服務", "error"); }
     }
 </script>
 </body>
