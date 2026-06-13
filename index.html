@@ -147,7 +147,6 @@
             gap: 6px;
         }
 
-        /* 📍 排序與標題專用容器 */
         .header-container { 
             display: flex; 
             justify-content: space-between; 
@@ -169,12 +168,13 @@
             cursor: pointer; 
         }
 
-        /* 📍 物流時間線垂直架構與時間樣式 */
         .order-timeline {
             margin: 5px 0 5px 5px;
             padding-left: 5px;
         }
         .timeline-node {
+            --node-color: #a1a1aa;
+            --node-shadow: rgba(161, 161, 170, 0.35);
             position: relative;
             padding-left: 24px;
             padding-bottom: 18px;
@@ -200,20 +200,23 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: #a1a1aa;
+            background: var(--node-color) !important;
         }
         .timeline-node.latest-node::after {
-            background: var(--pink);
-            box-shadow: 0 0 0 4px rgba(255, 143, 163, 0.35);
+            box-shadow: 0 0 0 4px var(--node-shadow) !important;
         }
-        .timeline-node.latest-node::before { background: var(--pink); }
+        .timeline-node.latest-node::before { 
+            background: var(--node-color) !important; 
+        }
         .timeline-node-title {
             font-size: 1em;
             font-weight: 900;
             color: var(--text);
             margin-bottom: 2px;
         }
-        .timeline-node.latest-node .timeline-node-title { color: var(--pink); }
+        .timeline-node.latest-node .timeline-node-title { 
+            color: var(--node-color) !important; 
+        }
         .timeline-node-time {
             font-size: 0.75em;
             font-weight: bold;
@@ -223,7 +226,7 @@
         }
         .timeline-node.latest-node .timeline-node-time {
             opacity: 0.85;
-            color: var(--pink);
+            color: var(--node-color) !important;
         }
         .timeline-node-desc {
             font-size: 0.8em;
@@ -233,7 +236,6 @@
             line-height: 1.4;
         }
 
-        /* 📍 版權資訊樣式 */
         .footer-info {
             text-align: center;
             margin-top: 40px;
@@ -344,6 +346,7 @@
                     <button class="btn" onclick="updateProfileName()" style="background:#0284c7; font-size: 1em; padding: 14px;">修改基本資料 (變更姓名)</button>
                     <button class="btn" onclick="updateUserPassword()" style="background:#0f172a; font-size: 1em; padding: 14px;">變更登入密碼</button>
                     <button class="btn" onclick="showQR()" style="background:var(--accent); font-size: 1em; padding: 14px;">顯示個人識別碼</button>
+                    <button class="btn" onclick="openCustomerServiceMenu()" style="background:#10b981; font-size: 1em; padding: 14px;">🎧 聯絡線上客服</button>
                     <button class="btn" onclick="triggerLogout()" style="background:var(--red); font-size: 1em; padding: 14px;">安全登出系統</button>
                 </div>
 
@@ -355,10 +358,9 @@
                 <button class="btn" onclick="toggleLayoutMode()" style="background:#4f46e5; margin-bottom:10px;">🖥️ 電腦版 / 📱 手機版 寬度切換</button>
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
-                <!-- 📍 新增：版權與關於資訊區塊 -->
                 <div class="footer-info">
-                    <div>版本：V70.4</div>
-                    <div>更新日期：2026-06-09</div>
+                    <div>版本：V70.8</div>
+                    <div>更新日期：2026-06-13</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
                 </div>
@@ -389,12 +391,13 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcsFyLgCfp2_aPvnhbx7aPy8hk6tHjk5ZHOlngGPr4UNKp7L04lj4f55fGVWeVl9WW/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz23q7WAksiNhvDiNQ_NQ6AM63kJ-F4Ac2ouyDZBN99Ldr6nwmJWA6grf1ccmUcvXg/exec"; 
         let store = null;
         let currentCouponTab = 0; 
         let currentLoanTab = 0; 
         let savedPw = "";      
-        
+        let returnPhotoBase64 = null; 
+
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
         const couponQr = new QRCode(document.getElementById("couponQrcode"), { width: 200, height: 200 });
 
@@ -426,7 +429,7 @@
                         <span style="animation: queue-bounce 0.8s infinite alternate 0.3s;">🚶‍♀️</span>
                         <span style="animation: queue-bounce 0.8s infinite alternate 0.6s;">🚶</span>
                     </div>
-                    <div style="font-weight: bold; color: var(--primary, #4f46e5); font-size: 1.1em;">
+                    <div style="font-weight: bold; color: var(--pink, #db2777); font-size: 1.1em;">
                         系統目前較為繁忙，您已進入排隊序列
                     </div>
                     <div style="margin-top: 5px; font-size: 0.95em;">
@@ -649,7 +652,6 @@
             });
         }
 
-        // 📍 顯示「關於系統」彈出視窗
         function showAboutSystem() {
             Swal.fire({
                 title: '關於本系統',
@@ -658,13 +660,14 @@
                         <p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p>
                         <p>本系統包含以下核心模組：</p>
                         <ul style="padding-left: 20px; margin-bottom: 15px;">
-                            <li>即時餘額與交易紀錄查詢</li>
+                            <li>即時點數與交易紀錄查詢</li>
                             <li>動態包裹與物流時間線追蹤</li>
                             <li>借貸與帳單智慧管理</li>
                             <li>專屬優惠券核銷系統</li>
+                            <li>全方位售後退款退貨與自助完成機制</li>
                         </ul>
                         <p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">
-                            系統版本：V70.4<br>
+                            系統版本：V70.8<br>
                             核心架構：Google Apps Script 驅動<br>
                             UI/UX 設計：最佳化響應式行動介面
                         </p>
@@ -706,27 +709,209 @@
 
         async function silentSyncData() {
             if (!store || !store.userData || !store.userData.id || !savedPw) return;
-            
             const uid = store.userData.id;
             const indicator = document.getElementById('syncIndicator');
-            
             if (indicator) indicator.style.display = 'flex';
-
             try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'login', uid: uid, pw: savedPw }) 
-                }).then(r => r.json());
-
-                if (res.success) {
-                    store = res;
-                    render(); 
-                }
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: uid, pw: savedPw }) }).then(r => r.json());
+                if (res.success) { store = res; render(); }
             } catch (e) {
                 console.log("背景資料同步失敗，保持現有數據呈現");
             } finally {
                 if (indicator) indicator.style.display = 'none';
             }
+        }
+
+        async function applyCancelOrder(oid) {
+            const { value: reason } = await Swal.fire({
+                title: '申請取消訂單',
+                input: 'select',
+                inputOptions: {
+                    '不想買了 / 改變心意': '不想買了 / 改變心意',
+                    '修改商品規格或數量': '修改商品規格或數量',
+                    '付款方式設定錯誤': '付款方式設定錯誤',
+                    '賣家未回覆 / 出貨過慢': '賣家未回覆 / 出貨過慢',
+                    '其他原因': '其他原因'
+                },
+                inputPlaceholder: '請選擇取消原因',
+                showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定取消', cancelButtonText: '保留訂單'
+            });
+
+            if (reason) {
+                try {
+                    let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCancelOrder', type: 'apply', oid: oid, uid: store.userData.id, reason: reason, pw: savedPw }, "送出申請中...");
+                    if (!res.aborted && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData());
+                    else if (!res.aborted) Swal.fire('無法申請', res.message, 'error');
+                } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
+            }
+        }
+
+        async function withdrawCancelOrder(oid) {
+            const { isConfirmed } = await Swal.fire({
+                title: '撤回取消申請', text: '確定要撤回您的取消申請，讓訂單繼續正常處理嗎？', icon: 'question',
+                showCancelButton: true, confirmButtonColor: 'var(--green)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定撤回', cancelButtonText: '不撤回'
+            });
+
+            if (isConfirmed) {
+                try {
+                    let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCancelOrder', type: 'withdraw', oid: oid, uid: store.userData.id, pw: savedPw }, "撤回申請中...");
+                    if (!res.aborted && res.success) Swal.fire('撤回成功', res.message, 'success').then(() => silentSyncData());
+                    else if (!res.aborted) Swal.fire('錯誤', res.message, 'error');
+                } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
+            }
+        }
+
+        async function completeOrder(oid) {
+            const { isConfirmed } = await Swal.fire({
+                title: '確認完成訂單？',
+                html: `
+                    <div style="font-weight:bold; color:var(--red); line-height:1.6;">
+                        在點選完成訂單之前，請務必檢查您所收到的商品是否正確無誤(無退貨/退款需求)。<br><br>
+                        提醒您，一旦確認完成訂單後，訂單款項將撥款給賣家。
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true, confirmButtonColor: 'var(--green)', cancelButtonColor: '#94a3b8', confirmButtonText: '確認收件無誤', cancelButtonText: '取消'
+            });
+
+            if (isConfirmed) {
+                try {
+                    let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCompleteOrder', oid: oid, uid: store.userData.id, pw: savedPw }, "更新訂單狀態中...");
+                    if (!res.aborted && res.success) Swal.fire('訂單已完成', res.message, 'success').then(() => silentSyncData());
+                    else if (!res.aborted) Swal.fire('錯誤', res.message, 'error');
+                } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
+            }
+        }
+
+        // 🚨 買家自助申請退貨 (支援勾選商品清單)
+        function previewReturnImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = e => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width; let height = img.height; const max_size = 1000; 
+                    if (width > height && width > max_size) { height *= max_size / width; width = max_size; } 
+                    else if (height > max_size) { width *= max_size / height; height = max_size; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                    returnPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7); 
+                }
+            }
+        }
+
+        async function applyReturn(oid) {
+            returnPhotoBase64 = null;
+            const o = store.orders.find(ord => ord.id === String(oid));
+            if(!o) return;
+            
+            let rawItem = o.desc || o.item || '無商品明細';
+            let itemsArray = rawItem.includes(';') && !rawItem.includes('\n') ? rawItem.split(';') : rawItem.split('\n');
+            itemsArray = itemsArray.map(i => i.trim().replace(/^- /, '')).filter(i => i);
+
+            let checkboxesHtml = itemsArray.map((item, idx) => `
+                <label style="display:flex; align-items:center; gap:8px; margin:5px 0; text-align:left; font-size:15px; cursor:pointer;">
+                    <input type="checkbox" class="return-item-checkbox" value="${item.replace(/"/g, '&quot;')}" style="width:20px; height:20px; margin:0; flex-shrink:0;">
+                    <span style="flex:1; line-height:1.3;">${item}</span>
+                </label>
+            `).join('');
+
+            if(itemsArray.length === 0) {
+                checkboxesHtml = `<input id="swal-ret-items-fallback" class="swal2-input" placeholder="請輸入退貨商品明細" style="width:100%; margin:0; box-sizing:border-box;">`;
+            }
+
+            const { value: formValues } = await Swal.fire({
+                title: '申請退貨/退款',
+                html: `
+                    <div style="text-align:left; font-size:16px;">
+                        <label style="display:block; font-weight:bold; color:var(--dark); margin-bottom:5px;">🛍️ 請勾選欲退貨的商品：</label>
+                        <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px; max-height:150px; overflow-y:auto; box-sizing:border-box;">
+                            ${checkboxesHtml}
+                        </div>
+                        <select id="swal-ret-reason" class="swal2-select" style="width:100%; margin:10px 0; display:flex; box-sizing:border-box;">
+                            <option value="商品瑕疵">商品瑕疵</option>
+                            <option value="尺寸/規格不合">尺寸/規格不合</option>
+                            <option value="寄錯商品">寄錯商品</option>
+                            <option value="商品缺件">商品缺件</option>
+                            <option value="個人因素(鑑賞期內)">個人因素(鑑賞期內)</option>
+                            <option value="其他原因">其他原因</option>
+                        </select>
+                        <textarea id="swal-ret-desc" class="swal2-textarea" placeholder="請詳細描述退貨原因或商品狀況..." style="width:100%; margin:10px 0; height:80px; box-sizing:border-box;"></textarea>
+                        <input id="swal-ret-method" class="swal2-input" placeholder="期望退款帳戶/方式" style="width:100%; margin:10px 0; box-sizing:border-box;">
+                        <label style="display:block; margin:10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">📸 上傳佐證相片 (必填)：</label>
+                        <input type="file" id="swal-ret-photo" accept="image/*" onchange="previewReturnImage(event)" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
+                    </div>
+                `,
+                focusConfirm: false, showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '送出申請', cancelButtonText: '取消',
+                preConfirm: () => {
+                    let items = "";
+                    if(itemsArray.length > 0) {
+                        const checkedBoxes = document.querySelectorAll('.return-item-checkbox:checked');
+                        if (checkedBoxes.length === 0) {
+                            Swal.showValidationMessage('請至少勾選一項退貨商品！');
+                            return false;
+                        }
+                        items = Array.from(checkedBoxes).map(cb => cb.value).join('; ');
+                    } else {
+                        items = document.getElementById('swal-ret-items-fallback').value.trim();
+                        if(!items) {
+                            Swal.showValidationMessage('請輸入退貨商品明細！');
+                            return false;
+                        }
+                    }
+                    
+                    const reason = document.getElementById('swal-ret-reason').value;
+                    const desc = document.getElementById('swal-ret-desc').value.trim();
+                    const method = document.getElementById('swal-ret-method').value.trim();
+                    if (!desc || !method || !returnPhotoBase64) {
+                        Swal.showValidationMessage('請確實填寫所有欄位並上傳佐證相片！');
+                        return false;
+                    }
+                    return { items: items, reason: reason, desc: desc, method: method, photoBase64: returnPhotoBase64 };
+                }
+            });
+
+            if (formValues) {
+                try {
+                    let payload = { action: 'buyerApplyReturn', oid: oid, uid: store.userData.id, pw: savedPw, ...formValues };
+                    let res = await fetchWithQueue(SCRIPT_URL, payload, "上傳佐證相片並送出申請中...");
+                    if (!res.aborted && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData());
+                    else if (!res.aborted) Swal.fire('錯誤', res.message, 'error');
+                } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
+            }
+        }
+
+        // ✅ 背景檢查並自動完成 7 日到期訂單
+        function checkAutoCompleteOrders() {
+            if (!store || !store.orders) return;
+            const now = new Date();
+            let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
+            
+            store.orders.forEach(o => {
+                let isCompleted = o.status === "訂單已完成";
+                let isReturning = o.status.includes("退貨");
+                let isCanceled = o.status.includes("不成立") || o.status.includes("取消");
+                let isDelivered = deliveredStatuses.some(s => o.status.includes(s));
+
+                if (isDelivered && !isCompleted && !isReturning && !isCanceled) {
+                    let deliveredNode = o.timeline.find(n => deliveredStatuses.some(s => n.status.includes(s)));
+                    if (deliveredNode) {
+                        let dDate = new Date(deliveredNode.time.replace(/-/g, '/'));
+                        dDate.setDate(dDate.getDate() + 7);
+                        if (now > dDate) {
+                            fetch(SCRIPT_URL, {
+                                method: 'POST',
+                                body: JSON.stringify({ action: 'buyerCompleteOrder', oid: o.id, uid: store.userData.id, pw: savedPw })
+                            });
+                            o.status = "訂單已完成"; 
+                        }
+                    }
+                }
+            });
         }
 
         function render() {
@@ -777,6 +962,54 @@
                     briefItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">${line}</div>`).join('');
                 }
 
+                let cancellableStatus = ["訂單成立", "處理中", "賣家確認中", "備貨中"];
+                let isCancellable = cancellableStatus.includes(o.status) || (!o.status.includes("出貨") && !o.status.includes("配送") && !o.status.includes("抵達") && !o.status.includes("不成立") && !o.status.includes("取消") && !o.status.includes("退貨") && !o.status.includes("完成"));
+                if (o.status === '申請取消中') isCancellable = false; 
+                if (o.note && o.note.includes("[已耗用取消額度]")) isCancellable = false;
+
+                // ✅ 判斷是否可退貨/完成訂單
+                let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
+                let isDelivered = deliveredStatuses.some(s => o.status.includes(s));
+                let isCompleted = o.status === "訂單已完成";
+                let isReturning = o.status.includes("退貨");
+
+                let actionBtnsHtml = "";
+                
+                if (isDelivered && !isCompleted && !isReturning) {
+                    let deliveredNode = o.timeline.find(n => deliveredStatuses.some(s => n.status.includes(s)));
+                    let deadlineHtml = "";
+                    let canReturn = false;
+                    
+                    if (deliveredNode) {
+                        let dDate = new Date(deliveredNode.time.replace(/-/g, '/'));
+                        dDate.setDate(dDate.getDate() + 7);
+                        let now = new Date();
+
+                        if (now <= dDate) {
+                            canReturn = true;
+                            let mm = String(dDate.getMonth() + 1).padStart(2, '0');
+                            let dd = String(dDate.getDate()).padStart(2, '0');
+                            deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${dDate.getFullYear()}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
+                        } else {
+                            deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
+                        }
+                    }
+                    
+                    if (canReturn) {
+                        actionBtnsHtml += `<button class="btn" style="background:var(--green); margin-top:15px;" onclick="completeOrder('${o.id}')">✅ 完成訂單</button>`;
+                        actionBtnsHtml += deadlineHtml;
+                        actionBtnsHtml += `<button class="btn" style="background:transparent; color:var(--red); border:1px solid var(--red); margin-top:5px;" onclick="applyReturn('${o.id}')">🚨 申請退貨/退款</button>`;
+                    } else {
+                        actionBtnsHtml += deadlineHtml; 
+                    }
+                }
+
+                if (o.status === "申請取消中") {
+                    actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:#64748b; width:100%; display:block;" onclick="withdrawCancelOrder('${o.id}')">↩️ 撤回取消申請</button>`;
+                } else if (isCancellable && !isDelivered) {
+                    actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:transparent; color:var(--red); border:1px solid var(--red); width:100%; display:block;" onclick="applyCancelOrder('${o.id}')">❌ 申請取消訂單</button>`;
+                }
+
                 return `
                 <div class="card">
                     <div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div>
@@ -787,9 +1020,13 @@
                         ${o.ship || '未知物流'} | 單號: ${o.track || '無'}
                     </div>
                     <button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup('${o.id}')">🔍 查看訂單詳細資訊</button>
+                    ${actionBtnsHtml}
                 </div>
                 `;
             }).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
+
+            // 觸發背景自動完成檢查
+            checkAutoCompleteOrders();
         }
 
         function generateTimelineHtml(logs, fallbackStatus, fallbackNote, fallbackTime) {
@@ -811,9 +1048,15 @@
             if (logs && Array.isArray(logs) && logs.length > 0) {
                 const sorted = [...logs].sort((a, b) => new Date(b.time) - new Date(a.time));
                 html = sorted.map((node, nIdx) => {
-                    const cleanNote = (node.note || '動態物流程序記錄正常').replace(/\[取件截止日:.*?\]/g, '').trim() || '動態物流程序記錄正常';
+                    let colorMatch = node.rawMsg ? node.rawMsg.match(/\[顏色:(#[0-9a-fA-F]{3,6})\]/) : null;
+                    let defaultColor = nIdx === 0 ? 'var(--pink)' : '#a1a1aa';
+                    let nodeColor = colorMatch ? colorMatch[1] : defaultColor;
+                    
+                    let styleAttr = `style="--node-color: ${nodeColor}; --node-shadow: ${nodeColor}55;"`;
+
+                    const cleanNote = (node.note || '動態物流程序記錄正常').replace(/\[取件截止日:.*?\]/g, '').replace(/\[顏色:.*?\]/g, '').trim() || '動態物流程序記錄正常';
                     return `
-                    <div class="timeline-node ${nIdx === 0 ? 'latest-node' : ''}">
+                    <div class="timeline-node ${nIdx === 0 ? 'latest-node' : ''}" ${styleAttr}>
                         <div class="timeline-node-title">${node.status}</div>
                         <div class="timeline-node-time">⏱️ ${node.time}</div>
                         <div class="timeline-node-desc">${cleanNote}</div>
@@ -821,10 +1064,10 @@
                 `}).join('');
             } else {
                 html += `
-                    <div class="timeline-node latest-node">
+                    <div class="timeline-node latest-node" style="--node-color: var(--pink); --node-shadow: rgba(255, 143, 163, 0.35);">
                         <div class="timeline-node-title">${fallbackStatus}</div>
                         <div class="timeline-node-time">⏱️ ${fallbackTime}</div>
-                        <div class="timeline-node-desc">${fallbackNote.replace(/\[取件截止日:.*?\]/g, '').trim()}</div>
+                        <div class="timeline-node-desc">${fallbackNote.replace(/\[取件截止日:.*?\]/g, '').replace(/\[顏色:.*?\]/g, '').trim()}</div>
                     </div>
                 `;
             }
@@ -842,8 +1085,35 @@
 
             let timelinesHtmlOutput = "";
             let globalDeadlineHtml = "";
+            
+            let returnHtml = "";
+            if (o.returnData) {
+                returnHtml = `
+                <div style="background: #fee2e2; border: 2px solid var(--red); padding: 12px; border-radius: 12px; margin-bottom: 15px;">
+                    <p style="margin: 0 0 8px 0; color: var(--red); font-weight: bold; font-size: 1.1em;">🚨 退貨/退款處理資訊</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>申請時間：</b>${o.returnData.date}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退回商品：</b>${o.returnData.items}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退貨原因：</b>${o.returnData.reason}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>詳細描述：</b>${o.returnData.desc || '無'}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>應退金額：</b>$${o.returnData.amt || '處理中'}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款方式：</b>${o.returnData.method}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退貨物流：</b>${o.returnData.ship || '待審核'} ${o.returnData.track ? '(單號: ' + o.returnData.track + ')' : ''}</p>
+                    ${o.returnData.photo ? `
+                    <div style="margin-top: 10px;">
+                        <a href="${o.returnData.photo}" target="_blank">
+                            <img src="${o.returnData.photo}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #fca5a5;">
+                        </a>
+                        <p style="font-size:0.7em; color:var(--red); margin:3px 0 0 0; text-align:center;">點擊圖片可放大查看</p>
+                    </div>` : ''}
+                </div>
+                `;
+            }
 
-            const tracks = (o.track || "").split(',').map(t => t.trim()).filter(t => t);
+            let allTracks = (o.track || "").split(',').map(t => t.trim()).filter(t => t);
+            if (o.returnData && o.returnData.track) {
+                allTracks.push(o.returnData.track.trim());
+            }
+            const tracks = [...new Set(allTracks)]; 
             
             if (tracks.length > 1) {
                 timelinesHtmlOutput = tracks.map((track, i) => {
@@ -854,7 +1124,7 @@
 
                     return `
                         <div style="background: rgba(0,0,0,0.03); padding: 12px 12px 2px 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border);">
-                            <p style="margin: 0 0 10px 0; color:var(--primary, #4f46e5); font-weight:bold; font-size: 1.05em; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">📦 包裹 ${i+1} (${track})</p>
+                            <p style="margin: 0 0 10px 0; color:var(--primary, #4f46e5); font-weight:bold; font-size: 1.05em; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">📦 包裹/退貨件 (${track})</p>
                             ${pkgDeadlineHtml}
                             <div class="order-timeline">
                                 ${generatedData.html}
@@ -880,6 +1150,8 @@
 
             let htmlContent = `
                 <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
+                    ${returnHtml} 
+                    
                     <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px;"><span style="color:var(--pink);">📦 訂單編號：</span>${o.id || '無'}</p>
                     <p><span style="color:var(--pink);">🚦 主訂單狀態：</span><b>${currentStatus}</b></p>
                     <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${o.code || '尚未發佈'}</span></p>
