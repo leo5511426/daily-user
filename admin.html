@@ -24,27 +24,15 @@
         
         .section-label { font-size: 0.85em; opacity: 0.7; margin-top: 10px; display: block; color: var(--dark); }
         .calc-box { background: #f1f5f9; padding: 12px; border-radius: 10px; margin: 8px 0; font-size: 0.95em; color: var(--dark); }
-        .item-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
-        .item-row input { padding: 10px; margin: 0; font-size: 14px; }
+        .item-row, .inv-item-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+        .item-row input, .inv-item-row input { padding: 10px; margin: 0; font-size: 14px; }
         .btn-mini { width: auto; padding: 8px 12px; margin: 0; font-size: 13px; border-radius: 8px; }
         
         .swal2-popup { font-family: -apple-system, sans-serif; font-weight: bold; border-radius: 20px !important; }
-
-        @keyframes queue-bounce {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-8px); }
-        }
+        @keyframes queue-bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
 
         .admin-timeline { margin-top: 15px; padding-left: 5px; }
-        .admin-node { 
-            --node-color: #94a3b8; 
-            --node-shadow: rgba(148,163,184,0.35);
-            position: relative; 
-            padding-left: 24px; 
-            padding-bottom: 15px; 
-            cursor: move; 
-            transition: 0.2s; 
-        }
+        .admin-node { --node-color: #94a3b8; --node-shadow: rgba(148,163,184,0.35); position: relative; padding-left: 24px; padding-bottom: 15px; cursor: move; transition: 0.2s; }
         .admin-node:hover { background: #f1f5f9; border-radius: 8px; }
         .admin-node::before { content: ''; position: absolute; left: 4px; top: 6px; bottom: 0; width: 2px; background: #cbd5e1; }
         .admin-node:last-child::before { display: none; }
@@ -56,10 +44,8 @@
         .admin-node-time { font-size: 0.75em; font-weight: bold; opacity: 0.6; color: var(--dark); margin-bottom: 3px; }
         .admin-node.latest-node .admin-node-time { color: var(--node-color) !important; opacity: 0.85; }
         .admin-node-desc { font-size: 0.8em; opacity: 0.75; color: var(--dark); line-height: 1.4; }
-        
         .admin-node.dragging { opacity: 0.4; }
         .admin-node.over { border-top: 3px dashed var(--primary) !important; padding-top: 15px; margin-top: 10px; }
-
         .img-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; display: none; margin-top: 10px; border: 1px solid #ddd; }
     </style>
 </head>
@@ -76,7 +62,7 @@
         <p id="targetDesc" style="white-space: pre-line; color:#666; line-height:1.6;"></p>
         <div id="quickBtns" class="quick-grid">
             <button class="q-btn" style="background:var(--primary)" onclick="quickGo('add')">💰 加值</button>
-            <button class="q-btn" style="background:var(--dark)" onclick="quickGo('sub')">🛒 扣款</button>
+            <button class="q-btn" style="background:var(--dark)" onclick="quickGo('sub')">🛒 扣除</button>
             <button class="q-btn" style="background:var(--green)" onclick="quickGo('pay')">🤝 還款</button>
             <button class="q-btn" style="background:var(--accent)" onclick="quickGo('redeem')">🎟️ 核銷</button>
         </div>
@@ -90,19 +76,19 @@
 <h2 style="text-align:center; letter-spacing:1px;">小佑管理後台</h2>
 
 <div class="menu-grid">
-    <button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (人/券自動識別)</button>
+    <button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (會員/券自動識別)</button>
     <div class="m-btn" onclick="openWiz('add')">💰 手動加值</div>
-    <div class="m-btn" onclick="openWiz('sub')">🛒 手動扣款</div>
+    <div class="m-btn" onclick="openWiz('sub')">🛒 手動扣除</div>
     <div class="m-btn" onclick="openWiz('pay')">🤝 還款入帳</div>
     <div class="m-btn" onclick="openWiz('redeem')">🎟️ 優惠核銷</div>
     <button class="m-btn full-btn" style="background:var(--orange); font-size:16px;" onclick="scrollToSection('cancel_section')">⚠️ 處理訂單取消 / 不成立</button>
     <button class="m-btn full-btn" style="background:var(--red); font-size:16px;" onclick="scrollToSection('return_section')">🚨 退貨 / 退款 審核中心</button>
+    <button class="m-btn full-btn" style="background:#3b82f6; font-size:16px;" onclick="scrollToSection('invoice_section')">🧾 電子發票管理中心</button>
 </div>
 
 <div class="card" id="cancel_section" style="border: 2px solid var(--orange);">
     <h3 style="margin:0 0 10px; color: #d97706;">⚠️ 訂單取消與不成立管理</h3>
     <p style="font-size:0.85em; color:#666; margin-top:0;">處理買家取消申請或強制判定訂單不成立，並自動退還資金。</p>
-    
     <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
         <h4 style="margin:0 0 5px 0; color:var(--dark);">📝 審核買家取消申請</h4>
         <select id="cancel_request_select"></select>
@@ -111,7 +97,6 @@
             <button onclick="processCancel('reject')" style="background:var(--dark); flex:1;">拒絕取消</button>
         </div>
     </div>
-
     <div>
         <h4 style="margin:0 0 5px 0; color:var(--dark);">🔨 強制判定訂單不成立</h4>
         <select id="force_cancel_select"></select>
@@ -123,13 +108,53 @@
 <div class="card" id="return_section" style="border: 2px solid var(--red);">
     <h3 style="margin:0 0 10px; color: var(--red);">🚨 退貨 / 退款 審核中心</h3>
     <p style="font-size:0.85em; color:#666; margin-top:0;">集中審核買家的退款與退貨請求，並可在此發佈退貨物流或驗收退款。</p>
-    
     <select id="r_audit_select" onchange="renderReturnAuditPanel()"></select>
-    
     <div id="r_audit_panel" style="display:none; margin-top: 15px; padding: 15px; background: #fff5f5; border-radius: 10px;">
         <h4 id="r_audit_title" style="margin:0 0 10px 0; color:var(--red);"></h4>
         <div id="r_audit_info" style="font-size:0.9em; color:#444; line-height:1.6; margin-bottom:15px; background:#fff; padding:10px; border-radius:8px; border:1px dashed var(--red);"></div>
         <div id="r_audit_actions" style="display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+</div>
+
+<div class="card" id="invoice_section" style="border: 2px solid #3b82f6;">
+    <h3 style="margin:0 0 10px; color: #3b82f6;">🧾 電子發票管理中心</h3>
+    <p style="font-size:0.85em; color:#666; margin-top:0;">手動開立補開發票，或標記發票中獎 (買家將自動收到狂歡通知)。</p>
+    
+    <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
+        <h4 style="margin:0 0 5px 0; color:var(--dark);">🏆 標記電子發票中獎</h4>
+        <select id="inv_won_oid"></select>
+        <input type="text" id="inv_won_name" placeholder="獎項名稱 (如：雲端發票專屬獎 500元)">
+        <input type="number" id="inv_won_amt" placeholder="中獎金額 (例如: 500)">
+        <button onclick="markInvoiceWon()" style="background:#3b82f6; margin-top:10px;">🎉 確認登錄中獎，發送通知</button>
+    </div>
+
+    <div>
+        <h4 style="margin:0 0 5px 0; color:var(--dark);">➕ 手動開立獨立發票</h4>
+        <select id="inv_new_uid"></select>
+        <input type="date" id="inv_new_date" placeholder="發票日期">
+        <input type="text" id="inv_new_num" placeholder="發票號碼 (如: AB-12345678)">
+        <input type="text" id="inv_new_rand" placeholder="隨機碼 (4碼)" maxlength="4">
+        <input type="text" id="inv_new_seller" placeholder="賣方名稱 (自由輸入)">
+        <input type="text" id="inv_new_vat" placeholder="賣方統編 (自由輸入)">
+        <input type="text" id="inv_new_addr" placeholder="賣方地址 (自由輸入)">
+        
+        <label class="section-label">🛍️ 發票消費明細：</label>
+        <div id="inv_items_container">
+            <div class="inv-item-row">
+                <input type="text" class="inv-item-name" placeholder="商品名稱" style="flex: 2;">
+                <input type="text" class="inv-item-spec" placeholder="規格/選項" style="flex: 1.5;">
+                <input type="number" class="inv-item-qty" placeholder="數量" min="1" value="1" style="flex: 1;" oninput="calculateInvTotal()">
+                <input type="number" class="inv-item-price" placeholder="價格" min="0" value="0" style="flex: 1.2;" oninput="calculateInvTotal()">
+                <button type="button" class="btn-mini" style="background: var(--red);" onclick="removeInvItemRow(this)">刪</button>
+            </div>
+        </div>
+        <button type="button" class="btn-mini" style="background: var(--dark); margin-bottom: 12px; width: 100%;" onclick="addInvItemRow()">＋ 新增消費明細</button>
+        
+        <div class="calc-box">🧾 發票總金額：$ <span id="lbl_inv_total">0</span></div>
+        <input type="hidden" id="inv_new_total" value="0">
+        
+        <select id="inv_new_link_oid" style="margin-top:10px;"><option value="">-- 請選擇關聯訂單 (選填) --</option></select>
+        <button onclick="createManualInvoice()" style="background:var(--primary); margin-top:10px;">💾 建立發票</button>
     </div>
 </div>
 
@@ -154,82 +179,64 @@
 
 <div class="card">
     <h3 style="margin:0 0 10px;">📦 手動新增訂單</h3>
-    
-    <label class="section-label">訂單編號 / 單號：</label>
-    <input type="text" id="o_new_id" placeholder="例如: ORD2026053001">
-    
-    <label class="section-label">選擇購買對象 (會員ID)：</label>
-    <select id="o_new_uid"></select>
-    
-    <label class="section-label">初始訂單狀態 (同步試算表 C 欄 物流狀態)：</label>
-    <select id="o_new_status" onchange="toggleVerificationCodeField()"></select>
+    <label class="section-label">訂單編號 / 單號：</label><input type="text" id="o_new_id" placeholder="例如: ORD2026053001">
+    <label class="section-label">選擇購買對象 (會員ID)：</label><select id="o_new_uid" onchange="loadUserCouponsForOrder()"></select>
+    <label class="section-label">初始訂單狀態 (同步試算表 C 欄)：</label><select id="o_new_status" onchange="toggleVerificationCodeField()"></select>
+    <div id="v_code_container" style="display: none;"><label class="section-label" style="color: var(--accent);">🔑 取件驗證碼：</label><input type="text" id="o_new_vcode" placeholder="例如: 8852"></div>
 
-    <div id="v_code_container" style="display: none;">
-        <label class="section-label" style="color: var(--accent);">🔑 取件驗證碼 (非強制填寫)：</label>
-        <input type="text" id="o_new_vcode" placeholder="例如: 8852">
-    </div>
+    <label class="section-label">💳 付款方式：</label>
+    <select id="o_new_payment">
+        <option value="帳戶餘額扣除">帳戶餘額扣除</option><option value="信用卡／金融卡">信用卡／金融卡</option><option value="銀行轉帳">銀行轉帳</option>
+        <option value="電子支付 (街口/LINE Pay等)">電子支付 (街口/LINE Pay等)</option><option value="貨到付款">貨到付款</option><option value="其他">其他</option>
+    </select>
 
     <label class="section-label">🛍️ 商品明細填寫：</label>
     <div id="order_items_container">
         <div class="item-row">
-            <input type="text" class="item-name" placeholder="商品名稱" style="flex: 2;">
-            <input type="text" class="item-spec" placeholder="規格/選項" style="flex: 1.5;">
-            <input type="number" class="item-qty" placeholder="數量" min="1" value="1" style="flex: 1;" oninput="calculateTotalOrderAmount()">
-            <input type="number" class="item-price" placeholder="價格" min="0" value="0" style="flex: 1.2;" oninput="calculateTotalOrderAmount()">
-            <button type="button" class="btn-mini" style="background: var(--red);" onclick="removeOrderItemRow(this)">刪</button>
+            <input type="text" class="item-name" placeholder="商品名稱" style="flex: 2;"><input type="text" class="item-spec" placeholder="規格/選項" style="flex: 1.5;"><input type="number" class="item-qty" placeholder="數量" min="1" value="1" style="flex: 1;" oninput="calculateTotalOrderAmount()"><input type="number" class="item-price" placeholder="價格" min="0" value="0" style="flex: 1.2;" oninput="calculateTotalOrderAmount()"><button type="button" class="btn-mini" style="background: var(--red);" onclick="removeOrderItemRow(this)">刪</button>
         </div>
     </div>
     <button type="button" class="btn-mini" style="background: var(--dark); margin-bottom: 12px; width: 100%;" onclick="addOrderItemRow()">＋ 新增商品品項</button>
 
-    <div class="calc-box">
-        💰 商品小計：$ <span id="lbl_subtotal">0</span>
-    </div>
+    <div class="calc-box">💰 商品小計：$ <span id="lbl_subtotal">0</span></div>
 
     <div style="display: flex; gap: 8px;">
-        <div>
-            <label class="section-label">運費：</label>
-            <input type="number" id="o_new_shipping" value="0" min="0" oninput="calculateTotalOrderAmount()">
-        </div>
-        <div>
-            <label class="section-label">運費折扣：</label>
-            <input type="number" id="o_new_ship_discount" value="0" min="0" oninput="calculateTotalOrderAmount()">
-        </div>
+        <div><label class="section-label">運費：</label><input type="number" id="o_new_shipping" value="0" min="0" oninput="calculateTotalOrderAmount()"></div>
+        <div><label class="section-label">運費折扣：</label><input type="number" id="o_new_ship_discount" value="0" min="0" oninput="calculateTotalOrderAmount()"></div>
     </div>
-
     <div style="display: flex; gap: 6px;">
-        <div>
-            <label class="section-label">賣家折扣：</label>
-            <input type="number" id="o_new_seller_discount" value="0" min="0" oninput="calculateTotalOrderAmount()">
-        </div>
-        <div>
-            <label class="section-label">蝦幣折扣：</label>
-            <input type="number" id="o_new_coin_discount" value="0" min="0" oninput="calculateTotalOrderAmount()">
-        </div>
+        <div><label class="section-label">賣家折扣：</label><input type="number" id="o_new_seller_discount" value="0" min="0" oninput="calculateTotalOrderAmount()"></div>
+        <div><label class="section-label">優惠金額折扣：</label><input type="number" id="o_new_coin_discount" value="0" min="0" oninput="calculateTotalOrderAmount()"></div>
     </div>
 
-    <div class="calc-box" style="background: #fee2e2; color: #b91c1c; font-size: 1.1em;">
-        🚨 訂單總金額 (自動計算)：$ <span id="lbl_total_amount">0</span>
+    <div style="background:#fffbeb; padding:10px; border-radius:8px; border:1px solid #fde68a; margin:10px 0;">
+        <label class="section-label" style="color:#d97706; font-weight:bold; margin-top:0;">🎟️ 套用並核銷會員優惠券 (選填)：</label>
+        <select id="o_new_use_coupon" style="margin-top:5px; border-color:#fcd34d;"><option value="">-- 不套用優惠券 --</option></select>
+        <p style="font-size:0.75em; color:#92400e; margin:5px 0 0 0;">💡 選定後，建立訂單時將自動把該券標記為已核銷。記得在上方折扣欄位手動填入折抵金額！</p>
     </div>
 
-    <label class="section-label">🚚 物流方式 (同步試算表 A 欄 物流方式)：</label>
-    <select id="o_new_log_method"></select>
+    <div class="calc-box" style="background: #fee2e2; color: #b91c1c; font-size: 1.1em;">🚨 訂單總金額 (自動計算)：$ <span id="lbl_total_amount">0</span></div>
 
-    <label class="section-label">🏪 收件門市 / 配送地址快速選擇 (同步試算表 B 欄 門市清單)：</label>
-    <select id="o_new_address_select" onchange="syncAddressSelectToInput()"></select>
-    <input type="text" id="o_new_address" placeholder="或在此處手動輸入修改門市/配送地址">
+    <label style="display:flex; align-items:center; gap:8px; margin: 15px 0; cursor:pointer; background:#f1f5f9; padding:10px; border-radius:8px;">
+        <input type="checkbox" id="o_new_has_invoice" style="width:20px; height:20px; margin:0;" onchange="document.getElementById('invoice_fields').style.display = this.checked ? 'block' : 'none';">
+        <span style="font-weight:bold; color:var(--dark);">🧾 附上電子發票 (將自動存入發票庫)</span>
+    </label>
+    <div id="invoice_fields" style="display:none; background:#f8fafc; padding:15px; border-radius:10px; border:1px dashed #cbd5e1; margin-bottom:15px;">
+        <p style="margin:0 0 10px 0; color:#64748b; font-size:0.85em;">消費明細與總金額將自動同步訂單資訊。</p>
+        <input type="date" id="o_new_inv_date" placeholder="發票日期" style="margin:5px 0;">
+        <input type="text" id="o_new_inv_num" placeholder="發票號碼 (如: AB-12345678)" style="margin:5px 0;">
+        <input type="text" id="o_new_inv_rand" placeholder="隨機碼 (4碼)" maxlength="4" style="margin:5px 0;">
+        <input type="text" id="o_new_inv_seller" placeholder="賣方名稱 (自由輸入)" style="margin:5px 0;">
+        <input type="text" id="o_new_inv_vat" placeholder="賣方統編 (自由輸入)" style="margin:5px 0;">
+        <input type="text" id="o_new_inv_addr" placeholder="賣方地址 (自由輸入)" style="margin:5px 0;">
+    </div>
 
-    <label class="section-label" style="color:var(--primary);">📦 物流追蹤編號 (拆單多包裹請用半形逗號 , 分隔)：</label>
-    <input type="text" id="o_new_log_id" placeholder="例如: 98765432, 12345678">
-
-    <label class="section-label">📝 物流狀態註記 / 備註：</label>
-    <input type="text" id="o_new_log_note" placeholder="例如：包裹已抵達高雄鼓山門市">
-
-    <label class="section-label">📅 訂單成立時間：</label>
-    <input type="datetime-local" id="o_new_time">
-    
-    <label class="section-label" style="color: var(--red);">🚨 取件截止日 (選填，通常於包裹到店時設定)：</label>
-    <input type="date" id="o_new_deadline">
-    
+    <label class="section-label">🚚 物流方式：</label><select id="o_new_log_method"></select>
+    <label class="section-label">🏪 收件門市 / 配送地址快速選擇：</label><select id="o_new_address_select" onchange="syncAddressSelectToInput()"></select><input type="text" id="o_new_address" placeholder="或在此處手動輸入修改門市/配送地址">
+    <label class="section-label" style="color:var(--primary);">📦 物流追蹤編號 (拆單請用 , 分隔)：</label><input type="text" id="o_new_log_id" placeholder="例如: 98765432, 12345678">
+    <label class="section-label">📝 物流狀態註記 / 備註：</label><input type="text" id="o_new_log_note" placeholder="例如：包裹已抵達高雄鼓山門市">
+    <label class="section-label">📅 訂單成立時間：</label><input type="datetime-local" id="o_new_time">
+    <label class="section-label" style="color: var(--red);">🚨 取件截止日 (選填)：</label><input type="date" id="o_new_deadline">
     <button onclick="createNewOrderSubmit()" style="background:var(--green)">確認建立全新訂單</button>
 </div>
 
@@ -244,79 +251,44 @@
 
     <div style="border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
         <h4 style="margin: 0 0 10px 0; color: var(--primary);">➕ 發佈最新物流進度</h4>
-        
         <div id="package_selector_container" style="display:none; margin-bottom:10px; background:#fff; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
             <label style="font-size:0.85em; font-weight:bold; color:var(--primary);">📦 選擇要更新的包裹 (出貨/退貨獨立)：</label>
             <select id="t_log_package" style="margin-top:5px;"></select>
         </div>
-
-        <label style="font-size:0.85em; opacity:0.7;">更新時間節點：</label>
-        <input type="datetime-local" id="t_log_time">
-        
-        <label style="font-size:0.85em; opacity:0.7;">變更物流狀態 (同步試算表 C 欄)：</label>
-        <select id="t_log_status"></select>
-
-        <label style="font-size:0.85em; opacity:0.7;">狀態備註 / 註記：</label>
-        <input type="text" id="t_log_note" placeholder="例如：買家已取件，感謝購買">
-        
+        <label style="font-size:0.85em; opacity:0.7;">更新時間節點：</label><input type="datetime-local" id="t_log_time">
+        <label style="font-size:0.85em; opacity:0.7;">變更物流狀態 (同步試算表 C 欄)：</label><select id="t_log_status"></select>
+        <label style="font-size:0.85em; opacity:0.7;">狀態備註 / 註記：</label><input type="text" id="t_log_note" placeholder="例如：買家已取件，感謝購買">
         <div style="display:flex; gap:10px; margin-top:10px;">
             <div style="flex:1;">
                 <label style="font-size:0.85em; opacity:0.7; color: var(--red);">📅 截止日 (選填)：</label>
                 <div style="display:flex; gap:5px; margin-top:5px;">
-                    <select id="t_log_dl_type" style="width:40%; padding:5px; border-radius:8px; border:1px solid #ddd;">
-                        <option value="取件截止日">取件</option>
-                        <option value="寄件截止日">寄件</option>
-                    </select>
+                    <select id="t_log_dl_type" style="width:40%; padding:5px; border-radius:8px; border:1px solid #ddd;"><option value="取件截止日">取件</option><option value="寄件截止日">寄件</option></select>
                     <input type="date" id="t_log_dl_date" style="width:60%; padding:5px; border-radius:8px; border:1px solid #ddd;">
                 </div>
             </div>
             <div style="flex:0.5;">
-                <label style="font-size:0.85em; opacity:0.7;">🎨 節點顏色：</label>
-                <input type="color" id="t_log_color" value="#db2777" style="height: 48px; padding: 2px; cursor:pointer;">
+                <label style="font-size:0.85em; opacity:0.7;">🎨 節點顏色：</label><input type="color" id="t_log_color" value="#db2777" style="height: 48px; padding: 2px; cursor:pointer;">
             </div>
         </div>
-        
         <button onclick="updateOrderTimelineSubmit()" style="background:var(--dark)">發佈最新節點紀錄</button>
     </div>
 </div>
 
 <div id="wizModal" class="modal">
-    <div class="modal-content">
-        <div id="wizBody"></div>
-        <button onclick="wizNext()" id="nextBtn">下一步</button>
-        <p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p>
-    </div>
+    <div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div>
 </div>
 
 <script>
     // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-    const GAS = "https://script.google.com/macros/s/AKfycbzdycKNpne-SdAuHKiykALkjkzDo1Hq3UARrtNXRSNusM3bfeQk4-pYU7zFyug-Ykuc/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbyQ8vCvLk_-XnZ0P94evwc930zwPQwLiyuj3ck4l4VQ7G36Fz1rnE_DuCBSFPbGvLLS/exec"; 
     
-    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
-    let html5QrCode;
-    let dragSrcEl = null;
+    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
+    let html5QrCode, dragSrcEl = null;
 
-    // --- UI 輔助函數 ---
-    function scrollToSection(id) { 
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: 'smooth' }); 
-    }
-    
-    function showAlert(title, text, icon = 'info') { 
-        Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: 'var(--primary)', confirmButtonText: '確定' }); 
-    }
-    
-    function getNowDateTimeString() { 
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        const hh = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}T${hh}:${min}`; 
-    }
+    function scrollToSection(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+    function showAlert(title, text, icon = 'info') { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: 'var(--primary)', confirmButtonText: '確定' }); }
+    function getNowDateTimeString() { const now = new Date(); const yyyy = now.getFullYear(); const mm = String(now.getMonth() + 1).padStart(2, '0'); const dd = String(now.getDate()).padStart(2, '0'); const hh = String(now.getHours()).padStart(2, '0'); const min = String(now.getMinutes()).padStart(2, '0'); return `${yyyy}-${mm}-${dd}T${hh}:${min}`; }
 
-    // --- 拖曳排序事件 ---
     function handleDragStart(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; this.classList.add('dragging'); }
     function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
     function handleDragEnter(e) { this.classList.add('over'); }
@@ -343,11 +315,14 @@
         } catch (e) { Swal.fire("錯誤", "無法連線至雲端服務", "error"); }
     }
 
-    // --- 網路連線與錯誤捕捉 ---
     async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
-        let currentAbortController = new AbortController();
-        const signal = currentAbortController.signal;
+        let currentAbortController = new AbortController(); const signal = currentAbortController.signal;
         let queuePos = Math.floor(Math.random() * 9), queueInterval, queueTimeout, isPrompting = false, isFinished = false;
+
+        if (url.includes("AKfycbzXHZBEhaN7rxJQ1PRfWYiD74CiSmmwO_zN-k0tdvtfkfoo_Yp64biBVV-74p6AtKHu")) {
+            Swal.fire("開發者提示", "請務必將程式碼中的 SCRIPT_URL 替換為您自己最新部署的專屬網址！", "error");
+            return { success: false, aborted: true };
+        }
 
         const startStandardUI = () => { if (isFinished) return; Swal.fire({ title: loadingTitle, text: '正在同步資料，請稍候...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }}); };
         const renderQueueHtml = (pos) => `<div style="margin: 15px 0;"><div style="font-size: 35px; margin-bottom: 15px; display: flex; justify-content: center; gap: 8px;"><span style="animation: queue-bounce 0.8s infinite alternate;">🚶</span><span style="animation: queue-bounce 0.8s infinite alternate 0.3s;">🚶‍♀️</span><span style="animation: queue-bounce 0.8s infinite alternate 0.6s;">🚶</span></div><div style="font-weight: bold; color: var(--primary, #4f46e5); font-size: 1.1em;">系統目前較為繁忙，您已進入排隊序列</div><div style="margin-top: 5px; font-size: 0.95em;">目前前方還有 <span style="font-size: 1.5em; color: var(--red, #ff5252); margin: 0 5px;">${pos}</span> 人</div></div>`;
@@ -372,7 +347,7 @@
 
         try {
             const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload), signal: signal });
-            const textData = await response.text();
+            const textData = await response.text(); 
             let data;
             try { 
                 data = JSON.parse(textData); 
@@ -405,6 +380,7 @@
             L_DB = res.loans || []; 
             CP_DB = res.coupons || []; 
             O_DB = res.orders || []; 
+            INV_DB = res.invoices || []; 
             SETTINGS = res.settings || {};
             
             updateSelects(); 
@@ -426,7 +402,8 @@
         const uOptions = U_DB.map(u => `<option value="${u.id}">${u.name} (ID: ${u.id})</option>`).join('');
         document.getElementById('l_uid').innerHTML = uOptions; 
         document.getElementById('cp_uid').innerHTML = uOptions; 
-        document.getElementById('o_new_uid').innerHTML = uOptions;
+        document.getElementById('o_new_uid').innerHTML = '<option value="">-- 請選擇購買會員 --</option>' + uOptions;
+        document.getElementById('inv_new_uid').innerHTML = '<option value="">-- 請選擇所屬會員 --</option>' + uOptions;
 
         const statusOptions = (SETTINGS.orderStatuses || SETTINGS["物流狀態"] || []).map(s => `<option value="${s}">${s}</option>`).join('');
         document.getElementById('o_new_status').innerHTML = statusOptions; 
@@ -443,6 +420,10 @@
         document.getElementById('t_order_id').innerHTML = orderOptions;
         if (currentSelectedOid && O_DB.find(o => o.id === currentSelectedOid)) document.getElementById('t_order_id').value = currentSelectedOid;
 
+        let linkOrderOpts = '<option value="">-- 請選擇關聯訂單 (選填) --</option>';
+        O_DB.forEach(o => { linkOrderOpts += `<option value="${o.id}">${o.id} - ${(o.item || '').substring(0, 15)}...</option>`; });
+        document.getElementById('inv_new_link_oid').innerHTML = linkOrderOpts;
+
         let cancelReqOpts = O_DB.filter(o => o.status === '申請取消中').map(o => `<option value="${o.id}">${o.id} - ${(o.item || '').substring(0,15)}</option>`).join('');
         document.getElementById('cancel_request_select').innerHTML = cancelReqOpts || '<option value="">目前無申請中的訂單</option>';
         
@@ -452,6 +433,98 @@
         let auditOpts = O_DB.filter(o => o.status === '申請退貨/退款中' || o.status === '賣家同意-待退貨' || o.status === '退貨驗收中').map(o => `<option value="${o.id}">${(o.status||'').includes('申請')?'🔴 ':'⏳ '}單號:${o.id} - ${o.status}</option>`).join('');
         document.getElementById('r_audit_select').innerHTML = '<option value="">-- 請選擇待處理的退貨退款單 --</option>' + auditOpts;
         document.getElementById('r_audit_panel').style.display = 'none';
+
+        let invWonOpts = INV_DB.map(inv => `<option value="${inv.num}">${inv.num} (所屬:${inv.uid})</option>`).join('');
+        document.getElementById('inv_won_oid').innerHTML = invWonOpts || '<option value="">目前無已開立的發票紀錄</option>';
+    }
+
+    function loadUserCouponsForOrder() {
+        const uid = document.getElementById('o_new_uid').value;
+        const sel = document.getElementById('o_new_use_coupon');
+        if (!uid) { sel.innerHTML = '<option value="">-- 不套用優惠券 --</option>'; return; }
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        let validCoupons = CP_DB.filter(c => c.uid === uid && c.status !== '已使用' && c.status !== 'Macro已使用' && (!c.expiry || c.expiry >= todayStr));
+        
+        let opts = '<option value="">-- 不套用優惠券 --</option>';
+        validCoupons.forEach(c => { opts += `<option value="${c.id}">${c.title} (券號: ${c.id})</option>`; });
+        sel.innerHTML = opts;
+    }
+
+    // 🧾 發票明細動態增刪
+    function addInvItemRow() {
+        const container = document.getElementById('inv_items_container');
+        const div = document.createElement('div');
+        div.className = 'inv-item-row';
+        div.innerHTML = `<input type="text" class="inv-item-name" placeholder="商品名稱" style="flex: 2;"><input type="text" class="inv-item-spec" placeholder="規格/選項" style="flex: 1.5;"><input type="number" class="inv-item-qty" placeholder="數量" min="1" value="1" style="flex: 1;" oninput="calculateInvTotal()"><input type="number" class="inv-item-price" placeholder="價格" min="0" value="0" style="flex: 1.2;" oninput="calculateInvTotal()"><button type="button" class="btn-mini" style="background: var(--red);" onclick="removeInvItemRow(this)">刪</button>`;
+        container.appendChild(div); calculateInvTotal();
+    }
+    function removeInvItemRow(btn) {
+        const rows = document.querySelectorAll('.inv-item-row');
+        if(rows.length <= 1) return Swal.fire("提示", "至少必須保留一項明細！", "warning");
+        btn.parentElement.remove(); calculateInvTotal();
+    }
+    function calculateInvTotal() {
+        let total = 0;
+        document.querySelectorAll('.inv-item-row').forEach(row => {
+            const qty = Number(row.querySelector('.inv-item-qty').value) || 0;
+            const price = Number(row.querySelector('.inv-item-price').value) || 0;
+            total += (qty * price);
+        });
+        document.getElementById('lbl_inv_total').innerText = total;
+        document.getElementById('inv_new_total').value = total;
+    }
+
+    async function createManualInvoice() {
+        let invNum = document.getElementById('inv_new_num').value.trim();
+        let invDate = document.getElementById('inv_new_date').value;
+        let uid = document.getElementById('inv_new_uid').value;
+        let randCode = document.getElementById('inv_new_rand').value.trim();
+        let sellerName = document.getElementById('inv_new_seller').value.trim();
+        let sellerVat = document.getElementById('inv_new_vat').value.trim();
+        let sellerAddr = document.getElementById('inv_new_addr').value.trim();
+        let total = document.getElementById('inv_new_total').value.trim() || 0;
+        let oid = document.getElementById('inv_new_link_oid').value.trim();
+
+        if(!invNum || !invDate || !uid) return Swal.fire("提示", "會員ID、發票日期與號碼為必填！", "warning");
+
+        let itemsArr = [];
+        const itemRows = document.querySelectorAll('.inv-item-row');
+        for (let i = 0; i < itemRows.length; i++) {
+            const name = itemRows[i].querySelector('.inv-item-name').value.trim();
+            const spec = itemRows[i].querySelector('.inv-item-spec').value.trim();
+            const qty = Number(itemRows[i].querySelector('.inv-item-qty').value.trim()) || 0;
+            const price = Number(itemRows[i].querySelector('.inv-item-price').value.trim()) || 0;
+            if(name) itemsArr.push({ name: name, spec: spec, qty: qty, price: price });
+        }
+        if(itemsArr.length === 0) return Swal.fire("提示", "請填寫至少一項消費明細！", "warning");
+
+        try {
+            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addInvoice', invNum: invNum, invDate: invDate, uid: uid, invRand: randCode, sellerName: sellerName, sellerVat: sellerVat, sellerAddr: sellerAddr, itemsJson: JSON.stringify(itemsArr), total: total, oid: oid }, "建立發票中...");
+            if (res.aborted) return;
+            if (res.success) {
+                Swal.fire('成功', res.message, 'success').then(() => refresh());
+                document.getElementById('inv_new_num').value = ""; document.getElementById('inv_new_total').value = "0"; document.getElementById('lbl_inv_total').innerText = "0"; document.getElementById('inv_new_link_oid').value = "";
+                document.querySelectorAll('.inv-item-name').forEach(e=>e.value=''); document.querySelectorAll('.inv-item-spec').forEach(e=>e.value=''); document.querySelectorAll('.inv-item-qty').forEach(e=>e.value='1'); document.querySelectorAll('.inv-item-price').forEach(e=>e.value='0');
+            } else Swal.fire('錯誤', res.message, 'error');
+        } catch(e) { Swal.fire('錯誤', '連線異常', 'error'); }
+    }
+
+    async function markInvoiceWon() {
+        let invNum = document.getElementById('inv_won_oid').value;
+        let prizeName = document.getElementById('inv_won_name').value.trim();
+        let prizeAmt = document.getElementById('inv_won_amt').value.trim();
+
+        if(!invNum || !prizeName || !prizeAmt) return Swal.fire("提示", "請確實填寫獎項名稱與中獎金額！", "warning");
+
+        try {
+            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'markInvoiceWon', invNum: invNum, prizeName: prizeName, prizeAmt: Number(prizeAmt) }, "正在登錄中獎資訊...");
+            if (res.aborted) return;
+            if (res.success) {
+                Swal.fire({ title: '🎊 登錄成功！', text: res.message, icon: 'success' }).then(() => refresh());
+                document.getElementById('inv_won_name').value = ""; document.getElementById('inv_won_amt').value = "";
+            } else { Swal.fire('錯誤', res.message, 'error'); }
+        } catch(e) { Swal.fire('錯誤', '連線異常', 'error'); }
     }
 
     // --- 退貨審核面板處理 ---
@@ -466,14 +539,13 @@
         let r = order.returnData;
         document.getElementById('r_audit_title').innerText = `審核：${order.id}`;
         
-        let isOnlyRefund = (r.items || '').includes('[僅退款]');
-        let isReturnRefund = (r.items || '').includes('[退貨退款]');
+        let isOnlyRefund = (r.items || '').includes('[僅退款]'); let isReturnRefund = (r.items || '').includes('[退貨退款]');
 
         let infoHtml = `
             <p style="margin: 3px 0;"><b>類型：</b> <span style="color:var(--red); font-weight:bold;">${isOnlyRefund ? '僅退款' : (isReturnRefund ? '退貨退款' : '一般退貨')}</span></p>
             <p style="margin: 3px 0;"><b>申請時間：</b> ${r.date}</p>
             <p style="margin: 3px 0;"><b>退回商品：</b> ${r.items}</p>
-            <p style="margin: 3px 0;"><b>退款原因：</b> ${r.reason}</p>
+            <p style="margin: 3px 0;"><b>退貨原因：</b> ${r.reason}</p>
             <p style="margin: 3px 0;"><b>詳細描述：</b> ${r.desc || '無'}</p>
             <p style="margin: 3px 0;"><b>退款方式：</b> ${r.method}</p>
             <p style="margin: 3px 0;"><b>原訂單金額：</b> $${order.total}</p>
@@ -555,7 +627,6 @@
         } catch(e) { Swal.fire('錯誤', '連線異常', 'error'); }
     }
 
-    // --- 訂單取消與審核 ---
     async function processCancel(mode) {
         let oid, reason = "";
         if (mode === 'approve' || mode === 'reject') {
@@ -580,7 +651,7 @@
         let dCoin = order.discCoin || 0, dTotal = order.total || 0;
         const { value: formValues } = await Swal.fire({
             title: '退款加回設定',
-            html: `<div style="text-align:left; font-size:16px;"><p style="color:var(--red); font-weight:bold; margin-bottom:10px;">請勾選欲加回餘額的項目：</p><label style="display:flex; align-items:center; gap:8px; margin-bottom:10px; cursor:pointer;"><input type="checkbox" id="chk_coin" style="width:20px; height:20px;" ${dCoin>0?'checked':''}>退還折扣點數 ($${dCoin})</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="chk_total" style="width:20px; height:20px;" ${dTotal>0?'checked':''}><span>退還實付金額 ($${dTotal})</span></label></div>`,
+            html: `<div style="text-align:left; font-size:16px;"><p style="color:var(--red); font-weight:bold; margin-bottom:10px;">請勾選欲加回餘額的項目：</p><label style="display:flex; align-items:center; gap:8px; margin-bottom:10px; cursor:pointer;"><input type="checkbox" id="chk_coin" style="width:20px; height:20px;" ${dCoin>0?'checked':''}>退還優惠金額折扣 ($${dCoin})</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="chk_total" style="width:20px; height:20px;" ${dTotal>0?'checked':''}><span>退還實付金額 ($${dTotal})</span></label></div>`,
             focusConfirm: false, showCancelButton: true, confirmButtonColor: 'var(--green)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定執行', cancelButtonText: '取消',
             preConfirm: () => { return { refundCoin: document.getElementById('chk_coin').checked, refundTotal: document.getElementById('chk_total').checked } }
         });
@@ -628,7 +699,6 @@
         let totalAmount = subtotal + shipping - shipDiscount - sellerDiscount - coinDiscount; document.getElementById('lbl_total_amount').innerText = Math.max(0, totalAmount); return { subtotal: subtotal, totalAmount: Math.max(0, totalAmount) };
     }
 
-    // --- 掃描與導航操作 ---
     function startScan() {
         document.getElementById('reader-modal').style.display = 'flex'; html5QrCode = new Html5Qrcode("reader");
         html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (decodedText) => {
@@ -641,7 +711,7 @@
                 } else showAlert("查無此券", "找不到券號：" + code, "error");
             } else {
                 const user = U_DB.find(u => u.id === code);
-                if (user) { FORM.uid = code; document.getElementById('targetName').innerText = user.name; document.getElementById('targetDesc').innerText = `目前餘額：$${user.bal}\n請選擇操作項目`; document.getElementById('quickBtns').style.display = 'grid'; document.getElementById('couponRedeemBtn').style.display = 'none'; document.getElementById('quickActionModal').style.display = 'flex'; } else showAlert("查無此人", "找不到使用者識別碼：" + code, "error");
+                if (user) { FORM.uid = code; document.getElementById('targetName').innerText = user.name; document.getElementById('targetDesc').innerText = `目前帳戶可用餘額：$${user.bal}\n請選擇操作項目`; document.getElementById('quickBtns').style.display = 'grid'; document.getElementById('couponRedeemBtn').style.display = 'none'; document.getElementById('quickActionModal').style.display = 'flex'; } else showAlert("查無此人", "找不到會員條碼：" + code, "error");
             }
         });
     }
@@ -649,7 +719,7 @@
     function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
     function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
 
-    const FLOWS = { add: [{t:"選擇對象",f:"uid",type:"user"}, {t:"加值金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], sub: [{t:"選擇對象",f:"uid",type:"user"}, {t:"扣款項目",f:"item",type:"text"}, {t:"扣款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], pay: [{t:"選擇對象",f:"uid",type:"user"}, {t:"選擇應還帳單",f:"loanRef",type:"loan"}, {t:"還款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], redeem: [{t:"請輸入或掃描優惠券ID",f:"cpId",type:"text"}] };
+    const FLOWS = { add: [{t:"選擇對象",f:"uid",type:"user"}, {t:"加值金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], sub: [{t:"選擇對象",f:"uid",type:"user"}, {t:"扣除項目",f:"item",type:"text"}, {t:"扣除金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], pay: [{t:"選擇對象",f:"uid",type:"user"}, {t:"選擇應還帳單",f:"loanRef",type:"loan"}, {t:"還款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], redeem: [{t:"請輸入或掃描優惠券ID",f:"cpId",type:"text"}] };
 
     function openWiz(mode, prefilledUid = null) { CUR_MODE = mode; CUR_STEP = 0; FORM = {}; if (prefilledUid) FORM.uid = prefilledUid; document.getElementById('wizModal').style.display = 'flex'; renderStep(); }
     function closeModal() { document.getElementById('wizModal').style.display = 'none'; }
@@ -666,26 +736,40 @@
         FORM[field] = inputEl.value.trim(); if (CUR_STEP < flow.length - 1) { CUR_STEP++; renderStep(); } else submitWiz();
     }
     
-    // --- 寫入操作群 ---
     async function submitWiz() { closeModal(); try { const res = await fetchWithQueue(GAS, { action: 'adminAction', type: CUR_MODE, ...FORM }, "提交中..."); if (res.aborted) return; if (res.success) Swal.fire({ title: '成功！', text: res.message, icon: 'success' }).then(() => refresh()); else showAlert("失敗", res.message, "error"); } catch(e) { showAlert("異常", "連線失敗", "error"); } }
     async function submitRedeem() { closeQuick(); try { const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'redeem', cpId: FORM.cpId }, "核銷中..."); if (res.aborted) return; if(res.success) Swal.fire({ title: '成功！', text: res.message, icon: 'success' }).then(() => refresh()); else showAlert("失敗", res.message, "error"); } catch(e) { showAlert("異常", "連線失敗", "error"); } }
     async function addLoan() { const uid = document.getElementById('l_uid').value, item = document.getElementById('l_item').value.trim(), amt = document.getElementById('l_amt').value.trim(), exp = document.getElementById('l_exp').value; if(!uid || !item || !amt || !exp) return Swal.fire("提示", "表單不完整！", "warning"); try { const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addLoan', uid: uid, item: item, amt: Number(amt), expiry: exp }, "撥發中..."); if (res.aborted) return; if(res.success) { Swal.fire({ title: '發放完成', text: res.message, icon: 'success' }).then(() => refresh()); document.getElementById('l_item').value = ""; document.getElementById('l_amt').value = ""; document.getElementById('l_exp').value = ""; } else showAlert("失敗", res.message, "error"); } catch(e) { showAlert("異常", "連線失敗", "error"); } }
     async function sendCouponSubmit() { const uid = document.getElementById('cp_uid').value, cpId = document.getElementById('cp_id').value.trim(), title = document.getElementById('cp_title').value.trim(), content = document.getElementById('cp_content').value.trim(), expiry = document.getElementById('cp_exp').value; if(!uid || !cpId || !title || !content || !expiry) return Swal.fire("提示", "請填寫完整資訊！", "warning"); try { const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry }, "發送中..."); if (res.aborted) return; if (res.success) { Swal.fire({ title: '發送完畢', text: res.message, icon: 'success' }).then(() => refresh()); document.getElementById('cp_id').value = ""; document.getElementById('cp_title').value = ""; document.getElementById('cp_content').value = ""; document.getElementById('cp_exp').value = ""; } else showAlert("失敗", res.message, "error"); } catch(e) { showAlert("異常", "連線失敗", "error"); } }
     
+    // 💳 🧾 新增訂單：包含付款方式與發票處理
     async function createNewOrderSubmit() {
         const id = document.getElementById('o_new_id').value.trim(), uid = document.getElementById('o_new_uid').value, status = document.getElementById('o_new_status').value, vcode = document.getElementById('o_new_vcode').value.trim(), time = document.getElementById('o_new_time').value;
+        const payment = document.getElementById('o_new_payment').value;
+        const cpid = document.getElementById('o_new_use_coupon').value;
+        
         const itemRows = document.querySelectorAll('.item-row'); let itemsArray = []; let itemSummaryText = ""; 
         for (let i = 0; i < itemRows.length; i++) {
             const name = itemRows[i].querySelector('.item-name').value.trim(), spec = itemRows[i].querySelector('.item-spec').value.trim(), qty = itemRows[i].querySelector('.item-qty').value.trim(), price = itemRows[i].querySelector('.item-price').value.trim();
             if(!name || !qty || !price) return Swal.fire("提示", `請確實填寫第 ${i+1} 項商品！`, "warning");
             itemsArray.push({ name, spec, qty: Number(qty), price: Number(price) }); itemSummaryText += `- ${name}${spec ? ' ('+spec+')' : ''} x${qty} ($${price})\n`;
         }
+        
         const calcData = calculateTotalOrderAmount(), shipping = Number(document.getElementById('o_new_shipping').value) || 0, shipDiscount = Number(document.getElementById('o_new_ship_discount').value) || 0, sellerDiscount = Number(document.getElementById('o_new_seller_discount').value) || 0, coinDiscount = Number(document.getElementById('o_new_coin_discount').value) || 0;
         const logMethod = document.getElementById('o_new_log_method').value, address = document.getElementById('o_new_address').value.trim(), logId = document.getElementById('o_new_log_id').value.trim();
         let logNote = document.getElementById('o_new_log_note').value.trim(); const newDeadline = document.getElementById('o_new_deadline').value; if (newDeadline) logNote = (logNote + ` [取件截止日:${newDeadline}]`).trim();
         if(!id || !uid || !status || !time || !address) return Swal.fire("提示", "請填寫必要欄位！", "warning");
+
+        let invJsonStr = "";
+        if(document.getElementById('o_new_has_invoice').checked) {
+            let invNum = document.getElementById('o_new_inv_num').value.trim();
+            let invDate = document.getElementById('o_new_inv_date').value;
+            if(!invNum || !invDate) return Swal.fire("提示", "勾選附上發票時，發票號碼與日期為必填！", "warning");
+            let invData = { date: invDate, num: invNum, rand: document.getElementById('o_new_inv_rand').value.trim(), sellerName: document.getElementById('o_new_inv_seller').value.trim(), sellerVat: document.getElementById('o_new_inv_vat').value.trim(), sellerAddr: document.getElementById('o_new_inv_addr').value.trim(), items: itemsArray, total: calcData.totalAmount };
+            invJsonStr = JSON.stringify(invData);
+        }
+
         try {
-            const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: vcode, subtotal: calcData.subtotal, shipFee: shipping, discShip: shipDiscount, discSeller: sellerDiscount, discCoin: coinDiscount, total: calcData.totalAmount, ship: logMethod, address: address, track: logId, note: logNote, time: time.replace('T', ' ') }, "建立中...");
+            const res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: vcode, subtotal: calcData.subtotal, shipFee: shipping, discShip: shipDiscount, discSeller: sellerDiscount, discCoin: coinDiscount, total: calcData.totalAmount, ship: logMethod, address: address, track: logId, note: logNote, payment: payment, invoiceJson: invJsonStr, cpid: cpid, time: time.replace('T', ' ') }, "建立中...");
             if (res.aborted) return; if (res.success) Swal.fire({ title: '成功！', text: '新訂單已寫入雲端。', icon: 'success' }).then(() => refresh()); else showAlert("失敗", res.message, "error");
         } catch(e) { showAlert("異常", "連線失敗", "error"); }
     }
@@ -700,95 +784,53 @@
         }).join('');
     }
 
-    // 📦 🚨 雙軌時間線分離與下拉選單獨立處理
     function renderAdminTimeline() {
         const container = document.getElementById('admin_timeline_container');
         const pkgSelector = document.getElementById('t_log_package');
         const pkgContainer = document.getElementById('package_selector_container');
         const orderId = document.getElementById('t_order_id').value;
 
-        if (!orderId) {
-            container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">請先選擇訂單以查看時間線</p>`;
-            pkgContainer.style.display = 'none'; return;
-        }
-
-        const order = O_DB.find(o => o.id === orderId);
-        if (!order) return;
+        if (!orderId) { container.innerHTML = `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">請先選擇訂單以查看時間線</p>`; pkgContainer.style.display = 'none'; return; }
+        const order = O_DB.find(o => o.id === orderId); if (!order) return;
 
         let outboundTracks = (order.track || "").split(',').map(t => t.trim()).filter(t => t);
-        let returnTrack = null;
-        let hasReturn = false;
-
-        if (order.returnData && !(order.returnData.items || '').includes('[僅退款]')) {
-            hasReturn = true;
-            returnTrack = order.returnData.track ? order.returnData.track.trim() : '退貨包裹(未編號)';
-        }
+        let returnTrack = null; let hasReturn = false;
+        if (order.returnData && !(order.returnData.items || '').includes('[僅退款]')) { hasReturn = true; returnTrack = order.returnData.track ? order.returnData.track.trim() : '退貨包裹(未編號)'; }
 
         let optionsHtml = '<option value="all">-- 🌐 共用進度 (同步更新) --</option>';
-        outboundTracks.forEach((t, i) => {
-            optionsHtml += `<option value="${t}">🚚 【出貨】包裹 ${i+1} (單號:${t})</option>`;
-        });
-        if (hasReturn) {
-            optionsHtml += `<option value="${returnTrack}">🚨 【退貨】退貨件 (${returnTrack})</option>`;
-        }
+        outboundTracks.forEach((t, i) => { optionsHtml += `<option value="${t}">🚚 【出貨】包裹 ${i+1} (單號:${t})</option>`; });
+        if (hasReturn) { optionsHtml += `<option value="${returnTrack}">🚨 【退貨】退貨件 (${returnTrack})</option>`; }
         
-        if (outboundTracks.length > 0 || hasReturn) {
-            pkgSelector.innerHTML = optionsHtml;
-            pkgContainer.style.display = 'block';
-        } else {
-            pkgSelector.innerHTML = '';
-            pkgContainer.style.display = 'none';
-        }
+        if (outboundTracks.length > 0 || hasReturn) { pkgSelector.innerHTML = optionsHtml; pkgContainer.style.display = 'block'; } else { pkgSelector.innerHTML = ''; pkgContainer.style.display = 'none'; }
 
         let finalHtml = "";
-        
         if (outboundTracks.length > 0) {
             finalHtml += `<h4 style="margin: 0 0 10px 0; color: var(--primary);">🚚 出貨物流進度</h4>`;
             outboundTracks.forEach((track, i) => {
                 let pkgLogs = (order.timeline || []).filter(n => !n.packageId || n.packageId === track);
                 let nodesHtml = generateAdminNodesHtml(pkgLogs, orderId);
-                finalHtml += `
-                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:12px; padding:12px;">
-                        <h5 style="margin:0 0 12px 0; color:var(--primary); font-size:0.95em; border-bottom:1px solid #f1f5f9; padding-bottom:5px;">📦 包裹 ${i+1} (${track})</h5>
-                        <div class="admin-timeline" style="margin-top:5px;">${nodesHtml}</div>
-                    </div>`;
+                finalHtml += `<div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:12px; padding:12px;"><h5 style="margin:0 0 12px 0; color:var(--primary); font-size:0.95em; border-bottom:1px solid #f1f5f9; padding-bottom:5px;">📦 包裹 ${i+1} (${track})</h5><div class="admin-timeline" style="margin-top:5px;">${nodesHtml}</div></div>`;
             });
         } else if (!hasReturn) {
             let pkgLogs = order.timeline || [];
-            if (pkgLogs.length > 0) {
-                finalHtml += `<h4 style="margin: 0 0 10px 0; color: var(--primary);">🚚 出貨物流進度</h4>`;
-                finalHtml += `<div class="admin-timeline">${generateAdminNodesHtml(pkgLogs, orderId)}</div>`;
-            } else {
-                finalHtml += `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">此訂單尚無出貨時間線紀錄</p>`;
-            }
+            if (pkgLogs.length > 0) { finalHtml += `<h4 style="margin: 0 0 10px 0; color: var(--primary);">🚚 出貨物流進度</h4><div class="admin-timeline">${generateAdminNodesHtml(pkgLogs, orderId)}</div>`; } else { finalHtml += `<p style="text-align: center; color: #94a3b8; font-size: 0.9em; margin: 0;">此訂單尚無出貨時間線紀錄</p>`; }
         }
 
         if (hasReturn) {
             let retLogs = (order.timeline || []).filter(n => n.packageId === returnTrack || n.packageId === '退貨包裹(未編號)');
             let nodesHtml = generateAdminNodesHtml(retLogs, orderId);
-            finalHtml += `
-                <div style="margin-top: 20px; padding-top: 15px; border-top: 2px dashed var(--red);">
-                    <h4 style="margin: 0 0 10px 0; color: var(--red);">🚨 退貨物流進度</h4>
-                    <div style="background:#fff5f5; border:1px solid #fecaca; border-radius:10px; margin-bottom:12px; padding:12px;">
-                        <h5 style="margin:0 0 12px 0; color:var(--red); font-size:0.95em; border-bottom:1px solid #fee2e2; padding-bottom:5px;">📦 退回件 (${returnTrack})</h5>
-                        <div class="admin-timeline" style="margin-top:5px;">${nodesHtml}</div>
-                    </div>
-                </div>`;
+            finalHtml += `<div style="margin-top: 20px; padding-top: 15px; border-top: 2px dashed var(--red);"><h4 style="margin: 0 0 10px 0; color: var(--red);">🚨 退貨物流進度</h4><div style="background:#fff5f5; border:1px solid #fecaca; border-radius:10px; margin-bottom:12px; padding:12px;"><h5 style="margin:0 0 12px 0; color:var(--red); font-size:0.95em; border-bottom:1px solid #fee2e2; padding-bottom:5px;">📦 退回件 (${returnTrack})</h5><div class="admin-timeline" style="margin-top:5px;">${nodesHtml}</div></div></div>`;
         }
-
         container.innerHTML = finalHtml;
     }
 
     async function openEditNodeModal(oid, encRawMsg, encTime, encStatus, encNote) {
         const rawMsg = decodeURIComponent(atob(encRawMsg)); const oldTime = decodeURIComponent(atob(encTime)); const oldStatus = decodeURIComponent(atob(encStatus)); const rawNote = decodeURIComponent(atob(encNote));
         const isoTime = oldTime.replace(' ', 'T'); const statusOptions = (SETTINGS.orderStatuses || SETTINGS["物流狀態"] || []).map(s => `<option value="${s}" ${s === oldStatus ? 'selected' : ''}>${s}</option>`).join('');
-        
         let pkgMatch = rawMsg.match(/\[包裹:(.*?)\]/); let extractedPkg = pkgMatch ? pkgMatch[1].trim() : "";
         let colorMatch = rawMsg.match(/\[顏色:(#[0-9a-fA-F]{3,6})\]/); let extractedColor = colorMatch ? colorMatch[1] : "#db2777";
         let cleanNote = rawNote.replace(/\[顏色:.*?\]/g, '').replace(/\[[取寄]件截止日:.*?\]/g, '').trim();
-        
-        let dlMatch = rawNote.match(/\[([取寄]件截止日):(.*?)]/);
-        let dlDate = dlMatch ? dlMatch[2] : ""; let dlType = dlMatch ? dlMatch[1] : "取件截止日";
+        let dlMatch = rawNote.match(/\[([取寄]件截止日):(.*?)]/); let dlDate = dlMatch ? dlMatch[2] : ""; let dlType = dlMatch ? dlMatch[1] : "取件截止日";
 
         const result = await Swal.fire({
             title: '✏️ 編輯或刪除物流時間線節點',
@@ -801,33 +843,17 @@
                     <label style="display:block; margin-top:10px; color:var(--dark);">狀態備註/註記：</label>
                     <input type="text" id="edit_log_note" class="swal2-input" value="${cleanNote}" style="width: 80%; margin: 5px auto; padding: 10px;">
                     <div style="display:flex; gap:10px; margin-top:10px; width:80%; margin-left:auto; margin-right:auto;">
-                        <div style="flex:1;">
-                            <label style="font-size:0.85em; opacity:0.7; color: var(--red);">📅 截止日 (選填)：</label>
-                            <div style="display:flex; gap:2px; margin-top:5px;">
-                                <select id="edit_log_dl_type" style="width:50%; padding:2px; font-size:12px; border-radius:4px;">
-                                    <option value="取件截止日" ${dlType==='取件截止日'?'selected':''}>取件</option>
-                                    <option value="寄件截止日" ${dlType==='寄件截止日'?'selected':''}>寄件</option>
-                                </select>
-                                <input type="date" id="edit_log_dl_date" value="${dlDate}" style="width:50%; padding:2px; border-radius:4px;">
-                            </div>
-                        </div>
-                        <div style="flex:0.5;">
-                            <label style="font-size:0.85em; opacity:0.7;">🎨 顏色：</label>
-                            <input type="color" id="edit_log_color" value="${extractedColor}" style="height: 40px; width:100%; padding: 2px; cursor:pointer;">
-                        </div>
+                        <div style="flex:1;"><label style="font-size:0.85em; opacity:0.7; color: var(--red);">📅 截止日 (選填)：</label><div style="display:flex; gap:2px; margin-top:5px;"><select id="edit_log_dl_type" style="width:50%; padding:2px; font-size:12px; border-radius:4px;"><option value="取件截止日" ${dlType==='取件截止日'?'selected':''}>取件</option><option value="寄件截止日" ${dlType==='寄件截止日'?'selected':''}>寄件</option></select><input type="date" id="edit_log_dl_date" value="${dlDate}" style="width:50%; padding:2px; border-radius:4px;"></div></div>
+                        <div style="flex:0.5;"><label style="font-size:0.85em; opacity:0.7;">🎨 顏色：</label><input type="color" id="edit_log_color" value="${extractedColor}" style="height: 40px; width:100%; padding: 2px; cursor:pointer;"></div>
                     </div>
                 </div>
             `,
             focusConfirm: false, showCancelButton: true, showDenyButton: true, confirmButtonColor: 'var(--primary)', denyButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', cancelButtonText: '取消', confirmButtonText: '儲存變更', denyButtonText: '🗑️ 刪除此節點',
             preConfirm: () => {
                 const nt = document.getElementById('edit_log_time').value, ns = document.getElementById('edit_log_status').value, nc = document.getElementById('edit_log_color').value;
-                const ndt = document.getElementById('edit_log_dl_type').value, ndd = document.getElementById('edit_log_dl_date').value;
-                let nn = document.getElementById('edit_log_note').value.trim();
-                
+                const ndt = document.getElementById('edit_log_dl_type').value, ndd = document.getElementById('edit_log_dl_date').value; let nn = document.getElementById('edit_log_note').value.trim();
                 if (!nt) { Swal.showValidationMessage('請確實填寫時間！'); return false; }
-                if (extractedPkg) nn = "[包裹:" + extractedPkg + "] " + nn;
-                nn = "[顏色:" + nc + "] " + nn;
-                if (ndd) nn = nn + ` [${ndt}:${ndd}]`;
+                if (extractedPkg) nn = "[包裹:" + extractedPkg + "] " + nn; nn = "[顏色:" + nc + "] " + nn; if (ndd) nn = nn + ` [${ndt}:${ndd}]`;
                 return { newTime: nt.replace('T', ' '), newStatus: ns, newNote: nn };
             }
         });
