@@ -6,13 +6,12 @@
     <title>小佑的日常生活行動會員</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- 🎉 引入滿版撒花動畫套件 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { 
             --bg: #ffffff; --text: #000; --pink: #FF8FA3; --accent: #FF8FA3; --card: #f5f5f5; 
             --border: #e0e0e0; --nav: #fafafa; --red: #ff5252; --green: #2ecc71; --fs: 18px; 
-            --orange: #f59e0b;
+            --orange: #f59e0b; --blue: #3b82f6;
         }
         [data-theme='dark'] { 
             --bg: #000; --text: #fff; --pink: #FFD1DC; --accent: #FF8FA3; --card: #121212; 
@@ -25,34 +24,57 @@
         .page { width: 100%; height: 100%; padding: 40px 20px 110px; box-sizing: border-box; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; }
         .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 1.1em; font-weight: 900; cursor: pointer; }
-        .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; height: 90px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; transition: max-width 0.3s ease; }
+        
+        /* 📱 導航列排版微調 (7個分頁) */
+        .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; height: 75px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; transition: max-width 0.3s ease; }
         .app-container.full-desktop ~ .nav-bar, .full-desktop .nav-bar { max-width: 100% !important; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.75em; cursor: pointer; }
-        .nav-item.active { color: var(--pink); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.75em; cursor: pointer; text-align: center; }
+        .nav-item.active { color: var(--pink); font-weight: bold; }
+        .nav-icon { font-size: 1.4em; margin-bottom: 3px; }
+        
         .mask { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
-        input { width:100%; padding:18px; margin:10px 0; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 1em; }
-        .overdue-tag { position: absolute; top: 10px; right: 10px; background: var(--red); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 0.75em; }
+        input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 0.9em; font-family:inherit; }
+        .overdue-tag { position: absolute; top: 10px; right: 10px; background: var(--red); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 0.7em; }
         .note-box { font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px dashed #333; padding-top: 5px; font-weight: normal; }
         .coupon-tabs, .loan-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 5px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .coupon-tab, .loan-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 0.9em; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; }
+        .coupon-tab, .loan-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 0.85em; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; }
         .coupon-tab.active, .loan-tab.active { background: var(--pink); color: #fff; }
-        .pwd-toggle-container { display: flex; align-items: center; margin: 5px 0 15px; font-size: 0.9em; cursor: pointer; user-select: none; }
+        .pwd-toggle-container { display: flex; align-items: center; margin: 5px 0 15px; font-size: 0.85em; cursor: pointer; user-select: none; }
         .pwd-toggle-container input { width: auto; margin: 0 8px 0 0; transform: scale(1.2); }
         .swal2-popup { font-family: -apple-system, sans-serif; font-weight: 900; border-radius: 20px !important; }
         [data-theme='dark'] .swal2-popup { background-color: #121212 !important; color: #fff !important; }
         [data-theme='dark'] .swal2-title, [data-theme='dark'] .swal2-html-container { color: #fff !important; }
+        
         .sync-indicator { position: absolute; top: 12px; left: 15px; display: none; align-items: center; gap: 6px; z-index: 110; background: rgba(0, 0, 0, 0.05); padding: 4px 8px; border-radius: 20px; pointer-events: none; }
         [data-theme='dark'] .sync-indicator { background: rgba(255, 255, 255, 0.1); }
         .sync-spinner { width: 12px; height: 12px; border: 2px solid var(--border); border-top: 2px solid var(--pink); border-radius: 50%; animation: sync-spin 0.8s linear infinite; }
         .sync-text { font-size: 0.65em; opacity: 0.7; letter-spacing: 0.5px; }
         @keyframes sync-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes queue-bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
+        
         .settings-section-title { font-size: 1.1em; margin: 20px 0 10px 5px; color: var(--pink); display: flex; align-items: center; gap: 6px; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .header-container h2 { margin: 0; }
         .sort-select { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 0.8em; font-weight: bold; outline: none; cursor: pointer; }
         
-        .order-timeline { margin: 5px 0 5px 5px; padding-left: 5px; }
+        .shortcut-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
+        .shortcut-item { background: var(--card); border: 1px solid var(--border); padding: 12px 5px; border-radius: 15px; text-align: center; font-size: 0.75em; cursor: pointer; display: none; }
+        .shortcut-item.visible { display: block; }
+
+        /* 🎧 客服交談室 UI */
+        .chat-container { display:flex; flex-direction:column; height: 60vh; background:#f1f5f9; border-radius:10px; overflow:hidden; }
+        .chat-box { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; text-align:left; }
+        .msg-bubble { max-width:80%; padding:10px 14px; border-radius:15px; font-size:14px; line-height:1.4; word-wrap:break-word; }
+        .msg-user { align-self:flex-end; background:var(--pink); color:#fff; border-bottom-right-radius:2px; }
+        .msg-admin { align-self:flex-start; background:#fff; border:1px solid #ddd; border-bottom-left-radius:2px; color:#000; }
+        .msg-time { font-size:10px; opacity:0.6; margin-top:4px; text-align:right; }
+        .msg-user .msg-time { color:#ffe4e6; }
+        .chat-input-area { display:flex; padding:10px; background:#fff; border-top:1px solid #ddd; }
+        .chat-input-area input { margin:0; border-radius:20px; border:1px solid #ccc; padding:10px 15px; flex:1; }
+        .chat-input-area button { width:auto; margin:0 0 0 10px; padding:10px 20px; border-radius:20px; }
+
+        /* ⏱️ 訂單時間線 UI */
+        .order-timeline { margin: 15px 0 5px 5px; padding-left: 5px; }
         .timeline-node { --node-color: #a1a1aa; --node-shadow: rgba(161, 161, 170, 0.35); position: relative; padding-left: 24px; padding-bottom: 18px; }
         .timeline-node:last-child { padding-bottom: 5px; }
         .timeline-node::before { content: ''; position: absolute; left: 4px; top: 6px; bottom: 0; width: 2px; background: var(--border); }
@@ -65,7 +87,7 @@
         .timeline-node-time { font-size: 0.75em; font-weight: bold; opacity: 0.6; color: var(--text); margin-bottom: 3px; }
         .timeline-node.latest-node .timeline-node-time { opacity: 0.85; color: var(--node-color) !important; }
         .timeline-node-desc { font-size: 0.8em; font-weight: normal; opacity: 0.75; color: var(--text); line-height: 1.4; }
-        
+
         .footer-info { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 0.75em; color: #888; line-height: 1.6; }
         .footer-info .about-link { color: var(--pink); text-decoration: underline; cursor: pointer; margin-top: 10px; display: inline-block; }
     </style>
@@ -87,32 +109,61 @@
         <div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
             <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
             
-            <!-- 分頁 0：首頁 -->
             <div id="p0" class="page" style="display:block;">
+                <div style="font-size:1.1em; margin:0 0 10px 5px; color:var(--pink); display:flex; align-items:center; gap:6px; font-weight:bold;">🔔 我的通知</div>
+                <div id="ntList" style="max-height:250px; overflow-y:auto; padding-right:5px; margin-bottom: 20px;"></div>
+
                 <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
-                <div class="card" style="text-align:center; padding: 40px 20px;">
-                    <div style="font-size:0.8em; opacity:0.6;">帳戶可用餘額</div>
-                    <div style="font-size:2.5em; color:var(--pink);">$ <span id="uBal">0</span></div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                    <div class="card" style="text-align:center; padding:20px 10px; margin:0;">
+                        <div style="font-size:0.75em; opacity:0.6;">可用積分餘額</div>
+                        <div style="font-size:2em; color:var(--pink); margin-top:5px;">$ <span id="uBal">0</span></div>
+                    </div>
+                    <div class="card" style="text-align:center; padding:20px 10px; margin:0; border-left:4px solid var(--blue);">
+                        <div style="font-size:0.75em; opacity:0.6;">先享後付 額度</div>
+                        <div style="font-size:2em; color:var(--blue); margin-top:5px;">$ <span id="uBnpl">0</span></div>
+                    </div>
                 </div>
-                <button class="btn" onclick="showQR()">顯示會員條碼</button>
+
+                <button class="btn" onclick="showQR()">顯示個人識別碼</button>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+                    <span style="font-size:0.9em; opacity:0.7;">⚡ 常用功能捷徑</span>
+                    <span style="font-size:0.8em; color:var(--pink); cursor:pointer;" onclick="customizeShortcuts()">[✏️ 自訂選單]</span>
+                </div>
+                <div class="shortcut-grid" id="shortcut_container">
+                    <div class="shortcut-item" id="sc_1" onclick="openTab(1)">📊 收支紀錄</div>
+                    <div class="shortcut-item" id="sc_2" onclick="openTab(2)">📦 訂單追蹤</div>
+                    <div class="shortcut-item" id="sc_3" onclick="openTab(3)">🤝 待還帳單</div>
+                    <div class="shortcut-item" id="sc_4" onclick="openTab(4)">🎟️ 我的優惠</div>
+                    <div class="shortcut-item" id="sc_5" onclick="openTab(5)">🧾 電子發票</div>
+                    <div class="shortcut-item" id="sc_6" onclick="openTab(6)">⚙️ 會員設定</div>
+                </div>
             </div>
 
-            <!-- 分頁 1：交易紀錄 -->
             <div id="p1" class="page">
                 <div class="header-container"><h2>交易紀錄</h2><select id="sortH" class="sort-select" onchange="render()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <p style="font-size:0.85em; color:#666; margin-top:0;">此處將列出您近期的餘額收支明細。</p>
                 <div id="hList"></div>
             </div>
 
-            <!-- 分頁 2：訂單狀態 -->
             <div id="p2" class="page">
                 <div class="header-container"><h2>訂單狀態</h2><select id="sortO" class="sort-select" onchange="render()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <div id="oList"></div>
             </div>
             
-            <!-- 分頁 3：待還帳單 -->
             <div id="p3" class="page">
                 <div class="header-container"><h2>待還帳單</h2><select id="sortL" class="sort-select" onchange="renderLoans()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
+                
+                <div class="card" style="background:var(--card); padding:15px; border-left:5px solid var(--blue); margin-bottom:15px;">
+                    <span style="font-size:0.8em; opacity:0.6;">💳 先享後付信用總額度</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                        <b style="font-size:1.3em; color:var(--blue);">$ <span id="lbl_loan_avail">0</span> / <span id="lbl_loan_total">500</span></b>
+                        <span style="font-size:0.75em; background:#fee2e2; color:var(--red); padding:3px 6px; border-radius:5px;" id="lbl_loan_outstanding">未結清: $0</span>
+                    </div>
+                </div>
+
                 <div class="loan-tabs">
                     <div class="loan-tab active" id="tabLn0" onclick="switchLoanTab(0)">未結清</div>
                     <div class="loan-tab" id="tabLn1" onclick="switchLoanTab(1)">已結清</div>
@@ -121,7 +172,6 @@
                 <div id="lList"></div>
             </div>
             
-            <!-- 分頁 4：優惠券 -->
             <div id="p4" class="page">
                 <div class="header-container"><h2>我的優惠券</h2><select id="sortC" class="sort-select" onchange="renderCoupons()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <div class="coupon-tabs">
@@ -132,24 +182,27 @@
                 <div id="cpList"></div>
             </div>
 
-            <!-- 分頁 5：電子發票 -->
             <div id="p5" class="page">
                 <div class="header-container"><h2>電子發票</h2></div>
                 <p style="font-size:0.85em; color:#666; margin-top:0;">此處將列出您近期開立的電子發票載具紀錄。</p>
                 <div id="invList"></div>
             </div>
             
-            <!-- 分頁 6：設定 -->
             <div id="p6" class="page">
-                <h2>更多設定</h2>
-                <div class="settings-section-title">👤 個人資料管理</div>
+                <h2>會員中心與設定</h2>
+                
+                <div class="card" style="background:var(--primary); color:white; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="openCustomerServiceModal()">
+                    <div><b style="font-size:1.1em;">🎧 線上客服與問題通報</b><div style="font-size:0.8em; opacity:0.8; margin-top:5px;">提交工單 / 查看進度 / 即時交談</div></div>
+                    <div style="font-size:2em;">➔</div>
+                </div>
+
+                <div class="settings-section-title" style="margin-top:20px;">👤 個人資料管理</div>
                 <div class="card" style="display: flex; flex-direction: column; gap: 10px; padding: 15px;">
-                    <button class="btn" onclick="updateProfileName()" style="background:#0284c7; font-size: 1em; padding: 14px;">修改基本資料 (變更姓名)</button>
+                    <button class="btn" onclick="updateProfileName()" style="background:#0284c7; font-size: 1em; padding: 14px;">修改真實姓名</button>
                     <button class="btn" onclick="updateUserPassword()" style="background:#0f172a; font-size: 1em; padding: 14px;">變更登入密碼</button>
-                    <button class="btn" onclick="showQR()" style="background:var(--accent); font-size: 1em; padding: 14px;">顯示會員條碼</button>
-                    <button class="btn" onclick="openCustomerServiceMenu()" style="background:#10b981; font-size: 1em; padding: 14px;">🎧 聯絡線上客服</button>
                     <button class="btn" onclick="triggerLogout()" style="background:var(--red); font-size: 1em; padding: 14px;">安全登出系統</button>
                 </div>
+                
                 <div class="settings-section-title">🎨 介面與顯示設定</div>
                 <div class="card">
                     <label style="display:block; margin-bottom:10px;">字體大小調整</label>
@@ -158,41 +211,40 @@
                 <button class="btn" onclick="toggleLayoutMode()" style="background:#4f46e5; margin-bottom:10px;">🖥️ 電腦版 / 📱 手機版 寬度切換</button>
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
                 <div class="footer-info">
-                    <div>版本：V70.16</div>
+                    <div>版本：V80 (防當機與客服完全體)</div>
                     <div>更新日期：2026-06-14</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
                 </div>
             </div>
 
-            <!-- 📱 導航列重組 (7個分頁：首頁、紀錄、訂單、帳單、優惠券、發票、設定) -->
             <div class="nav-bar">
-                <div class="nav-item active" onclick="openTab(0)">首頁</div>
-                <div class="nav-item" onclick="openTab(1)">紀錄</div>
-                <div class="nav-item" onclick="openTab(2)">訂單</div>
-                <div class="nav-item" onclick="openTab(3)">帳單</div>
-                <div class="nav-item" onclick="openTab(4)">優惠券</div>
-                <div class="nav-item" onclick="openTab(5)">發票</div>
-                <div class="nav-item" onclick="openTab(6)">設定</div>
+                <div class="nav-item active" onclick="openTab(0)"><div class="nav-icon">🏠</div>首頁</div>
+                <div class="nav-item" onclick="openTab(1)"><div class="nav-icon">📊</div>紀錄</div>
+                <div class="nav-item" onclick="openTab(2)"><div class="nav-icon">📦</div>訂單</div>
+                <div class="nav-item" onclick="openTab(3)"><div class="nav-icon">🤝</div>帳單</div>
+                <div class="nav-item" onclick="openTab(4)"><div class="nav-icon">🎟️</div>優惠</div>
+                <div class="nav-item" onclick="openTab(5)"><div class="nav-icon">🧾</div>發票</div>
+                <div class="nav-item" onclick="openTab(6)"><div class="nav-icon">⚙️</div>設定</div>
             </div>
         </div>
 
         <div id="qrBox" class="mask" onclick="this.style.display='none'">
             <div style="background:#fff; padding:20px; border-radius:20px;"><div id="qrcode"></div></div>
-            <p style="margin-top:20px;">點擊任何處關閉</p>
+            <p style="margin-top:20px; color:white;">點擊任何處關閉</p>
         </div>
 
         <div id="couponQrBox" class="mask" onclick="this.style.display='none'">
             <div style="background:#fff; padding:20px; border-radius:20px;"><div id="couponQrcode"></div></div>
             <p style="margin-top:20px; font-weight:bold; color:var(--pink);" id="couponQrTitle">優惠券核銷條碼</p>
             <p style="margin-top:5px; font-size:0.8em; opacity:0.7;">請將此畫面出示給管理員掃描核銷</p>
-            <p style="margin-top:15px;">點擊任何處關閉</p>
+            <p style="margin-top:15px; color:white;">點擊任何處關閉</p>
         </div>
     </div>
 
     <script>
         // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQ8vCvLk_-XnZ0P94evwc930zwPQwLiyuj3ck4l4VQ7G36Fz1rnE_DuCBSFPbGvLLS/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxF3xKaJ01HGG8EaYFiuh68bfJdNfaCr4aKdxkP0CLGstgYKt-52qtI1kEfoxDmsT1d/exec"; 
         
         let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null; 
 
@@ -202,11 +254,12 @@
         // 📅 日期安全格式化工具
         function formatDateString(dStr) {
             if (!dStr) return '';
-            let d = new Date(dStr.replace(/-/g, '/'));
+            let d = new Date((dStr||'').replace(/-/g, '/'));
             if (isNaN(d.getTime())) return dStr;
             return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         }
 
+        // 🎊 滿版撒花動畫函數
         function triggerConfetti() {
             var duration = 4 * 1000; var end = Date.now() + duration;
             (function frame() {
@@ -216,6 +269,7 @@
             }());
         }
 
+        // 🛡️ 擷取與列隊請求 (防空值錯誤攔截)
         async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
             let currentAbortController = new AbortController(); const signal = currentAbortController.signal;
             let queuePos = Math.floor(Math.random() * 9), queueInterval, queueTimeout, isPrompting = false, isFinished = false;
@@ -262,29 +316,26 @@
             }
         }
 
-        function showAlert(title, text, icon = 'info') { if (icon === 'error') showCustomerServiceAlert(title, text); else Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: 'var(--pink)', confirmButtonText: '確定' }); }
-        function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceMenu(); }); }
-
-        function openCustomerServiceMenu() {
-            Swal.fire({ title: '選擇聯絡客服方式', html: `<div style="text-align: left; font-size: 0.9em; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 10px;">請選擇您方便的管道與客服聯絡：<br>LINE 客服：@536waome<br>客服信箱：j1210217@kusjh.kh.edu.tw<br>客服電話：0966-236-830</div>`, showDenyButton: true, showCancelButton: true, confirmButtonColor: '#2ecc71', denyButtonColor: '#3498db', cancelButtonColor: '#f39c12', confirmButtonText: 'LINE 客服', denyButtonText: '客服信箱', cancelButtonText: '客服電話', allowOutsideClick: false }).then((res) => {
-                if (res.isConfirmed) window.open('https://line.me/R/ti/p/@536waome', '_blank');
-                else if (res.isDenied) { const mailtoUrl = 'mailto:j1210217@kusjh.kh.edu.tw?subject=小佑的日常生活行動會員-問題回報'; const startTime = Date.now(); window.location.href = mailtoUrl; setTimeout(() => { if (Date.now() - startTime < 1500) { Swal.fire({ title: '客服信箱資訊', text: 'j1210217@kusjh.kh.edu.tw', confirmButtonText: '複製信箱', confirmButtonColor: 'var(--pink)' }).then(() => { navigator.clipboard.writeText('j1210217@kusjh.kh.edu.tw'); Swal.fire({ title: '已複製信箱！', icon: 'success', timer: 1000, showConfirmButton: false }); }); } }, 500); } 
-                else if (res.dismiss === Swal.DismissReason.cancel) { Swal.fire({ title: '確定撥打付費電話？', html: '<span style="color: red; font-weight: bold;">【若您選擇撥打付費客服專線，語音電話費率將依照您的電信業者方案資費計收（通常為0.3元/秒）】</span>', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '取消', confirmButtonText: '撥打/顯示號碼' }).then((phoneChoice) => { if (phoneChoice.isConfirmed) { const telUrl = 'tel:0966-236-830'; const startTime = Date.now(); window.location.href = telUrl; setTimeout(() => { if (Date.now() - startTime < 1500) { Swal.fire({ title: '客服電話資訊', text: '0966-236-830', confirmButtonText: '複製電話', confirmButtonColor: 'var(--pink)' }).then(() => { navigator.clipboard.writeText('0966-236-830'); Swal.fire({ title: '已複製電話！', icon: 'success', timer: 1000, showConfirmButton: false }); }); } }, 500); } }); }
-            });
-        }
-
-        function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V70.16 (發票詳情按鈕與時間修正版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
-
-        function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
-
+        // 🔐 登入邏輯
         async function doLogin() {
             const uid = document.getElementById('acc').value.trim(), upw = document.getElementById('pw').value.trim();
-            if(!uid || !upw) return showAlert("提示", "請輸入完整資料", "warning");
+            if(!uid || !upw) return Swal.fire("提示", "請輸入完整資料", "warning");
+            
             try {
                 const res = await fetchWithQueue(SCRIPT_URL, { action: 'login', uid: uid, pw: upw }, '連線與驗證身份中...');
                 if (res.aborted) return; 
-                if (res.success) { savedPw = upw; store = res; render(); document.getElementById('loginView').style.display='none'; document.getElementById('appView').style.display='block'; } else showCustomerServiceAlert("登入失敗", res.message); 
-            } catch(e) { showCustomerServiceAlert("錯誤", "連線異常，請稍後再試"); }
+                if (res.success) { 
+                    savedPw = upw; store = res; 
+                    render(); 
+                    document.getElementById('loginView').style.display='none'; 
+                    document.getElementById('appView').style.display='block'; 
+                } else {
+                    Swal.fire("登入失敗", res.message || "請檢查帳號密碼", "error");
+                }
+            } catch(e) { 
+                console.error("Login Error:", e);
+                Swal.fire("系統異常", "錯誤原因: " + e.message + "<br><br>這通常是因為資料格式錯誤，請通知管理員。", "error");
+            }
         }
 
         async function silentSyncData() {
@@ -293,37 +344,268 @@
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: store.userData.id, pw: savedPw }) }).then(r => r.json());
                 if (res.success) { store = res; render(); }
-            } catch (e) { console.log("背景資料同步失敗"); } finally { if (indicator) indicator.style.display = 'none'; }
+            } catch (e) { console.log(e); } finally { if (indicator) indicator.style.display = 'none'; }
+        }
+
+        function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V80 (防當機與客服完全體)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+
+        function customizeShortcuts() {
+            let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6]');
+            let html = `<div style="text-align:left; font-size:15px;">`;
+            let items = ["📊 收支明細","📦 訂單追蹤","🤝 待還帳單","🎟️ 我的優惠","🧾 電子發票","🎧 聯繫客服"];
+            items.forEach((item, index) => {
+                let id = index + 1;
+                html += `<label style="display:flex; align-items:center; gap:10px; margin:8px 0; cursor:pointer;"><input type="checkbox" class="sc-chk" value="${id}" ${current.includes(id)?'checked':''} style="width:20px; height:20px;"> ${item}</label>`;
+            });
+            html += `</div>`;
+            Swal.fire({
+                title: '自訂首頁功能快捷鍵', html: html, showCancelButton: true, confirmButtonColor: 'var(--pink)', confirmButtonText: '儲存設定',
+                preConfirm: () => { return Array.from(document.querySelectorAll('.sc-chk:checked')).map(el => Number(el.value)); }
+            }).then((res) => {
+                if(res.isConfirmed) { localStorage.setItem('myShortcuts', JSON.stringify(res.value)); renderShortcuts(); }
+            });
+        }
+        
+        function renderShortcuts() {
+            let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6]');
+            document.querySelectorAll('.shortcut-item').forEach(el => el.classList.remove('visible'));
+            current.forEach(id => { let item = document.getElementById('sc_' + id); if(item) item.classList.add('visible'); });
+        }
+
+        // 📊 主渲染函數
+        function render() {
+            if (!store) return;
+            const u = store.userData || {}; 
+            document.getElementById('uName').innerText = u.name || '會員'; 
+            document.getElementById('uBal').innerText = (u.bal || 0).toLocaleString();
+            
+            let totalBnpl = (u.bnplLimit !== undefined && u.bnplLimit !== "") ? Number(u.bnplLimit) : 500;
+            let outstanding = 0;
+            (store.loans || []).forEach(l => { if((l.item || '').indexOf("先享後付") > -1 && l.status !== "已結清" && l.status !== "Macro已結清") outstanding += (l.totalDue || 0); });
+            let availBnpl = totalBnpl - outstanding;
+            
+            const elUBnpl = document.getElementById('uBnpl'); if (elUBnpl) elUBnpl.innerText = availBnpl.toLocaleString();
+            const elLoanAvail = document.getElementById('lbl_loan_avail'); if (elLoanAvail) elLoanAvail.innerText = availBnpl.toLocaleString();
+            const elLoanTotal = document.getElementById('lbl_loan_total'); if (elLoanTotal) elLoanTotal.innerText = totalBnpl.toLocaleString();
+            const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut) elLoanOut.innerText = `未結清: $${outstanding.toLocaleString()}`;
+
+            renderShortcuts();
+            
+            // 通知中心渲染 (置頂)
+            const ntList = document.getElementById('ntList');
+            if (ntList) {
+                ntList.innerHTML = (store.notifications || []).map(n => `
+                    <div class="card" style="padding:12px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:10px;">
+                        <span style="position:absolute; top:8px; right:8px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${n.subTag || '通知'}</span>
+                        <div style="font-size:11px; opacity:0.5; margin-bottom:4px;">${n.time || ''}</div>
+                        <div style="font-size:14px; font-weight:normal; line-height:1.4; color:var(--text);">${n.content || ''}</div>
+                    </div>
+                `).join('') || '<p style="text-align:center; opacity:0.3; margin-top:20px;">目前無任何通知</p>';
+            }
+
+            const sortH = document.getElementById('sortH').value; 
+            let sortedHistory = [...(store.history || [])];
+            sortedHistory.sort((a, b) => { const da = new Date((a.date||'').replace(/-/g, '/')).getTime() || 0; const db = new Date((b.date||'').replace(/-/g, '/')).getTime() || 0; return sortH === 'asc' ? da - db : db - da; });
+            document.getElementById('hList').innerHTML = sortedHistory.map(h => `<div class="card" style="padding:15px;"><div style="display:flex; justify-content:space-between;"><b>${h.item}</b><span style="color:${h.amt>=0?'var(--green)':'var(--red)'}">${h.amt>=0?'+':''}${h.amt}</span></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><small style="opacity:0.5;">${h.date}</small><small style="opacity:0.6; font-weight:bold;">餘額: ${h.bal}</small></div>${h.note ? `<div class="note-box" style="font-size:0.75em; padding-top:3px; margin-top:5px;">備註：${h.note}</div>` : ''}</div>`).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
+
+            renderLoans(); renderCoupons(); renderInvoices(); 
+
+            const sortO = document.getElementById('sortO').value; let sortedOrders = [...(store.orders || [])];
+            sortedOrders.sort((a, b) => { const da = a.time ? new Date((a.time||'').replace(/-/g, '/')).getTime() : 0; const db = b.time ? new Date((b.time||'').replace(/-/g, '/')).getTime() : 0; return sortO === 'asc' ? da - db : db - da; });
+
+            document.getElementById('oList').innerHTML = sortedOrders.map((o) => {
+                let rawItem = o.desc || o.item || '無商品明細'; let briefItemHtml = '';
+                if (rawItem.includes(';') && !rawItem.includes('\n')) briefItemHtml = rawItem.split(';').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">- ${line.trim()}</div>`).join('');
+                else briefItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">${line}</div>`).join('');
+
+                let statusStr = o.status || '';
+                let cancellableStatus = ["訂單成立", "處理中", "賣家確認中", "備貨中"];
+                let isCancellable = cancellableStatus.includes(statusStr) || (!statusStr.includes("出貨") && !statusStr.includes("配送") && !statusStr.includes("抵達") && !statusStr.includes("不成立") && !statusStr.includes("取消") && !statusStr.includes("退貨") && !statusStr.includes("退款") && !statusStr.includes("完成"));
+                if (statusStr === '申請取消中') isCancellable = false; 
+                if ((o.note || '').includes("[已耗用取消額度]")) isCancellable = false;
+
+                let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
+                let isDelivered = deliveredStatuses.some(s => statusStr.includes(s));
+                let isCompleted = statusStr === "訂單已完成";
+                let isReturning = statusStr.includes("退貨") || statusStr.includes("退款");
+
+                let actionBtnsHtml = "";
+                if (isDelivered && !isCompleted && !isReturning) {
+                    let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => (n.status||'').includes(s)));
+                    let deadlineHtml = ""; let canReturn = false;
+                    if (deliveredNode) {
+                        let dDate = new Date((deliveredNode.time||'').replace(/-/g, '/')); dDate.setDate(dDate.getDate() + 7);
+                        let now = new Date();
+                        if (now <= dDate) {
+                            canReturn = true; let mm = String(dDate.getMonth() + 1).padStart(2, '0'); let dd = String(dDate.getDate()).padStart(2, '0');
+                            deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${dDate.getFullYear()}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
+                        } else deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
+                    }
+                    if (canReturn) { actionBtnsHtml += `<button class="btn" style="background:var(--green); margin-top:15px;" onclick="completeOrder('${o.id}')">✅ 完成訂單</button>`; actionBtnsHtml += deadlineHtml; actionBtnsHtml += `<button class="btn" style="background:transparent; color:var(--red); border:1px solid var(--red); margin-top:5px;" onclick="applyReturn('${o.id}')">🚨 申請退貨/退款</button>`; } 
+                    else { actionBtnsHtml += deadlineHtml; }
+                }
+
+                if (statusStr === "申請取消中") actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:#64748b; width:100%; display:block;" onclick="withdrawCancelOrder('${o.id}')">↩️ 撤回取消申請</button>`;
+                else if (isCancellable && !isDelivered) actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:transparent; color:var(--red); border:1px solid var(--red); width:100%; display:block;" onclick="applyCancelOrder('${o.id}')">❌ 申請取消訂單</button>`;
+
+                return `<div class="card"><div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div><div style="margin:5px 0;"><b>狀態: ${statusStr}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${briefItemHtml}</div><div style="font-size:1.1em; color:var(--red); margin:5px 0;"><b>訂單總金額: $${o.total || o.totalAmount || 0}</b></div><div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">${o.ship || '未知物流'} | 單號: ${o.track || '無'}</div><button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup('${o.id}')">🔍 查看訂單詳細資訊</button>${actionBtnsHtml}</div>`;
+            }).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
+
+            checkAutoCompleteOrders();
+            checkWinningInvoices(); 
+        }
+
+        // ⏱️ 時間線產生器
+        function generateTimelineHtml(logs, fallbackStatus, fallbackNote, fallbackTime) {
+            let html = ""; let deadlineDisplay = '';
+            if (logs && Array.isArray(logs)) { for (let node of logs) { if (node.rawMsg && node.rawMsg.match(/\[([取寄]件截止日):/)) { const match = node.rawMsg.match(/\[([取寄]件截止日):(.*?)]/); if (match) { deadlineDisplay = match[2]; break; } } } }
+            if (logs && Array.isArray(logs) && logs.length > 0) {
+                const sorted = [...logs].sort((a, b) => new Date((a.time||'').replace(/-/g,'/')) - new Date((b.time||'').replace(/-/g,'/')));
+                html = sorted.map((node, nIdx) => {
+                    let colorMatch = node.rawMsg ? node.rawMsg.match(/\[顏色:(#[0-9a-fA-F]{3,6})\]/) : null; let defaultColor = nIdx === 0 ? 'var(--pink)' : '#a1a1aa'; let nodeColor = colorMatch ? colorMatch[1] : defaultColor; let styleAttr = `style="--node-color: ${nodeColor}; --node-shadow: ${nodeColor}55;"`;
+                    const cleanNote = (node.note || '動態物流程序記錄正常').replace(/\[[取寄]件截止日:.*?\]/g, '').replace(/\[顏色:.*?\]/g, '').trim() || '動態物流程序記錄正常';
+                    return `<div class="timeline-node ${nIdx === 0 ? 'latest-node' : ''}" ${styleAttr}><div class="timeline-node-title">${node.status||''}</div><div class="timeline-node-time">⏱️ ${node.time||''}</div><div class="timeline-node-desc">${cleanNote}</div></div>`;
+                }).join('');
+            } else {
+                html += `<div class="timeline-node latest-node" style="--node-color: var(--pink); --node-shadow: rgba(255, 143, 163, 0.35);"><div class="timeline-node-title">${fallbackStatus}</div><div class="timeline-node-time">⏱️ ${fallbackTime}</div><div class="timeline-node-desc">${(fallbackNote||'').replace(/\[[取寄]件截止日:.*?\]/g, '').replace(/\[顏色:.*?\]/g, '').trim()}</div></div>`;
+            }
+            return { html: `<div class="order-timeline">${html}</div>`, deadline: deadlineDisplay };
+        }
+
+        window.showOrderDetailPopup = function(orderId) {
+            if(!store || !store.orders) return; const o = store.orders.find(ord => ord.id === String(orderId)); if(!o) return;
+            const currentStatus = o.status || "訂單處理中", currentNote = o.note || "尚無備註描述", updateTime = o.time || '暫無時間紀錄';
+
+            let outboundHtml = "", returnTimelineHtml = "", globalDeadlineHtml = "", returnHtml = "";
+            let returnTrack = null;
+
+            if (o.returnData) {
+                returnTrack = o.returnData.track ? o.returnData.track.trim() : null;
+                returnHtml = `
+                <div style="background: #fee2e2; border: 2px solid var(--red); padding: 12px; border-radius: 12px; margin-bottom: 15px;">
+                    <p style="margin: 0 0 8px 0; color: var(--red); font-weight: bold; font-size: 1.1em;">🚨 退貨/退款資訊</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>申請時間：</b>${o.returnData.date}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退回商品：</b>${o.returnData.items}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款原因：</b>${o.returnData.reason}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>詳細描述：</b>${o.returnData.desc || '無'}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款金額：</b>$${o.returnData.amt || '審核/處理中'}</p>
+                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款方式：</b>${o.returnData.method}</p>
+                    ${!(o.returnData.items || '').includes('[僅退款]') ? `<p style="margin: 3px 0; font-size: 0.9em;"><b>退貨物流：</b>${o.returnData.ship || '待賣家確認'} ${returnTrack ? '(單號: ' + returnTrack + ')' : ''}</p>` : ''}
+                    ${o.returnData.photo ? `<div style="margin-top: 10px;"><a href="${o.returnData.photo}" target="_blank"><img src="${o.returnData.photo}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #fca5a5;"></a><p style="font-size:0.7em; color:var(--red); margin:3px 0 0 0; text-align:center;">點擊圖片可放大查看</p></div>` : ''}
+                </div>`;
+            }
+
+            let outboundTracks = (o.track || "").split(',').map(t => t.trim()).filter(t => t && t !== returnTrack);
+            if (outboundTracks.length > 1) {
+                outboundHtml = outboundTracks.map((track, i) => {
+                    let pkgLogs = (o.timeline || []).filter(n => !n.packageId || n.packageId === track);
+                    let gen = generateTimelineHtml(pkgLogs, currentStatus, currentNote, updateTime);
+                    let deadHtml = gen.deadline ? `<p style="margin:5px 0 0 0;"><span style="color:var(--red); font-size:0.9em;">📅 截止日：</span><b style="color:var(--red); font-size: 0.95em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${gen.deadline}</b></p>` : '';
+                    return `<div style="background: rgba(0,0,0,0.03); padding: 12px 12px 2px 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border);"><p style="margin: 0 0 10px 0; color:var(--primary, #4f46e5); font-weight:bold; font-size: 1.05em; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">📦 包裹 ${i+1} (${track})</p>${deadHtml}${gen.html}</div>`;
+                }).join('');
+            } else {
+                let pkgLogs = (o.timeline || []).filter(n => !n.packageId || (outboundTracks.length > 0 && n.packageId === outboundTracks[0]));
+                let gen = generateTimelineHtml(pkgLogs, currentStatus, currentNote, updateTime);
+                outboundHtml = gen.html;
+                if (gen.deadline) globalDeadlineHtml = `<p><span style="color:var(--red);">📅 截止日：</span><b style="color:var(--red); font-size: 1.1em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${gen.deadline}</b></p>`;
+            }
+
+            if (o.returnData && !(o.returnData.items || '').includes('[僅退款]')) {
+                let retLogs = (o.timeline || []).filter(n => n.packageId === '退貨包裹(未編號)' || (returnTrack && n.packageId === returnTrack));
+                if (retLogs.length > 0) {
+                    let gen = generateTimelineHtml(retLogs, "退貨運送中", "退貨包裹處理中", updateTime);
+                    let deadHtml = gen.deadline ? `<p style="margin:5px 0 0 0;"><span style="color:var(--red); font-size:0.9em;">📅 寄件/取件截止日：</span><b style="color:var(--red); font-size: 0.95em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${gen.deadline}</b></p>` : '';
+                    returnTimelineHtml = `<div style="margin-top: 25px; padding-top: 15px; border-top: 2px dashed var(--red);"><p style="margin: 0 0 10px 0; color:var(--red); font-weight:bold; font-size: 1.1em;">📦 退貨物流進度 ${returnTrack ? '(單號: '+returnTrack+')' : ''}</p>${deadHtml}<div style="background:#fff5f5; padding:10px; border-radius:10px;">${gen.html}</div></div>`;
+                } else if (currentStatus === "賣家同意-待退貨") {
+                    returnTimelineHtml = `<div style="margin-top: 25px; padding-top: 15px; border-top: 2px dashed var(--red);"><p style="margin: 0 0 10px 0; color:var(--red); font-weight:bold; font-size: 1.1em;">📦 退貨物流進度</p><p style="color:#666; font-size:0.9em; text-align:center;">等待買家寄件中 / 尚未提供退貨單號</p></div>`;
+                }
+            }
+            
+            let rawItem = o.desc || o.item || '無商品明細'; let detailItemHtml = '';
+            if (rawItem.includes(';') && !rawItem.includes('\n')) detailItemHtml = rawItem.split(';').filter(l => l.trim()).map(line => `<div style="margin-top:4px; padding-left:10px; text-indent:-10px;">- ${line.trim()}</div>`).join('');
+            else detailItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:4px; padding-left:10px; text-indent:-10px;">${line}</div>`).join('');
+
+            let invBtnHtml = ""; let inv = null;
+            if(o.invoice && o.invoice.includes('{')) {
+                try { let p = JSON.parse(o.invoice); inv = p.num; } catch(e){}
+            } else if (store.invoices) {
+                let f = store.invoices.find(i => String(i.oid) === String(o.id));
+                if(f) inv = f.num;
+            }
+            if (inv) {
+                invBtnHtml = `<p style="margin-top:10px;"><button class="btn" style="padding:6px; font-size:0.8em; background:#3b82f6;" onclick="Swal.close(); setTimeout(()=>showInvoiceDetailUnified('${inv}'), 300)">🧾 查看關聯發票 (${inv})</button></p>`;
+            }
+
+            let htmlContent = `
+                <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
+                    ${returnHtml} 
+                    <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px;"><span style="color:var(--pink);">📦 訂單編號：</span>${o.id || '無'}</p>
+                    <p><span style="color:var(--pink);">🚦 主訂單狀態：</span><b>${currentStatus}</b></p>
+                    <p><span style="color:var(--pink);">💳 付款方式：</span>${o.payment || '未指定'}</p>
+                    ${invBtnHtml}
+                    <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${o.code || '尚未發佈'}</span></p>
+                    ${globalDeadlineHtml}
+                    <p style="margin-top: 15px;"><span style="color:var(--pink);">🛍️ 商品明細：</span><br><span style="opacity:0.8; display:block; margin-top:5px;">${detailItemHtml}</span></p>
+                    <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px; margin: 10px 0; border: 1px solid var(--border);">
+                        <p style="margin: 3px 0;">💰 商品小計：$${o.subtotal || 0}</p>
+                        <p style="margin: 3px 0;">🚚 運費金額：$${o.shipFee || 0}</p>
+                        <p style="margin: 3px 0; color: var(--green);">🎟️ 運費折扣：-$${o.discShip || 0}</p>
+                        <p style="margin: 3px 0; color: var(--green);">🎟️ 賣家折扣：-$${o.discSeller || 0}</p>
+                        <p style="margin: 3px 0; color: var(--green);">🪙 優惠金額折扣：-$${o.discCoin || 0}</p>
+                        <p style="margin: 5px 0 0 0; font-size: 1.1em; color: var(--red); border-top: 1px solid var(--border); padding-top: 5px;">🚨 應付總金額：$${o.total || o.totalAmount || 0}</p>
+                    </div>
+                    <p><span style="color:var(--pink);">🛣️ 出貨物流方式：</span>${o.ship || '無'}</p>
+                    <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${{address: o.address || '無'}.address}</p>
+                    <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📦 出貨單號：</span>${outboundTracks.join(', ') || '無'}</p>
+                    <p style="margin: 15px 0 5px 0;"><span style="color:var(--pink);">📍 出貨物流進度：</span></p>
+                    <div style="background: rgba(0,0,0,0.02); padding: 5px; border-radius: 8px;">
+                        ${outboundHtml}
+                    </div>
+                    ${returnTimelineHtml}
+                </div>
+            `;
+            Swal.fire({ title: '📋 訂單詳細資訊', html: htmlContent, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉視窗' });
         }
 
         async function applyCancelOrder(oid) {
             const { value: reason } = await Swal.fire({ title: '申請取消訂單', input: 'select', inputOptions: { '不想買了 / 改變心意': '不想買了 / 改變心意', '修改商品規格或數量': '修改商品規格或數量', '付款方式設定錯誤': '付款方式設定錯誤', '賣家未回覆 / 出貨過慢': '賣家未回覆 / 出貨過慢', '其他原因': '其他原因' }, inputPlaceholder: '請選擇取消原因', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定取消', cancelButtonText: '保留訂單' });
             if (reason) {
-                try {
-                    let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCancelOrder', type: 'apply', oid: oid, uid: store.userData.id, reason: reason, pw: savedPw }, "送出申請中...");
-                    if (!res.aborted && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData()); else if (!res.aborted) Swal.fire('無法申請', res.message, 'error');
-                } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
+                let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCancelOrder', type: 'apply', oid: oid, uid: store.userData.id, reason: reason, pw: savedPw }, "送出申請中...");
+                if (res && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData()); else if (res) Swal.fire('無法申請', res.message, 'error');
             }
         }
 
         async function withdrawCancelOrder(oid) {
             const { isConfirmed } = await Swal.fire({ title: '撤回取消申請', html: '<div style="color:var(--red); font-weight:bold;">若您選擇撤回此筆訂單取消申請，則您無法再次提出取消訂單要求。<br><br>您確定要繼續嗎？</div>', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--green)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定撤回', cancelButtonText: '不撤回' });
             if (isConfirmed) {
-                try {
-                    let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCancelOrder', type: 'withdraw', oid: oid, uid: store.userData.id, pw: savedPw }, "撤回申請中...");
-                    if (!res.aborted && res.success) Swal.fire('撤回成功', res.message, 'success').then(() => silentSyncData()); else if (!res.aborted) Swal.fire('錯誤', res.message, 'error');
-                } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
+                let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCancelOrder', type: 'withdraw', oid: oid, uid: store.userData.id, pw: savedPw }, "撤回申請中...");
+                if (res && res.success) Swal.fire('撤回成功', res.message, 'success').then(() => silentSyncData()); else if (res) Swal.fire('錯誤', res.message, 'error');
             }
         }
 
         async function completeOrder(oid) {
             const { isConfirmed } = await Swal.fire({ title: '確認完成訂單？', html: `<div style="font-weight:bold; color:var(--red); line-height:1.6;">在點選完成訂單之前，請務必檢查您所收到的商品是否正確無誤(無退貨/退款需求)。<br><br>提醒您，一旦確認完成訂單後，訂單款項將撥款給賣家。</div>`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--green)', cancelButtonColor: '#94a3b8', confirmButtonText: '確認收件無誤', cancelButtonText: '取消' });
             if (isConfirmed) {
-                try {
-                    let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCompleteOrder', oid: oid, uid: store.userData.id, pw: savedPw }, "更新訂單狀態中...");
-                    if (!res.aborted && res.success) Swal.fire('訂單已完成', res.message, 'success').then(() => silentSyncData()); else if (!res.aborted) Swal.fire('錯誤', res.message, 'error');
-                } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
+                let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCompleteOrder', oid: oid, uid: store.userData.id, pw: savedPw }, "更新訂單狀態中...");
+                if (res && res.success) Swal.fire('訂單已完成', res.message, 'success').then(() => silentSyncData()); else if (res) Swal.fire('錯誤', res.message, 'error');
             }
+        }
+
+        function checkAutoCompleteOrders() {
+            if (!store || !store.orders) return;
+            const now = new Date(); let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
+            store.orders.forEach(o => {
+                let statusStr = o.status || '';
+                let isCompleted = statusStr === "訂單已完成", isReturning = statusStr.includes("退貨") || statusStr.includes("退款"), isCanceled = statusStr.includes("不成立") || statusStr.includes("取消");
+                let isDelivered = deliveredStatuses.some(s => statusStr.includes(s));
+                if (isDelivered && !isCompleted && !isReturning && !isCanceled) {
+                    let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => (n.status||'').includes(s)));
+                    if (deliveredNode) {
+                        let dDate = new Date((deliveredNode.time||'').replace(/-/g, '/')); dDate.setDate(dDate.getDate() + 7);
+                        if (now > dDate) { fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'buyerCompleteOrder', oid: o.id, uid: store.userData.id, pw: savedPw }) }); o.status = "訂單已完成"; }
+                    }
+                }
+            });
         }
 
         function previewReturnImage(event) {
@@ -363,7 +645,7 @@
                         <textarea id="swal-ret-desc" class="swal2-textarea" placeholder="請詳細描述退貨原因或商品狀況..." style="width:100%; margin:0 0 10px 0; height:80px; box-sizing:border-box;"></textarea>
                         <label style="display:block; font-weight:bold; color:var(--dark); margin-bottom:5px;">💰 期望退款方式：</label>
                         <select id="swal-ret-method-sel" class="swal2-select" style="width:100%; margin:0 0 10px 0; display:flex; box-sizing:border-box;" onchange="if(this.value=='其他') document.getElementById('swal-ret-method-other').style.display='block'; else document.getElementById('swal-ret-method-other').style.display='none';">
-                            <option value="退還至帳戶可用餘額">退還至帳戶可用餘額 (極速退款)</option><option value="信用卡刷退">信用卡刷退</option><option value="銀行轉帳">銀行轉帳</option><option value="街口/LINE Pay 等電子支付">街口/LINE Pay 等電子支付</option><option value="其他">其他...</option>
+                            <option value="退還至系統可用餘額">退還至系統可用餘額 (極速退款)</option><option value="信用卡刷退">信用卡刷退</option><option value="銀行轉帳">銀行轉帳</option><option value="街口/LINE Pay 等電子支付">街口/LINE Pay 等電子支付</option><option value="其他">其他...</option>
                         </select>
                         <input id="swal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%; margin:0 0 10px 0; box-sizing:border-box; display:none;">
                         <label style="display:block; margin:10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">📸 上傳佐證相片 (必填)：</label>
@@ -389,16 +671,14 @@
             });
 
             if (formValues) {
-                try {
-                    let payload = { action: 'buyerApplyReturn', oid: oid, uid: store.userData.id, pw: savedPw, ...formValues };
-                    let res = await fetchWithQueue(SCRIPT_URL, payload, "上傳佐證相片並送出申請中...");
-                    if (!res.aborted && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData());
-                    else if (!res.aborted) Swal.fire('錯誤', res.message, 'error');
-                } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
+                let payload = { action: 'buyerApplyReturn', oid: oid, uid: store.userData.id, pw: savedPw, ...formValues };
+                let res = await fetchWithQueue(SCRIPT_URL, payload, "上傳佐證相片並送出申請中...");
+                if (res && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData());
+                else if (res) Swal.fire('錯誤', res.message, 'error');
             }
         }
 
-        // 🏆 改用原生 confirm 確保不關閉 Swal 視窗
+        // 🛡️ 發票原生確認視窗 (修正跳出被關閉問題)
         window.revealRandCode = function(code) {
             if (confirm('⚠️ 隱私警告\n\n隨機碼涉及兌領獎權益，請妥適保護，勿揭露於他人！\n\n確定要顯示嗎？')) {
                 document.getElementById('rand_code_display').innerText = code;
@@ -424,38 +704,6 @@
             }
         }
 
-        function checkLotteryStatus(invDateStr, isWon) {
-            try {
-                if (!invDateStr) return { status: '未知', color: '#94a3b8', text: '日期未知' };
-                let d = new Date(invDateStr.replace(/-/g, '/'));
-                let y = d.getFullYear(); let m = d.getMonth() + 1;
-                let period = Math.ceil(m / 2); 
-                let drawMonth = period * 2 + 1; let drawYear = y;
-                if (drawMonth > 12) { drawMonth = 1; drawYear += 1; }
-                let drawDateStr = `${drawYear}-${String(drawMonth).padStart(2, '0')}-25T00:00:00+08:00`;
-                let drawDate = new Date(drawDateStr); let now = new Date();
-                if (now < drawDate) return { status: '尚未開獎', color: '#3b82f6', text: '⏳ 尚未開獎' };
-                else if (isWon) return { status: '中獎', color: 'var(--orange)', text: '🏆 幸運中獎' };
-                else return { status: '未中獎', color: '#94a3b8', text: '😔 未中獎' };
-            } catch(e) { return { status: '未知', color: '#94a3b8', text: '狀態未知' }; }
-        }
-
-        function checkAutoCompleteOrders() {
-            if (!store || !store.orders) return;
-            const now = new Date(); let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
-            store.orders.forEach(o => {
-                let isCompleted = o.status === "訂單已完成", isReturning = o.status.includes("退貨") || o.status.includes("退款"), isCanceled = o.status.includes("不成立") || o.status.includes("取消");
-                let isDelivered = deliveredStatuses.some(s => o.status.includes(s));
-                if (isDelivered && !isCompleted && !isReturning && !isCanceled) {
-                    let deliveredNode = o.timeline.find(n => deliveredStatuses.some(s => n.status.includes(s)));
-                    if (deliveredNode) {
-                        let dDate = new Date(deliveredNode.time.replace(/-/g, '/')); dDate.setDate(dDate.getDate() + 7);
-                        if (now > dDate) { fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'buyerCompleteOrder', oid: o.id, uid: store.userData.id, pw: savedPw }) }); o.status = "訂單已完成"; }
-                    }
-                }
-            });
-        }
-
         // 🧾 渲染電子發票分頁
         function renderInvoices() {
             let invHtml = "";
@@ -478,14 +726,19 @@
             
             let uniqueInvoices = []; let seenNums = new Set();
             for (let inv of combinedInvoices) { if (!seenNums.has(inv.num)) { seenNums.add(inv.num); uniqueInvoices.push(inv); } }
-            uniqueInvoices.sort((a, b) => { let d1 = new Date((a.date||'').replace(/-/g, '/')).getTime(); let d2 = new Date((b.date||'').replace(/-/g, '/')).getTime(); return d2 - d1; });
+            uniqueInvoices.sort((a, b) => { let d1 = new Date((a.date||'').replace(/-/g, '/')).getTime() || 0; let d2 = new Date((b.date||'').replace(/-/g, '/')).getTime() || 0; return d2 - d1; });
+
+            let wonCount = uniqueInvoices.filter(i => i.isWon).length;
+            let spendCount = 0; uniqueInvoices.forEach(i => spendCount += (Number(i.total)||0));
+            const elStatSpend = document.getElementById('lbl_stat_spend'); if(elStatSpend) elStatSpend.innerText = '$' + spendCount.toLocaleString();
+            const elStatInv = document.getElementById('lbl_stat_invoice'); if(elStatInv) elStatInv.innerText = wonCount + ' 張';
 
             if(uniqueInvoices.length === 0) {
                 invHtml = '<p style="text-align:center; opacity:0.3; margin-top:30px;">目前尚無開立的電子發票紀錄</p>';
             } else {
                 invHtml = uniqueInvoices.map(inv => {
                     let displayDate = formatDateString(inv.date);
-                    let lotStat = checkLotteryStatus(inv.date || '', inv.isWon);
+                    let lotStat = getInvoiceLotteryStatus(inv.date, inv.isWon);
                     let pData = {};
                     if(inv.source === 'invoice' && inv.prizeData) { try { pData = JSON.parse(inv.prizeData); } catch(e){} }
                     
@@ -502,7 +755,7 @@
                         <div style="font-size:0.9em; opacity:0.8;">賣方: ${inv.sellerName || '未提供'}</div>
                         <div style="font-size:1.1em; color:var(--red); margin-top:5px; font-weight:bold;">總計: $${inv.total || 0}</div>
                         ${wonTag}
-                        <button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showInvoiceDetailUnified('${inv.num}')">🔍 查看發票詳細資訊</button>
+                        <button class="btn" style="padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; background:var(--blue); width:100%; display:block; color:#fff;" onclick="showInvoiceDetailUnified('${inv.num}')">🔍 查看發票詳細資訊</button>
                     </div>`;
                 }).join('');
             }
@@ -567,189 +820,29 @@
             Swal.fire({ title: '發票詳細資訊', html: htmlContent, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' });
         }
 
-        function render() {
-            if (!store) return;
-            const u = store.userData; document.getElementById('uName').innerText = u.name; document.getElementById('uBal').innerText = (u.bal || 0).toLocaleString();
-            
-            const sortH = document.getElementById('sortH').value; let sortedHistory = [...(store.history || [])];
-            sortedHistory.sort((a, b) => { const da = new Date(a.date.replace(/-/g, '/')).getTime(); const db = new Date(b.date.replace(/-/g, '/')).getTime(); return sortH === 'asc' ? da - db : db - da; });
-            document.getElementById('hList').innerHTML = sortedHistory.map(h => `<div class="card" style="padding:15px;"><div style="display:flex; justify-content:space-between;"><b>${h.item}</b><span style="color:${h.amt>=0?'var(--green)':'var(--red)'}">${h.amt>=0?'+':''}${h.amt}</span></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><small style="opacity:0.5;">${h.date}</small><small style="opacity:0.6; font-weight:bold;">餘額: ${h.bal}</small></div>${h.note ? `<div class="note-box" style="font-size:0.75em; padding-top:3px; margin-top:5px;">備註：${h.note}</div>` : ''}</div>`).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
-
-            renderLoans(); renderCoupons(); renderInvoices(); 
-
-            const sortO = document.getElementById('sortO').value; let sortedOrders = [...(store.orders || [])];
-            sortedOrders.sort((a, b) => { const da = a.time ? new Date(a.time.replace(/-/g, '/')).getTime() : 0; const db = b.time ? new Date(b.time.replace(/-/g, '/')).getTime() : 0; return sortO === 'asc' ? da - db : db - da; });
-
-            document.getElementById('oList').innerHTML = sortedOrders.map((o) => {
-                let rawItem = o.desc || o.item || '無商品明細'; let briefItemHtml = '';
-                if (rawItem.includes(';') && !rawItem.includes('\n')) briefItemHtml = rawItem.split(';').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">- ${line.trim()}</div>`).join('');
-                else briefItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">${line}</div>`).join('');
-
-                let cancellableStatus = ["訂單成立", "處理中", "賣家確認中", "備貨中"];
-                let isCancellable = cancellableStatus.includes(o.status) || (!o.status.includes("出貨") && !o.status.includes("配送") && !o.status.includes("抵達") && !o.status.includes("不成立") && !o.status.includes("取消") && !o.status.includes("退貨") && !o.status.includes("退款") && !o.status.includes("完成"));
-                if (o.status === '申請取消中') isCancellable = false; 
-                if (o.note && o.note.includes("[已耗用取消額度]")) isCancellable = false;
-
-                let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
-                let isDelivered = deliveredStatuses.some(s => o.status.includes(s));
-                let isCompleted = o.status === "訂單已完成";
-                let isReturning = o.status.includes("退貨") || o.status.includes("退款");
-
-                let actionBtnsHtml = "";
-                if (isDelivered && !isCompleted && !isReturning) {
-                    let deliveredNode = o.timeline.find(n => deliveredStatuses.some(s => n.status.includes(s)));
-                    let deadlineHtml = ""; let canReturn = false;
-                    if (deliveredNode) {
-                        let dDate = new Date(deliveredNode.time.replace(/-/g, '/')); dDate.setDate(dDate.getDate() + 7);
-                        let now = new Date();
-                        if (now <= dDate) {
-                            canReturn = true; let mm = String(dDate.getMonth() + 1).padStart(2, '0'); let dd = String(dDate.getDate()).padStart(2, '0');
-                            deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${dDate.getFullYear()}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
-                        } else deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
-                    }
-                    if (canReturn) { actionBtnsHtml += `<button class="btn" style="background:var(--green); margin-top:15px;" onclick="completeOrder('${o.id}')">✅ 完成訂單</button>`; actionBtnsHtml += deadlineHtml; actionBtnsHtml += `<button class="btn" style="background:transparent; color:var(--red); border:1px solid var(--red); margin-top:5px;" onclick="applyReturn('${o.id}')">🚨 申請退貨/退款</button>`; } 
-                    else { actionBtnsHtml += deadlineHtml; }
-                }
-
-                if (o.status === "申請取消中") actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:#64748b; width:100%; display:block;" onclick="withdrawCancelOrder('${o.id}')">↩️ 撤回取消申請</button>`;
-                else if (isCancellable && !isDelivered) actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:transparent; color:var(--red); border:1px solid var(--red); width:100%; display:block;" onclick="applyCancelOrder('${o.id}')">❌ 申請取消訂單</button>`;
-
-                return `<div class="card"><div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div><div style="margin:5px 0;"><b>狀態: ${o.status}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${briefItemHtml}</div><div style="font-size:1.1em; color:var(--red); margin:5px 0;"><b>訂單總金額: $${o.total || o.totalAmount || 0}</b></div><div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">${o.ship || '未知物流'} | 單號: ${o.track || '無'}</div><button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup('${o.id}')">🔍 查看訂單詳細資訊</button>${actionBtnsHtml}</div>`;
-            }).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
-
-            checkAutoCompleteOrders();
-            checkWinningInvoices(); 
-        }
-
-        function generateTimelineHtml(logs, fallbackStatus, fallbackNote, fallbackTime) {
-            let html = ""; let deadlineDisplay = '';
-            if (logs && Array.isArray(logs)) { for (let node of logs) { if (node.rawMsg && node.rawMsg.match(/\[([取寄]件截止日):/)) { const match = node.rawMsg.match(/\[([取寄]件截止日):(.*?)]/); if (match) { deadlineDisplay = match[2]; break; } } } }
-            if (logs && Array.isArray(logs) && logs.length > 0) {
-                const sorted = [...logs].sort((a, b) => new Date(b.time) - new Date(a.time));
-                html = sorted.map((node, nIdx) => {
-                    let colorMatch = node.rawMsg ? node.rawMsg.match(/\[顏色:(#[0-9a-fA-F]{3,6})\]/) : null; let defaultColor = nIdx === 0 ? 'var(--pink)' : '#a1a1aa'; let nodeColor = colorMatch ? colorMatch[1] : defaultColor; let styleAttr = `style="--node-color: ${nodeColor}; --node-shadow: ${nodeColor}55;"`;
-                    const cleanNote = (node.note || '動態物流程序記錄正常').replace(/\[[取寄]件截止日:.*?\]/g, '').replace(/\[顏色:.*?\]/g, '').trim() || '動態物流程序記錄正常';
-                    return `<div class="timeline-node ${nIdx === 0 ? 'latest-node' : ''}" ${styleAttr}><div class="timeline-node-title">${node.status}</div><div class="timeline-node-time">⏱️ ${node.time}</div><div class="timeline-node-desc">${cleanNote}</div></div>`;
-                }).join('');
-            } else {
-                html += `<div class="timeline-node latest-node" style="--node-color: var(--pink); --node-shadow: rgba(255, 143, 163, 0.35);"><div class="timeline-node-title">${fallbackStatus}</div><div class="timeline-node-time">⏱️ ${fallbackTime}</div><div class="timeline-node-desc">${fallbackNote.replace(/\[[取寄]件截止日:.*?\]/g, '').replace(/\[顏色:.*?\]/g, '').trim()}</div></div>`;
-            }
-            return { html: html, deadline: deadlineDisplay };
-        }
-
-        window.showOrderDetailPopup = function(orderId) {
-            if(!store || !store.orders) return; const o = store.orders.find(ord => ord.id === String(orderId)); if(!o) return;
-            const currentStatus = o.status || "訂單處理中", currentNote = o.note || "尚無備註描述", updateTime = o.time || '暫無時間紀錄';
-
-            let outboundHtml = "", returnTimelineHtml = "", globalDeadlineHtml = "", returnHtml = "";
-            let returnTrack = null;
-
-            if (o.returnData) {
-                returnTrack = o.returnData.track ? o.returnData.track.trim() : null;
-                returnHtml = `
-                <div style="background: #fee2e2; border: 2px solid var(--red); padding: 12px; border-radius: 12px; margin-bottom: 15px;">
-                    <p style="margin: 0 0 8px 0; color: var(--red); font-weight: bold; font-size: 1.1em;">🚨 退貨/退款資訊</p>
-                    <p style="margin: 3px 0; font-size: 0.9em;"><b>申請時間：</b>${o.returnData.date}</p>
-                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退回商品：</b>${o.returnData.items}</p>
-                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款原因：</b>${o.returnData.reason}</p>
-                    <p style="margin: 3px 0; font-size: 0.9em;"><b>詳細描述：</b>${o.returnData.desc || '無'}</p>
-                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款金額：</b>$${o.returnData.amt || '審核/處理中'}</p>
-                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款方式：</b>${o.returnData.method}</p>
-                    ${!(o.returnData.items || '').includes('[僅退款]') ? `<p style="margin: 3px 0; font-size: 0.9em;"><b>退貨物流：</b>${o.returnData.ship || '待賣家確認'} ${returnTrack ? '(單號: ' + returnTrack + ')' : ''}</p>` : ''}
-                    ${o.returnData.photo ? `<div style="margin-top: 10px;"><a href="${o.returnData.photo}" target="_blank"><img src="${o.returnData.photo}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #fca5a5;"></a><p style="font-size:0.7em; color:var(--red); margin:3px 0 0 0; text-align:center;">點擊圖片可放大查看</p></div>` : ''}
-                </div>`;
-            }
-
-            let outboundTracks = (o.track || "").split(',').map(t => t.trim()).filter(t => t && t !== returnTrack);
-            if (outboundTracks.length > 1) {
-                outboundHtml = outboundTracks.map((track, i) => {
-                    let pkgLogs = (o.timeline || []).filter(n => !n.packageId || n.packageId === track);
-                    let gen = generateTimelineHtml(pkgLogs, currentStatus, currentNote, updateTime);
-                    let deadHtml = gen.deadline ? `<p style="margin:5px 0 0 0;"><span style="color:var(--red); font-size:0.9em;">📅 截止日：</span><b style="color:var(--red); font-size: 0.95em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${gen.deadline}</b></p>` : '';
-                    return `<div style="background: rgba(0,0,0,0.03); padding: 12px 12px 2px 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border);"><p style="margin: 0 0 10px 0; color:var(--primary, #4f46e5); font-weight:bold; font-size: 1.05em; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">📦 包裹 ${i+1} (${track})</p>${deadHtml}<div class="order-timeline">${gen.html}</div></div>`;
-                }).join('');
-            } else {
-                let pkgLogs = (o.timeline || []).filter(n => !n.packageId || (outboundTracks.length > 0 && n.packageId === outboundTracks[0]));
-                let gen = generateTimelineHtml(pkgLogs, currentStatus, currentNote, updateTime);
-                outboundHtml = `<div class="order-timeline">${gen.html}</div>`;
-                if (gen.deadline) globalDeadlineHtml = `<p><span style="color:var(--red);">📅 截止日：</span><b style="color:var(--red); font-size: 1.1em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${gen.deadline}</b></p>`;
-            }
-
-            if (o.returnData && !(o.returnData.items || '').includes('[僅退款]')) {
-                let retLogs = (o.timeline || []).filter(n => n.packageId === '退貨包裹(未編號)' || (returnTrack && n.packageId === returnTrack));
-                if (retLogs.length > 0) {
-                    let gen = generateTimelineHtml(retLogs, "退貨運送中", "退貨包裹處理中", updateTime);
-                    let deadHtml = gen.deadline ? `<p style="margin:5px 0 0 0;"><span style="color:var(--red); font-size:0.9em;">📅 寄件/取件截止日：</span><b style="color:var(--red); font-size: 0.95em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${gen.deadline}</b></p>` : '';
-                    returnTimelineHtml = `<div style="margin-top: 25px; padding-top: 15px; border-top: 2px dashed var(--red);"><p style="margin: 0 0 10px 0; color:var(--red); font-weight:bold; font-size: 1.1em;">📦 退貨物流進度 ${returnTrack ? '(單號: '+returnTrack+')' : ''}</p>${deadHtml}<div class="order-timeline" style="background:#fff5f5; padding:10px; border-radius:10px;">${gen.html}</div></div>`;
-                } else if (o.status === "賣家同意-待退貨") {
-                    returnTimelineHtml = `<div style="margin-top: 25px; padding-top: 15px; border-top: 2px dashed var(--red);"><p style="margin: 0 0 10px 0; color:var(--red); font-weight:bold; font-size: 1.1em;">📦 退貨物流進度</p><p style="color:#666; font-size:0.9em; text-align:center;">等待買家寄件中 / 尚未提供退貨單號</p></div>`;
-                }
-            }
-            
-            let rawItem = o.desc || o.item || '無商品明細'; let detailItemHtml = '';
-            if (rawItem.includes(';') && !rawItem.includes('\n')) detailItemHtml = rawItem.split(';').filter(l => l.trim()).map(line => `<div style="margin-top:4px; padding-left:10px; text-indent:-10px;">- ${line.trim()}</div>`).join('');
-            else detailItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:4px; padding-left:10px; text-indent:-10px;">${line}</div>`).join('');
-
-            let invBtnHtml = ""; let inv = null;
-            if(o.invoice && o.invoice.includes('{')) {
-                try { let p = JSON.parse(o.invoice); inv = p.num; } catch(e){}
-            } else if (store.invoices) {
-                let f = store.invoices.find(i => String(i.oid) === String(o.id));
-                if(f) inv = f.num;
-            }
-            if (inv) {
-                invBtnHtml = `<p style="margin-top:10px;"><button class="btn" style="padding:6px; font-size:0.8em; background:#3b82f6;" onclick="Swal.close(); setTimeout(()=>showInvoiceDetailUnified('${inv}'), 300)">🧾 查看關聯發票 (${inv})</button></p>`;
-            }
-
-            let htmlContent = `
-                <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
-                    ${returnHtml} 
-                    <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px;"><span style="color:var(--pink);">📦 訂單編號：</span>${o.id || '無'}</p>
-                    <p><span style="color:var(--pink);">🚦 主訂單狀態：</span><b>${currentStatus}</b></p>
-                    <p><span style="color:var(--pink);">💳 付款方式：</span>${o.payment || '未指定'}</p>
-                    ${invBtnHtml}
-                    <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${o.code || '尚未發佈'}</span></p>
-                    ${globalDeadlineHtml}
-                    <p style="margin-top: 15px;"><span style="color:var(--pink);">🛍️ 商品明細：</span><br><span style="opacity:0.8; display:block; margin-top:5px;">${detailItemHtml}</span></p>
-                    <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px; margin: 10px 0; border: 1px solid var(--border);">
-                        <p style="margin: 3px 0;">💰 商品小計：$${o.subtotal || 0}</p>
-                        <p style="margin: 3px 0;">🚚 運費金額：$${o.shipFee || 0}</p>
-                        <p style="margin: 3px 0; color: var(--green);">🎟️ 運費折扣：-$${o.discShip || 0}</p>
-                        <p style="margin: 3px 0; color: var(--green);">🎟️ 賣家折扣：-$${o.discSeller || 0}</p>
-                        <p style="margin: 3px 0; color: var(--green);">🪙 優惠金額折扣：-$${o.discCoin || 0}</p>
-                        <p style="margin: 5px 0 0 0; font-size: 1.1em; color: var(--red); border-top: 1px solid var(--border); padding-top: 5px;">🚨 應付總金額：$${o.total || o.totalAmount || 0}</p>
-                    </div>
-                    <p><span style="color:var(--pink);">🛣️ 出貨物流方式：</span>${o.ship || '無'}</p>
-                    <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${{address: o.address || '無'}.address}</p>
-                    <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📦 出貨單號：</span>${outboundTracks.join(', ') || '無'}</p>
-                    <p style="margin: 15px 0 5px 0;"><span style="color:var(--pink);">📍 出貨物流進度：</span></p>
-                    ${outboundHtml}
-                    ${returnTimelineHtml}
-                </div>
-            `;
-            Swal.fire({ title: '📋 訂單詳細資訊', html: htmlContent, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉視窗' });
-        }
-
         function renderLoans() {
             if (!store || !store.loans) return;
             const filteredLoans = store.loans.filter(l => { const isCleared = (l.status === '已結清' || l.status === 'Macro已結清'); const isOverdue = (!isCleared && l.penalty > 0); if (currentLoanTab === 1) return isCleared; else if (currentLoanTab === 2) return isOverdue; else return !isCleared && !isOverdue; });
-            const sortL = document.getElementById('sortL').value; filteredLoans.sort((a, b) => { const da = new Date(a.expiry.replace(/-/g, '/')).getTime(); const db = new Date(b.expiry.replace(/-/g, '/')).getTime(); return sortL === 'asc' ? da - db : db - da; });
-            document.getElementById('lList').innerHTML = filteredLoans.map(l => `<div class="card">${l.status === 'processed_cleared' || l.status === '已結清' || l.status === 'Macro已結清' ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${l.expiry}</small><b style="color:${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' || l.status === 'Macro已結清' ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' || l.status === 'Macro已結清' ? '已結清' : '$' + l.totalDue}</b></div></div>`).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無帳單</p>';
+            const sortL = document.getElementById('sortL').value; filteredLoans.sort((a, b) => { const da = new Date((a.expiry||'').replace(/-/g, '/')).getTime() || 0; const db = new Date((b.expiry||'').replace(/-/g, '/')).getTime() || 0; return sortL === 'asc' ? da - db : db - da; });
+            document.getElementById('lList').innerHTML = filteredLoans.map(l => `<div class="card">${l.status === 'processed_cleared' || l.status === '已結清' || l.status === 'Macro已結清' ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' || l.status === 'Macro已結清' ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${l.status === 'processed_cleared' || l.status === '橫結清' || l.status === '已結清' || l.status === 'Macro已結清' ? '已結清' : '$' + l.totalDue}</b></div></div>`).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無帳單</p>';
         }
-        function switchLoanTab(tabIndex) { currentLoanTab = tabIndex; document.querySelectorAll('.loan-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderLoans(); silentSyncData(); }
+        function switchLoanTab(tabIndex) { currentLoanTab = tabIndex; document.querySelectorAll('.loan-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderLoans(); }
 
         function renderCoupons() {
             if (!store || !store.coupons) return; const todayStr = new Date().toISOString().split('T')[0];
-            const filteredCoupons = store.coupons.filter(c => { const isUsed = (c.status === '已使用' || c.status === '已核銷' || c.status === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = c.expiry.match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; } if (currentCouponTab === 1) return isUsed; else if (currentCouponTab === 2) return !isUsed && isExpired; else return !isUsed && !isExpired; });
-            const sortC = document.getElementById('sortC').value; filteredCoupons.sort((a, b) => { const da = new Date(a.expiry.replace(/-/g, '/')).getTime(); const db = new Date(b.expiry.replace(/-/g, '/')).getTime(); return sortC === 'asc' ? da - db : db - da; });
+            const filteredCoupons = store.coupons.filter(c => { const isUsed = (c.status === '已使用' || c.status === '已核銷' || c.status === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; } if (currentCouponTab === 1) return isUsed; else if (currentCouponTab === 2) return !isUsed && isExpired; else return !isUsed && !isExpired; });
+            const sortC = document.getElementById('sortC').value; filteredCoupons.sort((a, b) => { const da = new Date((a.expiry||'').replace(/-/g, '/')).getTime() || 0; const db = new Date((b.expiry||'').replace(/-/g, '/')).getTime() || 0; return sortC === 'asc' ? da - db : db - da; });
+            
+            const elStatCoupon = document.getElementById('lbl_stat_coupon'); if(elStatCoupon) elStatCoupon.innerText = (store.coupons||[]).filter(c=>c.status==='未使用').length + ' 張';
+
             document.getElementById('cpList').innerHTML = filteredCoupons.map(c => {
-                const isUsed = (c.status === '已使用' || c.status === '已核銷' || c.status === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = c.expiry.match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; }
+                const isUsed = (c.status === '已使用' || c.status === '已核銷' || c.status === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; }
                 let tagHtml = '<span class="overdue-tag" style="background:var(--pink);">可使用</span>'; if (isUsed) tagHtml = '<span class="overdue-tag" style="background:var(--green);">已核銷</span>'; else if (isExpired) tagHtml = '<span class="overdue-tag" style="background:#7f8c8d;">已過期</span>';
-                const scanBtnHtml = (!isUsed && !isExpired) ? `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:#4f46e5; width:auto; display:block; margin-left:auto;" onclick="showCouponQR('${c.id}', '${c.name}')">出示核銷條碼</button>` : '';
-                return `<div class="card" style="opacity: ${isUsed || isExpired ? '0.6' : '1'};">${tagHtml}<div style="font-size:1.1em; margin-bottom:5px; padding-right:60px;"><b>${c.name || c.title}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:10px; white-space: pre-line;">${c.content}</div><div style="display:flex; justify-content:space-between; font-size:0.75em; opacity:0.5; border-top:1px dashed var(--border); padding-top:8px; align-items: center;"><span>到期日: ${c.expiry}</span>${c.useTime ? `<span>核銷時間: ${c.useTime}</span>` : `<span>券ID: ${c.id}</span>`}</div>${scanBtnHtml}</div>`;
+                const scanBtnHtml = (!isUsed && !isExpired) ? `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:#4f46e5; width:auto; display:block; margin-left:auto;" onclick="showCouponQR('${c.id}', '${c.title || c.name}')">出示核銷條碼</button>` : '';
+                return `<div class="card" style="opacity: ${isUsed || isExpired ? '0.6' : '1'};">${tagHtml}<div style="font-size:1.1em; margin-bottom:5px; padding-right:60px;"><b>${c.title || c.name}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:10px; white-space: pre-line;">${c.content}</div><div style="display:flex; justify-content:space-between; font-size:0.75em; opacity:0.5; border-top:1px dashed var(--border); padding-top:8px; align-items: center;"><span>到期日: ${formatDateString(c.expiry)}</span>${c.useTime ? `<span>核銷時間: ${c.useTime}</span>` : `<span>券ID: ${c.id}</span>`}</div>${scanBtnHtml}</div>`;
             }).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無優惠券</p>';
         }
-        function switchCouponTab(tabIndex) { currentCouponTab = tabIndex; document.querySelectorAll('.coupon-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderCoupons(); silentSyncData(); }
+        function switchCouponTab(tabIndex) { currentCouponTab = tabIndex; document.querySelectorAll('.coupon-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderCoupons(); }
 
         function showCouponQR(couponId, couponName) { couponQr.clear(); couponQr.makeCode(couponId); document.getElementById('couponQrTitle').innerText = `【${couponName}】核銷條碼`; document.getElementById('couponQrBox').style.display = 'flex'; event.stopPropagation(); }
         
@@ -760,39 +853,117 @@
 
         async function updateProfileName() {
             if (!store || !store.userData) return;
-            const confirmStep1 = await Swal.fire({ title: '確定要修改基本資料嗎？', text: '您即將變更您的會員個人資料。', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '取消', confirmButtonText: '確定前往' });
-            if (!confirmStep1.isConfirmed) return;
-            const { value: newName } = await Swal.fire({ title: '修改個人資料', input: 'text', inputLabel: '請輸入新的姓名', inputValue: store.userData.name, showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '取消', confirmButtonText: '下一步', inputValidator: (value) => { if (!value || !value.trim()) return '姓名不能為空！'; } });
-            if (!newName || newName.trim() === store.userData.name) return; const finalizedName = newName.trim();
-            const confirmStep2 = await Swal.fire({ title: '最後確認：確定變更名稱？', html: `您確定要將會員名稱從「<span style="color:var(--red);">${store.userData.name}</span>」<br>正式修改為「<span style="color:var(--green);">${finalizedName}</span>」嗎？`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '返回修改', confirmButtonText: '確認修改，不回頭' });
-            if (!confirmStep2.isConfirmed) return;
-            try {
-                const res = await fetchWithQueue(SCRIPT_URL, { action: 'updateProfile', uid: store.userData.id, pw: savedPw, newName: finalizedName }, '資料更新與連線中...');
-                if (res.aborted) return;
-                if (res.success) { store.userData.name = finalizedName; render(); await Swal.fire({ title: '基本資料變更成功！', text: `您的姓名已成功更新為：${finalizedName}`, icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '確定' }); } 
-                else showCustomerServiceAlert("基本資料更新失敗", res.message || "伺服器更新拒絕，請稍後再試");
-            } catch (e) { showCustomerServiceAlert("錯誤", "網路連線異常，無法完成基本資料變更"); }
+            const { value: newName } = await Swal.fire({ title: '修改真實姓名', input: 'text', inputValue: store.userData.name, showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '取消', confirmButtonText: '確定修改', inputValidator: (value) => { if (!value || !value.trim()) return '姓名不能為空！'; } });
+            if (newName && newName.trim() !== store.userData.name) {
+                let res = await fetchWithQueue(SCRIPT_URL, { action: 'updateProfile', uid: store.userData.id, pw: savedPw, newName: newName.trim() }, "資料更新中...");
+                if (res && res.success) { store.userData.name = newName.trim(); render(); Swal.fire('成功', '更名成功！', 'success'); }
+                else if (res) Swal.fire('錯誤', res.message, 'error');
+            }
         }
 
         async function updateUserPassword() {
             if (!store || !store.userData) return;
-            const confirmStep1 = await Swal.fire({ title: '確定要變更登入密碼嗎？', text: '密碼變更成功後，系統將強制安全登出，您需要使用新密碼重新登入。', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '確定前往' });
-            if (!confirmStep1.isConfirmed) return;
-            const { value: formValues } = await Swal.fire({ title: '變更登入密碼', html: '<input id="swal-old-pw" class="swal2-input" type="password" placeholder="請輸入舊密碼"><input id="swal-new-pw" class="swal2-input" type="password" placeholder="請輸入新密碼"><input id="swal-confirm-pw" class="swal2-input" type="password" placeholder="再次確認新密碼">', focusConfirm: false, showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '下一步', preConfirm: () => { const oldPw = document.getElementById('swal-old-pw').value.trim(); const newPw = document.getElementById('swal-new-pw').value.trim(); const confirmPw = document.getElementById('swal-confirm-pw').value.trim(); if (!oldPw || !newPw || !confirmPw) { Swal.showValidationMessage('所有密碼欄位皆為必填！'); return false; } if (newPw !== confirmPw) { Swal.showValidationMessage('兩次輸入的新密碼不一致！'); return false; } return { oldPw: oldPw, newPw: newPw }; } });
-            if (!formValues) return;
-            const confirmStep2 = await Swal.fire({ title: '您確定要寫入新密碼嗎？', text: '請確保您記住了剛才輸入的新密碼。按下確定後將立即向伺服器提交變更申請！', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '返回修改', confirmButtonText: '確認提交變更' });
-            if (!confirmStep2.isConfirmed) return;
-            try {
-                const res = await fetchWithQueue(SCRIPT_URL, { action: 'updatePassword', uid: store.userData.id, oldPw: formValues.oldPw, newPw: formValues.newPw }, '密碼變更與連線中...');
-                if (res.aborted) return;
-                if (res.success) { await Swal.fire({ title: '密碼變更成功！', text: '帳戶安全密碼已成功變更，請點擊確認以安全登出並重新登入。', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '登出系統' }); location.reload(); } 
-                else showCustomerServiceAlert("密碼變更失敗", res.message || "請檢查您的舊密碼是否輸入正確");
-            } catch (e) { showCustomerServiceAlert("錯誤", "網路連線異常，變更密碼失敗"); }
+            const { value: formValues } = await Swal.fire({
+                title: '變更登入密碼',
+                html: '<input id="swal-old-pw" class="swal2-input" type="password" placeholder="請輸入舊密碼"><input id="swal-new-pw" class="swal2-input" type="password" placeholder="請輸入新密碼"><input id="swal-confirm-pw" class="swal2-input" type="password" placeholder="再次確認新密碼">',
+                focusConfirm: false, showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '確認修改',
+                preConfirm: () => { const oldPw = document.getElementById('swal-old-pw').value.trim(); const newPw = document.getElementById('swal-new-pw').value.trim(); const confirmPw = document.getElementById('swal-confirm-pw').value.trim(); if (!oldPw || !newPw || !confirmPw) { Swal.showValidationMessage('所有密碼欄位皆為必填！'); return false; } if (newPw !== confirmPw) { Swal.showValidationMessage('兩次輸入的新密碼不一致！'); return false; } return { oldPw: oldPw, newPw: newPw }; }
+            });
+            if (formValues) {
+                let res = await fetchWithQueue(SCRIPT_URL, { action: 'updatePassword', uid: store.userData.id, oldPw: formValues.oldPw, newPw: formValues.newPw }, "密碼變更中...");
+                if (res && res.success) { await Swal.fire({ title: '密碼變更成功！', text: '請點擊確認以安全登出並重新登入。', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '登出系統' }); location.reload(); }
+                else if (res) Swal.fire('變更失敗', res.message, 'error');
+            }
         }
 
-        async function triggerLogout() {
-            const confirmResult = await Swal.fire({ title: '確認要登出系統嗎？', text: '登出後需要重新輸入您的帳號與密碼才能存取行動會員。', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '安全登出' });
-            if (confirmResult.isConfirmed) { await Swal.fire({ title: '登出成功', text: '您已安全登出本系統，再見！', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '回到登入頁' }); location.reload(); }
+        function triggerLogout() {
+            Swal.fire({ title: '確定要登出系統嗎？', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '安全登出' }).then((res) => {
+                if (res.isConfirmed) location.reload();
+            });
+        }
+
+        // --- 🎧 客服線上交談與問題通報 ---
+        window.openCustomerServiceModal = function() {
+            let tics = store.tickets || [];
+            let listHtml = tics.map(t => `
+                <div style="background:#f8fafc; border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:8px; cursor:pointer;" onclick="openChatWindow('${t.tid}')">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#666;"><span>${t.tid}</span><span style="color:${t.status==='處理中'?'var(--orange)':'var(--green)'}; font-weight:bold;">${t.status}</span></div>
+                    <div style="font-weight:bold; font-size:14px; margin-top:4px; color:var(--text);">${t.subject}</div>
+                </div>`).join('');
+            
+            Swal.fire({
+                title: '線上客服與問題通報',
+                html: `
+                <div style="text-align:left; max-height:60vh; overflow-y:auto; padding-right:5px;">
+                    <button class="btn" style="background:var(--pink); margin-bottom:15px; font-size:15px;" onclick="showNewTicketForm()">＋ 建立新通報案件</button>
+                    <div style="font-weight:bold; border-bottom:2px solid #eee; padding-bottom:5px; margin-bottom:10px; color:var(--text);">我的歷史案件</div>
+                    ${listHtml || '<p style="font-size:13px; color:#999; text-align:center;">尚無通報紀錄</p>'}
+                </div>`,
+                showConfirmButton: false, showCloseButton: true
+            });
+        }
+
+        window.showNewTicketForm = function() {
+            Swal.fire({
+                title: '建立新通報',
+                html: `
+                    <div style="text-align:left; font-size:14px;">
+                        <label style="color:var(--text);">問題大分類：</label>
+                        <select id="tic_cat" class="swal2-select" style="width:100%; margin:5px 0 10px 0;">
+                            <option>訂單問題</option>
+                            <option>帳務問題</option>
+                            <option>系統問題</option>
+                            <option>我想問的問題分類不在這上面</option>
+                        </select>
+                        <label style="color:var(--text);">問題子分類：</label><input type="text" id="tic_subcat" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="例如: 忘記密碼、商品損壞">
+                        <label style="color:var(--text);">主旨：</label><input type="text" id="tic_subject" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="簡述您的問題">
+                        <label style="color:var(--text);">詳細問題描述：</label><textarea id="tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:80px;" placeholder="請詳細描述您遇到的狀況..."></textarea>
+                    </div>
+                `,
+                showCancelButton: true, confirmButtonText: '送出通報', confirmButtonColor: '#3b82f6', cancelButtonText: '取消',
+                preConfirm: () => {
+                    let cat = document.getElementById('tic_cat').value, subcat = document.getElementById('tic_subcat').value.trim();
+                    let subject = document.getElementById('tic_subject').value.trim(), desc = document.getElementById('tic_desc').value.trim();
+                    if(!subcat || !subject || !desc) { Swal.showValidationMessage('請確實填寫所有欄位'); return false; }
+                    return { cat, subcat, subject, desc };
+                }
+            }).then(async (res) => {
+                if (res.isConfirmed) {
+                    let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: store.userData.id, pw: savedPw, ...res.value }, "通報建檔中...");
+                    if(fetchRes && fetchRes.success) { Swal.fire('通報成功', fetchRes.message, 'success').then(()=>silentSyncData()); }
+                    else if (fetchRes) { Swal.fire('錯誤', fetchRes.message || '發生異常', 'error'); }
+                } else { setTimeout(()=>openCustomerServiceModal(), 300); }
+            });
+        }
+
+        window.openChatWindow = function(tid) {
+            let msgs = (store.chatMessages || []).filter(m => m.tid === tid);
+            let chatHtml = msgs.map(m => `<div class="msg-bubble ${m.sender==='Admin'?'msg-admin':'msg-user'}">${m.msg}<div class="msg-time">${m.time}</div></div>`).join('');
+            
+            Swal.fire({
+                title: `即時交談 (${tid})`,
+                html: `
+                    <div class="chat-container">
+                        <div class="chat-box" id="user_chat_box">${chatHtml}</div>
+                        <div class="chat-input-area">
+                            <input type="text" id="user_chat_input" placeholder="輸入訊息...">
+                            <button onclick="sendUserChat('${tid}')" style="background:var(--pink); color:#fff; border:none;">傳送</button>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: false, showCloseButton: true, width: '90%', padding: '10px'
+            }).then(() => openCustomerServiceModal());
+            setTimeout(() => { let box = document.getElementById('user_chat_box'); if(box) box.scrollTop = box.scrollHeight; }, 100);
+        }
+
+        window.sendUserChat = async function(tid) {
+            let input = document.getElementById('user_chat_input'); let msg = input.value.trim();
+            if(!msg) return; input.value = '';
+            let box = document.getElementById('user_chat_box');
+            box.innerHTML += `<div class="msg-bubble msg-user">${msg}<div class="msg-time">傳送中...</div></div>`; box.scrollTop = box.scrollHeight;
+            
+            let res = await fetchWithQueue(SCRIPT_URL, { action: 'sendChat', tid: tid, sender: store.userData.id, msg: msg }, "發送中...");
+            if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 500); }
         }
     </script>
 </body>
