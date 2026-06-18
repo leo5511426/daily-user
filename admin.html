@@ -101,6 +101,13 @@
     <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
         <h4 style="margin:0 0 5px 0; color:var(--dark);">📩 發送個人化站內推播</h4>
         <select id="nt_uid"></select>
+        
+        <div style="display:flex; gap:10px; margin-top:8px;">
+            <input type="text" id="nt_mainCat" placeholder="主分類 (例: 個人通知)" value="個人通知" style="margin:0; flex:1;">
+            <input type="text" id="nt_subTag" placeholder="子標籤 (例: 專屬訊息)" value="專屬訊息" style="margin:0; flex:1;">
+            <input type="color" id="nt_color" value="#db2777" style="margin:0; flex:0.5; height: 48px; padding: 2px; cursor:pointer;" title="標籤顏色">
+        </div>
+        
         <textarea id="nt_msg" rows="3" placeholder="請輸入通知內容，送出後買家將在中心收到紅色標籤提醒..."></textarea>
         <button onclick="sendCustomNotification()" style="background:#8b5cf6; margin-top:10px;">發送推播給會員</button>
     </div>
@@ -369,11 +376,27 @@
         if(!res.aborted) handlePostSuccess(res);
     }
 
-    // 🎧 客服交談中心
+    // ✨ 傳送帶有動態標籤的客製化推播 ✨
     async function sendCustomNotification() {
-        let uid = document.getElementById('nt_uid').value; let msg = document.getElementById('nt_msg').value.trim();
+        let uid = document.getElementById('nt_uid').value; 
+        let msg = document.getElementById('nt_msg').value.trim();
+        let mainCat = document.getElementById('nt_mainCat').value.trim() || '個人通知';
+        let subTag = document.getElementById('nt_subTag').value.trim() || '專屬訊息';
+        let color = document.getElementById('nt_color').value || '#db2777';
+
         if(!uid || !msg) return Swal.fire("提示", "請填寫通知內容", "warning");
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'sendCustomNotification', uid: uid, msg: msg }, "發送中...");
+        
+        // 傳送所有參數給後端 (若後端尚未更新支援，則會忽略 mainCat/subTag/color)
+        let res = await fetchWithQueue(GAS, { 
+            action: 'sendCustomNotification', // 頂層路由
+            type: 'sendCustomNotification',   // 保留以相容各種後端寫法
+            uid: uid, 
+            msg: msg,
+            mainCat: mainCat,
+            subTag: subTag,
+            color: color
+        }, "發送中...");
+        
         if(!res.aborted) handlePostSuccess(res);
     }
     
