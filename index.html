@@ -6,6 +6,7 @@
     <title>小佑的日常生活行動會員</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- 🎉 引入滿版撒花動畫套件 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { 
@@ -107,13 +108,16 @@
             <label class="pwd-toggle-container"><input type="checkbox" id="showPwdCheck" onchange="togglePasswordVisibility()"> 顯示輸入的密碼</label>
             <button class="btn" onclick="doLogin()">登入</button>
             
+            <!-- 👤 強化：訪客回報客服按鈕 -->
             <button class="btn" style="background:var(--blue); margin-top:15px; font-size:1em; padding:15px;" onclick="openGuestTicketForm()">🎧 忘記密碼/無法登入？聯絡客服</button>
         </div>
 
         <div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
             <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
             
+            <!-- 分頁 0：首頁 -->
             <div id="p0" class="page" style="display:block;">
+                <!-- 🔔 置頂：我的通知區塊與分類過濾器 -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 我的通知</div>
                     <select id="ntFilter" class="sort-select" onchange="renderNotifications()" style="padding:4px 8px; font-size:0.85em; background:#f1f5f9;">
@@ -127,6 +131,7 @@
 
                 <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
                 
+                <!-- 💳 先享後付與餘額雙儀表板 -->
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
                     <div class="card" style="text-align:center; padding:20px 10px; margin:0;">
                         <div style="font-size:0.75em; opacity:0.6;">可用積分餘額</div>
@@ -150,24 +155,28 @@
                     <div class="shortcut-item" id="sc_3" onclick="openTab(3)">🤝 待還帳單</div>
                     <div class="shortcut-item" id="sc_4" onclick="openTab(4)">🎟️ 我的優惠</div>
                     <div class="shortcut-item" id="sc_5" onclick="openTab(5)">🧾 電子發票</div>
-                    <div class="shortcut-item" id="sc_6" onclick="openTab(6)">🎧 客服設定</div>
+                    <div class="shortcut-item" id="sc_6" onclick="openTab(6)">⚙️ 會員設定</div>
                 </div>
             </div>
 
+            <!-- 分頁 1：交易紀錄 -->
             <div id="p1" class="page">
                 <div class="header-container"><h2>交易紀錄</h2><select id="sortH" class="sort-select" onchange="render()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <p style="font-size:0.85em; color:#666; margin-top:0;">此處將列出您近期的餘額收支明細。</p>
                 <div id="hList"></div>
             </div>
 
+            <!-- 分頁 2：訂單狀態 -->
             <div id="p2" class="page">
                 <div class="header-container"><h2>訂單狀態</h2><select id="sortO" class="sort-select" onchange="render()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <div id="oList"></div>
             </div>
             
+            <!-- 分頁 3：待還帳單 -->
             <div id="p3" class="page">
                 <div class="header-container"><h2>待還帳單</h2><select id="sortL" class="sort-select" onchange="renderLoans()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 
+                <!-- 💳 先享後付總信用額度卡片 -->
                 <div class="card" style="background:var(--card); padding:15px; border-left:5px solid var(--blue); margin-bottom:15px;">
                     <span style="font-size:0.8em; opacity:0.6;">💳 先享後付信用總額度</span>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
@@ -184,6 +193,7 @@
                 <div id="lList"></div>
             </div>
             
+            <!-- 分頁 4：優惠券 -->
             <div id="p4" class="page">
                 <div class="header-container"><h2>我的優惠券</h2><select id="sortC" class="sort-select" onchange="renderCoupons()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <div class="coupon-tabs">
@@ -194,21 +204,24 @@
                 <div id="cpList"></div>
             </div>
 
+            <!-- 分頁 5：電子發票 -->
             <div id="p5" class="page">
                 <div class="header-container"><h2>電子發票</h2></div>
                 <p style="font-size:0.85em; color:#666; margin-top:0;">此處將列出您近期開立的電子發票載具紀錄。</p>
                 <div id="invList"></div>
             </div>
             
+            <!-- 分頁 6：設定 -->
             <div id="p6" class="page">
                 <h2>會員中心與設定</h2>
                 
-                <div class="card" style="background:var(--primary); color:white; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="openCustomerServiceModal()">
-                    <div><b style="font-size:1.1em;">🎧 線上客服與問題通報</b><div style="font-size:0.8em; opacity:0.8; margin-top:5px;">聯絡管理員 / 售後通報 / 系統問題回報</div></div>
-                    <div style="font-size:2em;">➔</div>
-                </div>
+                <!-- 🎧 完整客服功能入口 (升級為大按鈕) -->
+                <button class="btn" onclick="openCustomerServiceModal()" style="background:var(--blue); margin-bottom:20px; padding:20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); display:flex; flex-direction:column; align-items:center; gap:6px;">
+                    <span style="font-size:1.15em;">🎧 線上客服與問題通報</span>
+                    <span style="font-size:0.75em; opacity:0.85; font-weight:normal;">聯絡管理員 / 售後通報 / 系統問題回報</span>
+                </button>
 
-                <div class="settings-section-title" style="margin-top:20px;">👤 個人資料管理</div>
+                <div class="settings-section-title">👤 個人資料管理</div>
                 <div class="card" style="display: flex; flex-direction: column; gap: 10px; padding: 15px;">
                     <button class="btn" onclick="updateProfileName()" style="background:#0284c7; font-size: 1em; padding: 14px;">修改真實姓名</button>
                     <button class="btn" onclick="updateUserPassword()" style="background:#0f172a; font-size: 1em; padding: 14px;">變更登入密碼</button>
@@ -231,6 +244,7 @@
                 </div>
             </div>
 
+            <!-- 📱 導航列重組 (7個分頁) -->
             <div class="nav-bar">
                 <div class="nav-item active" onclick="openTab(0)"><div class="nav-icon">🏠</div>首頁</div>
                 <div class="nav-item" onclick="openTab(1)"><div class="nav-icon">📊</div>紀錄</div>
@@ -238,10 +252,11 @@
                 <div class="nav-item" onclick="openTab(3)"><div class="nav-icon">🤝</div>帳單</div>
                 <div class="nav-item" onclick="openTab(4)"><div class="nav-icon">🎟️</div>優惠</div>
                 <div class="nav-item" onclick="openTab(5)"><div class="nav-icon">🧾</div>發票</div>
-                <div class="nav-item" onclick="openTab(6)"><div class="nav-icon">🎧</div>客服設定</div>
+                <div class="nav-item" onclick="openTab(6)"><div class="nav-icon">⚙️</div>設定</div>
             </div>
         </div>
 
+        <!-- ✖️ 加入關閉按鈕的會員條碼視窗 -->
         <div id="qrBox" class="mask">
             <div style="background:#fff; padding:25px; border-radius:20px; position:relative; text-align:center;">
                 <button class="close-btn" onclick="document.getElementById('qrBox').style.display='none';">✕</button>
@@ -250,6 +265,7 @@
             </div>
         </div>
 
+        <!-- ✖️ 加入關閉按鈕的優惠券條碼視窗 -->
         <div id="couponQrBox" class="mask">
             <div style="background:#fff; padding:25px; border-radius:20px; position:relative; text-align:center;">
                 <button class="close-btn" onclick="document.getElementById('couponQrBox').style.display='none';">✕</button>
@@ -435,7 +451,7 @@
         function customizeShortcuts() {
             let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6]');
             let html = `<div style="text-align:left; font-size:15px;">`;
-            let items = ["📊 收支明細","📦 訂單追蹤","🤝 待還帳單","🎟️ 我的優惠","🧾 電子發票","🎧 客服設定"];
+            let items = ["📊 收支明細","📦 訂單追蹤","🤝 待還帳單","🎟️ 我的優惠","🧾 電子發票","⚙️ 會員設定"];
             items.forEach((item, index) => {
                 let id = index + 1;
                 html += `<label style="display:flex; align-items:center; gap:10px; margin:8px 0; cursor:pointer;"><input type="checkbox" class="sc-chk" value="${id}" ${current.includes(id)?'checked':''} style="width:20px; height:20px;"> ${item}</label>`;
@@ -470,13 +486,18 @@
                 }
             }
 
-            ntList.innerHTML = filtered.map(n => `
+            ntList.innerHTML = filtered.map(n => {
+                // 將時間字串格式化為 YYYY-MM-DD HH:mm
+                let d = new Date((n.time||'').replace(/-/g, '/'));
+                let displayTime = isNaN(d.getTime()) ? (n.time||'') : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+
+                return `
                 <div class="card" style="padding:12px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:10px;">
                     <span style="position:absolute; top:8px; right:8px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${n.subTag || '通知'}</span>
-                    <div style="font-size:11px; opacity:0.5; margin-bottom:4px;">${n.time || ''}</div>
+                    <div style="font-size:11px; opacity:0.5; margin-bottom:4px;">${displayTime}</div>
                     <div style="font-size:14px; font-weight:normal; line-height:1.4; color:var(--text);">${n.content || ''}</div>
-                </div>
-            `).join('') || '<p style="text-align:center; opacity:0.3; margin-top:20px;">目前無任何通知</p>';
+                </div>`;
+            }).join('') || '<p style="text-align:center; opacity:0.3; margin-top:20px;">目前無任何通知</p>';
         }
 
         // 🛡️ 補回：自動完成訂單防呆檢查
@@ -881,7 +902,7 @@
                     <p style="display:flex; align-items:center; gap:10px;">
                         <b>發票隨機碼：</b>
                         <span id="rand_code_display" style="background:#f1f5f9; padding:2px 8px; border-radius:4px; letter-spacing:2px; font-family:monospace;">****</span>
-                        <button id="rand_code_btn" onclick="revealRandCode('${targetInv.rand || '0000'}')" style="background:var(--red); color:white; border:none; border-radius:4px; padding:3px 8px; font-size:0.8em; cursor:pointer;">顯示</button>
+                        <button id="rand_code_btn" onclick="revealRandCode('${targetInv.rand || '無'}')" style="background:var(--red); color:white; border:none; border-radius:4px; padding:3px 8px; font-size:0.8em; cursor:pointer;">顯示</button>
                     </p>
                     <p><b>賣方名稱：</b>${targetInv.sellerName || '未提供'}</p>
                     <p><b>賣方統編：</b>${targetInv.sellerVat || '未提供'}</p>
@@ -935,7 +956,7 @@
             document.getElementById('cpList').innerHTML = filteredCoupons.map(c => {
                 const statusStr = String(c.status||''); const isUsed = (statusStr === '已使用' || statusStr === '已核銷' || statusStr === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; }
                 let tagHtml = '<span class="overdue-tag" style="background:var(--pink);">可使用</span>'; if (isUsed) tagHtml = '<span class="overdue-tag" style="background:var(--green);">已核銷</span>'; else if (isExpired) tagHtml = '<span class="overdue-tag" style="background:#7f8c8d;">已過期</span>';
-                const scanBtnHtml = (!isUsed && !isExpired) ? `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:#4f46e5; width:auto; display:block; margin-left:auto;" onclick="showCouponQR('${c.id}', '${c.title || c.name || ''}')">出示核銷條碼</button>` : '';
+                const scanBtnHtml = (!isUsed && !isExpired) ? `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--blue); width:auto; display:block; margin-left:auto;" onclick="showCouponQR('${c.id}', '${c.title || c.name || ''}')">出示核銷條碼</button>` : '';
                 return `<div class="card" style="opacity: ${isUsed || isExpired ? '0.6' : '1'};">${tagHtml}<div style="font-size:1.1em; margin-bottom:5px; padding-right:60px;"><b>${c.title || c.name || ''}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:10px; white-space: pre-line;">${c.content}</div><div style="display:flex; justify-content:space-between; font-size:0.75em; opacity:0.5; border-top:1px dashed var(--border); padding-top:8px; align-items: center;"><span>到期日: ${formatDateString(c.expiry)}</span>${c.useTime ? `<span>核銷時間: ${c.useTime}</span>` : `<span>券ID: ${c.id}</span>`}</div>${scanBtnHtml}</div>`;
             }).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無優惠券</p>';
         }
@@ -943,124 +964,7 @@
 
         function showCouponQR(couponId, couponName) { couponQr.clear(); couponQr.makeCode(couponId); document.getElementById('couponQrTitle').innerText = `【${couponName}】核銷條碼`; document.getElementById('couponQrBox').style.display = 'flex'; event.stopPropagation(); }
         
-        // --- 👤 訪客回報客服功能 ---
-        window.openGuestTicketForm = function() {
-            Swal.fire({
-                title: '訪客 / 登入問題通報',
-                html: `
-                    <div style="text-align:left; font-size:14px;">
-                        <p style="color:#666; font-size:13px; margin-bottom:10px;">無法登入或忘記密碼？請填寫下方表單，管理員將盡快與您聯繫。</p>
-                        <label style="color:var(--text);">您的稱呼 / 帳號：</label>
-                        <input type="text" id="g_tic_name" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請輸入您記得的帳號或姓名">
-                        <label style="color:var(--text);">聯絡方式：</label>
-                        <input type="text" id="g_tic_contact" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請填寫手機號碼或 Email">
-                        <label style="color:var(--text);">詳細問題描述：</label>
-                        <textarea id="g_tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:80px;" placeholder="請描述您遇到的問題..."></textarea>
-                    </div>
-                `,
-                showCancelButton: true, confirmButtonText: '送出通報', confirmButtonColor: '#3b82f6', cancelButtonText: '取消',
-                preConfirm: () => {
-                    let name = document.getElementById('g_tic_name').value.trim();
-                    let contact = document.getElementById('g_tic_contact').value.trim();
-                    let desc = document.getElementById('g_tic_desc').value.trim();
-                    if(!name || !contact || !desc) { Swal.showValidationMessage('請確實填寫所有欄位'); return false; }
-                    return { name, contact, desc };
-                }
-            }).then(async (res) => {
-                if (res.isConfirmed) {
-                    let fullDesc = "【訪客通報】\n聯絡方式: " + res.value.contact + "\n問題描述: " + res.value.desc;
-                    let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: '訪客_' + res.value.name, cat: '系統問題', subcat: '登入障礙/忘記密碼', subject: '訪客登入問題通報', desc: fullDesc }, "通報送出中...");
-                    if (fetchRes && fetchRes.success) Swal.fire('通報成功', '您的問題已送出！管理員會盡快透過您留下的聯絡方式協助您。', 'success');
-                    else Swal.fire('錯誤', '通報失敗，請稍後再試。', 'error');
-                }
-            });
-        }
-
-        // --- 🎧 客服線上交談與問題通報 ---
-        window.openCustomerServiceModal = function() {
-            let tics = store.tickets || [];
-            let listHtml = tics.map(t => `
-                <div style="background:#f8fafc; border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:8px; cursor:pointer;" onclick="openChatWindow('${t.tid}')">
-                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#666;"><span>${t.tid}</span><span style="color:${t.status==='處理中'?'var(--orange)':'var(--green)'}; font-weight:bold;">${t.status}</span></div>
-                    <div style="font-weight:bold; font-size:14px; margin-top:4px; color:var(--text);">${t.subject}</div>
-                </div>`).join('');
-            
-            Swal.fire({
-                title: '線上客服與問題通報',
-                html: `
-                <div style="text-align:left; max-height:60vh; overflow-y:auto; padding-right:5px;">
-                    <button class="btn" style="background:var(--pink); margin-bottom:15px; font-size:15px;" onclick="showNewTicketForm()">＋ 建立新通報案件</button>
-                    <div style="font-weight:bold; border-bottom:2px solid #eee; padding-bottom:5px; margin-bottom:10px; color:var(--text);">我的歷史案件</div>
-                    ${listHtml || '<p style="font-size:13px; color:#999; text-align:center;">尚無通報紀錄</p>'}
-                </div>`,
-                showConfirmButton: false, showCloseButton: true
-            });
-        }
-
-        window.showNewTicketForm = function() {
-            Swal.fire({
-                title: '建立新通報',
-                html: `
-                    <div style="text-align:left; font-size:14px;">
-                        <label style="color:var(--text);">問題大分類：</label>
-                        <select id="tic_cat" class="swal2-select" style="width:100%; margin:5px 0 10px 0;">
-                            <option>訂單問題</option>
-                            <option>帳務問題</option>
-                            <option>系統問題</option>
-                            <option>我想問的問題分類不在這上面</option>
-                        </select>
-                        <label style="color:var(--text);">問題子分類：</label><input type="text" id="tic_subcat" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="例如: 忘記密碼、商品損壞">
-                        <label style="color:var(--text);">主旨：</label><input type="text" id="tic_subject" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="簡述您的問題">
-                        <label style="color:var(--text);">詳細問題描述：</label><textarea id="tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:80px;" placeholder="請詳細描述您遇到的狀況..."></textarea>
-                    </div>
-                `,
-                showCancelButton: true, confirmButtonText: '送出通報', confirmButtonColor: '#3b82f6', cancelButtonText: '取消',
-                preConfirm: () => {
-                    let cat = document.getElementById('tic_cat').value, subcat = document.getElementById('tic_subcat').value.trim();
-                    let subject = document.getElementById('tic_subject').value.trim(), desc = document.getElementById('tic_desc').value.trim();
-                    if(!subcat || !subject || !desc) { Swal.showValidationMessage('請確實填寫所有欄位'); return false; }
-                    return { cat, subcat, subject, desc };
-                }
-            }).then(async (res) => {
-                if (res.isConfirmed) {
-                    let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: store.userData.id, pw: savedPw, ...res.value }, "通報建檔中...");
-                    if(fetchRes && fetchRes.success) { Swal.fire('通報成功', fetchRes.message, 'success').then(()=>silentSyncData()); }
-                    else if (fetchRes) { Swal.fire('錯誤', fetchRes.message || '發生異常', 'error'); }
-                } else { setTimeout(()=>openCustomerServiceModal(), 300); }
-            });
-        }
-
-        window.openChatWindow = function(tid) {
-            let msgs = (store.chatMessages || []).filter(m => m.tid === tid);
-            let chatHtml = msgs.map(m => `<div class="msg-bubble ${m.sender==='Admin'?'msg-admin':'msg-user'}">${m.msg}<div class="msg-time">${m.time}</div></div>`).join('');
-            
-            Swal.fire({
-                title: `即時交談 (${tid})`,
-                html: `
-                    <div class="chat-container">
-                        <div class="chat-box" id="user_chat_box">${chatHtml}</div>
-                        <div class="chat-input-area">
-                            <input type="text" id="user_chat_input" placeholder="輸入訊息...">
-                            <button onclick="sendUserChat('${tid}')" style="background:var(--pink); color:#fff; border:none;">傳送</button>
-                        </div>
-                    </div>
-                `,
-                showConfirmButton: false, showCloseButton: true, width: '90%', padding: '10px'
-            }).then(() => openCustomerServiceModal());
-            setTimeout(() => { let box = document.getElementById('user_chat_box'); if(box) box.scrollTop = box.scrollHeight; }, 100);
-        }
-
-        window.sendUserChat = async function(tid) {
-            let input = document.getElementById('user_chat_input'); let msg = input.value.trim();
-            if(!msg) return; input.value = '';
-            let box = document.getElementById('user_chat_box');
-            box.innerHTML += `<div class="msg-bubble msg-user">${msg}<div class="msg-time">傳送中...</div></div>`; box.scrollTop = box.scrollHeight;
-            
-            let res = await fetchWithQueue(SCRIPT_URL, { action: 'sendChat', tid: tid, sender: store.userData.id, msg: msg }, "發送中...");
-            if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 500); }
-        }
-
-        // --- 基礎介面功能 ---
+        // --- 基礎頁面切換 ---
         function openTab(i) { document.querySelectorAll('.page').forEach(p => p.style.display='none'); document.getElementById('p'+i).style.display='block'; document.querySelectorAll('.nav-item').forEach((n,idx) => idx===i?n.classList.add('active'):n.classList.remove('active')); silentSyncData(); }
         function showQR() { qr.clear(); qr.makeCode(store.userData.id); document.getElementById('qrBox').style.display='flex'; }
         function changeTheme() { const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark'); }
@@ -1068,39 +972,33 @@
 
         async function updateProfileName() {
             if (!store || !store.userData) return;
-            const confirmStep1 = await Swal.fire({ title: '確定要修改基本資料嗎？', text: '您即將變更您的會員個人資料。', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '取消', confirmButtonText: '確定前往' });
-            if (!confirmStep1.isConfirmed) return;
-            const { value: newName } = await Swal.fire({ title: '修改個人資料', input: 'text', inputLabel: '請輸入新的姓名', inputValue: store.userData.name, showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '取消', confirmButtonText: '下一步', inputValidator: (value) => { if (!value || !value.trim()) return '姓名不能為空！'; } });
-            if (!newName || newName.trim() === store.userData.name) return; const finalizedName = newName.trim();
-            const confirmStep2 = await Swal.fire({ title: '最後確認：確定變更名稱？', html: `您確定要將會員名稱從「<span style="color:var(--red);">${store.userData.name}</span>」<br>正式修改為「<span style="color:var(--green);">${finalizedName}</span>」嗎？`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '返回修改', confirmButtonText: '確認修改，不回頭' });
-            if (!confirmStep2.isConfirmed) return;
-            try {
-                const res = await fetchWithQueue(SCRIPT_URL, { action: 'updateProfile', uid: store.userData.id, pw: savedPw, newName: finalizedName }, '資料更新與連線中...');
-                if (res.aborted) return;
-                if (res && res.success) { store.userData.name = finalizedName; render(); await Swal.fire({ title: '基本資料變更成功！', text: `您的姓名已成功更新為：${finalizedName}`, icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '確定' }); } 
-                else if (res) showCustomerServiceAlert("基本資料更新失敗", res.message || "伺服器更新拒絕，請稍後再試");
-            } catch (e) { showCustomerServiceAlert("錯誤", "網路連線異常，無法完成基本資料變更"); }
+            const { value: newName } = await Swal.fire({ title: '修改真實姓名', input: 'text', inputValue: store.userData.name, showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '取消', confirmButtonText: '確定修改', inputValidator: (value) => { if (!value || !value.trim()) return '姓名不能為空！'; } });
+            if (newName && newName.trim() !== store.userData.name) {
+                let res = await fetchWithQueue(SCRIPT_URL, { action: 'updateProfile', uid: store.userData.id, pw: savedPw, newName: newName.trim() }, "資料更新中...");
+                if (res && res.success) { store.userData.name = newName.trim(); render(); Swal.fire('成功', '更名成功！', 'success'); }
+                else if (res) Swal.fire('錯誤', res.message || '更新拒絕', 'error');
+            }
         }
 
         async function updateUserPassword() {
             if (!store || !store.userData) return;
-            const confirmStep1 = await Swal.fire({ title: '確定要變更登入密碼嗎？', text: '密碼變更成功後，系統將強制安全登出，您需要使用新密碼重新登入。', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '確定前往' });
-            if (!confirmStep1.isConfirmed) return;
-            const { value: formValues } = await Swal.fire({ title: '變更登入密碼', html: '<input id="swal-old-pw" class="swal2-input" type="password" placeholder="請輸入舊密碼"><input id="swal-new-pw" class="swal2-input" type="password" placeholder="請輸入新密碼"><input id="swal-confirm-pw" class="swal2-input" type="password" placeholder="再次確認新密碼">', focusConfirm: false, showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '下一步', preConfirm: () => { const oldPw = document.getElementById('swal-old-pw').value.trim(); const newPw = document.getElementById('swal-new-pw').value.trim(); const confirmPw = document.getElementById('swal-confirm-pw').value.trim(); if (!oldPw || !newPw || !confirmPw) { Swal.showValidationMessage('所有密碼欄位皆為必填！'); return false; } if (newPw !== confirmPw) { Swal.showValidationMessage('兩次輸入的新密碼不一致！'); return false; } return { oldPw: oldPw, newPw: newPw }; } });
-            if (!formValues) return;
-            const confirmStep2 = await Swal.fire({ title: '您確定要寫入新密碼嗎？', text: '請確保您記住了剛才輸入的新密碼。按下確定後將立即向伺服器提交變更申請！', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '返回修改', confirmButtonText: '確認提交變更' });
-            if (!confirmStep2.isConfirmed) return;
-            try {
-                const res = await fetchWithQueue(SCRIPT_URL, { action: 'updatePassword', uid: store.userData.id, oldPw: formValues.oldPw, newPw: formValues.newPw }, '密碼變更與連線中...');
-                if (res.aborted) return;
-                if (res && res.success) { await Swal.fire({ title: '密碼變更成功！', text: '帳戶安全密碼已成功變更，請點擊確認以安全登出並重新登入。', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '登出系統' }); location.reload(); } 
-                else if (res) showCustomerServiceAlert("密碼變更失敗", res.message || "請檢查您的舊密碼是否輸入正確");
-            } catch (e) { showCustomerServiceAlert("錯誤", "網路連線異常，變更密碼失敗"); }
+            const { value: formValues } = await Swal.fire({
+                title: '變更登入密碼',
+                html: '<input id="swal-old-pw" class="swal2-input" type="password" placeholder="請輸入舊密碼"><input id="swal-new-pw" class="swal2-input" type="password" placeholder="請輸入新密碼"><input id="swal-confirm-pw" class="swal2-input" type="password" placeholder="再次確認新密碼">',
+                focusConfirm: false, showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '確認修改',
+                preConfirm: () => { const oldPw = document.getElementById('swal-old-pw').value.trim(); const newPw = document.getElementById('swal-new-pw').value.trim(); const confirmPw = document.getElementById('swal-confirm-pw').value.trim(); if (!oldPw || !newPw || !confirmPw) { Swal.showValidationMessage('所有密碼欄位皆為必填！'); return false; } if (newPw !== confirmPw) { Swal.showValidationMessage('兩次輸入的新密碼不一致！'); return false; } return { oldPw: oldPw, newPw: newPw }; }
+            });
+            if (formValues) {
+                let res = await fetchWithQueue(SCRIPT_URL, { action: 'updatePassword', uid: store.userData.id, oldPw: formValues.oldPw, newPw: formValues.newPw }, '密碼變更中...');
+                if (res && res.success) { await Swal.fire({ title: '密碼變更成功！', text: '請點擊確認以安全登出並重新登入。', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '登出系統' }); location.reload(); } 
+                else if (res) Swal.fire("錯誤", res.message || "密碼輸入錯誤", "error");
+            }
         }
 
-        async function triggerLogout() {
-            const confirmResult = await Swal.fire({ title: '確認要登出系統嗎？', text: '登出後需要重新輸入您的帳號與密碼才能存取行動會員。', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '安全登出' });
-            if (confirmResult.isConfirmed) { await Swal.fire({ title: '登出成功', text: '您已安全登出本系統，再見！', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '回到登入頁' }); location.reload(); }
+        function triggerLogout() {
+            Swal.fire({ title: '確認要登出系統嗎？', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '安全登出' }).then((res) => {
+                if (res.isConfirmed) { Swal.fire({ title: '登出成功', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '回到登入頁' }).then(() => location.reload()); }
+            });
         }
     </script>
 </body>
