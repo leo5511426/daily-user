@@ -115,8 +115,16 @@
         <div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
             <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
             
-            <!-- 分頁 0：首頁 (極簡版，移除通知) -->
+            <!-- 分頁 0：首頁 -->
             <div id="p0" class="page" style="display:block;">
+                
+                <!-- 🔔 置頂：最新通知預覽 -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 最新通知</div>
+                    <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(7)">查看全部 ➔</span>
+                </div>
+                <div id="ntListPreview" style="margin-bottom: 20px;"></div>
+
                 <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
                 
                 <!-- 💳 先享後付與餘額雙儀表板 -->
@@ -226,7 +234,7 @@
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
                 
                 <div class="footer-info">
-                    <div>版本：V82.0</div>
+                    <div>版本：V82.1 (首頁通知預覽版)</div>
                     <div>更新日期：2026-06-21</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
@@ -247,7 +255,7 @@
                 <div id="ntList"></div>
             </div>
 
-            <!-- 📱 導航列重組 (8個分頁：首頁、通知、紀錄、訂單、帳單、優惠、發票、客服) -->
+            <!-- 📱 導航列重組 (8個分頁) -->
             <div class="nav-bar">
                 <div class="nav-item active" onclick="openTab(0)"><div class="nav-icon">🏠</div>首頁</div>
                 <div class="nav-item" onclick="openTab(7)"><div class="nav-icon">🔔</div>通知</div>
@@ -420,7 +428,7 @@
 
         function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-        function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V82.0 (獨立通知中心版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+        function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V82.1 (首頁通知預覽版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
         function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -455,7 +463,7 @@
 
         // 🧩 捷徑自訂功能
         function customizeShortcuts() {
-            let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6]');
+            let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6,7]');
             let html = `<div style="text-align:left; font-size:15px;">`;
             let items = ["📊 收支明細","📦 訂單追蹤","🤝 待還帳單","🎟️ 我的優惠","🧾 電子發票","🎧 客服設定","🔔 通知中心"];
             items.forEach((item, index) => {
@@ -472,18 +480,36 @@
         }
         
         function renderShortcuts() {
-            let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6]');
+            let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6,7]');
             document.querySelectorAll('.shortcut-item').forEach(el => el.classList.remove('visible'));
             current.forEach(id => { let item = document.getElementById('sc_' + id); if(item) item.classList.add('visible'); });
         }
 
-        // 🔔 獨立通知中心渲染
+        // 🔔 獨立通知中心渲染與首頁預覽
         function renderNotifications() {
-            const ntList = document.getElementById('ntList');
-            const filterVal = document.getElementById('ntFilter') ? document.getElementById('ntFilter').value : 'ALL';
-            if (!ntList) return;
-            
             let filtered = store.notifications || [];
+            
+            // --- 處理首頁預覽 (取前 3 筆最新) ---
+            const ntListPreview = document.getElementById('ntListPreview');
+            if (ntListPreview) {
+                let previewData = filtered.slice(0, 3);
+                ntListPreview.innerHTML = previewData.map(n => {
+                    let d = new Date(String(n.time||'').replace(/-/g, '/'));
+                    let displayTime = isNaN(d.getTime()) ? (n.time||'') : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                    return `
+                    <div class="card" style="padding:12px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:10px;">
+                        <span style="position:absolute; top:8px; right:8px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${n.subTag || '通知'}</span>
+                        <div style="font-size:11px; opacity:0.5; margin-bottom:4px;">${displayTime}</div>
+                        <div style="font-size:13px; font-weight:normal; line-height:1.4; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${n.content || ''}</div>
+                    </div>`;
+                }).join('') || '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin: 10px 0;">目前無最新通知</p>';
+            }
+
+            // --- 處理獨立通知中心 (全列表與過濾) ---
+            const ntList = document.getElementById('ntList');
+            if (!ntList) return;
+            const filterVal = document.getElementById('ntFilter') ? document.getElementById('ntFilter').value : 'ALL';
+
             if(filterVal !== 'ALL') {
                 if(filterVal === '其他') {
                     filtered = filtered.filter(n => n.mainCat !== '訂單通知' && n.mainCat !== '帳務通知');
@@ -545,7 +571,7 @@
             const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut) elLoanOut.innerText = `未結清: $${outstanding.toLocaleString()}`;
 
             renderShortcuts();
-            renderNotifications();
+            renderNotifications(); // 同時更新首頁預覽與通知中心
 
             const sortH = document.getElementById('sortH').value; let sortedHistory = [...(store.history || [])];
             sortedHistory.sort((a, b) => { const da = new Date(String(a.date||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.date||'').replace(/-/g, '/')).getTime() || 0; return sortH === 'asc' ? da - db : db - da; });
