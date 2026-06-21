@@ -26,12 +26,12 @@
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; }
         .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 1.1em; font-weight: 900; cursor: pointer; }
         
-        /* 📱 導航列排版微調 (7個分頁) */
+        /* 📱 導航列排版微調 (8個分頁，防跑版) */
         .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; height: 75px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; transition: max-width 0.3s ease; }
         .app-container.full-desktop ~ .nav-bar, .full-desktop .nav-bar { max-width: 100% !important; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.75em; cursor: pointer; text-align: center; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.65em; cursor: pointer; text-align: center; white-space: nowrap; }
         .nav-item.active { color: var(--pink); font-weight: bold; }
-        .nav-icon { font-size: 1.4em; margin-bottom: 3px; }
+        .nav-icon { font-size: 1.5em; margin-bottom: 3px; }
         
         .mask { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
         input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 0.9em; font-family:inherit; }
@@ -92,7 +92,7 @@
         .footer-info { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 0.75em; color: #888; line-height: 1.6; }
         .footer-info .about-link { color: var(--pink); text-decoration: underline; cursor: pointer; margin-top: 10px; display: inline-block; }
 
-        .close-btn { position:absolute; top:-10px; right:-10px; background:var(--red); color:white; border:none; border-radius:50%; width:32px; height:32px; font-size:16px; cursor:pointer; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; }
+        .close-btn { position:absolute; top:-10px; right:-10px; background:var(--red); color:white; border:none; border-radius:50%; width:32px; height:32px; font-size:16px; cursor:pointer; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; z-index: 10; }
     </style>
 </head>
 <body data-theme="light">
@@ -115,20 +115,8 @@
         <div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
             <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
             
-            <!-- 分頁 0：首頁 -->
+            <!-- 分頁 0：首頁 (極簡版，移除通知) -->
             <div id="p0" class="page" style="display:block;">
-                <!-- 🔔 置頂：我的通知區塊與分類過濾器 -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 我的通知</div>
-                    <select id="ntFilter" class="sort-select" onchange="renderNotifications()" style="padding:4px 8px; font-size:0.85em; background:#f1f5f9;">
-                        <option value="ALL">顯示全部</option>
-                        <option value="訂單通知">📦 訂單通知</option>
-                        <option value="帳務通知">💰 帳務通知</option>
-                        <option value="其他">📌 其他通知</option>
-                    </select>
-                </div>
-                <div id="ntList" style="max-height:250px; overflow-y:auto; padding-right:5px; margin-bottom: 20px;"></div>
-
                 <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
                 
                 <!-- 💳 先享後付與餘額雙儀表板 -->
@@ -156,6 +144,7 @@
                     <div class="shortcut-item" id="sc_4" onclick="openTab(4)">🎟️ 我的優惠</div>
                     <div class="shortcut-item" id="sc_5" onclick="openTab(5)">🧾 電子發票</div>
                     <div class="shortcut-item" id="sc_6" onclick="openTab(6)">🎧 客服設定</div>
+                    <div class="shortcut-item" id="sc_7" onclick="openTab(7)">🔔 通知中心</div>
                 </div>
             </div>
 
@@ -237,22 +226,37 @@
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
                 
                 <div class="footer-info">
-                    <div>版本：V81.0 (全系統穩定修復版)</div>
-                    <div>更新日期：2026-06-18</div>
+                    <div>版本：V82.0</div>
+                    <div>更新日期：2026-06-21</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
                 </div>
             </div>
 
-            <!-- 📱 導航列重組 (7個分頁) -->
+            <!-- 分頁 7：🔔 獨立通知中心 -->
+            <div id="p7" class="page">
+                <div class="header-container">
+                    <h2 style="color:var(--pink); display:flex; align-items:center; gap:6px;">🔔 通知中心</h2>
+                    <select id="ntFilter" class="sort-select" onchange="renderNotifications()" style="padding:6px 10px; font-size:0.85em; background:var(--card);">
+                        <option value="ALL">顯示全部</option>
+                        <option value="訂單通知">📦 訂單通知</option>
+                        <option value="帳務通知">💰 帳務通知</option>
+                        <option value="其他">📌 其他通知</option>
+                    </select>
+                </div>
+                <div id="ntList"></div>
+            </div>
+
+            <!-- 📱 導航列重組 (8個分頁：首頁、通知、紀錄、訂單、帳單、優惠、發票、客服) -->
             <div class="nav-bar">
                 <div class="nav-item active" onclick="openTab(0)"><div class="nav-icon">🏠</div>首頁</div>
+                <div class="nav-item" onclick="openTab(7)"><div class="nav-icon">🔔</div>通知</div>
                 <div class="nav-item" onclick="openTab(1)"><div class="nav-icon">📊</div>紀錄</div>
                 <div class="nav-item" onclick="openTab(2)"><div class="nav-icon">📦</div>訂單</div>
                 <div class="nav-item" onclick="openTab(3)"><div class="nav-icon">🤝</div>帳單</div>
                 <div class="nav-item" onclick="openTab(4)"><div class="nav-icon">🎟️</div>優惠</div>
                 <div class="nav-item" onclick="openTab(5)"><div class="nav-icon">🧾</div>發票</div>
-                <div class="nav-item" onclick="openTab(6)"><div class="nav-icon">🎧</div>客服設定</div>
+                <div class="nav-item" onclick="openTab(6)"><div class="nav-icon">🎧</div>客服</div>
             </div>
         </div>
 
@@ -416,7 +420,7 @@
 
         function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-        function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V81.0 (全系統穩定修復版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+        function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V82.0 (獨立通知中心版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
         function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -453,7 +457,7 @@
         function customizeShortcuts() {
             let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6]');
             let html = `<div style="text-align:left; font-size:15px;">`;
-            let items = ["📊 收支明細","📦 訂單追蹤","🤝 待還帳單","🎟️ 我的優惠","🧾 電子發票","🎧 客服設定"];
+            let items = ["📊 收支明細","📦 訂單追蹤","🤝 待還帳單","🎟️ 我的優惠","🧾 電子發票","🎧 客服設定","🔔 通知中心"];
             items.forEach((item, index) => {
                 let id = index + 1;
                 html += `<label style="display:flex; align-items:center; gap:10px; margin:8px 0; cursor:pointer;"><input type="checkbox" class="sc-chk" value="${id}" ${current.includes(id)?'checked':''} style="width:20px; height:20px;"> ${item}</label>`;
@@ -473,7 +477,7 @@
             current.forEach(id => { let item = document.getElementById('sc_' + id); if(item) item.classList.add('visible'); });
         }
 
-        // 🔔 渲染通知功能 (首頁過濾功能)
+        // 🔔 獨立通知中心渲染
         function renderNotifications() {
             const ntList = document.getElementById('ntList');
             const filterVal = document.getElementById('ntFilter') ? document.getElementById('ntFilter').value : 'ALL';
@@ -489,20 +493,19 @@
             }
 
             ntList.innerHTML = filtered.map(n => {
-                // 將時間字串格式化為 YYYY-MM-DD HH:mm
                 let d = new Date(String(n.time||'').replace(/-/g, '/'));
                 let displayTime = isNaN(d.getTime()) ? (n.time||'') : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 
                 return `
-                <div class="card" style="padding:12px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:10px;">
-                    <span style="position:absolute; top:8px; right:8px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${n.subTag || '通知'}</span>
-                    <div style="font-size:11px; opacity:0.5; margin-bottom:4px;">${displayTime}</div>
-                    <div style="font-size:14px; font-weight:normal; line-height:1.4; color:var(--text);">${n.content || ''}</div>
+                <div class="card" style="padding:15px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:12px;">
+                    <span style="position:absolute; top:12px; right:12px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:3px 8px; border-radius:6px; font-weight:bold;">${n.subTag || '通知'}</span>
+                    <div style="font-size:12px; opacity:0.6; margin-bottom:6px; font-weight:bold;">${displayTime}</div>
+                    <div style="font-size:15px; font-weight:normal; line-height:1.5; color:var(--text);">${n.content || ''}</div>
                 </div>`;
-            }).join('') || '<p style="text-align:center; opacity:0.3; margin-top:20px;">目前無任何通知</p>';
+            }).join('') || '<p style="text-align:center; opacity:0.3; margin-top:40px;">目前無任何通知</p>';
         }
 
-        // 🛡️ 補回：自動完成訂單防呆檢查
+        // 🛡️ 自動完成訂單防呆檢查
         function checkAutoCompleteOrders() {
             if (!store || !store.orders) return;
             const now = new Date(); let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
@@ -531,7 +534,6 @@
             let totalBnpl = (u.bnplLimit !== undefined && u.bnplLimit !== "") ? Number(u.bnplLimit) : 500;
             let outstanding = 0;
             
-            // 💰 修正借款計算邏輯：只要未結清都扣除額度
             (store.loans || []).forEach(l => { 
                 if(l.status !== "已結清" && l.status !== "Macro已結清") outstanding += (l.totalDue || 0); 
             });
