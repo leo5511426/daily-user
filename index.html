@@ -6,7 +6,6 @@
     <title>小佑的日常生活行動會員</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- 🎉 引入滿版撒花動畫套件 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { 
@@ -108,17 +107,13 @@
             <label class="pwd-toggle-container"><input type="checkbox" id="showPwdCheck" onchange="togglePasswordVisibility()"> 顯示輸入的密碼</label>
             <button class="btn" onclick="doLogin()">登入</button>
             
-            <!-- 👤 訪客回報客服按鈕 -->
             <button class="btn" style="background:var(--blue); margin-top:15px; font-size:1em; padding:15px;" onclick="openGuestTicketForm()">🎧 忘記密碼/無法登入？聯絡客服</button>
         </div>
 
         <div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
             <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
             
-            <!-- 分頁 0：首頁 -->
             <div id="p0" class="page" style="display:block;">
-                
-                <!-- 🔔 置頂：最新通知預覽 -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 最新通知</div>
                     <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(7)">查看全部 ➔</span>
@@ -127,7 +122,6 @@
 
                 <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
                 
-                <!-- 💳 先享後付與餘額雙儀表板 -->
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
                     <div class="card" style="text-align:center; padding:20px 10px; margin:0;">
                         <div style="font-size:0.75em; opacity:0.6;">可用積分餘額</div>
@@ -156,24 +150,20 @@
                 </div>
             </div>
 
-            <!-- 分頁 1：交易紀錄 -->
             <div id="p1" class="page">
                 <div class="header-container"><h2>交易紀錄</h2><select id="sortH" class="sort-select" onchange="render()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <p style="font-size:0.85em; color:#666; margin-top:0;">此處將列出您近期的餘額收支明細。</p>
                 <div id="hList"></div>
             </div>
 
-            <!-- 分頁 2：訂單狀態 -->
             <div id="p2" class="page">
                 <div class="header-container"><h2>訂單狀態</h2><select id="sortO" class="sort-select" onchange="render()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <div id="oList"></div>
             </div>
             
-            <!-- 分頁 3：待還帳單 -->
             <div id="p3" class="page">
                 <div class="header-container"><h2>待還帳單</h2><select id="sortL" class="sort-select" onchange="renderLoans()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 
-                <!-- 💳 先享後付總信用額度卡片 -->
                 <div class="card" style="background:var(--card); padding:15px; border-left:5px solid var(--blue); margin-bottom:15px;">
                     <span style="font-size:0.8em; opacity:0.6;">💳 先享後付信用總額度</span>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
@@ -190,7 +180,6 @@
                 <div id="lList"></div>
             </div>
             
-            <!-- 分頁 4：優惠券 -->
             <div id="p4" class="page">
                 <div class="header-container"><h2>我的優惠券</h2><select id="sortC" class="sort-select" onchange="renderCoupons()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
                 <div class="coupon-tabs">
@@ -201,18 +190,15 @@
                 <div id="cpList"></div>
             </div>
 
-            <!-- 分頁 5：電子發票 -->
             <div id="p5" class="page">
                 <div class="header-container"><h2>電子發票</h2></div>
                 <p style="font-size:0.85em; color:#666; margin-top:0;">此處將列出您近期開立的電子發票載具紀錄。</p>
                 <div id="invList"></div>
             </div>
             
-            <!-- 分頁 6：設定 / 客服中心 -->
             <div id="p6" class="page">
                 <h2>會員中心與設定</h2>
                 
-                <!-- 🎧 完整客服功能入口 (大按鈕) -->
                 <button class="btn" onclick="openCustomerServiceModal()" style="background:var(--blue); margin-bottom:20px; padding:20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); display:flex; flex-direction:column; align-items:center; gap:6px;">
                     <span style="font-size:1.15em;">🎧 線上客服與問題通報</span>
                     <span style="font-size:0.75em; opacity:0.85; font-weight:normal;">聯絡管理員 / 售後通報 / 系統問題回報</span>
@@ -234,14 +220,13 @@
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
                 
                 <div class="footer-info">
-                    <div>版本：V82.1</div>
-                    <div>更新日期：2026-06-21</div>
+                    <div>版本：V83.0</div>
+                    <div>更新日期：2026-06-24</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
                 </div>
             </div>
 
-            <!-- 分頁 7：🔔 獨立通知中心 -->
             <div id="p7" class="page">
                 <div class="header-container">
                     <h2 style="color:var(--pink); display:flex; align-items:center; gap:6px;">🔔 通知中心</h2>
@@ -255,7 +240,6 @@
                 <div id="ntList"></div>
             </div>
 
-            <!-- 📱 導航列重組 (8個分頁) -->
             <div class="nav-bar">
                 <div class="nav-item active" onclick="openTab(0)"><div class="nav-icon">🏠</div>首頁</div>
                 <div class="nav-item" onclick="openTab(7)"><div class="nav-icon">🔔</div>通知</div>
@@ -268,7 +252,6 @@
             </div>
         </div>
 
-        <!-- ✖️ 加入關閉按鈕的會員條碼視窗 -->
         <div id="qrBox" class="mask">
             <div style="background:#fff; padding:25px; border-radius:20px; position:relative; text-align:center;">
                 <button class="close-btn" onclick="document.getElementById('qrBox').style.display='none';">✕</button>
@@ -277,7 +260,6 @@
             </div>
         </div>
 
-        <!-- ✖️ 加入關閉按鈕的優惠券條碼視窗 -->
         <div id="couponQrBox" class="mask">
             <div style="background:#fff; padding:25px; border-radius:20px; position:relative; text-align:center;">
                 <button class="close-btn" onclick="document.getElementById('couponQrBox').style.display='none';">✕</button>
@@ -428,7 +410,7 @@
 
         function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-        function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V82.1 (首頁通知預覽版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+        function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V83 (絕對時間鎖定防呆版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
         function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -531,19 +513,30 @@
             }).join('') || '<p style="text-align:center; opacity:0.3; margin-top:40px;">目前無任何通知</p>';
         }
 
-        // 🛡️ 自動完成訂單防呆檢查
+        // 🛡️ 自動完成訂單防呆檢查 (改用毫秒絕對時間差)
         function checkAutoCompleteOrders() {
             if (!store || !store.orders) return;
-            const now = new Date(); let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
+            const nowTime = Date.now(); 
+            let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
+            
             store.orders.forEach(o => {
                 let statusStr = String(o.status || '');
-                let isCompleted = statusStr === "訂單已完成", isReturning = statusStr.includes("退貨") || statusStr.includes("退款"), isCanceled = statusStr.includes("不成立") || statusStr.includes("取消");
+                let isCompleted = statusStr === "訂單已完成";
+                let isReturning = statusStr.includes("退貨") || statusStr.includes("退款");
+                let isCanceled = statusStr.includes("不成立") || statusStr.includes("取消");
                 let isDelivered = deliveredStatuses.some(s => statusStr.includes(s));
+                
                 if (isDelivered && !isCompleted && !isReturning && !isCanceled) {
                     let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => String(n.status||'').includes(s)));
-                    if (deliveredNode) {
-                        let dDate = new Date(String(deliveredNode.time||'').replace(/-/g, '/')); dDate.setDate(dDate.getDate() + 7);
-                        if (now > dDate) { fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'buyerCompleteOrder', oid: o.id, uid: store.userData.id, pw: savedPw }) }); o.status = "訂單已完成"; }
+                    if (deliveredNode && deliveredNode.time) {
+                        let dDate = new Date(String(deliveredNode.time).replace(/-/g, '/'));
+                        if (!isNaN(dDate.getTime())) {
+                            let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000); // 絕對增加7天毫秒數
+                            if (nowTime > limitTime) { 
+                                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'buyerCompleteOrder', oid: o.id, uid: store.userData.id, pw: savedPw }) }); 
+                                o.status = "訂單已完成"; 
+                            }
+                        }
                     }
                 }
             });
@@ -606,14 +599,25 @@
                 if (isDelivered && !isCompleted && !isReturning) {
                     let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => String(n.status||'').includes(s)));
                     let deadlineHtml = ""; let canReturn = false;
-                    if (deliveredNode) {
-                        let dDate = new Date(String(deliveredNode.time||'').replace(/-/g, '/')); dDate.setDate(dDate.getDate() + 7);
-                        let now = new Date();
-                        if (now <= dDate) {
-                            canReturn = true; let mm = String(dDate.getMonth() + 1).padStart(2, '0'); let dd = String(dDate.getDate()).padStart(2, '0');
-                            deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${dDate.getFullYear()}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
-                        } else deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
+                    
+                    if (deliveredNode && deliveredNode.time) {
+                        let dDate = new Date(String(deliveredNode.time).replace(/-/g, '/'));
+                        if (!isNaN(dDate.getTime())) {
+                            let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000);
+                            let nowTime = Date.now();
+                            if (nowTime <= limitTime) {
+                                canReturn = true; 
+                                let limitObj = new Date(limitTime);
+                                let yyyy = limitObj.getFullYear();
+                                let mm = String(limitObj.getMonth() + 1).padStart(2, '0'); 
+                                let dd = String(limitObj.getDate()).padStart(2, '0');
+                                deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${yyyy}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
+                            } else {
+                                deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
+                            }
+                        }
                     }
+
                     if (canReturn) { actionBtnsHtml += `<button class="btn" style="background:var(--green); margin-top:15px;" onclick="completeOrder('${o.id}')">✅ 完成訂單</button>`; actionBtnsHtml += deadlineHtml; actionBtnsHtml += `<button class="btn" style="background:transparent; color:var(--red); border:1px solid var(--red); margin-top:5px;" onclick="applyReturn('${o.id}')">🚨 申請退貨/退款</button>`; } 
                     else { actionBtnsHtml += deadlineHtml; }
                 }
@@ -808,7 +812,7 @@
                         <select id="swal-ret-method-sel" class="swal2-select" style="width:100%; margin:0 0 10px 0; display:flex; box-sizing:border-box;" onchange="if(this.value=='其他') document.getElementById('swal-ret-method-other').style.display='block'; else document.getElementById('swal-ret-method-other').style.display='none';">
                             <option value="退還至系統可用餘額">退還至系統可用餘額 (極速退款)</option><option value="信用卡刷退">信用卡刷退</option><option value="銀行轉帳">銀行轉帳</option><option value="街口/LINE Pay 等電子支付">街口/LINE Pay 等電子支付</option><option value="其他">其他...</option>
                         </select>
-                        <input id="swal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%; margin:0 0 10px 0; box-sizing:border-box; display:none;">
+                        <input idswal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%; margin:0 0 10px 0; box-sizing:border-box; display:none;">
                         <label style="display:block; margin:10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">📸 上傳佐證相片 (必填)：</label>
                         <input type="file" id="swal-ret-photo" accept="image/*" onchange="previewReturnImage(event)" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
                     </div>
