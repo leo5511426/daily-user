@@ -61,6 +61,12 @@
         .shortcut-item { background: var(--card); border: 1px solid var(--border); padding: 12px 5px; border-radius: 15px; text-align: center; font-size: 0.75em; cursor: pointer; display: none; }
         .shortcut-item.visible { display: block; }
 
+        /* 🏷️ 訂單／通知 可滑動頁籤 */
+        .tab-bar-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .tab-bar-scroll::-webkit-scrollbar { display: none; }
+        .pill-tab { flex-shrink: 0; padding: 8px 14px; border-radius: 20px; background: var(--card); border: 1px solid var(--border); font-size: 0.8em; font-weight: bold; color: var(--text); cursor: pointer; white-space: nowrap; opacity: 0.75; transition: 0.15s; }
+        .pill-tab.active { background: var(--pink); color: #fff; border-color: var(--pink); opacity: 1; }
+
         /* ⏱️ 訂單時間線專屬 CSS */
         .order-timeline { margin: 5px 0 5px 5px; padding-left: 5px; }
         .timeline-node { --node-color: #a1a1aa; --node-shadow: rgba(161, 161, 170, 0.35); position: relative; padding-left: 24px; padding-bottom: 18px; text-align: left; }
@@ -118,6 +124,7 @@
                     <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 最新通知</div>
                     <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(7)">查看全部 ➔</span>
                 </div>
+                <div id="ntTabBarHome" class="tab-bar-scroll"></div>
                 <div id="ntListPreview" style="margin-bottom: 20px;"></div>
 
                 <h2>你好，<span id="uName" style="color:var(--pink);">...</span></h2>
@@ -134,6 +141,12 @@
                 </div>
 
                 <button class="btn" onclick="showQR()">顯示個人識別碼</button>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+                    <span style="font-size:1.05em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">📦 最新訂單動態</span>
+                    <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(2)">查看全部 ➔</span>
+                </div>
+                <div id="orderListPreview" style="margin-bottom: 15px;"></div>
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
                     <span style="font-size:0.9em; opacity:0.7;">⚡ 常用功能捷徑</span>
@@ -158,6 +171,7 @@
 
             <div id="p2" class="page">
                 <div class="header-container"><h2>訂單狀態</h2><select id="sortO" class="sort-select" onchange="render()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select></div>
+                <div id="orderTabBar" class="tab-bar-scroll"></div>
                 <div id="oList"></div>
             </div>
             
@@ -220,8 +234,8 @@
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
                 
                 <div class="footer-info">
-                    <div>版本：V83.0</div>
-                    <div>更新日期：2026-06-25</div>
+                    <div>版本：V85.0</div>
+                    <div>更新日期：2026-06-30</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
                 </div>
@@ -230,13 +244,9 @@
             <div id="p7" class="page">
                 <div class="header-container">
                     <h2 style="color:var(--pink); display:flex; align-items:center; gap:6px;">🔔 通知中心</h2>
-                    <select id="ntFilter" class="sort-select" onchange="renderNotifications()" style="padding:6px 10px; font-size:0.85em; background:var(--card);">
-                        <option value="ALL">顯示全部</option>
-                        <option value="訂單通知">📦 訂單通知</option>
-                        <option value="帳務通知">💰 帳務通知</option>
-                        <option value="其他">📌 其他通知</option>
-                    </select>
+                    <select id="sortNt" class="sort-select" onchange="renderNotifications()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select>
                 </div>
+                <div id="ntTabBarCenter" class="tab-bar-scroll"></div>
                 <div id="ntList"></div>
             </div>
 
@@ -273,7 +283,7 @@
 
     <script>
         // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwyQMPjsacghR12E1RvJgxZMa6SdNCHfXAU2mdBMl1hy9pllBBl_ZZLSyc41E0lZmo5/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKzmGZYthFSCpAPn6NCefXRQe7ia6-yYq1tl2tq0boc-CI8PSLafj9J3oN2K1j4hSw/exec"; 
         
         let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null; 
 
@@ -467,14 +477,53 @@
             current.forEach(id => { let item = document.getElementById('sc_' + id); if(item) item.classList.add('visible'); });
         }
 
-        // 🔔 獨立通知中心渲染與首頁預覽
+        // 🔔 通知頁籤定義（首頁與通知中心共用同一篩選狀態）
+        let currentNotifyTab = 'ALL';
+        const NOTIFY_TABS = [
+            { key: 'ALL', label: '全部' },
+            { key: '訂單通知', label: '📦 訂單通知' },
+            { key: '帳務通知', label: '💰 帳務通知' },
+            { key: '其他', label: '📌 其他通知' }
+        ];
+
+        function getNotifyMainCat(n) {
+            return (n.mainCat === '訂單通知' || n.mainCat === '帳務通知') ? n.mainCat : '其他';
+        }
+
+        window.switchNotifyTab = function(key) {
+            currentNotifyTab = key;
+            renderNotifications();
+        }
+
+        function renderNotifyTabBar(allNotifications) {
+            let counts = { ALL: allNotifications.length, '訂單通知': 0, '帳務通知': 0, '其他': 0 };
+            allNotifications.forEach(n => { let c = getNotifyMainCat(n); counts[c] = (counts[c] || 0) + 1; });
+            let html = NOTIFY_TABS.map(t => {
+                let activeCls = currentNotifyTab === t.key ? 'active' : '';
+                return `<div class="pill-tab ${activeCls}" onclick="switchNotifyTab('${t.key}')">${t.label} (${counts[t.key] || 0})</div>`;
+            }).join('');
+            ['ntTabBarHome', 'ntTabBarCenter'].forEach(id => { 
+                let el = document.getElementById(id); 
+                if (el) { 
+                    el.innerHTML = html; 
+                    let activeEl = el.querySelector('.pill-tab.active');
+                    if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', block: 'nearest' });
+                } 
+            });
+        }
+
+        // 🔔 獨立通知中心渲染與首頁預覽（共用 currentNotifyTab 篩選狀態）
         function renderNotifications() {
-            let filtered = store.notifications || [];
-            
-            // --- 處理首頁預覽 (取前 3 筆最新) ---
+            let allNotifications = store.notifications || [];
+            renderNotifyTabBar(allNotifications);
+
+            let filteredByTab = currentNotifyTab === 'ALL' ? allNotifications : allNotifications.filter(n => getNotifyMainCat(n) === currentNotifyTab);
+
+            // --- 處理首頁預覽 (依篩選分類，固定新到舊，取前 3 筆最新) ---
             const ntListPreview = document.getElementById('ntListPreview');
             if (ntListPreview) {
-                let previewData = filtered.slice(0, 3);
+                let previewSorted = [...filteredByTab].sort((a, b) => { const da = new Date(String(a.time||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.time||'').replace(/-/g, '/')).getTime() || 0; return db - da; });
+                let previewData = previewSorted.slice(0, 3);
                 ntListPreview.innerHTML = previewData.map(n => {
                     let d = new Date(String(n.time||'').replace(/-/g, '/'));
                     let displayTime = isNaN(d.getTime()) ? (n.time||'') : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -487,20 +536,13 @@
                 }).join('') || '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin: 10px 0;">目前無最新通知</p>';
             }
 
-            // --- 處理獨立通知中心 (全列表與過濾) ---
+            // --- 處理獨立通知中心 (依篩選分類＋可選排序) ---
             const ntList = document.getElementById('ntList');
             if (!ntList) return;
-            const filterVal = document.getElementById('ntFilter') ? document.getElementById('ntFilter').value : 'ALL';
+            const sortVal = document.getElementById('sortNt') ? document.getElementById('sortNt').value : 'desc';
+            let centerSorted = [...filteredByTab].sort((a, b) => { const da = new Date(String(a.time||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.time||'').replace(/-/g, '/')).getTime() || 0; return sortVal === 'asc' ? da - db : db - da; });
 
-            if(filterVal !== 'ALL') {
-                if(filterVal === '其他') {
-                    filtered = filtered.filter(n => n.mainCat !== '訂單通知' && n.mainCat !== '帳務通知');
-                } else {
-                    filtered = filtered.filter(n => n.mainCat === filterVal);
-                }
-            }
-
-            ntList.innerHTML = filtered.map(n => {
+            ntList.innerHTML = centerSorted.map(n => {
                 let d = new Date(String(n.time||'').replace(/-/g, '/'));
                 let displayTime = isNaN(d.getTime()) ? (n.time||'') : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 
@@ -512,6 +554,7 @@
                 </div>`;
             }).join('') || '<p style="text-align:center; opacity:0.3; margin-top:40px;">目前無任何通知</p>';
         }
+
 
         // 🛡️ 自動完成訂單防呆檢查 (改用毫秒絕對時間差)
         function checkAutoCompleteOrders() {
@@ -573,11 +616,99 @@
             renderLoans(); renderCoupons(); renderInvoices(); renderOrders(); 
         }
 
+        // --- 📦 訂單分類映射表（依狀態關鍵字歸類，優先序由上至下） ---
+        let currentOrderTab = 'ALL';
+        const ORDER_TABS = [
+            { key: 'ALL', label: '全部' },
+            { key: 'shipping', label: '待出貨' },
+            { key: 'receive', label: '待收貨' },
+            { key: 'pickup', label: '待取貨' },
+            { key: 'done', label: '已完成' },
+            { key: 'return', label: '退貨／退款' },
+            { key: 'cancelled', label: '不成立' }
+        ];
+        const ORDER_CATEGORY_COLOR = {
+            shipping: '#f59e0b', receive: '#3b82f6', pickup: '#8b5cf6',
+            done: '#2ecc71', return: '#ff5252', cancelled: '#94a3b8'
+        };
+
+        const ORDER_LABEL_TO_KEY = {
+            '待出貨': 'shipping', '待收貨': 'receive', '待取貨': 'pickup',
+            '已完成': 'done', '退貨／退款': 'return', '退貨/退款': 'return', '不成立': 'cancelled'
+        };
+
+        function getOrderCategory(status) {
+            let s = String(status || '').trim();
+
+            // 1️⃣ 優先採用後台「狀態→分類」對應表（Settings 工作表 D 欄設定，由管理員維護）
+            if (store && store.statusCategoryMap && store.statusCategoryMap[s]) {
+                let mappedKey = ORDER_LABEL_TO_KEY[String(store.statusCategoryMap[s]).trim()];
+                if (mappedKey) return mappedKey;
+            }
+
+            // 2️⃣ 後援防呆：若該狀態尚未在後台設定分類，採用關鍵字規則判斷
+            if (s === '訂單已完成') return 'done';
+            if (s.includes('退貨') || s.includes('退款')) return 'return';
+            if (s.includes('申請取消中') || s.includes('訂單不成立') || s.includes('取消')) return 'cancelled';
+            if (s.includes('已配達') || s.includes('已到貨')) return 'pickup';
+            if (s.includes('出貨') || s.includes('配送') || s.includes('已取件') || s.includes('取件成功')) return 'receive';
+            return 'shipping'; // 訂單成立/處理中/賣家確認中/備貨中，以及其他未明確符合上述規則的狀態（防呆預設值）
+        }
+
+        window.switchOrderTab = function(key) {
+            currentOrderTab = key;
+            renderOrders();
+        }
+
+        function renderOrderTabBar(allOrders) {
+            let counts = { ALL: allOrders.length, shipping: 0, receive: 0, pickup: 0, done: 0, return: 0, cancelled: 0 };
+            allOrders.forEach(o => { let c = getOrderCategory(o.status); counts[c] = (counts[c] || 0) + 1; });
+            let html = ORDER_TABS.map(t => {
+                let activeCls = currentOrderTab === t.key ? 'active' : '';
+                return `<div class="pill-tab ${activeCls}" onclick="switchOrderTab('${t.key}')">${t.label} (${counts[t.key] || 0})</div>`;
+            }).join('');
+            let bar = document.getElementById('orderTabBar'); 
+            if (bar) {
+                bar.innerHTML = html;
+                let activeEl = bar.querySelector('.pill-tab.active');
+                if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', block: 'nearest' });
+            }
+        }
+
+        // 🏠 首頁「最新訂單動態」預覽 (固定顯示最新 2 筆，不受頁籤篩選影響)
+        function renderOrderPreview() {
+            const el = document.getElementById('orderListPreview'); if (!el) return;
+            let allOrders = [...(store.orders || [])];
+            allOrders.sort((a, b) => { const da = a.time ? new Date(String(a.time||'').replace(/-/g, '/')).getTime() : 0; const db = b.time ? new Date(String(b.time||'').replace(/-/g, '/')).getTime() : 0; return db - da; });
+            let preview = allOrders.slice(0, 2);
+
+            el.innerHTML = preview.map(o => {
+                let cat = getOrderCategory(o.status);
+                let color = ORDER_CATEGORY_COLOR[cat] || '#ccc';
+                let label = (ORDER_TABS.find(t => t.key === cat) || {}).label || o.status || '未知狀態';
+                let rawItem = String(o.desc || o.item || '無商品明細');
+                let firstLine = rawItem.split(/[;\n]/).map(s => s.trim()).filter(s => s)[0] || '無商品明細';
+                return `
+                <div class="card" style="padding:12px; cursor:pointer;" onclick="openTab(2)">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.8em; color:var(--pink);">單號: ${o.id}</span>
+                        <span style="background:${color}; color:#fff; font-size:0.7em; padding:2px 8px; border-radius:6px; font-weight:bold;">${label}</span>
+                    </div>
+                    <div style="font-size:0.85em; margin-top:6px; opacity:0.85;">${firstLine}</div>
+                </div>`;
+            }).join('') || '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin: 10px 0;">目前無訂單紀錄</p>';
+        }
+
         // --- 📦 訂單追蹤與自動完成 ---
         function renderOrders() {
             const sortO = document.getElementById('sortO').value; 
-            let sortedOrders = [...(store.orders || [])];
-            sortedOrders.sort((a, b) => { const da = a.time ? new Date(String(a.time||'').replace(/-/g, '/')).getTime() : 0; const db = b.time ? new Date(String(b.time||'').replace(/-/g, '/')).getTime() : 0; return sortO === 'asc' ? da - db : db - da; });
+            let allOrders = [...(store.orders || [])];
+            allOrders.sort((a, b) => { const da = a.time ? new Date(String(a.time||'').replace(/-/g, '/')).getTime() : 0; const db = b.time ? new Date(String(b.time||'').replace(/-/g, '/')).getTime() : 0; return sortO === 'asc' ? da - db : db - da; });
+
+            renderOrderTabBar(allOrders);
+            renderOrderPreview();
+
+            let sortedOrders = currentOrderTab === 'ALL' ? allOrders : allOrders.filter(o => getOrderCategory(o.status) === currentOrderTab);
 
             document.getElementById('oList').innerHTML = sortedOrders.map((o) => {
                 let rawItem = String(o.desc || o.item || '無商品明細'); let briefItemHtml = '';
@@ -626,7 +757,7 @@
                 else if (isCancellable && !isDelivered) actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:transparent; color:var(--red); border:1px solid var(--red); width:100%; display:block;" onclick="applyCancelOrder('${o.id}')">❌ 申請取消訂單</button>`;
 
                 return `<div class="card"><div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div><div style="margin:5px 0;"><b>狀態: ${statusStr}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${briefItemHtml}</div><div style="font-size:1.1em; color:var(--red); margin:5px 0;"><b>訂單總金額: $${o.total || o.totalAmount || 0}</b></div><div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">${o.ship || '未知物流'} | 單號: ${o.track || '無'}</div><button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup('${o.id}')">🔍 查看訂單詳細資訊</button>${actionBtnsHtml}</div>`;
-            }).join('') || '<p style="text-align:center; opacity:0.3;">無訂單紀錄</p>';
+            }).join('') || `<p style="text-align:center; opacity:0.3;">${currentOrderTab === 'ALL' ? '無訂單紀錄' : '此分類目前無訂單'}</p>`;
 
             checkAutoCompleteOrders();
         }
@@ -812,7 +943,7 @@
                         <select id="swal-ret-method-sel" class="swal2-select" style="width:100%; margin:0 0 10px 0; display:flex; box-sizing:border-box;" onchange="if(this.value=='其他') document.getElementById('swal-ret-method-other').style.display='block'; else document.getElementById('swal-ret-method-other').style.display='none';">
                             <option value="退還至系統可用餘額">退還至系統可用餘額 (極速退款)</option><option value="信用卡刷退">信用卡刷退</option><option value="銀行轉帳">銀行轉帳</option><option value="街口/LINE Pay 等電子支付">街口/LINE Pay 等電子支付</option><option value="其他">其他...</option>
                         </select>
-                        <input idswal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%; margin:0 0 10px 0; box-sizing:border-box; display:none;">
+                        <input id="swal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%; margin:0 0 10px 0; box-sizing:border-box; display:none;">
                         <label style="display:block; margin:10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">📸 上傳佐證相片 (必填)：</label>
                         <input type="file" id="swal-ret-photo" accept="image/*" onchange="previewReturnImage(event)" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
                     </div>
