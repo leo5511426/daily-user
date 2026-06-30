@@ -234,7 +234,7 @@
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
                 
                 <div class="footer-info">
-                    <div>版本：V85.0</div>
+                    <div>版本：V85.1</div>
                     <div>更新日期：2026-06-30</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
@@ -1138,6 +1138,24 @@
         function showQR() { qr.clear(); qr.makeCode(store.userData.id); document.getElementById('qrBox').style.display='flex'; }
         function changeTheme() { const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark'); }
         function toggleLayoutMode() { const container = document.getElementById('appContainer'); container.classList.toggle('full-desktop'); }
+
+        // 🖥️📱 自動偵測螢幕寬度切換電腦版/手機版（即時監聽視窗大小變化，不記憶使用者手動覆寫的選擇）
+        const AUTO_LAYOUT_BREAKPOINT = 768; // px，螢幕寬度 ≥ 此值時自動切換為電腦版寬版
+        function applyAutoLayoutMode() {
+            const container = document.getElementById('appContainer');
+            if (!container) return;
+            if (window.innerWidth >= AUTO_LAYOUT_BREAKPOINT) {
+                container.classList.add('full-desktop');
+            } else {
+                container.classList.remove('full-desktop');
+            }
+        }
+        let autoLayoutResizeTimer = null;
+        window.addEventListener('resize', function() {
+            clearTimeout(autoLayoutResizeTimer);
+            autoLayoutResizeTimer = setTimeout(applyAutoLayoutMode, 150); // 防抖，避免拖曳視窗邊框時頻繁觸發
+        });
+        applyAutoLayoutMode(); // 頁面載入當下立即執行一次自動判斷
 
         async function updateProfileName() {
             if (!store || !store.userData) return;
