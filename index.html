@@ -205,7 +205,7 @@
                 <div id="cpList"></div>
             </div>
 
-            <div id="p5" class="page">
+            <div class="page" id="p5">
                 <div class="header-container"><h2>電子發票</h2></div>
                 <p style="font-size:0.85em; color:#666; margin-top:0;">此處將列出您近期開立的電子發票載具紀錄。</p>
                 <div id="invList"></div>
@@ -235,8 +235,8 @@
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
                 
                 <div class="footer-info">
-                    <div>版本：V83.2</div>
-                    <div>更新日期：2026-07-04</div>
+                    <div>版本：V83.0</div>
+                    <div>更新日期：2026-06-25</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
                 </div>
@@ -1127,13 +1127,13 @@
             document.getElementById('lList').innerHTML = filteredLoans.map(l => {
                 let sStr = String(l.status||'');
                 let isCleared = (sStr === 'processed_cleared' || sStr === '已結清' || sStr === 'Macro已結清');
-                let payBtn = (!isCleared && l.id) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item)}',${l.totalDue})">📲 顯示繳款條碼</button>` : '';
+                let loanIdVal = l.id || l.row || '';
+                let payBtn = (!isCleared) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${loanIdVal}','${encodeURIComponent(l.item)}',${l.totalDue})">📲 顯示繳款條碼</button>` : '';
                 return `<div class="card">${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '$' + l.totalDue}</b></div>${payBtn}</div>`;
             }).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無帳單</p>';
         }
         function switchLoanTab(tabIndex) { currentLoanTab = tabIndex; document.querySelectorAll('.loan-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderLoans(); }
 
-        // 📲 顯示繳款 QR Code 彈窗（買家自行輸入繳費金額 → 產生 QR Code 給後台掃描）
         // 📲 顯示繳款條碼彈窗（步驟1：選擇金額 → 步驟2：paymentQrBox overlay，與優惠券核銷條碼相同機制）
         window.showPaymentQR = async function(loanId, encodedItem, totalDue) {
             let itemName = decodeURIComponent(encodedItem);
