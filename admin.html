@@ -291,7 +291,7 @@
 
 <script>
     // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbwKzmGZYthFSCpAPn6NCefXRQe7ia6-yYq1tl2tq0boc-CI8PSLafj9J3oN2K1j4hSw/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbwt-CI9_UP1Zph6TxzAWjJ5NIHLB0gcG_hbY3WbAYX5FN15e79BEz093ySaFQk0q0gN/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
@@ -322,12 +322,32 @@
         if (!res.aborted) { if (res.success) Swal.fire('排序成功', res.message, 'success').then(() => refresh()); else Swal.fire('錯誤', res.message, 'error'); }
     }
 
+    // 🌟 增強版除錯連線函數 🌟
     async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
-        Swal.fire({ title: loadingTitle, text: '正在同步資料，請稍候...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+        Swal.fire({ title: loadingTitle, text: '正在處理中，請稍候...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
         try {
-            let res = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
-            let data = await res.json(); Swal.close(); return data;
-        } catch(e) { Swal.close(); Swal.fire("連線錯誤", "無法連線至雲端，請確認試算表格式是否正確。", "error"); return {success:false, aborted:true}; }
+            let response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+            let textData = await response.text(); // 先強制讀取純文字
+            
+            try {
+                let data = JSON.parse(textData); // 嘗試解析為 JSON
+                Swal.close(); 
+                return data;
+            } catch (jsonErr) {
+                Swal.close();
+                console.error("🔴 後端崩潰，回傳內容：", textData);
+                Swal.fire({
+                    title: "後端程式錯誤 (GAS)", 
+                    html: `Google Apps Script 發生異常，未能正確回傳資料。<br><br>請按鍵盤 <b>F12</b> 打開開發者工具的 Console 標籤頁查看完整錯誤，或至 GAS 後台查看「執行記錄」。<br><br><div style="font-size:12px; color:red; text-align:left; background:#fee2e2; padding:5px; max-height:100px; overflow:auto;">${textData.substring(0, 200)}...</div>`, 
+                    icon: "error"
+                });
+                return { success: false, aborted: true };
+            }
+        } catch(e) { 
+            Swal.close(); 
+            Swal.fire("網路連線錯誤", e.message, "error"); 
+            return { success: false, aborted: true }; 
+        }
     }
 
     // 智慧核銷與複製半自動推播彈窗
