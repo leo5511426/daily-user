@@ -6,6 +6,7 @@
     <title>小佑的日常生活行動會員</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { 
@@ -234,8 +235,8 @@
                 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
                 
                 <div class="footer-info">
-                    <div>版本：V85.1</div>
-                    <div>更新日期：2026-06-30</div>
+                    <div>版本：V83.0</div>
+                    <div>更新日期：2026-06-25</div>
                     <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
                     <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
                 </div>
@@ -279,16 +280,29 @@
                 <button class="btn" style="background:var(--red); margin-top:20px; padding:10px; font-size:0.9em;" onclick="document.getElementById('couponQrBox').style.display='none';">關閉視窗</button>
             </div>
         </div>
+
+        <div id="paymentQrBox" class="mask">
+            <div style="background:#fff; padding:25px; border-radius:20px; position:relative; text-align:center; max-width:320px; width:90%;">
+                <button class="close-btn" onclick="document.getElementById('paymentQrBox').style.display='none';">✕</button>
+                <p style="font-weight:bold; color:var(--pink); margin:0 0 5px 0;" id="paymentQrTitle"></p>
+                <div id="paymentQrcode" style="display:inline-block; margin: 10px 0;"></div>
+                <p style="font-size:1.3em; font-weight:bold; color:var(--red); margin:8px 0;" id="paymentQrAmt"></p>
+                <p style="font-size:0.72em; color:#aaa; margin:5px 0; word-break:break-all;" id="paymentQrId"></p>
+                <p style="font-size:0.82em; color:#666; margin:8px 0;">請將此畫面出示給管理員掃描還款</p>
+                <button class="btn" style="background:var(--red); margin-top:15px; padding:10px; font-size:0.9em;" onclick="document.getElementById('paymentQrBox').style.display='none';">關閉視窗</button>
+            </div>
+        </div>
     </div>
 
     <script>
         // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-        const SCRIPT_URL = "https://daily-user.vercel.app/admin"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKzmGZYthFSCpAPn6NCefXRQe7ia6-yYq1tl2tq0boc-CI8PSLafj9J3oN2K1j4hSw/exec"; 
         
         let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null; 
 
         const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
         const couponQr = new QRCode(document.getElementById("couponQrcode"), { width: 200, height: 200 });
+        const paymentQr = new QRCode(document.getElementById("paymentQrcode"), { width: 230, height: 230 });
 
         // 📅 日期安全格式化工具
         function formatDateString(dStr) {
@@ -406,7 +420,7 @@
                 } catch(e) {
                     isFinished = true; if (isQueueMode) { clearInterval(queueInterval); clearTimeout(queueTimeout); } Swal.close();
                     console.error("JSON 解析失敗:", textData);
-                    Swal.fire("伺服器異常", "系統維護中，請稍後再試。若持續發生問題，請與客服中心聯絡。\n\n系統回傳內容：\n" + textData.substring(0, 150), "error"); 
+                    Swal.fire("伺服器端錯誤", "請確認您的 Google Apps Script 網址是否正確，且已部署為「最新版本」。\n\n系統回傳內容：\n" + textData.substring(0, 150), "error"); 
                     return { success: false, aborted: true }; 
                 }
                 isFinished = true; if (isQueueMode) { clearInterval(queueInterval); clearTimeout(queueTimeout); }
@@ -1112,10 +1126,51 @@
             const sortL = document.getElementById('sortL').value; filteredLoans.sort((a, b) => { const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.expiry||'').replace(/-/g, '/')).getTime() || 0; return sortL === 'asc' ? da - db : db - da; });
             document.getElementById('lList').innerHTML = filteredLoans.map(l => {
                 let sStr = String(l.status||'');
-                return `<div class="card">${sStr === 'processed_cleared' || sStr === '已結清' || sStr === 'Macro已結清' ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${sStr === 'processed_cleared' || sStr === '橫結清' || sStr === '已結清' || sStr === 'Macro已結清' ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${sStr === 'processed_cleared' || sStr === '橫結清' || sStr === '已結清' || sStr === 'Macro已結清' ? '已結清' : '$' + l.totalDue}</b></div></div>`
+                let isCleared = (sStr === 'processed_cleared' || sStr === '已結清' || sStr === 'Macro已結清');
+                let payBtn = (!isCleared && l.id) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item)}',${l.totalDue})">📲 顯示繳款條碼</button>` : '';
+                return `<div class="card">${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '$' + l.totalDue}</b></div>${payBtn}</div>`;
             }).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無帳單</p>';
         }
         function switchLoanTab(tabIndex) { currentLoanTab = tabIndex; document.querySelectorAll('.loan-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderLoans(); }
+
+        // 📲 顯示繳款 QR Code 彈窗（買家自行輸入繳費金額 → 產生 QR Code 給後台掃描）
+        // 📲 顯示繳款條碼彈窗（步驟1：選擇金額 → 步驟2：paymentQrBox overlay，與優惠券核銷條碼相同機制）
+        window.showPaymentQR = async function(loanId, encodedItem, totalDue) {
+            let itemName = decodeURIComponent(encodedItem);
+
+            // 步驟 1：Swal 輸入繳費金額（含「全額繳款」快速帶入按鈕）
+            const { value: amt } = await Swal.fire({
+                title: '📲 產生繳款條碼',
+                html: `
+                    <div style="text-align:left; font-size:14px;">
+                        <div style="margin-bottom:8px; font-weight:bold; color:#555;">${itemName}</div>
+                        <div style="margin-bottom:10px;">應繳金額：<b style="color:var(--red); font-size:1.1em;">$${totalDue}</b></div>
+                        <input id="swal-pay-amt" class="swal2-input" type="number" placeholder="請輸入繳費金額" value="${totalDue}" min="1" style="width:100%; margin:0 0 10px 0; box-sizing:border-box;">
+                        <button type="button" onclick="document.getElementById('swal-pay-amt').value='${totalDue}';" style="width:100%; padding:10px; background:var(--pink); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer;">💯 全額繳款 $${totalDue}</button>
+                        <div style="font-size:11px; color:#aaa; margin-top:8px; text-align:center;">也可手動輸入部分還款金額</div>
+                    </div>`,
+                confirmButtonText: '產生條碼 ➔',
+                showCancelButton: true,
+                cancelButtonText: '取消',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const v = parseFloat(document.getElementById('swal-pay-amt').value);
+                    if (!v || v <= 0) { Swal.showValidationMessage('請輸入有效金額'); return false; }
+                    if (v > totalDue) { Swal.showValidationMessage(`金額不可超過應繳總額 $${totalDue}`); return false; }
+                    return v;
+                }
+            });
+            if (!amt) return;
+
+            // 步驟 2：顯示 paymentQrBox overlay（與 couponQrBox 相同模式）
+            const qrContent = `PAY|${loanId}|${store.userData.id}|${amt}`;
+            document.getElementById('paymentQrTitle').innerText = `【${itemName}】繳款條碼`;
+            document.getElementById('paymentQrAmt').innerText = `繳費金額：$${amt}`;
+            document.getElementById('paymentQrId').innerText = loanId;
+            paymentQr.clear();
+            paymentQr.makeCode(qrContent);
+            document.getElementById('paymentQrBox').style.display = 'flex';
+        };
 
         // --- 🎟️ 優惠券 (Coupons) ---
         function renderCoupons() {
