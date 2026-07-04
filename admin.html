@@ -66,6 +66,10 @@
             <button class="q-btn" style="background:var(--dark)" onclick="quickGo('sub')">🛒 扣除</button>
             <button class="q-btn" style="background:var(--green)" onclick="quickGo('pay')">🤝 還款</button>
             <button class="q-btn" style="background:var(--accent)" onclick="quickGo('redeem')">🎟️ 核銷</button>
+            <button class="q-btn" style="background:var(--blue)" onclick="quickGoTimeline()">📦 訂單時間線</button>
+            <button class="q-btn" style="background:var(--orange)" onclick="quickGoLoan()">📋 新增帳單</button>
+            <button class="q-btn" style="background:#8b5cf6" onclick="quickGoNotify()">📤 發送推播</button>
+            <button class="q-btn" style="background:#db2777" onclick="quickGoCoupon()">➕ 發送優惠券</button>
         </div>
         <div id="couponRedeemBtn" style="display:none;"><button onclick="submitRedeem()" style="background:var(--accent); font-size:18px; padding:20px;">立即核銷此券</button></div>
         <button onclick="closeQuick()" style="background:none; color:#999; margin-top:15px; border:none; font-size:14px;">取消</button>
@@ -185,12 +189,11 @@
     </div>
 </div>
 
-<div class="card">
-    <h3 style="margin:0 0 10px;">🤝 快速撥款 (借貸)</h3>
+<div class="card" id="loan_section">
     <select id="l_uid"></select><input type="text" id="l_item" placeholder="項目明細"><input type="number" id="l_amt" placeholder="撥款金額"><input type="date" id="l_exp"><button onclick="addLoan()" style="background:var(--accent)">確認撥發借款</button>
 </div>
 
-<div class="card">
+<div class="card" id="coupon_section">
     <h3 style="margin:0 0 10px;">🎟️ 發送實體優惠券</h3>
     <select id="cp_uid"></select><input type="text" id="cp_id" placeholder="券號ID"><input type="text" id="cp_title" placeholder="優惠券名稱"><input type="text" id="cp_content" placeholder="詳細折扣說明"><input type="date" id="cp_exp"><button onclick="sendCouponSubmit()" style="background:var(--primary)">發送至會員載具</button>
 </div>
@@ -234,7 +237,7 @@
     <button onclick="createNewOrderSubmit()" style="background:var(--green)">💾 儲存並發佈訂單</button>
 </div>
 
-<div class="card">
+<div class="card" id="timeline_section">
     <h3 style="margin:0 0 10px;">⏳ 獨立發佈最新物流進度</h3>
     <label style="font-size:0.85em; opacity:0.7;">選擇目標訂單：</label>
     <select id="t_order_id" onchange="renderAdminTimeline()"></select>
@@ -686,6 +689,27 @@
         document.getElementById('reader-modal').style.display = 'flex'; html5QrCode = new Html5Qrcode("reader");
         html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (decodedText) => {
             let code = decodedText.trim(); if (code.includes("CP|")) code = code.split("CP|")[1]; stopScan();
+
+            // 📲 處理買家出示的繳款 QR Code（格式：PAY|loanId|uid|amt）
+            if (code.startsWith("PAY|")) {
+                const parts = code.split("|");
+                if (parts.length === 4) {
+                    const [, loanId, uid, amt] = parts;
+                    const user = U_DB.find(u => u.id === uid);
+                    const loan = L_DB.find(l => String(l.id) === loanId);
+                    if (!user || !loan) return Swal.fire("查無資料", `找不到帳單 ${loanId} 或會員 ${uid}`, "error");
+                    if (loan.status === "已結清" || loan.status === "Macro已結清") return Swal.fire("提示", "此帳單已結清！", "warning");
+                    // 直接帶入還款精靈，跳過「選擇對象」與「選擇帳單」步驟，直接到「還款金額」確認
+                    FORM = { uid: uid, loanRef: String(loan.row), amt: amt };
+                    CUR_MODE = "pay"; CUR_STEP = FLOWS.pay.length - 2; // 停在「還款金額」步驟
+                    document.getElementById('wizModal').style.display = 'flex';
+                    renderStep();
+                    // 覆蓋金額輸入框預設值為 QR 帶入的金額
+                    setTimeout(() => { const el = document.getElementById('wiz_val'); if (el) el.value = amt; }, 50);
+                    return;
+                }
+            }
+
             if (code.startsWith("CP")) {
                 const cp = CP_DB.find(c => String(c.id) === code);
                 if (cp) {
@@ -701,6 +725,46 @@
     function stopScan() { if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{}); }
     function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
     function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
+
+    // 📦 跳至該會員的訂單時間線（篩選只顯示該會員的訂單）
+    function quickGoTimeline() {
+        let uid = FORM.uid;
+        document.getElementById('quickActionModal').style.display = 'none';
+        let userOrders = O_DB.filter(o => String(o.uid) === String(uid));
+        document.getElementById('t_order_id').innerHTML = userOrders.length > 0
+            ? userOrders.map(o => `<option value="${o.id}">單號:${o.id} (${o.status})</option>`).join('')
+            : '<option value="">此會員目前無訂單</option>';
+        if (userOrders.length > 0) renderAdminTimeline();
+        scrollToSection('timeline_section');
+        FORM = {};
+    }
+
+    // 📋 跳至新增帳單並預選該會員
+    function quickGoLoan() {
+        let uid = FORM.uid;
+        document.getElementById('quickActionModal').style.display = 'none';
+        document.getElementById('l_uid').value = uid;
+        scrollToSection('loan_section');
+        FORM = {};
+    }
+
+    // 📤 跳至推播中心並預選該會員
+    function quickGoNotify() {
+        let uid = FORM.uid;
+        document.getElementById('quickActionModal').style.display = 'none';
+        document.getElementById('nt_uid').value = uid;
+        scrollToSection('cs_section');
+        FORM = {};
+    }
+
+    // ➕ 跳至發送優惠券並預選該會員
+    function quickGoCoupon() {
+        let uid = FORM.uid;
+        document.getElementById('quickActionModal').style.display = 'none';
+        document.getElementById('cp_uid').value = uid;
+        scrollToSection('coupon_section');
+        FORM = {};
+    }
 
     const FLOWS = { add: [{t:"選擇對象",f:"uid",type:"user"}, {t:"加值金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], sub: [{t:"選擇對象",f:"uid",type:"user"}, {t:"扣除項目",f:"item",type:"text"}, {t:"扣除金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], pay: [{t:"選擇對象",f:"uid",type:"user"}, {t:"選擇應還帳單",f:"loanRef",type:"loan"}, {t:"還款金額",f:"amt",type:"number"}, {t:"備註描述",f:"note",type:"text"}], redeem: [{t:"請輸入或掃描優惠券ID",f:"cpId",type:"text"}] };
     function openWiz(mode, prefilledUid = null) { CUR_MODE = mode; CUR_STEP = 0; FORM = {}; if (prefilledUid) FORM.uid = prefilledUid; document.getElementById('wizModal').style.display = 'flex'; renderStep(); }
