@@ -724,7 +724,7 @@
                 if (parts.length === 4) {
                     const [, loanId, uid, amt] = parts;
                     const user = U_DB.find(u => u.id === uid);
-                    const loan = L_DB.find(l => String(l.id) === loanId);
+                    const loan = L_DB.find(l => String(l.id) === loanId || String(l.row) === loanId);
                     if (!user || !loan) return Swal.fire("查無資料", `找不到帳單 ${loanId} 或會員 ${uid}`, "error");
                     if (loan.status === "已結清" || loan.status === "Macro已結清") return Swal.fire("提示", "此帳單已結清！", "warning");
                     // 直接帶入還款精靈，跳過「選擇對象」與「選擇帳單」步驟，直接到「還款金額」確認
