@@ -22,6 +22,7 @@
         .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .q-btn { padding: 15px; border-radius: 12px; border: none; color: white; font-weight: bold; }
         .section-label { font-size: 0.85em; opacity: 0.7; margin-top: 10px; display: block; color: var(--dark); }
+        .req { color: var(--red); font-weight: bold; margin-left: 2px; font-size: 0.9em; }
         .calc-box { background: #f1f5f9; padding: 12px; border-radius: 10px; margin: 8px 0; font-size: 0.95em; color: var(--dark); }
         .item-row, .inv-item-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
         .item-row input, .inv-item-row input { padding: 10px; margin: 0; font-size: 14px; }
@@ -94,7 +95,7 @@
     <h3 style="margin:0 0 10px; color: var(--blue);">💳 調整先享後付額度</h3>
     <p style="font-size:0.85em; color:#666; margin-top:0;">強制調整會員的先享後付信用總額度 (最高 500，輸入 0 則代表停權)。</p>
     <select id="bnpl_uid"></select>
-    <input type="number" id="bnpl_limit" placeholder="輸入新額度 (例：500)" max="500" min="0">
+    <input type="number" id="bnpl_limit" placeholder="輸入新額度 (例：500)  ← 必填" max="500" min="0">
     <button onclick="updateBnplLimit()" style="background:var(--blue); margin-top:10px;">更新會員額度</button>
 </div>
 
@@ -112,7 +113,7 @@
             <input type="color" id="nt_color" value="#db2777" style="margin:0; flex:0.5; height: 48px; padding: 2px; cursor:pointer;" title="標籤顏色">
         </div>
         
-        <textarea id="nt_msg" rows="3" placeholder="請輸入通知內容，送出後買家將在中心收到紅色標籤提醒..."></textarea>
+        <textarea id="nt_msg" rows="3" placeholder="通知內容（必填）：送出後買家將在中心收到提醒..."></textarea>
         <button onclick="sendCustomNotification()" style="background:#8b5cf6; margin-top:10px;">發送推播給會員</button>
     </div>
 
@@ -143,7 +144,7 @@
     <div>
         <h4 style="margin:0 0 5px 0; color:var(--dark);">🔨 強制判定訂單不成立</h4>
         <select id="force_cancel_select"></select>
-        <input type="text" id="force_cancel_reason" placeholder="輸入不成立原因">
+        <input type="text" id="force_cancel_reason" placeholder="不成立原因（必填）">
         <button onclick="processCancel('force')" style="background:var(--red); margin-top:10px;">強制不成立</button>
     </div>
 </div>
@@ -163,16 +164,16 @@
     <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
         <h4 style="margin:0 0 5px 0; color:var(--dark);">🏆 標記電子發票中獎</h4>
         <select id="inv_won_oid"></select>
-        <input type="text" id="inv_won_name" placeholder="獎項名稱">
-        <input type="number" id="inv_won_amt" placeholder="中獎金額">
+        <input type="text" id="inv_won_name" placeholder="獎項名稱（必填）">
+        <input type="number" id="inv_won_amt" placeholder="中獎金額（必填）">
         <button onclick="markInvoiceWon()" style="background:#3b82f6; margin-top:10px;">🎉 確認登錄中獎，發送通知</button>
     </div>
     <div>
         <h4 style="margin:0 0 5px 0; color:var(--dark);">➕ 手動開立獨立發票</h4>
         <select id="inv_new_uid"></select>
         <input type="date" id="inv_new_date">
-        <input type="text" id="inv_new_num" placeholder="發票號碼">
-        <input type="text" id="inv_new_rand" placeholder="隨機碼 (4碼)" maxlength="4">
+        <input type="text" id="inv_new_num" placeholder="發票號碼（必填）">
+        <input type="text" id="inv_new_rand" placeholder="隨機碼 4碼（必填）" maxlength="4">
         <input type="text" id="inv_new_seller" placeholder="賣方名稱"><input type="text" id="inv_new_vat" placeholder="賣方統編"><input type="text" id="inv_new_addr" placeholder="賣方地址">
         
         <label class="section-label">🛍️ 發票消費明細：</label>
@@ -190,12 +191,33 @@
 </div>
 
 <div class="card" id="loan_section">
-    <select id="l_uid"></select><input type="text" id="l_item" placeholder="項目明細"><input type="number" id="l_amt" placeholder="撥款金額"><input type="date" id="l_exp"><button onclick="addLoan()" style="background:var(--accent)">確認撥發借款</button>
+    <h3 style="margin:0 0 5px;">🤝 快速撥款 (借貸)</h3>
+    <p style="font-size:0.8em; color:var(--red); margin:0 0 8px 0;"><span class="req">*</span> 為必填欄位</p>
+    <label class="section-label">選擇會員<span class="req"> *</span></label>
+    <select id="l_uid"></select>
+    <label class="section-label">項目明細<span class="req"> *</span></label>
+    <input type="text" id="l_item" placeholder="例：先享後付 - 訂單 ORD001">
+    <label class="section-label">撥款金額<span class="req"> *</span></label>
+    <input type="number" id="l_amt" placeholder="請輸入金額">
+    <label class="section-label">到期日<span class="req"> *</span></label>
+    <input type="date" id="l_exp">
+    <button onclick="addLoan()" style="background:var(--accent); margin-top:10px;">確認撥發借款</button>
 </div>
 
 <div class="card" id="coupon_section">
-    <h3 style="margin:0 0 10px;">🎟️ 發送實體優惠券</h3>
-    <select id="cp_uid"></select><input type="text" id="cp_id" placeholder="券號ID"><input type="text" id="cp_title" placeholder="優惠券名稱"><input type="text" id="cp_content" placeholder="詳細折扣說明"><input type="date" id="cp_exp"><button onclick="sendCouponSubmit()" style="background:var(--primary)">發送至會員載具</button>
+    <h3 style="margin:0 0 5px;">🎟️ 發送實體優惠券</h3>
+    <p style="font-size:0.8em; color:var(--red); margin:0 0 8px 0;"><span class="req">*</span> 為必填欄位</p>
+    <label class="section-label">選擇會員<span class="req"> *</span></label>
+    <select id="cp_uid"></select>
+    <label class="section-label">券號 ID<span class="req"> *</span></label>
+    <input type="text" id="cp_id" placeholder="例：CP001">
+    <label class="section-label">優惠券名稱<span class="req"> *</span></label>
+    <input type="text" id="cp_title" placeholder="例：新會員折扣券">
+    <label class="section-label">詳細折扣說明<span class="req"> *</span></label>
+    <input type="text" id="cp_content" placeholder="例：全館九折">
+    <label class="section-label">有效期限<span class="req"> *</span></label>
+    <input type="date" id="cp_exp">
+    <button onclick="sendCouponSubmit()" style="background:var(--primary); margin-top:10px;">發送至會員載具</button>
 </div>
 
 <div class="card">
@@ -516,11 +538,17 @@
     }
 
     async function updateOrderTimelineSubmit() {
+        let oid = document.getElementById('t_order_id').value;
+        let time = document.getElementById('t_log_time').value;
+        let status = document.getElementById('t_log_status').value;
+        if (!oid) return Swal.fire("提示", "請先選擇目標訂單", "warning");
+        if (!time) return Swal.fire("提示", "請填寫節點時間", "warning");
+        if (!status) return Swal.fire("提示", "請選擇物流狀態", "warning");
         let note = document.getElementById('t_log_note').value.trim();
         let dt = document.getElementById('t_log_dl_date').value;
-        if(dt) note += ` [${document.getElementById('t_log_dl_type').value}:${dt}]`;
+        if (dt) note += ` [${document.getElementById('t_log_dl_type').value}:${dt}]`;
         note = `[顏色:${document.getElementById('t_log_color').value}] ` + note;
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateTimeline', oid: document.getElementById('t_order_id').value, time: document.getElementById('t_log_time').value.replace('T', ' '), status: document.getElementById('t_log_status').value, note: note, packageId: document.getElementById('t_log_package').value }, "發佈時間線中...");
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateTimeline', oid: oid, time: time.replace('T', ' '), status: status, note: note, packageId: document.getElementById('t_log_package').value }, "發佈時間線中...");
         if(!res.aborted) handlePostSuccess(res);
     }
 
@@ -772,7 +800,7 @@
     function renderStep() {
         const flow = FLOWS[CUR_MODE]; let stepInfo = flow[CUR_STEP]; if (CUR_STEP === 0 && FORM.uid && stepInfo.f === "uid") { CUR_STEP++; stepInfo = flow[CUR_STEP]; }
         let html = `<h3>${stepInfo.t}</h3>`;
-        if (stepInfo.type === "user") html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`; else if (stepInfo.type === "number") html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`; else if (stepInfo.type === "loan") { const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清"); if (userLoans.length === 0) html += `<p style="color:var(--red); font-weight:bold;">此會員目前無待繳的帳單</p><input type="hidden" id="wiz_val" value="">`; else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.total - l.paid})</option>`).join('')}</select>`; } else html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
+        if (stepInfo.type === "user") html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`; else if (stepInfo.type === "number") html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`; else if (stepInfo.type === "loan") { const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清"); if (userLoans.length === 0) html += `<p style="color:var(--red); font-weight:bold;">此會員目前無待繳的帳單</p><input type="hidden" id="wiz_val" value="">`; else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.totalDue})</option>`).join('')}</select>`; } else html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
         document.getElementById('wizBody').innerHTML = html; const nextBtn = document.getElementById('nextBtn');
         if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清").length === 0) nextBtn.style.display = 'none'; else { nextBtn.style.display = 'block'; nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步"; }
     }
