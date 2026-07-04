@@ -327,10 +327,10 @@
         Swal.fire({ title: loadingTitle, text: '正在處理中，請稍候...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
         try {
             let response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
-            let textData = await response.text(); // 先強制讀取純文字
+            let textData = await response.text(); 
             
             try {
-                let data = JSON.parse(textData); // 嘗試解析為 JSON
+                let data = JSON.parse(textData); 
                 Swal.close(); 
                 return data;
             } catch (jsonErr) {
@@ -431,10 +431,9 @@
 
         if(!uid || !msg) return Swal.fire("提示", "請填寫通知內容", "warning");
         
-        // 傳送所有參數給後端 (若後端尚未更新支援，則會忽略 mainCat/subTag/color)
         let res = await fetchWithQueue(GAS, { 
-            action: 'sendCustomNotification', // 頂層路由
-            type: 'sendCustomNotification',   // 保留以相容各種後端寫法
+            action: 'sendCustomNotification', 
+            type: 'sendCustomNotification',   
             uid: uid, 
             msg: msg,
             mainCat: mainCat,
@@ -738,7 +737,6 @@
         html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (decodedText) => {
             let code = decodedText.trim(); if (code.includes("CP|")) code = code.split("CP|")[1]; stopScan();
 
-            // 📲 處理買家出示的繳款 QR Code（格式：PAY|loanId|uid|amt）
             if (code.startsWith("PAY|")) {
                 const parts = code.split("|");
                 if (parts.length === 4) {
@@ -747,12 +745,11 @@
                     const loan = L_DB.find(l => String(l.id) === loanId || String(l.row) === loanId);
                     if (!user || !loan) return Swal.fire("查無資料", `找不到帳單 ${loanId} 或會員 ${uid}`, "error");
                     if (loan.status === "已結清" || loan.status === "Macro已結清") return Swal.fire("提示", "此帳單已結清！", "warning");
-                    // 直接帶入還款精靈，跳過「選擇對象」與「選擇帳單」步驟，直接到「還款金額」確認
+                    
                     FORM = { uid: uid, loanRef: String(loan.row), amt: amt };
-                    CUR_MODE = "pay"; CUR_STEP = FLOWS.pay.length - 2; // 停在「還款金額」步驟
+                    CUR_MODE = "pay"; CUR_STEP = FLOWS.pay.length - 2; 
                     document.getElementById('wizModal').style.display = 'flex';
                     renderStep();
-                    // 覆蓋金額輸入框預設值為 QR 帶入的金額
                     setTimeout(() => { const el = document.getElementById('wiz_val'); if (el) el.value = amt; }, 50);
                     return;
                 }
@@ -771,10 +768,11 @@
         });
     }
     function stopScan() { if(html5QrCode) html5QrCode.stop().then(() => { document.getElementById('reader-modal').style.display = 'none'; }).catch(()=>{}); }
+    
     function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
     function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
 
-    // 📦 跳至該會員的訂單時間線（篩選只顯示該會員的訂單）
+    // 📦 跳至該會員的訂單時間線
     function quickGoTimeline() {
         let uid = FORM.uid;
         document.getElementById('quickActionModal').style.display = 'none';
@@ -824,13 +822,28 @@
         document.getElementById('wizBody').innerHTML = html; const nextBtn = document.getElementById('nextBtn');
         if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清").length === 0) nextBtn.style.display = 'none'; else { nextBtn.style.display = 'block'; nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步"; }
     }
+    
     function wizNext() {
         const inputEl = document.getElementById('wiz_val'); const flow = FLOWS[CUR_MODE]; const field = flow[CUR_STEP].f;
         if (!inputEl.value.trim()) { if (flow[CUR_STEP].type === "loan") return Swal.fire("提示", "無帳單可還款", "warning"); return Swal.fire("提示", "欄位不可為空", "warning"); }
         FORM[field] = inputEl.value.trim(); if (CUR_STEP < flow.length - 1) { CUR_STEP++; renderStep(); } else submitWiz();
     }
-    async function submitWiz() { closeModal(); let res = await fetchWithQueue(GAS, { action: 'adminAction', type: CUR_MODE, ...FORM }, "提交中..."); if (!res.aborted) handlePostSuccess(res); }
-    async function submitRedeem() { closeQuick(); let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'redeem', cpId: FORM.cpId }, "核銷中..."); if (!res.aborted) handlePostSuccess(res); }
+    
+    async function submitWiz() { 
+        closeModal(); 
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: CUR_MODE, ...FORM }, "提交中..."); 
+        if (!res.aborted) handlePostSuccess(res); 
+    }
+    
+    // 🌟 修正重點在這裡：先把 cpId 存起來，再關閉視窗（避免 FORM 被清空）
+    async function submitRedeem() { 
+        let targetCpId = FORM.cpId; 
+        closeQuick(); 
+        if(!targetCpId) return;
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'redeem', cpId: targetCpId }, "核銷中..."); 
+        if (!res.aborted) handlePostSuccess(res); 
+    }
+
     async function addLoan() { const uid = document.getElementById('l_uid').value, item = document.getElementById('l_item').value.trim(), amt = document.getElementById('l_amt').value.trim(), exp = document.getElementById('l_exp').value; if(!uid || !item || !amt || !exp) return Swal.fire("提示", "表單不完整！", "warning"); let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addLoan', uid: uid, item: item, amt: Number(amt), expiry: exp }, "撥發中..."); if (!res.aborted) { handlePostSuccess(res); document.getElementById('l_item').value = ""; document.getElementById('l_amt').value = ""; document.getElementById('l_exp').value = ""; } }
     async function sendCouponSubmit() { const uid = document.getElementById('cp_uid').value, cpId = document.getElementById('cp_id').value.trim(), title = document.getElementById('cp_title').value.trim(), content = document.getElementById('cp_content').value.trim(), expiry = document.getElementById('cp_exp').value; if(!uid || !cpId || !title || !content || !expiry) return Swal.fire("提示", "請填寫完整資訊！", "warning"); let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry }, "發送中..."); if (!res.aborted) { handlePostSuccess(res); document.getElementById('cp_id').value = ""; document.getElementById('cp_title').value = ""; document.getElementById('cp_content').value = ""; document.getElementById('cp_exp').value = ""; } }
 </script>
