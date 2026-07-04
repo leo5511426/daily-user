@@ -406,7 +406,7 @@
                 } catch(e) {
                     isFinished = true; if (isQueueMode) { clearInterval(queueInterval); clearTimeout(queueTimeout); } Swal.close();
                     console.error("JSON 解析失敗:", textData);
-                    Swal.fire("伺服器端錯誤", "請確認您的 Google Apps Script 網址是否正確，且已部署為「最新版本」。\n\n系統回傳內容：\n" + textData.substring(0, 150), "error"); 
+                    Swal.fire("伺服器異常", "系統維護中，請稍後再試。若持續發生問題，請與客服中心聯絡。\n\n系統回傳內容：\n" + textData.substring(0, 150), "error"); 
                     return { success: false, aborted: true }; 
                 }
                 isFinished = true; if (isQueueMode) { clearInterval(queueInterval); clearTimeout(queueTimeout); }
