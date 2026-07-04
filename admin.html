@@ -291,10 +291,32 @@
 
 <script>
     // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbw6eAc41KfqM16vPGQxPQyPe0QIJfz2Y4ulPN9u62wWqrXD6fe-3p6S9od2is-5pemK/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbzQo-n3jzCmzmlp43NX1ey1vNinxk1mxX1xjUM7pKeCeBCakaSui5jacKRwvTDw1HBS/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
+
+    // 🌟 全局推播模式詢問共用函數 (單選 4 種模式) 🌟
+    async function confirmActionWithPush(title) {
+        const { value: notifyMode } = await Swal.fire({
+            title: title || '確認執行',
+            html: '<div style="font-size:14px; text-align:left; font-weight:bold; color:var(--dark); margin-bottom:10px;">請選擇本次操作的通知方式：</div>',
+            input: 'radio',
+            inputOptions: {
+                'both': '📢 雙重通知 (寫入會員中心 + 產出 LINE 文案)',
+                'line_only': '📝 僅產出 LINE 文案 (不寫入會員中心)',
+                'app_only': '🔔 僅寫入會員中心 (不產出 LINE 文案)',
+                'none': '🔕 完全靜默執行 (不寫入、不產出文案)'
+            },
+            inputValue: 'both',
+            showCancelButton: true,
+            confirmButtonText: '🚀 確認執行',
+            cancelButtonText: '取消',
+            confirmButtonColor: 'var(--primary)'
+        });
+        if (!notifyMode) return null; // 使用者按了取消或點擊背景
+        return notifyMode; 
+    }
 
     function scrollToSection(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
     function showAlert(title, text, icon = 'info') { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: 'var(--primary)', confirmButtonText: '確定' }); }
@@ -322,7 +344,7 @@
         if (!res.aborted) { if (res.success) Swal.fire('排序成功', res.message, 'success').then(() => refresh()); else Swal.fire('錯誤', res.message, 'error'); }
     }
 
-    // 🌟 增強版除錯連線函數 🌟
+    // 🌟 增強版除錯連線函數
     async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
         Swal.fire({ title: loadingTitle, text: '正在處理中，請稍候...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
         try {
@@ -354,8 +376,8 @@
     function handlePostSuccess(res) {
         if(res.success && res.notifyText) {
             Swal.fire({
-                title: '🎉 操作成功且推播完畢！',
-                html: `<p style="font-size:0.85em; text-align:left; color:#666;">系統已同步將通知寫入買家行動中心。您可以點擊下方按鈕複製對話文案，直接貼到 LINE 社群通知買家：</p><textarea id="copy_area" style="width:100%; height:120px; font-size:13px; font-weight:bold; padding:8px;" readonly>${res.notifyText}</textarea>`,
+                title: '🎉 操作成功！',
+                html: `<p style="font-size:0.85em; text-align:left; color:#666;">您可以點擊下方按鈕複製對話文案，直接貼到 LINE 社群通知買家：</p><textarea id="copy_area" style="width:100%; height:120px; font-size:13px; font-weight:bold; padding:8px;" readonly>${res.notifyText}</textarea>`,
                 icon: 'success', showCancelButton: true, confirmButtonColor: 'var(--primary)', cancelButtonText: '關閉', confirmButtonText: '📋 一鍵複製文案'
             }).then((choice) => {
                 if(choice.isConfirmed) {
@@ -417,7 +439,11 @@
         if(!uid || limit === "") return Swal.fire("提示", "請選擇會員並輸入額度", "warning");
         if(Number(limit) > 500) limit = 500;
         if(Number(limit) < 0) limit = 0;
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateBnplLimit', uid: uid, limit: limit }, "更新額度中...");
+        
+        let notifyMode = await confirmActionWithPush('更新額度');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateBnplLimit', uid: uid, limit: limit, notifyMode: notifyMode }, "更新額度中...");
         if(!res.aborted) handlePostSuccess(res);
     }
 
@@ -474,10 +500,11 @@
 
     async function closeTicket() {
         let tid = document.getElementById('cs_ticket_select').value;
-        if(confirm('確定要結案嗎？結案後買家將無法繼續回覆。')) {
-            let res = await fetchWithQueue(GAS, { action: 'closeTicket', tid: tid }, "結案中...");
-            if(!res.aborted) handlePostSuccess(res);
-        }
+        let notifyMode = await confirmActionWithPush('結案確認');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'closeTicket', tid: tid, notifyMode: notifyMode }, "結案中...");
+        if(!res.aborted) handlePostSuccess(res);
     }
 
     // BNPL選單連動
@@ -509,12 +536,21 @@
             let name = row.querySelector('.inv-item-name').value.trim();
             if(name) itemsArr.push({ name: name, spec: row.querySelector('.inv-item-spec').value.trim(), qty: Number(row.querySelector('.inv-item-qty').value)||1, price: Number(row.querySelector('.inv-item-price').value)||0 });
         });
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addInvoice', invNum: invNum, invDate: invDate, uid: uid, invRand: document.getElementById('inv_new_rand').value, sellerName: document.getElementById('inv_new_seller').value, sellerVat: document.getElementById('inv_new_vat').value, sellerAddr: document.getElementById('inv_new_addr').value, itemsJson: JSON.stringify(itemsArr), total: document.getElementById('inv_new_total').value, oid: document.getElementById('inv_new_link_oid').value }, "開立獨立發票中...");
+        
+        let notifyMode = await confirmActionWithPush('開立獨立發票');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addInvoice', invNum: invNum, invDate: invDate, uid: uid, invRand: document.getElementById('inv_new_rand').value, sellerName: document.getElementById('inv_new_seller').value, sellerVat: document.getElementById('inv_new_vat').value, sellerAddr: document.getElementById('inv_new_addr').value, itemsJson: JSON.stringify(itemsArr), total: document.getElementById('inv_new_total').value, oid: document.getElementById('inv_new_link_oid').value, notifyMode: notifyMode }, "開立獨立發票中...");
         if(!res.aborted) handlePostSuccess(res);
     }
 
     async function markInvoiceWon() {
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'markInvoiceWon', invNum: document.getElementById('inv_won_oid').value, prizeName: document.getElementById('inv_won_name').value.trim(), prizeAmt: Number(document.getElementById('inv_won_amt').value) }, "登錄中獎資料...");
+        if(!document.getElementById('inv_won_name').value || !document.getElementById('inv_won_amt').value) return Swal.fire("提示", "請填寫完整", "warning");
+        
+        let notifyMode = await confirmActionWithPush('登錄中獎資料');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'markInvoiceWon', invNum: document.getElementById('inv_won_oid').value, prizeName: document.getElementById('inv_won_name').value.trim(), prizeAmt: Number(document.getElementById('inv_won_amt').value), notifyMode: notifyMode }, "登錄中獎資料...");
         if(!res.aborted) handlePostSuccess(res);
     }
 
@@ -523,19 +559,28 @@
         let reason = (mode==='force')?document.getElementById('force_cancel_reason').value.trim() : "雙方協議取消";
         if(mode==='reject') {
             let r = prompt("請填寫拒絕取消原因："); if(!r) return;
-            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'processCancel', mode: 'reject', oid: oid, reason: r });
+            let notifyMode = await confirmActionWithPush('拒絕取消申請');
+            if (!notifyMode) return;
+            
+            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'processCancel', mode: 'reject', oid: oid, reason: r, notifyMode: notifyMode });
             if(!res.aborted) handlePostSuccess(res); return;
         }
         let order = O_DB.find(o => o.id === oid);
         if(confirm(`訂單應付實額為 $${order.total}，是否執行自動化加回買家餘額金流？`)) {
-            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'processCancel', mode: mode, oid: oid, reason: reason, refundCoin: true, refundTotal: true });
+            let notifyMode = await confirmActionWithPush('訂單取消與退款');
+            if (!notifyMode) return;
+
+            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'processCancel', mode: mode, oid: oid, reason: reason, refundCoin: true, refundTotal: true, notifyMode: notifyMode });
             if(!res.aborted) handlePostSuccess(res);
         }
     }
 
     async function processReturnAction(oid, mode) {
         let amt = prompt("請確認退款金額："); if(amt===null) return;
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'auditReturn', oid: oid, mode: mode, amt: Number(amt) });
+        let notifyMode = await confirmActionWithPush('執行退款撥發');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'auditReturn', oid: oid, mode: mode, amt: Number(amt), notifyMode: notifyMode });
         if(!res.aborted) handlePostSuccess(res);
     }
 
@@ -552,7 +597,11 @@
             invJsonStr = JSON.stringify({ num: document.getElementById('o_new_inv_num').value.trim(), date: document.getElementById('o_new_inv_date').value, rand: document.getElementById('o_new_inv_rand').value, sellerName: document.getElementById('o_new_inv_seller').value, sellerVat: document.getElementById('o_new_inv_vat').value, sellerAddr: document.getElementById('o_new_inv_addr').value, items: itemsArray, total: calcData.totalAmount });
         }
         let deadlineVal = (payment === "先享後付") ? document.getElementById('o_new_bnpl_due').value : document.getElementById('o_new_deadline').value;
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: document.getElementById('o_new_vcode').value, subtotal: calcData.subtotal, shipFee: Number(document.getElementById('o_new_shipping').value), discShip: Number(document.getElementById('o_new_ship_discount').value), discSeller: Number(document.getElementById('o_new_seller_discount').value), discCoin: Number(document.getElementById('o_new_coin_discount').value), total: calcData.totalAmount, ship: document.getElementById('o_new_log_method').value, address: document.getElementById('o_new_address').value, track: document.getElementById('o_new_log_id').value, note: document.getElementById('o_new_log_note').value, payment: payment, invoiceJson: invJsonStr, cpid: document.getElementById('o_new_use_coupon').value, time: document.getElementById('o_new_time').value.replace('T', ' '), deadline: deadlineVal }, "正在佈署全新交易...");
+        
+        let notifyMode = await confirmActionWithPush('發佈訂單');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: document.getElementById('o_new_vcode').value, subtotal: calcData.subtotal, shipFee: Number(document.getElementById('o_new_shipping').value), discShip: Number(document.getElementById('o_new_ship_discount').value), discSeller: Number(document.getElementById('o_new_seller_discount').value), discCoin: Number(document.getElementById('o_new_coin_discount').value), total: calcData.totalAmount, ship: document.getElementById('o_new_log_method').value, address: document.getElementById('o_new_address').value, track: document.getElementById('o_new_log_id').value, note: document.getElementById('o_new_log_note').value, payment: payment, invoiceJson: invJsonStr, cpid: document.getElementById('o_new_use_coupon').value, time: document.getElementById('o_new_time').value.replace('T', ' '), deadline: deadlineVal, notifyMode: notifyMode }, "正在佈署全新交易...");
         if(!res.aborted) handlePostSuccess(res);
     }
 
@@ -567,7 +616,11 @@
         let dt = document.getElementById('t_log_dl_date').value;
         if (dt) note += ` [${document.getElementById('t_log_dl_type').value}:${dt}]`;
         note = `[顏色:${document.getElementById('t_log_color').value}] ` + note;
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateTimeline', oid: oid, time: time.replace('T', ' '), status: status, note: note, packageId: document.getElementById('t_log_package').value }, "發佈時間線中...");
+        
+        let notifyMode = await confirmActionWithPush('發佈最新節點');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateTimeline', oid: oid, time: time.replace('T', ' '), status: status, note: note, packageId: document.getElementById('t_log_package').value, notifyMode: notifyMode }, "發佈時間線中...");
         if(!res.aborted) handlePostSuccess(res);
     }
 
@@ -772,7 +825,6 @@
     function quickGo(mode) { document.getElementById('quickActionModal').style.display = 'none'; openWiz(mode, FORM.uid); }
     function closeQuick() { document.getElementById('quickActionModal').style.display = 'none'; FORM = {}; }
 
-    // 📦 跳至該會員的訂單時間線
     function quickGoTimeline() {
         let uid = FORM.uid;
         document.getElementById('quickActionModal').style.display = 'none';
@@ -785,7 +837,6 @@
         FORM = {};
     }
 
-    // 📋 跳至新增帳單並預選該會員
     function quickGoLoan() {
         let uid = FORM.uid;
         document.getElementById('quickActionModal').style.display = 'none';
@@ -794,7 +845,6 @@
         FORM = {};
     }
 
-    // 📤 跳至推播中心並預選該會員
     function quickGoNotify() {
         let uid = FORM.uid;
         document.getElementById('quickActionModal').style.display = 'none';
@@ -803,7 +853,6 @@
         FORM = {};
     }
 
-    // ➕ 跳至發送優惠券並預選該會員
     function quickGoCoupon() {
         let uid = FORM.uid;
         document.getElementById('quickActionModal').style.display = 'none';
@@ -831,11 +880,17 @@
     
     async function submitWiz() { 
         closeModal(); 
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: CUR_MODE, ...FORM }, "提交中..."); 
-        if (!res.aborted) handlePostSuccess(res); 
+        if (CUR_MODE === 'redeem') {
+            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: CUR_MODE, ...FORM }, "提交中..."); 
+            if (!res.aborted) handlePostSuccess(res);
+        } else {
+            let notifyMode = await confirmActionWithPush('確認送出');
+            if (!notifyMode) return;
+            let res = await fetchWithQueue(GAS, { action: 'adminAction', type: CUR_MODE, notifyMode: notifyMode, ...FORM }, "提交中..."); 
+            if (!res.aborted) handlePostSuccess(res);
+        }
     }
     
-    // 🌟 修正重點在這裡：先把 cpId 存起來，再關閉視窗（避免 FORM 被清空）
     async function submitRedeem() { 
         let targetCpId = FORM.cpId; 
         closeQuick(); 
@@ -844,8 +899,33 @@
         if (!res.aborted) handlePostSuccess(res); 
     }
 
-    async function addLoan() { const uid = document.getElementById('l_uid').value, item = document.getElementById('l_item').value.trim(), amt = document.getElementById('l_amt').value.trim(), exp = document.getElementById('l_exp').value; if(!uid || !item || !amt || !exp) return Swal.fire("提示", "表單不完整！", "warning"); let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addLoan', uid: uid, item: item, amt: Number(amt), expiry: exp }, "撥發中..."); if (!res.aborted) { handlePostSuccess(res); document.getElementById('l_item').value = ""; document.getElementById('l_amt').value = ""; document.getElementById('l_exp').value = ""; } }
-    async function sendCouponSubmit() { const uid = document.getElementById('cp_uid').value, cpId = document.getElementById('cp_id').value.trim(), title = document.getElementById('cp_title').value.trim(), content = document.getElementById('cp_content').value.trim(), expiry = document.getElementById('cp_exp').value; if(!uid || !cpId || !title || !content || !expiry) return Swal.fire("提示", "請填寫完整資訊！", "warning"); let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry }, "發送中..."); if (!res.aborted) { handlePostSuccess(res); document.getElementById('cp_id').value = ""; document.getElementById('cp_title').value = ""; document.getElementById('cp_content').value = ""; document.getElementById('cp_exp').value = ""; } }
+    async function addLoan() { 
+        const uid = document.getElementById('l_uid').value, item = document.getElementById('l_item').value.trim(), amt = document.getElementById('l_amt').value.trim(), exp = document.getElementById('l_exp').value; 
+        if(!uid || !item || !amt || !exp) return Swal.fire("提示", "表單不完整！", "warning"); 
+        
+        let notifyMode = await confirmActionWithPush('撥發借款');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addLoan', uid: uid, item: item, amt: Number(amt), expiry: exp, notifyMode: notifyMode }, "撥發中..."); 
+        if (!res.aborted) { 
+            handlePostSuccess(res); 
+            document.getElementById('l_item').value = ""; document.getElementById('l_amt').value = ""; document.getElementById('l_exp').value = ""; 
+        } 
+    }
+    
+    async function sendCouponSubmit() { 
+        const uid = document.getElementById('cp_uid').value, cpId = document.getElementById('cp_id').value.trim(), title = document.getElementById('cp_title').value.trim(), content = document.getElementById('cp_content').value.trim(), expiry = document.getElementById('cp_exp').value; 
+        if(!uid || !cpId || !title || !content || !expiry) return Swal.fire("提示", "請填寫完整資訊！", "warning"); 
+        
+        let notifyMode = await confirmActionWithPush('發送優惠券');
+        if (!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'sendCoupon', uid: uid, cpId: cpId, title: title, content: content, expiry: expiry, notifyMode: notifyMode }, "發送中..."); 
+        if (!res.aborted) { 
+            handlePostSuccess(res); 
+            document.getElementById('cp_id').value = ""; document.getElementById('cp_title').value = ""; document.getElementById('cp_content').value = ""; document.getElementById('cp_exp').value = ""; 
+        } 
+    }
 </script>
 </body>
 </html>
