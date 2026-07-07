@@ -89,6 +89,7 @@
     <button class="m-btn full-btn" style="background:var(--red); font-size:16px;" onclick="scrollToSection('return_section')">🚨 退貨 / 退款 審核中心</button>
     <button class="m-btn full-btn" style="background:var(--blue); font-size:16px;" onclick="scrollToSection('invoice_section')">🧾 電子發票管理中心</button>
     <button class="m-btn full-btn" style="background:#8b5cf6; font-size:16px;" onclick="scrollToSection('cs_section')">🎧 線上客服與推播中心</button>
+    <button class="m-btn full-btn" style="background:#0f172a; font-size:16px;" onclick="scrollToSection('ldms_section')">📋 法律文件管理系統 (LDMS)</button>
 </div>
 
 <div class="card" style="border: 2px solid var(--blue);">
@@ -287,13 +288,20 @@
     </div>
 </div>
 
+<div class="card" id="ldms_section" style="border: 2px solid #0f172a;">
+    <h3 style="margin:0 0 5px; color:var(--dark);">📋 法律文件管理系統 (LDMS)</h3>
+    <p style="font-size:0.8em; color:#666; margin:0 0 12px 0;">管理前台「法律資訊中心」所有已發布的法律文件。新增文件後狀態為「草稿」，填寫完整後點擊「發布」才會顯示於前台。</p>
+    <button onclick="addLegalDocForm()" style="background:var(--dark); margin-bottom:12px;">＋ 新增法律文件</button>
+    <div id="legal_doc_list"><p style="text-align:center; opacity:0.4; font-size:0.9em;">資料載入中...</p></div>
+</div>
+
 <div id="wizModal" class="modal"><div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div></div>
 
 <script>
     // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbzQo-n3jzCmzmlp43NX1ey1vNinxk1mxX1xjUM7pKeCeBCakaSui5jacKRwvTDw1HBS/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbwSOeDmAGIgbbaUPJtVu2EKOm3tUYR_oMuiGsHWvMGWve3hU_F1NCoEMS3YjXt34r4J/exec"; 
     
-    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, CUR_MODE = "", CUR_STEP = 0, FORM = {};
+    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
 
     // 🌟 全局推播模式詢問共用函數 (單選 4 種模式) 🌟
@@ -396,8 +404,8 @@
     async function refresh() {
         let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
         if (res.success) {
-            U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{};
-            updateSelects(); renderAdminTimeline();
+            U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{}; LEGAL_DB = res.legalDocs||[];
+            updateSelects(); renderAdminTimeline(); renderLegalDocList_Admin();
             const nowTime = getNowDateTimeString();
             if (document.getElementById('t_log_time')) document.getElementById('t_log_time').value = nowTime; 
             if (document.getElementById('o_new_time')) document.getElementById('o_new_time').value = nowTime;
@@ -898,6 +906,119 @@
         let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'redeem', cpId: targetCpId }, "核銷中..."); 
         if (!res.aborted) handlePostSuccess(res); 
     }
+
+    // ==================== 📋 LDMS 法律文件管理系統 ====================
+
+    function renderLegalDocList_Admin() {
+        const container = document.getElementById('legal_doc_list'); if (!container) return;
+        if (LEGAL_DB.length === 0) { container.innerHTML = '<p style="text-align:center; opacity:0.4; font-size:0.9em; padding:10px 0;">目前尚無法律文件，請點擊「新增法律文件」開始建立。</p>'; return; }
+        const statusStyle = { '已發布': 'background:var(--green);', '草稿': 'background:var(--orange);', '已停用': 'background:#94a3b8;' };
+        container.innerHTML = LEGAL_DB.map(doc => {
+            let pubBtn = doc.status !== '已發布' ? `<button onclick="setLegalDocStatus('${doc.docId}','已發布')" style="flex:1; background:var(--green); padding:8px; font-size:0.8em; border-radius:8px;">🚀 發布</button>` : '';
+            let disableBtn = doc.status === '已發布' ? `<button onclick="setLegalDocStatus('${doc.docId}','已停用')" style="flex:1; background:#94a3b8; padding:8px; font-size:0.8em; border-radius:8px;">⏸ 停用</button>` : '';
+            let draftBtn = doc.status === '已停用' ? `<button onclick="setLegalDocStatus('${doc.docId}','草稿')" style="flex:1; background:var(--orange); padding:8px; font-size:0.8em; border-radius:8px;">↩ 轉草稿</button>` : '';
+            return `
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:0.72em; color:var(--primary); font-weight:bold;">${doc.docId}</div>
+                        <div style="font-weight:bold; font-size:0.95em; margin:2px 0;">${doc.title}</div>
+                        <div style="font-size:0.75em; opacity:0.6;">版本：${doc.version || '未設定'} ｜ 修訂：${doc.lastRevised || '未設定'}</div>
+                    </div>
+                    <span style="flex-shrink:0; ${statusStyle[doc.status]||'background:#94a3b8;'} color:#fff; padding:3px 10px; border-radius:8px; font-size:0.72em; font-weight:bold;">${doc.status}</span>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button onclick="editLegalDocForm('${doc.docId}')" style="flex:1; background:var(--primary); padding:8px; font-size:0.8em; border-radius:8px;">✏️ 編輯</button>
+                    ${pubBtn}${disableBtn}${draftBtn}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function addLegalDocForm() {
+        let existingIds = LEGAL_DB.map(d => d.docId).filter(id => /^DOC-\d{3}$/.test(id));
+        let nextNum = existingIds.length > 0 ? Math.max(...existingIds.map(id => parseInt(id.split('-')[1]))) + 1 : 11;
+        let nextDocId = 'DOC-' + String(nextNum).padStart(3, '0');
+        const { value: fd } = await Swal.fire({
+            title: '新增法律文件',
+            html: `<div style="text-align:left; font-size:14px;">
+                <label class="section-label">文件編號<span class="req"> *</span></label>
+                <input type="text" id="ld_new_id" class="swal2-input" value="${nextDocId}" style="width:100%;" placeholder="例：DOC-011">
+                <label class="section-label">文件名稱<span class="req"> *</span></label>
+                <input type="text" id="ld_new_title" class="swal2-input" style="width:100%;" placeholder="例：退換貨政策">
+                <label class="section-label">版本號<span class="req"> *</span></label>
+                <input type="text" id="ld_new_version" class="swal2-input" value="V1.0" style="width:100%;">
+                <label class="section-label">生效日期</label>
+                <input type="date" id="ld_new_effDate" class="swal2-input" style="width:100%;">
+                <label class="section-label">制定單位</label>
+                <input type="text" id="ld_new_dept" class="swal2-input" value="本站管理單位" style="width:100%;">
+                <label class="section-label">聯絡資訊</label>
+                <input type="text" id="ld_new_contact" class="swal2-input" style="width:100%;" placeholder="例：service@example.com">
+                <label class="section-label">文件內文<span class="req"> *</span></label>
+                <textarea id="ld_new_content" class="swal2-textarea" style="width:100%; height:180px; font-size:13px; font-weight:normal; line-height:1.6;" placeholder="請輸入完整文件內文..."></textarea>
+            </div>`,
+            focusConfirm: false, showCancelButton: true, confirmButtonText: '儲存為草稿', cancelButtonText: '取消', width: '92%',
+            preConfirm: () => {
+                let docId = document.getElementById('ld_new_id').value.trim();
+                let title = document.getElementById('ld_new_title').value.trim();
+                let version = document.getElementById('ld_new_version').value.trim();
+                let content = document.getElementById('ld_new_content').value.trim();
+                if (!docId || !title || !version || !content) { Swal.showValidationMessage('文件編號、名稱、版本號與內文為必填！'); return false; }
+                if (LEGAL_DB.find(d => d.docId === docId)) { Swal.showValidationMessage('此文件編號已存在，請使用不同編號！'); return false; }
+                return { docId, title, version, content, effectiveDate: document.getElementById('ld_new_effDate').value, department: document.getElementById('ld_new_dept').value.trim(), contactInfo: document.getElementById('ld_new_contact').value.trim() };
+            }
+        });
+        if (!fd) return;
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'addLegalDoc', ...fd }, "新增文件中...");
+        if (!res.aborted) handlePostSuccess(res);
+    }
+
+    async function editLegalDocForm(docId) {
+        let doc = LEGAL_DB.find(d => d.docId === docId); if (!doc) return;
+        // Escape HTML special chars in content for textarea display
+        let safeContent = (doc.content || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const { value: fd } = await Swal.fire({
+            title: `✏️ 編輯 ${doc.docId}`,
+            html: `<div style="text-align:left; font-size:14px;">
+                <label class="section-label" style="color:var(--primary); font-weight:bold;">文件編號：${doc.docId}（不可修改）</label>
+                <label class="section-label">文件名稱<span class="req"> *</span></label>
+                <input type="text" id="ld_e_title" class="swal2-input" value="${doc.title}" style="width:100%;">
+                <label class="section-label">版本號<span class="req"> *</span></label>
+                <input type="text" id="ld_e_version" class="swal2-input" value="${doc.version}" style="width:100%;">
+                <label class="section-label">生效日期</label>
+                <input type="date" id="ld_e_effDate" class="swal2-input" value="${doc.effectiveDate}" style="width:100%;">
+                <label class="section-label">最後修訂日期</label>
+                <input type="date" id="ld_e_revDate" class="swal2-input" value="${doc.lastRevised}" style="width:100%;">
+                <label class="section-label">制定單位</label>
+                <input type="text" id="ld_e_dept" class="swal2-input" value="${doc.department}" style="width:100%;">
+                <label class="section-label">聯絡資訊</label>
+                <input type="text" id="ld_e_contact" class="swal2-input" value="${doc.contactInfo}" style="width:100%;">
+                <label class="section-label">文件內文<span class="req"> *</span></label>
+                <textarea id="ld_e_content" class="swal2-textarea" style="width:100%; height:220px; font-size:13px; font-weight:normal; line-height:1.6;">${safeContent}</textarea>
+            </div>`,
+            focusConfirm: false, showCancelButton: true, confirmButtonText: '💾 儲存', cancelButtonText: '取消', width: '92%',
+            preConfirm: () => {
+                let title = document.getElementById('ld_e_title').value.trim();
+                let version = document.getElementById('ld_e_version').value.trim();
+                let content = document.getElementById('ld_e_content').value.trim();
+                if (!title || !version || !content) { Swal.showValidationMessage('文件名稱、版本號與內文為必填！'); return false; }
+                return { title, version, content, effectiveDate: document.getElementById('ld_e_effDate').value, lastRevised: document.getElementById('ld_e_revDate').value, department: document.getElementById('ld_e_dept').value.trim(), contactInfo: document.getElementById('ld_e_contact').value.trim() };
+            }
+        });
+        if (!fd) return;
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'editLegalDoc', docId: docId, ...fd }, "儲存文件中...");
+        if (!res.aborted) handlePostSuccess(res);
+    }
+
+    async function setLegalDocStatus(docId, status) {
+        const labels = { '已發布': '確定要【發布】此文件？發布後前台使用者即可看見。', '已停用': '確定要【停用】此文件？停用後前台將立即隱藏。', '草稿': '確定要將此文件改回【草稿】狀態？' };
+        const { isConfirmed } = await Swal.fire({ title: '確認操作', text: labels[status] || '確認修改狀態？', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--primary)', confirmButtonText: '確認', cancelButtonText: '取消' });
+        if (!isConfirmed) return;
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'setLegalDocStatus', docId: docId, status: status }, "更新文件狀態中...");
+        if (!res.aborted) handlePostSuccess(res);
+    }
+
+    // ==================== LDMS 結束 ====================
 
     async function addLoan() { 
         const uid = document.getElementById('l_uid').value, item = document.getElementById('l_item').value.trim(), amt = document.getElementById('l_amt').value.trim(), exp = document.getElementById('l_exp').value; 
