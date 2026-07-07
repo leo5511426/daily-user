@@ -1357,16 +1357,28 @@
             document.getElementById('legalDocDetailBox').style.display = 'flex';
         }
 
-        // 從同意書 Swal 內直接開啟文件（另開 Swal 預覽，不破壞同意流程）
+        // 從同意書 Swal 內點擊條款連結 → 開啟 fixed 閱讀器 overlay，完全不影響 Swal 狀態
         window.openLegalDocFromConsent = function(docId) {
             let doc = (legalDocs || []).find(d => d.docId === docId);
-            if (!doc) { Swal.fire('提示', '此文件尚未發布，請聯絡管理員。', 'info'); return; }
-            Swal.fire({
-                title: doc.title,
-                html: `<div style="text-align:left; max-height:55vh; overflow-y:auto; padding-right:5px; font-weight:normal; font-size:0.88em; line-height:1.9; white-space:pre-wrap;">${(doc.content || '（內容尚未發布）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`,
-                confirmButtonText: '關閉', confirmButtonColor: 'var(--pink)', width: '90%'
-            });
-        }
+            let overlay = document.getElementById('legalReaderOverlay');
+            let titleEl = document.getElementById('legalReaderTitle');
+            let contentEl = document.getElementById('legalReaderContent');
+            if (!doc) {
+                titleEl.innerText = docId;
+                contentEl.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:40px;">此文件尚未發布，請聯絡管理員。</p>';
+                overlay.style.display = 'flex'; return;
+            }
+            titleEl.innerText = doc.title;
+            contentEl.innerHTML = `
+                <div style="background:#f8fafc; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:0.85em; line-height:1.9; color:#64748b;">
+                    <b style="color:#db2777;">${doc.docId}</b> ｜ 版本：${doc.version || '—'} ｜ 生效日期：${doc.effectiveDate || '未設定'} ｜ 制定單位：${doc.department || '—'}
+                </div>
+                <div style="white-space:pre-wrap; line-height:2; color:#1e293b;">${(doc.content || '（本文件內容尚待管理員填寫後發布）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                ${doc.contactInfo ? `<div style="margin-top:24px; padding:12px 14px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; font-size:0.88em;"><b>📬 聯絡資訊</b><br><span style="font-weight:normal; color:#475569;">${doc.contactInfo}</span></div>` : ''}
+                <div style="height:40px;"></div>`;
+            overlay.style.display = 'flex';
+            contentEl.scrollTop = 0; // 每次開啟都捲回頂部
+        };
 
         // ── 首次登入：服務條款同意書 ──
         async function checkFirstLoginConsent(uid) {
@@ -1571,5 +1583,14 @@
             if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 500); }
         }
     </script>
+<!-- 📄 法律文件閱讀器（position:fixed，掛在 body 最上層，用於同意書流程內點擊條款閱讀，不影響 Swal 狀態） -->
+<div id="legalReaderOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:2147483647; flex-direction:column; overflow:hidden; font-family:inherit;">
+    <div style="position:sticky; top:0; background:#fff; padding:14px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #e5e7eb; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <button onclick="document.getElementById('legalReaderOverlay').style.display='none'" style="all:unset; cursor:pointer; border:1px solid #e5e7eb; padding:6px 14px; border-radius:20px; font-size:0.82em; font-weight:bold; color:#374151; background:#f9fafb; flex-shrink:0;">← 關閉</button>
+        <span id="legalReaderTitle" style="font-size:0.92em; font-weight:bold; color:#db2777; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+    </div>
+    <div id="legalReaderContent" style="flex:1; overflow-y:auto; padding:20px 22px; font-size:0.88em; line-height:1.95; color:#374151; -webkit-overflow-scrolling:touch;"></div>
+</div>
+
 </body>
 </html>
