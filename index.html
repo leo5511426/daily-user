@@ -485,12 +485,11 @@
                 if (res.aborted) return; 
                 if (res.success) { 
                     savedPw = upw; store = res;
-                    // 首次登入：檢查是否已同意服務條款（未同意則跳出同意書視窗）
-                    const consented = await checkFirstLoginConsent(store.userData.id);
-                    if (!consented) return; // 使用者拒絕同意，已自動 reload
                     render(); 
                     document.getElementById('loginView').style.display='none'; 
-                    document.getElementById('appView').style.display='block'; 
+                    document.getElementById('appView').style.display='block';
+                    // 完全進入主畫面後，再執行首次登入同意書檢查（不干擾登入過渡動畫）
+                    checkFirstLoginConsent(store.userData.id);
                 } else {
                     Swal.fire({title: "登入失敗", text: res.message || "請檢查帳號密碼", icon: "error", confirmButtonColor: "var(--pink)"});
                 }
@@ -1380,10 +1379,10 @@
             contentEl.scrollTop = 0; // 每次開啟都捲回頂部
         };
 
-        // ── 首次登入：服務條款同意書 ──
+        // ── 首次登入：服務條款同意書（主畫面完全顯示後才觸發，不阻斷登入過渡）──
         async function checkFirstLoginConsent(uid) {
             const KEY = 'legalConsent_v1_' + uid;
-            if (localStorage.getItem(KEY)) return true; // 已同意過
+            if (localStorage.getItem(KEY)) return; // 已同意過，直接結束
             await fetchLegalDocsIfNeeded();
 
             const needed = ['DOC-002', 'DOC-003', 'DOC-004'];
@@ -1412,10 +1411,11 @@
                 }
             });
 
-            if (isConfirmed) { localStorage.setItem(KEY, new Date().toISOString()); return true; }
-            // 使用者點「不同意」→ 強制登出
-            await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
-            location.reload(); return false;
+            if (isConfirmed) { localStorage.setItem(KEY, new Date().toISOString()); }
+            else {
+                await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
+                location.reload();
+            }
         }
 
         // ── 先享後付：BNPL 同意書（首次進入帳單頁且有 BNPL 項目時觸發）──
