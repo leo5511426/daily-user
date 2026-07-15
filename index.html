@@ -132,20 +132,6 @@
             </div>
         </div>
 
-
-        <!-- ✅ 會員啟用暫存頁 (Milestone 1 Placeholder) -->
-        <div id="activationView" style="display:none; flex-direction:column; justify-content:center; align-items:center; padding:40px; box-sizing:border-box; text-align:center; height:100%; overflow-y:auto;">
-            <div style="font-size:3em; margin-bottom:20px;">🎉</div>
-            <h1 style="color:var(--pink); margin-bottom:8px; font-size:1.4em;">歡迎加入</h1>
-            <h2 style="color:var(--pink); margin-bottom:24px; font-size:1.1em; font-weight:bold;">小佑的日常生活會員</h2>
-            <div class="card" style="width:100%; max-width:380px; padding:24px; text-align:center;">
-                <p style="margin:0 0 8px 0; font-size:1em; line-height:1.6;">您的帳號尚未完成會員啟用。</p>
-                <p style="margin:0 0 24px 0; font-size:0.9em; opacity:0.65; line-height:1.6;">完成啟用後即可開始使用所有會員服務。</p>
-                <button class="btn" id="btnStartActivation" style="background:var(--pink); font-size:1em; padding:16px;">開始啟用</button>
-            </div>
-            <button onclick="triggerLogout()" style="margin-top:24px; background:none; border:none; color:#aaa; font-size:0.8em; cursor:pointer; font-family:inherit; text-decoration:underline;">登出並返回登入頁</button>
-        </div>
-
         <div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
             <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
             
@@ -499,20 +485,11 @@
                 if (res.aborted) return; 
                 if (res.success) { 
                     savedPw = upw; store = res;
-                    document.getElementById('loginView').style.display = 'none';
-
-                    // 🔀 會員啟用狀態分流
-                    const activationStatus = String(res.activationStatus || 'ACTIVE').trim();
-                    if (activationStatus === 'PENDING') {
-                        // 帳號尚未啟用 → 顯示啟用暫存頁，不進入主畫面
-                        document.getElementById('activationView').style.display = 'flex';
-                    } else {
-                        // activationStatus === 'ACTIVE' 或未設定 → 正常登入流程
-                        render();
-                        document.getElementById('appView').style.display = 'block';
-                        // 完全進入主畫面後，再執行首次登入同意書檢查（不干擾登入過渡動畫）
-                        checkFirstLoginConsent(store.userData.id);
-                    }
+                    render(); 
+                    document.getElementById('loginView').style.display='none'; 
+                    document.getElementById('appView').style.display='block';
+                    // 完全進入主畫面後，再執行首次登入同意書檢查（不干擾登入過渡動畫）
+                    checkFirstLoginConsent(store.userData.id);
                 } else {
                     Swal.fire({title: "登入失敗", text: res.message || "請檢查帳號密碼", icon: "error", confirmButtonColor: "var(--pink)"});
                 }
