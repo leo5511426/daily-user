@@ -334,7 +334,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSOeDmAGIgbbaUPJtVu2EKOm3tUYR_oMuiGsHWvMGWve3hU_F1NCoEMS3YjXt34r4J/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYP9bZj48fnkLwKNY8VkaJxmOVRPiTCZHgl9_OioF0q00z0i3fo3cuYp32MNHDLNEB/exec"; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null; 
 
@@ -482,22 +482,18 @@ const uid = document.getElementById('acc').value.trim(), upw = document.getEleme
 if(!uid || !upw) return Swal.fire({title: "提示", text: "請輸入完整資料", icon: "warning", confirmButtonColor: "var(--pink)"});
 try {
 const res = await fetchWithQueue(SCRIPT_URL, { action: 'login', uid: uid, pw: upw }, '連線與驗證身份中...');
-if (res.aborted) return; 
-if (res.success) { 
+if (res.aborted) return;
+if (res.success) {
 savedPw = upw; store = res;
-                    // 首次登入：檢查是否已同意服務條款（未同意則跳出同意書視窗）
-                    const consented = await checkFirstLoginConsent(store.userData.id);
-                    if (!consented) return; // 使用者拒絕同意，已自動 reload
-render(); 
-document.getElementById('loginView').style.display='none'; 
-                    document.getElementById('appView').style.display='block'; 
-                    document.getElementById('appView').style.display='block';
-                    // 完全進入主畫面後，再執行首次登入同意書檢查（不干擾登入過渡動畫）
-                    checkFirstLoginConsent(store.userData.id);
+const consented = await checkFirstLoginConsent(store.userData.id);
+if (!consented) return;
+render();
+document.getElementById('loginView').style.display='none';
+document.getElementById('appView').style.display='block';
 } else {
 Swal.fire({title: "登入失敗", text: res.message || "請檢查帳號密碼", icon: "error", confirmButtonColor: "var(--pink)"});
 }
-} catch(e) { 
+} catch(e) {
 Swal.fire({title: "系統異常", html: "錯誤原因: " + e.message + "<br><br>這通常是因為資料格式錯誤，請通知管理員。", icon: "error", confirmButtonColor: "var(--pink)"});
 }
 }
@@ -1383,49 +1379,132 @@ overlay.style.display = 'flex';
 contentEl.scrollTop = 0; // 每次開啟都捲回頂部
 };
 
-        // ── 首次登入：服務條款同意書 ──
-        // ── 首次登入：服務條款同意書（主畫面完全顯示後才觸發，不阻斷登入過渡）──
+// ── Feature 功能識別常數（集中定義，避免散落的字串字面量）──
+// 未來新增 POINTS / MEMBERSHIP_LEVELS / CUSTOMER_SERVICE / AI_ASSISTANT 等功能時，在此處新增一行即可
+const FEATURES = {
+  MEMBER:          'MEMBER',
+  BNPL:            'BNPL',
+  AI_ASSISTANT:    'AI_ASSISTANT',
+  POINTS:          'POINTS',
+  MEMBERSHIP_LEVELS: 'MEMBERSHIP_LEVELS',
+  CUSTOMER_SERVICE:  'CUSTOMER_SERVICE'
+};
+
+// ── 會員啟用流程：服務條款同意書
+// 唯一真相來源：Google Sheets LegalConsents（伺服器端）
+// localStorage 僅作為本機快取輔助，不參與決策
+// 伺服器異常時：阻斷登入，不允許繞過
 async function checkFirstLoginConsent(uid) {
-const KEY = 'legalConsent_v1_' + uid;
-            if (localStorage.getItem(KEY)) return true; // 已同意過
-            if (localStorage.getItem(KEY)) return; // 已同意過，直接結束
-await fetchLegalDocsIfNeeded();
 
-const needed = ['DOC-002', 'DOC-003', 'DOC-004'];
-const links = needed.map(id => {
-let d = (legalDocs || []).find(x => x.docId === id);
-let label = d ? d.title : (id === 'DOC-002' ? '會員服務條款' : id === 'DOC-003' ? '隱私權政策' : '個人資料蒐集、處理及利用告知暨同意書');
-return `<a href="javascript:void(0)" onclick="openLegalDocFromConsent('${id}')" style="color:var(--pink); font-weight:bold; text-decoration:underline;">《${label}》</a>`;
-}).join('、');
+  // Step 1：向伺服器查詢此會員對 MEMBER 功能的同意狀態
+  let checkRes;
+  try {
+    const raw = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'checkConsents', uid: uid, feature: FEATURES.MEMBER })
+    });
+    checkRes = await raw.json();
+  } catch(e) {
+    // 網路層異常 → 阻斷登入，要求重試
+    await Swal.fire({
+      title: '⚠️ 無法完成身份驗證',
+      html: '系統暫時無法確認您的條款同意狀態，請檢查網路連線後再試。<br><br><small style="color:#aaa;">錯誤原因：' + e.message + '</small>',
+      icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '返回重試', allowOutsideClick: false
+    });
+    return false;
+  }
 
-const { isConfirmed } = await Swal.fire({
-title: '📋 服務條款同意書',
-html: `<div style="text-align:left; font-size:0.95em; line-height:1.8;">
-                   <p style="color:#888; font-size:0.88em; margin-top:0;">歡迎使用本系統！開始使用前，請閱讀並同意下列條款（點擊可閱讀全文）：</p>
-                   <div style="background:var(--card, #f5f5f5); border-radius:10px; padding:12px; margin:10px 0; font-size:0.9em;">${links}</div>
-                   <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-top:12px; font-weight:bold;">
-                       <input type="checkbox" id="consent_chk" style="width:22px; height:22px; flex-shrink:0; margin-top:2px; accent-color:var(--pink);">
-                       <span>我已閱讀並同意《會員服務條款》、《隱私權政策》及《個人資料蒐集、處理及利用告知暨同意書》</span>
-                   </label>
-               </div>`,
-showCancelButton: true, confirmButtonText: '✅ 同意並繼續使用', cancelButtonText: '不同意（登出）',
-confirmButtonColor: '#2ecc71', cancelButtonColor: '#94a3b8',
-allowOutsideClick: false, allowEscapeKey: false,
-preConfirm: () => {
-if (!document.getElementById('consent_chk').checked) { Swal.showValidationMessage('請勾選同意後才能繼續使用本系統'); return false; }
-return true;
-}
-});
+  // GAS 或 Sheets 層異常 → 阻斷登入
+  if (!checkRes || !checkRes.success) {
+    await Swal.fire({
+      title: '⚠️ 同意書驗證失敗',
+      html: '系統在驗證您的條款同意記錄時發生錯誤，請稍後再試。<br><br><small style="color:#aaa;">伺服器回應：' + (checkRes ? checkRes.message : '無回應') + '</small>',
+      icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '返回重試', allowOutsideClick: false
+    });
+    return false;
+  }
 
-            if (isConfirmed) { localStorage.setItem(KEY, new Date().toISOString()); return true; }
-            // 使用者點「不同意」→ 強制登出
-            await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
-            location.reload(); return false;
-            if (isConfirmed) { localStorage.setItem(KEY, new Date().toISOString()); }
-            else {
-                await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
-                location.reload();
-            }
+  // Step 2：所有必要文件均已同意最新版本 → 放行
+  if (checkRes.allConsented) {
+    localStorage.setItem('legalConsent_v1_' + uid, new Date().toISOString()); // 更新本機快取
+    return true;
+  }
+
+  // Step 3：有未同意或版本過時的文件 → 顯示同意書 Modal
+  await fetchLegalDocsIfNeeded(); // 確保文件內容已載入供閱讀連結使用
+
+  // 動態建立文件連結（依伺服器回傳的 missing 清單，不硬編碼任何文件編號）
+  const missingDocs = checkRes.missing || [];
+  const links = missingDocs.map(function(doc) {
+    return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--pink); font-weight:bold; text-decoration:underline;">《' + doc.title + '》</a>';
+  }).join('、');
+  const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
+
+  const { isConfirmed } = await Swal.fire({
+    title: '📋 服務條款同意書',
+    html: '<div style="text-align:left; font-size:0.95em; line-height:1.8;">'
+        + '<p style="color:#888; font-size:0.88em; margin-top:0;">歡迎使用本系統！開始使用前，請閱讀並同意下列條款（點擊可閱讀全文）：</p>'
+        + '<div style="background:var(--card, #f5f5f5); border-radius:10px; padding:12px; margin:10px 0; font-size:0.9em;">' + links + '</div>'
+        + '<label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-top:12px; font-weight:bold;">'
+        + '<input type="checkbox" id="consent_chk" style="width:22px; height:22px; flex-shrink:0; margin-top:2px; accent-color:var(--pink);">'
+        + '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
+        + '</label></div>',
+    showCancelButton: true,
+    confirmButtonText: '✅ 同意並繼續使用',
+    cancelButtonText: '不同意（登出）',
+    confirmButtonColor: '#2ecc71',
+    cancelButtonColor: '#94a3b8',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    preConfirm: function() {
+      if (!document.getElementById('consent_chk').checked) {
+        Swal.showValidationMessage('請勾選同意後才能繼續使用本系統');
+        return false;
+      }
+      return true;
+    }
+  });
+
+  // 使用者拒絕同意 → 強制登出，不進入系統
+  if (!isConfirmed) {
+    await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
+    location.reload();
+    return false;
+  }
+
+  // Step 4：使用者同意 → 寫入伺服器 LegalConsents（recordConsents 為冪等操作）
+  let recordRes;
+  try {
+    const raw = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'recordConsents', uid: uid, feature: FEATURES.MEMBER, consentMethod: '線上勾選同意' })
+    });
+    recordRes = await raw.json();
+  } catch(e) {
+    // 寫入網路異常 → 阻斷登入，確保記錄一定被寫入
+    await Swal.fire({
+      title: '⚠️ 同意書記錄失敗',
+      html: '您的同意記錄暫時無法寫入系統，請檢查網路後再次登入並同意條款。<br><br><small style="color:#aaa;">錯誤原因：' + e.message + '</small>',
+      icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '返回重試', allowOutsideClick: false
+    });
+    location.reload();
+    return false;
+  }
+
+  if (!recordRes || !recordRes.success) {
+    // GAS 寫入失敗 → 阻斷登入
+    await Swal.fire({
+      title: '⚠️ 同意書記錄失敗',
+      html: '系統無法儲存您的同意記錄，請稍後再試。<br><br><small style="color:#aaa;">伺服器回應：' + (recordRes ? recordRes.message : '無回應') + '</small>',
+      icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '返回重試', allowOutsideClick: false
+    });
+    location.reload();
+    return false;
+  }
+
+  // 同步更新 localStorage 作為本機快取（非決策依據）
+  localStorage.setItem('legalConsent_v1_' + uid, new Date().toISOString());
+  return true;
 }
 
 // ── 先享後付：BNPL 同意書（首次進入帳單頁且有 BNPL 項目時觸發）──
