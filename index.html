@@ -53,6 +53,32 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 @keyframes sync-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes queue-bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
 
+/* 🌟 Login Progress Overlay UX Improvements 🌟 */
+@keyframes lp-spin { 100% { transform: rotate(360deg); } }
+@keyframes lp-pop { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes lp-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@keyframes lp-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 143, 163, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(255, 143, 163, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 143, 163, 0); } }
+
+.lp-icon { display: inline-block; transition: opacity 0.2s ease, transform 0.2s ease; font-size: 1.25em; width: 24px; text-align: center; }
+.lp-spin { animation: lp-spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.lp-pop { animation: lp-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.lp-shake { animation: lp-shake 0.4s ease-in-out forwards; }
+
+.lp-step { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 12px; margin-bottom: 6px; transition: all 0.4s ease; border-left: 4px solid transparent; }
+.lp-step.waiting { opacity: 0.35; filter: grayscale(100%); transform: scale(0.98); }
+.lp-step.running { background: rgba(255, 255, 255, 0.12); border-left-color: var(--pink); animation: lp-pulse 2s infinite; opacity: 1; transform: scale(1); }
+.lp-step.running span { text-shadow: 0 0 8px rgba(255, 255, 255, 0.3); }
+.lp-step.done { opacity: 0.55; transform: scale(0.98); }
+.lp-step.failed { background: rgba(255, 82, 82, 0.15); border-left-color: #ff5252; opacity: 1; transform: scale(1); }
+
+.lp-progress-bg { background: rgba(255, 255, 255, 0.15); height: 6px; border-radius: 4px; width: 100%; margin: 12px 0 20px 0; overflow: hidden; position: relative; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+.lp-progress-fill { background: linear-gradient(90deg, #FF8FA3, #FFD1DC); height: 100%; width: 0%; transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); border-radius: 4px; box-shadow: 0 0 10px rgba(255, 143, 163, 0.5); }
+
+@media (prefers-reduced-motion: reduce) {
+    .lp-spin, .lp-pop, .lp-shake, .lp-pulse, .lp-progress-fill, .lp-step, .lp-icon { animation: none !important; transition: none !important; }
+}
+/* 🌟 End Login Progress UX */
+
 .settings-section-title { font-size: 1.1em; margin: 20px 0 10px 5px; color: var(--pink); display: flex; align-items: center; gap: 6px; }
 .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .header-container h2 { margin: 0; }
@@ -234,6 +260,11 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <span style="font-size:0.75em; opacity:0.85; font-weight:normal;">聯絡管理員 / 售後通報 / 系統問題回報</span>
 </button>
 
+<div class="settings-section-title">🔐 安全與登入管理</div>
+<div class="card" style="padding:15px;">
+<button class="btn" onclick="openSessionManager()" style="background:#7c3aed; font-size:1em; padding:14px;">📱 目前登入裝置管理</button>
+</div>
+
 <div class="settings-section-title">👤 個人資料管理</div>
 <div class="card" style="display: flex; flex-direction: column; gap: 10px; padding: 15px;">
 <button class="btn" onclick="updateProfileName()" style="background:#0284c7; font-size: 1em; padding: 14px;">修改真實姓名</button>
@@ -334,9 +365,9 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYP9bZj48fnkLwKNY8VkaJxmOVRPiTCZHgl9_OioF0q00z0i3fo3cuYp32MNHDLNEB/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4BCExM3ObED45-8Az-59Dxru03UFMg4U7JYRRR3fVHEW82XDLhSF48LGqLcsthsJU/exec"; 
 
-let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null; 
+let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
 
 const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
 const couponQr = new QRCode(document.getElementById("couponQrcode"), { width: 200, height: 200 });
@@ -476,26 +507,331 @@ function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div s
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
-// 🔐 登入邏輯
+// 🔐 登入進行中旗標：防止重複點擊產生並發登入請求
+let _loginInProgress = false;
+
+// ── 登入進度清單 Overlay ──
+const LOGIN_STEPS = [
+  { id: 'ls_auth',    running: '驗證帳號密碼...',       done: '驗證完成' },
+  { id: 'ls_session', running: '建立安全工作階段...',   done: '建立完成' },
+  { id: 'ls_log',     running: '記錄登入資訊...',       done: '已記錄' },
+  { id: 'ls_perm',    running: '驗證會員權限...',       done: '驗證完成' },
+  { id: 'ls_legal',   running: '檢查法律文件...',       done: '已完成' },
+  { id: 'ls_notify',  running: '同步會員通知...',       done: '已同步' },
+  { id: 'ls_load',    running: '載入首頁...',           done: '已完成' }
+];
+
+// ⏱️ UI 延遲輔助函數：製造些微停頓感讓進度清晰可見
+const uiDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
+
+function setLoginStep(stepId, state, extraLabel) {
+  const stepEl = document.getElementById(stepId);
+  const icon = document.getElementById(stepId + '_icon');
+  const label = document.getElementById(stepId + '_label');
+  if (!icon || !label || !stepEl) return;
+  
+  const stateConfig = {
+    waiting: { icon: '⬜', animClass: '', className: 'lp-step waiting' },
+    running: { icon: '⏳', animClass: 'lp-spin', className: 'lp-step running' },
+    done:    { icon: '✅', animClass: 'lp-pop', className: 'lp-step done' },
+    failed:  { icon: '❌', animClass: 'lp-shake', className: 'lp-step failed' },
+    warn:    { icon: '⚠️', animClass: 'lp-shake', className: 'lp-step failed' }
+  };
+
+  const cfg = stateConfig[state] || stateConfig.waiting;
+  
+  // Apply parent step visual state
+  stepEl.className = cfg.className;
+  
+  // Smooth icon transition
+  icon.style.opacity = '0';
+  icon.style.transform = 'scale(0.5)';
+  
+  setTimeout(() => {
+    icon.innerHTML = cfg.icon;
+    icon.className = `lp-icon ${cfg.animClass}`;
+    icon.style.opacity = '1';
+    icon.style.transform = 'scale(1)';
+  }, 150);
+
+  // Dynamically update text[cite: 1]
+  let stepDef = LOGIN_STEPS.find(s => s.id === stepId);
+  if (stepDef) {
+     if (state === 'running') label.textContent = extraLabel || stepDef.running;
+     if (state === 'done') label.textContent = extraLabel || stepDef.done;
+     if (state === 'failed' || state === 'warn') label.textContent = extraLabel || stepDef.running;
+     if (state === 'waiting') label.textContent = stepDef.running;
+  }
+
+  // Smooth Auto-Scroll to running/failed step
+  if (state === 'running' || state === 'failed') {
+     stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Calculate and update Progress Bar
+  const doneSteps = document.querySelectorAll('.lp-step.done').length;
+  const pct = Math.floor((doneSteps / LOGIN_STEPS.length) * 100);
+  document.getElementById('lp-pct').innerText = pct + '%';
+  document.getElementById('lp-bar').style.width = pct + '%';
+}
+
+function showLoginOverlay() {
+  const stepsHtml = LOGIN_STEPS.map(s =>
+    `<div id="${s.id}" class="lp-step waiting">
+      <span id="${s.id}_icon" class="lp-icon">⬜</span>
+      <span id="${s.id}_label" style="transition:color 0.3s ease;">${s.running}</span>
+    </div>`
+  ).join('');
+
+  let overlay = document.getElementById('loginProgressOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'loginProgressOverlay';
+    overlay.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,20,0.97);z-index:9999;flex-direction:column;justify-content:center;align-items:center;font-family:-apple-system,sans-serif;font-weight:900;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
+    overlay.innerHTML = `
+      <div style="width:90%;max-width:420px;display:flex;flex-direction:column;max-height:90vh;">
+        <div style="text-align:center;margin-bottom:20px;flex-shrink:0;">
+          <div style="font-size:2.5em;margin-bottom:8px;animation:lp-pop 0.5s ease;">🔐</div>
+          <div id="lp-main-title" style="color:var(--pink);font-size:1.25em;margin-bottom:6px;transition:color 0.4s ease;">安全登入中</div>
+          <div id="lp-sub-title" style="color:rgba(255,255,255,0.8);font-size:0.9em;margin-bottom:4px;transition:color 0.4s ease;">正在建立安全連線...</div>
+          <div style="color:rgba(255,255,255,0.45);font-size:0.75em;font-weight:normal;">請稍候，系統正在驗證您的登入資訊。</div>
+        </div>
+        
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.85em;color:var(--pink);flex-shrink:0;">
+          <span>登入進度</span>
+          <span id="lp-pct" style="transition:all 0.3s ease;">0%</span>
+        </div>
+        <div class="lp-progress-bg">
+          <div id="lp-bar" class="lp-progress-fill"></div>
+        </div>
+
+        <div id="loginStepsList" style="background:rgba(255,255,255,0.05);border-radius:16px;padding:12px;color:#fff;overflow-y:auto;flex:1;scroll-behavior:smooth;">
+            ${stepsHtml}
+        </div>
+        
+        <div id="loginErrorMsg" style="display:none;margin-top:20px;background:#fee2e2;border-radius:12px;padding:14px 18px;color:#b91c1c;font-size:0.9em;line-height:1.5;box-shadow:0 4px 12px rgba(220,38,38,0.2);flex-shrink:0;"></div>
+        <div id="loginRetryBtn" style="display:none;margin-top:14px;flex-shrink:0;">
+          <button onclick="hideLoginOverlay()" style="width:100%;padding:14px;border-radius:12px;background:var(--pink);color:#fff;border:none;font-size:1em;font-weight:900;cursor:pointer;transition:transform 0.2s ease;">返回重試</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+  } else {
+     // Reset UI to waiting state securely
+     document.getElementById('lp-pct').innerText = '0%';
+     document.getElementById('lp-bar').style.width = '0%';
+     document.getElementById('lp-main-title').innerText = '安全登入中';
+     document.getElementById('lp-sub-title').innerText = '正在建立安全連線...';
+     document.getElementById('lp-main-title').style.color = 'var(--pink)';
+     
+     LOGIN_STEPS.forEach(s => setLoginStep(s.id, 'waiting'));
+     
+     const errEl = document.getElementById('loginErrorMsg');
+     const retryEl = document.getElementById('loginRetryBtn');
+     if (errEl) errEl.style.display = 'none';
+     if (retryEl) retryEl.style.display = 'none';
+  }
+  overlay.style.display = 'flex';
+}
+
+function hideLoginOverlay() {
+  const overlay = document.getElementById('loginProgressOverlay');
+  if (overlay) overlay.style.display = 'none';
+  _loginInProgress = false; 
+}
+
+function showLoginError(msg) {
+  const errEl = document.getElementById('loginErrorMsg');
+  const retryEl = document.getElementById('loginRetryBtn');
+  const titleEl = document.getElementById('lp-main-title');
+  
+  if(titleEl) {
+      titleEl.innerText = '❌ 登入失敗';
+      titleEl.style.color = '#ff5252';
+      titleEl.style.animation = 'lp-shake 0.4s ease';
+  }
+  
+  if (errEl) { errEl.style.display = 'block'; errEl.innerHTML = '<b>Reason:</b><br>' + msg; }
+  if (retryEl) retryEl.style.display = 'block';
+}
+
+// 🔐 登入主流程
 async function doLogin() {
-const uid = document.getElementById('acc').value.trim(), upw = document.getElementById('pw').value.trim();
-if(!uid || !upw) return Swal.fire({title: "提示", text: "請輸入完整資料", icon: "warning", confirmButtonColor: "var(--pink)"});
-try {
-const res = await fetchWithQueue(SCRIPT_URL, { action: 'login', uid: uid, pw: upw }, '連線與驗證身份中...');
-if (res.aborted) return;
-if (res.success) {
-savedPw = upw; store = res;
-const consented = await checkFirstLoginConsent(store.userData.id);
-if (!consented) return;
-render();
-document.getElementById('loginView').style.display='none';
-document.getElementById('appView').style.display='block';
-} else {
-Swal.fire({title: "登入失敗", text: res.message || "請檢查帳號密碼", icon: "error", confirmButtonColor: "var(--pink)"});
-}
-} catch(e) {
-Swal.fire({title: "系統異常", html: "錯誤原因: " + e.message + "<br><br>這通常是因為資料格式錯誤，請通知管理員。", icon: "error", confirmButtonColor: "var(--pink)"});
-}
+  if (_loginInProgress) return;
+  _loginInProgress = true;
+
+  const uid = document.getElementById('acc').value.trim();
+  const upw = document.getElementById('pw').value.trim();
+  if (!uid || !upw) {
+    _loginInProgress = false;
+    return Swal.fire({ title: '提示', text: '請輸入完整資料', icon: 'warning', confirmButtonColor: 'var(--pink)' });
+  }
+
+  showLoginOverlay();
+
+  // ── Step 1: 驗證帳號密碼 ──
+  setLoginStep('ls_auth', 'running');
+  await uiDelay(500);
+  
+  let res;
+  try {
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: uid, pw: upw }) });
+    res = await raw.json();
+  } catch(e) {
+    setLoginStep('ls_auth', 'failed');
+    showLoginError('無法連線至伺服器<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+    return;
+  }
+
+  if (!res.success) {
+    setLoginStep('ls_auth', 'failed', '驗證帳號密碼失敗');
+    showLoginError(res.message || '帳號或密碼錯誤');
+    return; 
+  }
+  setLoginStep('ls_auth', 'done');
+  await uiDelay(300);
+
+  // ── Step 2: Session 建立 ──
+  setLoginStep('ls_session', 'running');
+  await uiDelay(400);
+  savedPw = upw;
+  store = res;
+  currentSessionId = res.sessionId || '';
+  setLoginStep('ls_session', 'done');
+  await uiDelay(300);
+
+  // ── Step 3: 登入日誌 ──
+  setLoginStep('ls_log', 'running');
+  await uiDelay(300);
+  setLoginStep('ls_log', 'done');
+  await uiDelay(300);
+
+  // ── Step 4: 檢查會員權限 ──
+  setLoginStep('ls_perm', 'running');
+  let checkRes;
+  try {
+    const raw = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.MEMBER })
+    });
+    checkRes = await raw.json();
+  } catch(e) {
+    setLoginStep('ls_perm', 'failed');
+    showLoginError('系統暫時無法確認您的條款同意狀態，請檢查網路連線後再試。<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+    return;
+  }
+
+  if (!checkRes || !checkRes.success) {
+    setLoginStep('ls_perm', 'failed');
+    showLoginError('同意書驗證失敗，請稍後再試。<br><small style="font-weight:normal;opacity:0.7;">' + (checkRes ? checkRes.message : '無回應') + '</small>');
+    return;
+  }
+
+  setLoginStep('ls_perm', 'done');
+  await uiDelay(300);
+
+  // ── Step 5: 檢查法律文件 ──
+  setLoginStep('ls_legal', 'running');
+  await uiDelay(300);
+
+  if (!checkRes.allConsented) {
+    setLoginStep('ls_legal', 'warn', '發現新的法律文件需要重新同意');
+
+    await fetchLegalDocsIfNeeded();
+    const missingDocs = checkRes.missing || [];
+    const links = missingDocs.map(function(doc) {
+      return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--pink);font-weight:bold;text-decoration:underline;">《' + doc.title + '》</a>';
+    }).join('、');
+    const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
+
+    const { isConfirmed } = await Swal.fire({
+      title: '📋 服務條款同意書',
+      html: '<div style="text-align:left;font-size:0.95em;line-height:1.8;">'
+          + '<p style="color:#888;font-size:0.88em;margin-top:0;">開始使用前，請閱讀並同意下列條款（點擊可閱讀全文）：</p>'
+          + '<div style="background:var(--card,#f5f5f5);border-radius:10px;padding:12px;margin:10px 0;font-size:0.9em;">' + links + '</div>'
+          + '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;font-weight:bold;">'
+          + '<input type="checkbox" id="consent_chk" style="width:22px;height:22px;flex-shrink:0;margin-top:2px;accent-color:var(--pink);">'
+          + '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
+          + '</label></div>',
+      showCancelButton: true, confirmButtonText: '✅ 同意並繼續使用', cancelButtonText: '不同意（登出）',
+      confirmButtonColor: '#2ecc71', cancelButtonColor: '#94a3b8',
+      allowOutsideClick: false, allowEscapeKey: false,
+      preConfirm: function() {
+        if (!document.getElementById('consent_chk').checked) {
+          Swal.showValidationMessage('請勾選同意後才能繼續使用本系統'); return false;
+        }
+        return true;
+      }
+    });
+
+    if (!isConfirmed) {
+      setLoginStep('ls_legal', 'failed', '使用者拒絕同意服務條款');
+      await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
+      location.reload(); return; 
+    }
+
+    let recordRes;
+    try {
+      const raw = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.MEMBER, consentMethod: '線上勾選同意', sessionId: currentSessionId })
+      });
+      recordRes = await raw.json();
+    } catch(e) {
+      setLoginStep('ls_legal', 'failed', '同意書記錄寫入失敗');
+      showLoginError('您的同意記錄暫時無法寫入系統，請重新登入並同意條款。<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+      return;
+    }
+
+    if (!recordRes || !recordRes.success) {
+      setLoginStep('ls_legal', 'failed', '同意書記錄寫入失敗');
+      showLoginError('系統無法儲存您的同意記錄，請稍後再試。<br><small style="font-weight:normal;opacity:0.7;">' + (recordRes ? recordRes.message : '無回應') + '</small>');
+      return;
+    }
+    
+    setLoginStep('ls_legal', 'running');
+    await uiDelay(300);
+  }
+
+  setLoginStep('ls_legal', 'done');
+  localStorage.setItem('legalConsent_v1_' + store.userData.id, new Date().toISOString());
+  await uiDelay(300);
+
+  // ── Step 6: 同步會員通知 ──
+  setLoginStep('ls_notify', 'running');
+  await uiDelay(300); 
+  setLoginStep('ls_notify', 'done');
+  await uiDelay(300);
+
+  // ── Step 7: 載入首頁 ──
+  setLoginStep('ls_load', 'running');
+  await uiDelay(300);
+  render();
+  setLoginStep('ls_load', 'done');
+  
+  // Set final UI progress to 100% just to be safe
+  document.getElementById('lp-pct').innerText = '100%';
+  document.getElementById('lp-bar').style.width = '100%';
+  
+  // Success Screen
+  const titleEl = document.getElementById('lp-main-title');
+  const subTitleEl = document.getElementById('lp-sub-title');
+  if(titleEl) {
+      titleEl.innerText = '🎉 登入成功';
+      titleEl.style.color = '#10b981';
+      titleEl.style.animation = 'lp-pop 0.5s ease';
+  }
+  if(subTitleEl) subTitleEl.innerText = '歡迎回來！';
+
+  // Pause briefly before transitioning to the app
+  await uiDelay(800);
+
+  _loginInProgress = false; 
+  hideLoginOverlay();
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('appView').style.display = 'block';
+
+  startSessionHeartbeat();
+  checkWinningInvoices();
 }
 
 async function silentSyncData() {
@@ -505,6 +841,16 @@ try {
 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: store.userData.id, pw: savedPw }) }).then(r => r.json());
 if (res.success) { store = res; render(); }
 } catch (e) { console.log(e); } finally { if (indicator) indicator.style.display = 'none'; }
+}
+
+// 🔐 Session 活動心跳（每5分鐘靜默更新 lastActivityTime）
+let _sessionHeartbeatTimer = null;
+function startSessionHeartbeat() {
+  if (_sessionHeartbeatTimer) clearInterval(_sessionHeartbeatTimer);
+  _sessionHeartbeatTimer = setInterval(function() {
+    if (!currentSessionId || !store || !store.userData) return;
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSessionActivity', uid: store.userData.id, sessionId: currentSessionId }) }).catch(function(){});
+  }, 5 * 60 * 1000);
 }
 
 // 🧩 捷徑自訂功能
@@ -1267,7 +1613,7 @@ if (!newName || newName.trim() === store.userData.name) return; const finalizedN
 const confirmStep2 = await Swal.fire({ title: '最後確認：確定變更名稱？', html: `您確定要將會員名稱從「<span style="color:var(--red);">${store.userData.name}</span>」<br>正式修改為「<span style="color:var(--green);">${finalizedName}</span>」嗎？`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '返回修改', confirmButtonText: '確認修改，不回頭' });
 if (!confirmStep2.isConfirmed) return;
 try {
-const res = await fetchWithQueue(SCRIPT_URL, { action: 'updateProfile', uid: store.userData.id, pw: savedPw, newName: finalizedName }, '資料更新與連線中...');
+const res = await fetchWithQueue(SCRIPT_URL, { action: 'updateProfile', uid: store.userData.id, pw: savedPw, newName: finalizedName, sessionId: currentSessionId }, '資料更新與連線中...');
 if (res.aborted) return;
 if (res && res.success) { store.userData.name = finalizedName; render(); await Swal.fire({ title: '基本資料變更成功！', text: `您的姓名已成功更新為：${finalizedName}`, icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '確定' }); } 
 else if (res) showCustomerServiceAlert("基本資料更新失敗", res.message || "伺服器更新拒絕，請稍後再試");
@@ -1283,7 +1629,7 @@ if (!formValues) return;
 const confirmStep2 = await Swal.fire({ title: '您確定要寫入新密碼嗎？', text: '請確保您記住了剛才輸入的新密碼。按下確定後將立即向伺服器提交變更申請！', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '返回修改', confirmButtonText: '確認提交變更' });
 if (!confirmStep2.isConfirmed) return;
 try {
-const res = await fetchWithQueue(SCRIPT_URL, { action: 'updatePassword', uid: store.userData.id, oldPw: formValues.oldPw, newPw: formValues.newPw }, '密碼變更與連線中...');
+const res = await fetchWithQueue(SCRIPT_URL, { action: 'updatePassword', uid: store.userData.id, oldPw: formValues.oldPw, newPw: formValues.newPw, sessionId: currentSessionId }, '密碼變更與連線中...');
 if (res.aborted) return;
 if (res && res.success) { await Swal.fire({ title: '密碼變更成功！', text: '帳戶安全密碼已成功變更，請點擊確認以安全登出並重新登入。', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '登出系統' }); location.reload(); } 
 else if (res) showCustomerServiceAlert("密碼變更失敗", res.message || "請檢查您的舊密碼是否輸入正確");
@@ -1291,8 +1637,49 @@ else if (res) showCustomerServiceAlert("密碼變更失敗", res.message || "請
 }
 
 async function triggerLogout() {
-const confirmResult = await Swal.fire({ title: '確認要登出系統嗎？', text: '登出後需要重新輸入您的帳號與密碼才能存取行動會員。', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '安全登出' });
-if (confirmResult.isConfirmed) { await Swal.fire({ title: '登出成功', text: '您已安全登出本系統，再見！', icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '回到登入頁' }); location.reload(); }
+  const confirmResult = await Swal.fire({
+    title: '確認要登出系統嗎？',
+    text: '登出後需要重新輸入您的帳號與密碼才能存取行動會員。',
+    icon: 'question', showCancelButton: true,
+    confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '安全登出'
+  });
+  if (!confirmResult.isConfirmed) return;
+
+  // 先停止心跳，避免在登出過程中仍送出 updateSessionActivity
+  if (_sessionHeartbeatTimer) { clearInterval(_sessionHeartbeatTimer); _sessionHeartbeatTimer = null; }
+
+  // 呼叫後端 logout：標記 session 為已登出，寫入 SecurityEvents
+  if (currentSessionId && store && store.userData) {
+    let logoutOk = false;
+    try {
+      const raw = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'logout', uid: store.userData.id, sessionId: currentSessionId })
+      });
+      const logoutRes = await raw.json();
+      logoutOk = logoutRes && logoutRes.success;
+    } catch(e) {
+      logoutOk = false;
+    }
+
+    if (!logoutOk) {
+      // 登出 API 失敗：重啟心跳，告知使用者，不執行 reload
+      startSessionHeartbeat();
+      Swal.fire({
+        title: '⚠️ 登出失敗',
+        text: '無法連線至伺服器完成登出，請確認網路連線後再試。',
+        icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '確定'
+      });
+      return;
+    }
+  }
+
+  // 後端確認登出成功，顯示提示後執行 reload
+  await Swal.fire({
+    title: '登出成功', text: '您已安全登出本系統，再見！',
+    icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '回到登入頁'
+  });
+  location.reload();
 }
 
 // =====================================================================
@@ -1390,163 +1777,103 @@ const FEATURES = {
   CUSTOMER_SERVICE:  'CUSTOMER_SERVICE'
 };
 
-// ── 會員啟用流程：服務條款同意書
-// 唯一真相來源：Google Sheets LegalConsents（伺服器端）
-// localStorage 僅作為本機快取輔助，不參與決策
-// 伺服器異常時：阻斷登入，不允許繞過
-async function checkFirstLoginConsent(uid) {
-
-  // Step 1：向伺服器查詢此會員對 MEMBER 功能的同意狀態
-  let checkRes;
+// ── 目前登入裝置管理 ──
+window.openSessionManager = async function() {
+  Swal.fire({ title: '載入裝置清單...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  let res;
   try {
-    const raw = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'checkConsents', uid: uid, feature: FEATURES.MEMBER })
-    });
-    checkRes = await raw.json();
-  } catch(e) {
-    // 網路層異常 → 阻斷登入，要求重試
-    await Swal.fire({
-      title: '⚠️ 無法完成身份驗證',
-      html: '系統暫時無法確認您的條款同意狀態，請檢查網路連線後再試。<br><br><small style="color:#aaa;">錯誤原因：' + e.message + '</small>',
-      icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '返回重試', allowOutsideClick: false
-    });
-    return false;
-  }
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getSessions', uid: store.userData.id }) });
+    res = await raw.json();
+  } catch(e) { Swal.fire('錯誤', '無法取得裝置清單，請稍後再試。', 'error'); return; }
+  Swal.close();
+  if (!res || !res.success) { Swal.fire('錯誤', res ? res.message : '無回應', 'error'); return; }
 
-  // GAS 或 Sheets 層異常 → 阻斷登入
-  if (!checkRes || !checkRes.success) {
-    await Swal.fire({
-      title: '⚠️ 同意書驗證失敗',
-      html: '系統在驗證您的條款同意記錄時發生錯誤，請稍後再試。<br><br><small style="color:#aaa;">伺服器回應：' + (checkRes ? checkRes.message : '無回應') + '</small>',
-      icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '返回重試', allowOutsideClick: false
-    });
-    return false;
-  }
+  const sessions = res.sessions || [];
+  if (sessions.length === 0) { Swal.fire({ title: '📱 登入裝置', text: '目前無登入記錄。', icon: 'info', confirmButtonColor: 'var(--pink)' }); return; }
 
-  // Step 2：所有必要文件均已同意最新版本 → 放行
-  if (checkRes.allConsented) {
-    localStorage.setItem('legalConsent_v1_' + uid, new Date().toISOString()); // 更新本機快取
-    return true;
-  }
+  const listHtml = sessions.map(function(s) {
+    const isCurrent = s.sessionId === currentSessionId;
+    const isActive = s.isActive;
+    const statusColor = isCurrent ? '#10b981' : (isActive ? '#3b82f6' : '#94a3b8');
+    const statusLabel = isCurrent ? '目前裝置' : (isActive ? '登入中' : '已登出');
+    const terminateBtn = (!isCurrent && isActive)
+      ? '<button onclick="terminateSessionById(\'' + s.sessionId + '\')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:transparent;color:var(--red);border:1px solid var(--red);font-size:0.8em;font-weight:bold;cursor:pointer;">🔴 終止此裝置</button>'
+      : '';
+    return '<div style="background:' + (isCurrent ? 'rgba(16,185,129,0.07)' : 'rgba(0,0,0,0.03)') + ';border:1px solid ' + (isCurrent ? '#10b981' : 'var(--border)') + ';border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
+      + '<span style="font-size:0.78em;color:#aaa;font-weight:normal;">....' + s.sessionId.slice(-8) + '</span>'
+      + '<span style="background:' + statusColor + ';color:#fff;font-size:0.72em;padding:2px 8px;border-radius:6px;">' + statusLabel + '</span>'
+      + '</div>'
+      + '<div style="font-size:0.82em;margin-bottom:2px;">登入時間：' + (s.loginTime || '—') + '</div>'
+      + '<div style="font-size:0.82em;opacity:0.65;">最後活動：' + (s.lastActivityTime || '—') + '</div>'
+      + terminateBtn + '</div>';
+  }).join('');
 
-  // Step 3：有未同意或版本過時的文件 → 顯示同意書 Modal
-  await fetchLegalDocsIfNeeded(); // 確保文件內容已載入供閱讀連結使用
-
-  // 動態建立文件連結（依伺服器回傳的 missing 清單，不硬編碼任何文件編號）
-  const missingDocs = checkRes.missing || [];
-  const links = missingDocs.map(function(doc) {
-    return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--pink); font-weight:bold; text-decoration:underline;">《' + doc.title + '》</a>';
-  }).join('、');
-  const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
-
-  const { isConfirmed } = await Swal.fire({
-    title: '📋 服務條款同意書',
-    html: '<div style="text-align:left; font-size:0.95em; line-height:1.8;">'
-        + '<p style="color:#888; font-size:0.88em; margin-top:0;">歡迎使用本系統！開始使用前，請閱讀並同意下列條款（點擊可閱讀全文）：</p>'
-        + '<div style="background:var(--card, #f5f5f5); border-radius:10px; padding:12px; margin:10px 0; font-size:0.9em;">' + links + '</div>'
-        + '<label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-top:12px; font-weight:bold;">'
-        + '<input type="checkbox" id="consent_chk" style="width:22px; height:22px; flex-shrink:0; margin-top:2px; accent-color:var(--pink);">'
-        + '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
-        + '</label></div>',
-    showCancelButton: true,
-    confirmButtonText: '✅ 同意並繼續使用',
-    cancelButtonText: '不同意（登出）',
-    confirmButtonColor: '#2ecc71',
-    cancelButtonColor: '#94a3b8',
-    allowOutsideClick: false,
-    allowEscapeKey: false,
-    preConfirm: function() {
-      if (!document.getElementById('consent_chk').checked) {
-        Swal.showValidationMessage('請勾選同意後才能繼續使用本系統');
-        return false;
-      }
-      return true;
-    }
+  Swal.fire({
+    title: '📱 目前登入裝置', confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉', width: '90%',
+    html: '<div style="text-align:left;max-height:55vh;overflow-y:auto;padding-right:4px;">' + listHtml + '</div>'
   });
+};
 
-  // 使用者拒絕同意 → 強制登出，不進入系統
-  if (!isConfirmed) {
-    await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
-    location.reload();
-    return false;
-  }
-
-  // Step 4：使用者同意 → 寫入伺服器 LegalConsents（recordConsents 為冪等操作）
-  let recordRes;
+window.terminateSessionById = async function(sessionId) {
+  const { isConfirmed } = await Swal.fire({ title: '確定要終止此裝置？', text: '該裝置將被強制登出。', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定終止', cancelButtonText: '取消' });
+  if (!isConfirmed) { openSessionManager(); return; }
   try {
-    const raw = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'recordConsents', uid: uid, feature: FEATURES.MEMBER, consentMethod: '線上勾選同意' })
-    });
-    recordRes = await raw.json();
-  } catch(e) {
-    // 寫入網路異常 → 阻斷登入，確保記錄一定被寫入
-    await Swal.fire({
-      title: '⚠️ 同意書記錄失敗',
-      html: '您的同意記錄暫時無法寫入系統，請檢查網路後再次登入並同意條款。<br><br><small style="color:#aaa;">錯誤原因：' + e.message + '</small>',
-      icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '返回重試', allowOutsideClick: false
-    });
-    location.reload();
-    return false;
-  }
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'terminateSession', uid: store.userData.id, sessionId: sessionId, currentSessionId: currentSessionId }) });
+    const res = await raw.json();
+    if (res && res.success) Swal.fire('已終止', res.message, 'success').then(openSessionManager);
+    else Swal.fire('錯誤', res ? res.message : '操作失敗', 'error').then(openSessionManager);
+  } catch(e) { Swal.fire('錯誤', '網路異常，請稍後再試。', 'error').then(openSessionManager); }
+};
 
-  if (!recordRes || !recordRes.success) {
-    // GAS 寫入失敗 → 阻斷登入
-    await Swal.fire({
-      title: '⚠️ 同意書記錄失敗',
-      html: '系統無法儲存您的同意記錄，請稍後再試。<br><br><small style="color:#aaa;">伺服器回應：' + (recordRes ? recordRes.message : '無回應') + '</small>',
-      icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '返回重試', allowOutsideClick: false
-    });
-    location.reload();
-    return false;
-  }
+// checkFirstLoginConsent 已整合至 doLogin 進度清單流程，此函式保留為向後相容空殼
+async function checkFirstLoginConsent(uid) { return true; }
 
-  // 同步更新 localStorage 作為本機快取（非決策依據）
-  localStorage.setItem('legalConsent_v1_' + uid, new Date().toISOString());
-  return true;
-}
-
-// ── 先享後付：BNPL 同意書（首次進入帳單頁且有 BNPL 項目時觸發）──
+// ── 先享後付：BNPL 同意書（首次進入帳單頁且有 BNPL 項目時觸發，使用伺服器端 checkConsents）──
 async function checkBnplConsentAndShow() {
 if (!store || !store.userData) return;
-const KEY = 'bnplConsent_v1_' + store.userData.id;
-if (localStorage.getItem(KEY)) return;
 const hasBnpl = (store.loans || []).some(l => String(l.item).includes('先享後付'));
 if (!hasBnpl) return;
-await fetchLegalDocsIfNeeded();
 
-const needed = ['DOC-008', 'DOC-009'];
-const links = needed.map(id => {
-let d = (legalDocs || []).find(x => x.docId === id);
-let label = d ? d.title : (id === 'DOC-008' ? '先享後付服務制度' : '先享後付服務契約');
-return `<a href="javascript:void(0)" onclick="openLegalDocFromConsent('${id}')" style="color:var(--blue); font-weight:bold; text-decoration:underline;">《${label}》</a>`;
+let checkRes;
+try {
+  const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL }) });
+  checkRes = await raw.json();
+} catch(e) { return; } // 網路異常靜默忽略，不阻斷帳單功能
+if (!checkRes || !checkRes.success || checkRes.allConsented) return;
+
+await fetchLegalDocsIfNeeded();
+const missingDocs = checkRes.missing || [];
+const links = missingDocs.map(function(doc) {
+  return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--blue);font-weight:bold;text-decoration:underline;">《' + doc.title + '》</a>';
 }).join('、');
+const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
 
 const { isConfirmed } = await Swal.fire({
 title: '💳 先享後付服務同意書',
-html: `<div style="text-align:left; font-size:0.95em; line-height:1.8;">
-                   <p style="color:#888; font-size:0.88em; margin-top:0;">您的帳戶已開通先享後付服務，繼續使用前請閱讀並同意相關條款（點擊可閱讀全文）：</p>
-                   <div style="background:var(--card, #f5f5f5); border-radius:10px; padding:12px; margin:10px 0; font-size:0.9em;">${links}</div>
-                   <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-top:12px; font-weight:bold;">
-                       <input type="checkbox" id="bnpl_consent_chk" style="width:22px; height:22px; flex-shrink:0; margin-top:2px; accent-color:var(--blue);">
-                       <span>我已閱讀並同意《先享後付服務制度》及《先享後付服務契約》</span>
-                   </label>
-               </div>`,
+html: '<div style="text-align:left;font-size:0.95em;line-height:1.8;">'
+    + '<p style="color:#888;font-size:0.88em;margin-top:0;">您的帳戶已開通先享後付服務，繼續使用前請閱讀並同意相關條款（點擊可閱讀全文）：</p>'
+    + '<div style="background:var(--card,#f5f5f5);border-radius:10px;padding:12px;margin:10px 0;font-size:0.9em;">' + links + '</div>'
+    + '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;font-weight:bold;">'
+    + '<input type="checkbox" id="bnpl_consent_chk" style="width:22px;height:22px;flex-shrink:0;margin-top:2px;accent-color:var(--blue);">'
+    + '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
+    + '</label></div>',
 showCancelButton: true, confirmButtonText: '✅ 同意並繼續', cancelButtonText: '暫不同意',
-confirmButtonColor: 'var(--blue)', cancelButtonColor: '#94a3b8',
-allowOutsideClick: false,
-preConfirm: () => {
-if (!document.getElementById('bnpl_consent_chk').checked) { Swal.showValidationMessage('請勾選同意後才能繼續使用先享後付服務'); return false; }
-return true;
+confirmButtonColor: 'var(--blue)', cancelButtonColor: '#94a3b8', allowOutsideClick: false,
+preConfirm: function() {
+  if (!document.getElementById('bnpl_consent_chk').checked) { Swal.showValidationMessage('請勾選同意後才能繼續使用先享後付服務'); return false; }
+  return true;
 }
 });
 
-if (isConfirmed) { localStorage.setItem(KEY, new Date().toISOString()); }
-else {
-// 使用者暫不同意 → 導回首頁，讓他無法使用帳單功能
-openTab(0);
-Swal.fire({ title: '提示', text: '您尚未同意先享後付條款。若需使用此功能，請同意相關條款後再進入。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 3000, showConfirmButton: false });
+if (isConfirmed) {
+  try {
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.BNPL, consentMethod: '線上勾選同意', sessionId: currentSessionId }) });
+  } catch(e) {}
+  localStorage.setItem('bnplConsent_v1_' + store.userData.id, new Date().toISOString());
+} else {
+  openTab(0);
+  Swal.fire({ title: '提示', text: '您尚未同意先享後付條款。若需使用此功能，請同意相關條款後再進入。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 3000, showConfirmButton: false });
 }
 }
 
