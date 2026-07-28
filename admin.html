@@ -65,7 +65,7 @@
         <div id="quickBtns" class="quick-grid">
             <button class="q-btn" style="background:var(--primary)" onclick="quickGo('add')">💰 加值</button>
             <button class="q-btn" style="background:var(--dark)" onclick="quickGo('sub')">🛒 扣除</button>
-            <button class="q-btn" style="background:var(--green)" onclick="quickGo('pay')">🤝 還款</button>
+            <button class="q-btn" style="background:var(--green)" onclick="quickGo('pay')">🤝 一般還款</button>
             <button class="q-btn" style="background:var(--accent)" onclick="quickGo('redeem')">🎟️ 核銷</button>
             <button class="q-btn" style="background:var(--blue)" onclick="quickGoTimeline()">📦 訂單時間線</button>
             <button class="q-btn" style="background:var(--orange)" onclick="quickGoLoan()">📋 新增帳單</button>
@@ -80,10 +80,10 @@
 <h2 style="text-align:center; letter-spacing:1px;">小佑管理後台</h2>
 
 <div class="menu-grid">
-    <button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (會員/券自動識別)</button>
+    <button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (會員/券/繳款條碼)</button>
     <div class="m-btn" onclick="openWiz('add')">💰 手動加值</div>
     <div class="m-btn" onclick="openWiz('sub')">🛒 手動扣除</div>
-    <div class="m-btn" onclick="openWiz('pay')">🤝 還款入帳</div>
+    <div class="m-btn" onclick="openWiz('pay')">🤝 一般還款入帳</div>
     <div class="m-btn" onclick="openWiz('redeem')">🎟️ 優惠核銷</div>
     <button class="m-btn full-btn" style="background:var(--orange); font-size:16px;" onclick="scrollToSection('cancel_section')">⚠️ 處理訂單取消 / 不成立</button>
     <button class="m-btn full-btn" style="background:var(--red); font-size:16px;" onclick="scrollToSection('return_section')">🚨 退貨 / 退款 審核中心</button>
@@ -197,12 +197,27 @@
     <label class="section-label">選擇會員<span class="req"> *</span></label>
     <select id="l_uid"></select>
     <label class="section-label">項目明細<span class="req"> *</span></label>
-    <input type="text" id="l_item" placeholder="例：先享後付 - 訂單 ORD001">
+    <input type="text" id="l_item" placeholder="例：一般個人借款 - 單號 001">
     <label class="section-label">撥款金額<span class="req"> *</span></label>
     <input type="number" id="l_amt" placeholder="請輸入金額">
     <label class="section-label">到期日<span class="req"> *</span></label>
     <input type="date" id="l_exp">
     <button onclick="addLoan()" style="background:var(--accent); margin-top:10px;">確認撥發借款</button>
+</div>
+
+<!-- ✨ BNPL 2.0 分期計畫建立區塊 ✨ -->
+<div class="card" id="bnpl_plan_section" style="border: 2px solid var(--blue);">
+    <h3 style="margin:0 0 5px; color:var(--blue);">💳 建立/轉換 BNPL 分期計畫</h3>
+    <p style="font-size:0.8em; color:#666; margin:0 0 8px 0;">將既有一般帳單或未分期的先享後付訂單，轉換為多期分期付款計畫。</p>
+    <label class="section-label">選擇會員<span class="req"> *</span></label>
+    <select id="bnpl_plan_uid"></select>
+    <label class="section-label">指定關聯母帳單(關鍵字/名稱)<span class="req"> *</span></label>
+    <input type="text" id="bnpl_plan_keyword" placeholder="請輸入貸款項目名稱以配對，例：先享後付">
+    <label class="section-label">欲建立的分期期數<span class="req"> *</span></label>
+    <input type="number" id="bnpl_plan_periods" value="3" min="2" max="24">
+    <label class="section-label">總利息/手續費(%)</label>
+    <input type="number" id="bnpl_plan_interest" value="0" min="0" placeholder="例：輸入 5 代表加收 5% 總利息">
+    <button onclick="createBnplPlanSubmit()" style="background:var(--blue); margin-top:10px;">🚀 產生並發布分期計畫</button>
 </div>
 
 <div class="card" id="coupon_section">
@@ -298,13 +313,12 @@
 <div id="wizModal" class="modal"><div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div></div>
 
 <script>
-    // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbx4BCExM3ObED45-8Az-59Dxru03UFMg4U7JYRRR3fVHEW82XDLhSF48LGqLcsthsJU/exec"; 
+    // ⚠️ 替換為您的最新 GAS 部署網址[cite: 2]
+    const GAS = "https://script.google.com/macros/s/AKfycbzFz-rZFohCRF7MXGmfrMT9JLcLCJnSEPb0EP-PDF_A5BvvTKi-3GqQFwdj8p_RUfFJ/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
 
-    // 🌟 全局推播模式詢問共用函數 (單選 4 種模式) 🌟
     async function confirmActionWithPush(title) {
         const { value: notifyMode } = await Swal.fire({
             title: title || '確認執行',
@@ -322,7 +336,7 @@
             cancelButtonText: '取消',
             confirmButtonColor: 'var(--primary)'
         });
-        if (!notifyMode) return null; // 使用者按了取消或點擊背景
+        if (!notifyMode) return null; 
         return notifyMode; 
     }
 
@@ -330,7 +344,7 @@
     function showAlert(title, text, icon = 'info') { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: 'var(--primary)', confirmButtonText: '確定' }); }
     function getNowDateTimeString() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; }
 
-    // 拖曳排序
+    // 拖曳排序邏輯維持不變
     function handleDragStart(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; this.classList.add('dragging'); }
     function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
     function handleDragEnter(e) { this.classList.add('over'); }
@@ -352,7 +366,6 @@
         if (!res.aborted) { if (res.success) Swal.fire('排序成功', res.message, 'success').then(() => refresh()); else Swal.fire('錯誤', res.message, 'error'); }
     }
 
-    // 🌟 增強版除錯連線函數
     async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
         Swal.fire({ title: loadingTitle, text: '正在處理中，請稍候...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
         try {
@@ -380,7 +393,6 @@
         }
     }
 
-    // 智慧核銷與複製半自動推播彈窗
     function handlePostSuccess(res) {
         if(res.success && res.notifyText) {
             Swal.fire({
@@ -416,6 +428,7 @@
         let uOpts = U_DB.map(u => `<option value="${u.id}">${u.name} (ID: ${u.id})</option>`).join('');
         document.getElementById('l_uid').innerHTML = uOpts; 
         document.getElementById('cp_uid').innerHTML = uOpts;
+        document.getElementById('bnpl_plan_uid').innerHTML = uOpts;
         document.getElementById('nt_uid').innerHTML = '<option value="ALL">📢 群發所有會員</option>' + uOpts;
         document.getElementById('o_new_uid').innerHTML = '<option value="">--請選擇購買會員--</option>' + uOpts;
         document.getElementById('inv_new_uid').innerHTML = '<option value="">--請選擇所屬會員--</option>' + uOpts;
@@ -440,7 +453,6 @@
         document.getElementById('cs_ticket_select').innerHTML = '<option value="">-- 選擇工單 --</option>' + TIC_DB.filter(t=>t.status!='已結案').map(t=>`<option value="${t.tid}">${t.tid} (${t.status})</option>`).join('');
     }
 
-    // 💳 更新 BNPL 額度
     async function updateBnplLimit() {
         let uid = document.getElementById('bnpl_uid').value;
         let limit = document.getElementById('bnpl_limit').value.trim();
@@ -455,7 +467,20 @@
         if(!res.aborted) handlePostSuccess(res);
     }
 
-    // ✨ 傳送帶有動態標籤的客製化推播 ✨
+    async function createBnplPlanSubmit() {
+        let uid = document.getElementById('bnpl_plan_uid').value;
+        let kw = document.getElementById('bnpl_plan_keyword').value.trim();
+        let periods = document.getElementById('bnpl_plan_periods').value;
+        let interest = document.getElementById('bnpl_plan_interest').value;
+        if(!uid || !kw || !periods) return Swal.fire("提示", "請填寫必填欄位", "warning");
+
+        let notifyMode = await confirmActionWithPush('建立分期計畫');
+        if(!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'createBnplPlan', uid: uid, loanItemKeyword: kw, periods: Number(periods), interestRate: Number(interest), notifyMode: notifyMode }, "產生分期中...");
+        if(!res.aborted) handlePostSuccess(res);
+    }
+
     async function sendCustomNotification() {
         let uid = document.getElementById('nt_uid').value; 
         let msg = document.getElementById('nt_msg').value.trim();
@@ -465,16 +490,7 @@
 
         if(!uid || !msg) return Swal.fire("提示", "請填寫通知內容", "warning");
         
-        let res = await fetchWithQueue(GAS, { 
-            action: 'sendCustomNotification', 
-            type: 'sendCustomNotification',   
-            uid: uid, 
-            msg: msg,
-            mainCat: mainCat,
-            subTag: subTag,
-            color: color
-        }, "發送中...");
-        
+        let res = await fetchWithQueue(GAS, { action: 'sendCustomNotification', type: 'sendCustomNotification', uid: uid, msg: msg, mainCat: mainCat, subTag: subTag, color: color }, "發送中...");
         if(!res.aborted) handlePostSuccess(res);
     }
     
@@ -515,7 +531,6 @@
         if(!res.aborted) handlePostSuccess(res);
     }
 
-    // BNPL選單連動
     document.getElementById('o_new_payment').addEventListener('change', function(){ document.getElementById('bnpl_due_container').style.display = (this.value === "先享後付") ? "block" : "none"; });
 
     function loadUserCouponsForOrder() {
@@ -524,7 +539,6 @@
         document.getElementById('o_new_use_coupon').innerHTML = '<option value="">--不套用--</option>' + filtered.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
     }
 
-    // 發票明細動態表單
     function addInvItemRow() {
         const container = document.getElementById('inv_items_container'); const div = document.createElement('div'); div.className = 'inv-item-row';
         div.innerHTML = `<input type="text" class="inv-item-name" placeholder="商品名稱" style="flex: 2;"><input type="text" class="inv-item-spec" placeholder="規格/選項" style="flex: 1.5;"><input type="number" class="inv-item-qty" min="1" value="1" style="flex: 1;" oninput="calculateInvTotal()"><input type="number" class="inv-item-price" min="0" value="0" style="flex: 1.2;" oninput="calculateInvTotal()"><button type="button" class="btn-mini" style="background: var(--red);" onclick="removeInvItemRow(this)">刪</button>`;
@@ -800,6 +814,7 @@
 
             if (code.startsWith("PAY|")) {
                 const parts = code.split("|");
+                // PAY|loanId|uid|amt (保留對舊版相容)
                 if (parts.length === 4) {
                     const [, loanId, uid, amt] = parts;
                     const user = U_DB.find(u => u.id === uid);
@@ -812,6 +827,28 @@
                     document.getElementById('wizModal').style.display = 'flex';
                     renderStep();
                     setTimeout(() => { const el = document.getElementById('wiz_val'); if (el) el.value = amt; }, 50);
+                    return;
+                }
+            }
+            
+            // BNPL 2.0 新分期繳款條碼 (PAY_INST|installmentId|uid|amt)
+            if (code.startsWith("PAY_INST|")) {
+                const parts = code.split("|");
+                if (parts.length === 4) {
+                    const [, instId, uid, amt] = parts;
+                    Swal.fire({
+                        title: '掃描到分期帳單',
+                        text: `您即將收取會員的繳費: $${amt} (單號: ${instId})`,
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: '確認收款',
+                        cancelButtonText: '取消'
+                    }).then(async (res) => {
+                        if (res.isConfirmed) {
+                            let fetchRes = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payBnplInstallment', installmentId: instId, amt: Number(amt), method: '現金收款' }, "收款處理中...");
+                            if (!fetchRes.aborted) handlePostSuccess(fetchRes);
+                        }
+                    });
                     return;
                 }
             }
@@ -875,9 +912,9 @@
     function renderStep() {
         const flow = FLOWS[CUR_MODE]; let stepInfo = flow[CUR_STEP]; if (CUR_STEP === 0 && FORM.uid && stepInfo.f === "uid") { CUR_STEP++; stepInfo = flow[CUR_STEP]; }
         let html = `<h3>${stepInfo.t}</h3>`;
-        if (stepInfo.type === "user") html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`; else if (stepInfo.type === "number") html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`; else if (stepInfo.type === "loan") { const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清"); if (userLoans.length === 0) html += `<p style="color:var(--red); font-weight:bold;">此會員目前無待繳的帳單</p><input type="hidden" id="wiz_val" value="">`; else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.totalDue})</option>`).join('')}</select>`; } else html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
+        if (stepInfo.type === "user") html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`; else if (stepInfo.type === "number") html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`; else if (stepInfo.type === "loan") { const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清" && l.loanType !== "BNPL_INSTALLMENT"); if (userLoans.length === 0) html += `<p style="color:var(--red); font-weight:bold;">此會員目前無待繳的「一般」帳單 (分期請掃碼或讓買家自行繳納)</p><input type="hidden" id="wiz_val" value="">`; else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.totalDue})</option>`).join('')}</select>`; } else html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
         document.getElementById('wizBody').innerHTML = html; const nextBtn = document.getElementById('nextBtn');
-        if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清").length === 0) nextBtn.style.display = 'none'; else { nextBtn.style.display = 'block'; nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步"; }
+        if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清" && l.loanType !== "BNPL_INSTALLMENT").length === 0) nextBtn.style.display = 'none'; else { nextBtn.style.display = 'block'; nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步"; }
     }
     
     function wizNext() {
