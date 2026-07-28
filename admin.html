@@ -313,8 +313,8 @@
 <div id="wizModal" class="modal"><div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div></div>
 
 <script>
-    // ⚠️ 替換為您的最新 GAS 部署網址[cite: 2]
-    const GAS = "https://script.google.com/macros/s/AKfycbw_Q70NqfXNXv6EkpxoRdz7BZHsob-lGRGgJm1kd3Gwv6K0uiUUHmwgNDJ_nsONcNLX/exec"; 
+    // ⚠️ 替換為您的最新 GAS 部署網址
+    const GAS = "https://script.google.com/macros/s/AKfycbxr2ho5KpYY-_GiItuL-FzjlKSqulHQfNrTb4PqoOCtz__czyQOlP9pLGUwY2lmPMs3/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
@@ -344,7 +344,6 @@
     function showAlert(title, text, icon = 'info') { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: 'var(--primary)', confirmButtonText: '確定' }); }
     function getNowDateTimeString() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; }
 
-    // 拖曳排序邏輯維持不變
     function handleDragStart(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; this.classList.add('dragging'); }
     function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
     function handleDragEnter(e) { this.classList.add('over'); }
