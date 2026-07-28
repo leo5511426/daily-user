@@ -77,7 +77,6 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 @media (prefers-reduced-motion: reduce) {
     .lp-spin, .lp-pop, .lp-shake, .lp-pulse, .lp-progress-fill, .lp-step, .lp-icon { animation: none !important; transition: none !important; }
 }
-/* 🌟 End Login Progress UX */
 
 .settings-section-title { font-size: 1.1em; margin: 20px 0 10px 5px; color: var(--pink); display: flex; align-items: center; gap: 6px; }
 .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -281,8 +280,8 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：V21</div>
-<div>更新日期：2026-07-18</div>
+<div>版本：V84 BNPL 2.0</div>
+<div>更新日期：2026-07-28</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
 <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
 <span style="margin: 0 6px; opacity:0.4;">｜</span>
@@ -365,7 +364,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4BCExM3ObED45-8Az-59Dxru03UFMg4U7JYRRR3fVHEW82XDLhSF48LGqLcsthsJU/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFz-rZFohCRF7MXGmfrMT9JLcLCJnSEPb0EP-PDF_A5BvvTKi-3GqQFwdj8p_RUfFJ/exec"; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
 
@@ -503,7 +502,7 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V83 (絕對時間鎖定防呆版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V84 (BNPL 2.0)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -521,7 +520,7 @@ const LOGIN_STEPS = [
   { id: 'ls_load',    running: '載入首頁...',           done: '已完成' }
 ];
 
-// ⏱️ UI 延遲輔助函數：製造些微停頓感讓進度清晰可見
+// ⏱️ UI 延遲輔助函數
 const uiDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
 function setLoginStep(stepId, state, extraLabel) {
@@ -540,10 +539,7 @@ function setLoginStep(stepId, state, extraLabel) {
 
   const cfg = stateConfig[state] || stateConfig.waiting;
   
-  // Apply parent step visual state
   stepEl.className = cfg.className;
-  
-  // Smooth icon transition
   icon.style.opacity = '0';
   icon.style.transform = 'scale(0.5)';
   
@@ -554,7 +550,6 @@ function setLoginStep(stepId, state, extraLabel) {
     icon.style.transform = 'scale(1)';
   }, 150);
 
-  // Dynamically update text[cite: 1]
   let stepDef = LOGIN_STEPS.find(s => s.id === stepId);
   if (stepDef) {
      if (state === 'running') label.textContent = extraLabel || stepDef.running;
@@ -563,12 +558,10 @@ function setLoginStep(stepId, state, extraLabel) {
      if (state === 'waiting') label.textContent = stepDef.running;
   }
 
-  // Smooth Auto-Scroll to running/failed step
   if (state === 'running' || state === 'failed') {
      stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  // Calculate and update Progress Bar
   const doneSteps = document.querySelectorAll('.lp-step.done').length;
   const pct = Math.floor((doneSteps / LOGIN_STEPS.length) * 100);
   document.getElementById('lp-pct').innerText = pct + '%';
@@ -616,7 +609,6 @@ function showLoginOverlay() {
       </div>`;
     document.body.appendChild(overlay);
   } else {
-     // Reset UI to waiting state securely
      document.getElementById('lp-pct').innerText = '0%';
      document.getElementById('lp-bar').style.width = '0%';
      document.getElementById('lp-main-title').innerText = '安全登入中';
@@ -668,7 +660,6 @@ async function doLogin() {
 
   showLoginOverlay();
 
-  // ── Step 1: 驗證帳號密碼 ──
   setLoginStep('ls_auth', 'running');
   await uiDelay(500);
   
@@ -690,7 +681,6 @@ async function doLogin() {
   setLoginStep('ls_auth', 'done');
   await uiDelay(300);
 
-  // ── Step 2: Session 建立 ──
   setLoginStep('ls_session', 'running');
   await uiDelay(400);
   savedPw = upw;
@@ -699,13 +689,11 @@ async function doLogin() {
   setLoginStep('ls_session', 'done');
   await uiDelay(300);
 
-  // ── Step 3: 登入日誌 ──
   setLoginStep('ls_log', 'running');
   await uiDelay(300);
   setLoginStep('ls_log', 'done');
   await uiDelay(300);
 
-  // ── Step 4: 檢查會員權限 ──
   setLoginStep('ls_perm', 'running');
   let checkRes;
   try {
@@ -729,7 +717,6 @@ async function doLogin() {
   setLoginStep('ls_perm', 'done');
   await uiDelay(300);
 
-  // ── Step 5: 檢查法律文件 ──
   setLoginStep('ls_legal', 'running');
   await uiDelay(300);
 
@@ -796,23 +783,19 @@ async function doLogin() {
   localStorage.setItem('legalConsent_v1_' + store.userData.id, new Date().toISOString());
   await uiDelay(300);
 
-  // ── Step 6: 同步會員通知 ──
   setLoginStep('ls_notify', 'running');
   await uiDelay(300); 
   setLoginStep('ls_notify', 'done');
   await uiDelay(300);
 
-  // ── Step 7: 載入首頁 ──
   setLoginStep('ls_load', 'running');
   await uiDelay(300);
   render();
   setLoginStep('ls_load', 'done');
   
-  // Set final UI progress to 100% just to be safe
   document.getElementById('lp-pct').innerText = '100%';
   document.getElementById('lp-bar').style.width = '100%';
   
-  // Success Screen
   const titleEl = document.getElementById('lp-main-title');
   const subTitleEl = document.getElementById('lp-sub-title');
   if(titleEl) {
@@ -822,7 +805,6 @@ async function doLogin() {
   }
   if(subTitleEl) subTitleEl.innerText = '歡迎回來！';
 
-  // Pause briefly before transitioning to the app
   await uiDelay(800);
 
   _loginInProgress = false; 
@@ -843,7 +825,7 @@ if (res.success) { store = res; render(); }
 } catch (e) { console.log(e); } finally { if (indicator) indicator.style.display = 'none'; }
 }
 
-// 🔐 Session 活動心跳（每5分鐘靜默更新 lastActivityTime）
+// 🔐 Session 活動心跳
 let _sessionHeartbeatTimer = null;
 function startSessionHeartbeat() {
   if (_sessionHeartbeatTimer) clearInterval(_sessionHeartbeatTimer);
@@ -877,7 +859,7 @@ document.querySelectorAll('.shortcut-item').forEach(el => el.classList.remove('v
 current.forEach(id => { let item = document.getElementById('sc_' + id); if(item) item.classList.add('visible'); });
 }
 
-// 🔔 通知頁籤定義（首頁與通知中心共用同一篩選狀態）
+// 🔔 通知頁籤定義
 let currentNotifyTab = 'ALL';
 const NOTIFY_TABS = [
 { key: 'ALL', label: '全部' },
@@ -912,14 +894,13 @@ if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', blo
 });
 }
 
-// 🔔 獨立通知中心渲染與首頁預覽（共用 currentNotifyTab 篩選狀態）
+// 🔔 獨立通知中心渲染與首頁預覽
 function renderNotifications() {
 let allNotifications = store.notifications || [];
 renderNotifyTabBar(allNotifications);
 
 let filteredByTab = currentNotifyTab === 'ALL' ? allNotifications : allNotifications.filter(n => getNotifyMainCat(n) === currentNotifyTab);
 
-// --- 處理首頁預覽 (依篩選分類，固定新到舊，取前 3 筆最新) ---
 const ntListPreview = document.getElementById('ntListPreview');
 if (ntListPreview) {
 let previewSorted = [...filteredByTab].sort((a, b) => { const da = new Date(String(a.time||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.time||'').replace(/-/g, '/')).getTime() || 0; return db - da; });
@@ -936,7 +917,6 @@ return `
 }).join('') || '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin: 10px 0;">目前無最新通知</p>';
 }
 
-// --- 處理獨立通知中心 (依篩選分類＋可選排序) ---
 const ntList = document.getElementById('ntList');
 if (!ntList) return;
 const sortVal = document.getElementById('sortNt') ? document.getElementById('sortNt').value : 'desc';
@@ -955,8 +935,7 @@ return `
 }).join('') || '<p style="text-align:center; opacity:0.3; margin-top:40px;">目前無任何通知</p>';
 }
 
-
-// 🛡️ 自動完成訂單防呆檢查 (改用毫秒絕對時間差)
+// 🛡️ 自動完成訂單防呆檢查
 function checkAutoCompleteOrders() {
 if (!store || !store.orders) return;
 const nowTime = Date.now(); 
@@ -974,7 +953,7 @@ let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => Strin
 if (deliveredNode && deliveredNode.time) {
 let dDate = new Date(String(deliveredNode.time).replace(/-/g, '/'));
 if (!isNaN(dDate.getTime())) {
-let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000); // 絕對增加7天毫秒數
+let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000); 
 if (nowTime > limitTime) { 
 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'buyerCompleteOrder', oid: o.id, uid: store.userData.id, pw: savedPw }) }); 
 o.status = "訂單已完成"; 
@@ -1007,7 +986,7 @@ const elLoanTotal = document.getElementById('lbl_loan_total'); if (elLoanTotal) 
 const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut) elLoanOut.innerText = `未結清: $${outstanding.toLocaleString()}`;
 
 renderShortcuts();
-renderNotifications(); // 同時更新首頁預覽與通知中心
+renderNotifications(); 
 
 const sortH = document.getElementById('sortH').value; let sortedHistory = [...(store.history || [])];
 sortedHistory.sort((a, b) => { const da = new Date(String(a.date||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.date||'').replace(/-/g, '/')).getTime() || 0; return sortH === 'asc' ? da - db : db - da; });
@@ -1016,7 +995,7 @@ document.getElementById('hList').innerHTML = sortedHistory.map(h => `<div class=
 renderLoans(); renderCoupons(); renderInvoices(); renderOrders(); 
 }
 
-// --- 📦 訂單分類映射表（依狀態關鍵字歸類，優先序由上至下） ---
+// --- 📦 訂單分類映射表 ---
 let currentOrderTab = 'ALL';
 const ORDER_TABS = [
 { key: 'ALL', label: '全部' },
@@ -1040,19 +1019,17 @@ const ORDER_LABEL_TO_KEY = {
 function getOrderCategory(status) {
 let s = String(status || '').trim();
 
-// 1️⃣ 優先採用後台「狀態→分類」對應表（Settings 工作表 D 欄設定，由管理員維護）
 if (store && store.statusCategoryMap && store.statusCategoryMap[s]) {
 let mappedKey = ORDER_LABEL_TO_KEY[String(store.statusCategoryMap[s]).trim()];
 if (mappedKey) return mappedKey;
 }
 
-// 2️⃣ 後援防呆：若該狀態尚未在後台設定分類，採用關鍵字規則判斷
 if (s === '訂單已完成') return 'done';
 if (s.includes('退貨') || s.includes('退款')) return 'return';
 if (s.includes('申請取消中') || s.includes('訂單不成立') || s.includes('取消')) return 'cancelled';
 if (s.includes('已配達') || s.includes('已到貨')) return 'pickup';
 if (s.includes('出貨') || s.includes('配送') || s.includes('已取件') || s.includes('取件成功')) return 'receive';
-return 'shipping'; // 訂單成立/處理中/賣家確認中/備貨中，以及其他未明確符合上述規則的狀態（防呆預設值）
+return 'shipping'; 
 }
 
 window.switchOrderTab = function(key) {
@@ -1075,7 +1052,6 @@ if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', blo
 }
 }
 
-// 🏠 首頁「最新訂單動態」預覽 (固定顯示最新 2 筆，不受頁籤篩選影響)
 function renderOrderPreview() {
 const el = document.getElementById('orderListPreview'); if (!el) return;
 let allOrders = [...(store.orders || [])];
@@ -1099,7 +1075,6 @@ return `
 }).join('') || '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin: 10px 0;">目前無訂單紀錄</p>';
 }
 
-// --- 📦 訂單追蹤與自動完成 ---
 function renderOrders() {
 const sortO = document.getElementById('sortO').value; 
 let allOrders = [...(store.orders || [])];
@@ -1162,7 +1137,6 @@ return `<div class="card"><div style="color:var(--pink); font-size:0.8em;">單�
 checkAutoCompleteOrders();
 }
 
-// ⏱️ 訂單時間線產生器
 function generateTimelineHtml(logs, fallbackStatus, fallbackNote, fallbackTime) {
 let html = ""; let deadlineDisplay = '';
 if (logs && Array.isArray(logs)) { for (let node of logs) { if (node.rawMsg && String(node.rawMsg).match(/\[([取寄]件截止日):/)) { const match = String(node.rawMsg).match(/\[([取寄]件截止日):(.*?)]/); if (match) { deadlineDisplay = match[2]; break; } } } }
@@ -1505,26 +1479,63 @@ Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.nu
 }
 }
 
-// --- 🤝 帳單 (Loans) ---
+// --- 🤝 帳單 (Loans) 與 Installments (BNPL) ---
 function renderLoans() {
 if (!store || !store.loans) return;
 const filteredLoans = store.loans.filter(l => { const statusStr = String(l.status||''); const isCleared = (statusStr === '已結清' || statusStr === 'Macro已結清'); const isOverdue = (!isCleared && l.penalty > 0); if (currentLoanTab === 1) return isCleared; else if (currentLoanTab === 2) return isOverdue; else return !isCleared && !isOverdue; });
 const sortL = document.getElementById('sortL').value; filteredLoans.sort((a, b) => { const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.expiry||'').replace(/-/g, '/')).getTime() || 0; return sortL === 'asc' ? da - db : db - da; });
+
 document.getElementById('lList').innerHTML = filteredLoans.map(l => {
-let sStr = String(l.status||'');
-let isCleared = (sStr === 'processed_cleared' || sStr === '已結清' || sStr === 'Macro已結清');
-let loanIdVal = l.id || l.row || '';
-let payBtn = (!isCleared) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${loanIdVal}','${encodeURIComponent(l.item)}',${l.totalDue})">📲 顯示繳款條碼</button>` : '';
-return `<div class="card">${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '$' + l.totalDue}</b></div>${payBtn}</div>`;
+    let sStr = String(l.status||'');
+    let isCleared = (sStr === 'processed_cleared' || sStr === '已結清' || sStr === 'Macro已結清');
+    let loanIdVal = l.id || l.row || '';
+    
+    // 若為 BNPL 分期計畫，渲染子項目結構
+    if (l.loanType === 'BNPL_INSTALLMENT') {
+        let childHtml = '';
+        let installments = (store.installments || []).filter(inst => String(inst.loanId) === String(l.id));
+        installments.sort((a, b) => a.installmentNo - b.installmentNo);
+        
+        childHtml = installments.map(inst => {
+            let instStatus = inst.status;
+            let payBtn = (instStatus !== '已繳') ? `<button class="btn" style="background:#3b82f6; padding:6px 10px; font-size:0.75em; border-radius:6px; margin-top:5px; width:100%;" onclick="showPaymentQR('${inst.installmentId}', '${encodeURIComponent(l.item + ' - 第' + inst.installmentNo + '期')}', ${inst.amount + inst.lateFee}, true)">📲 繳納第 ${inst.installmentNo} 期</button>` : '';
+            let statusColor = instStatus === '已繳' ? 'var(--green)' : (instStatus === '已逾期' ? 'var(--red)' : 'var(--orange)');
+            return `
+            <div style="background:rgba(0,0,0,0.03); padding:10px; border-radius:8px; margin-top:8px; border:1px solid #eee;">
+                <div style="display:flex; justify-content:space-between; font-size:0.85em;">
+                    <b>第 ${inst.installmentNo}/${inst.totalInstallments} 期</b>
+                    <span style="color:${statusColor}; font-weight:bold;">${instStatus}</span>
+                </div>
+                <div style="font-size:0.8em; margin-top:4px;">應繳: $${inst.amount + inst.lateFee} (含罰金 $${inst.lateFee})</div>
+                <div style="font-size:0.75em; color:#666; margin-top:2px;">到期日: ${inst.dueDate}</div>
+                ${payBtn}
+            </div>`;
+        }).join('');
+
+        return `
+        <div class="card" style="border: 1px solid var(--blue);">
+            ${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '<span class="overdue-tag" style="background:var(--blue);">分期計畫</span>')}
+            <div style="font-size:1.1em; margin-bottom:5px; color:var(--blue);">${l.item}</div>
+            <div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">總分期: ${l.installmentCount} 期 (已繳 ${l.completedInstall} 期)</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '剩餘 $' + l.totalDue}</b></div>
+            <div style="margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;">
+                <button class="btn" style="background:transparent; color:var(--blue); border:1px solid var(--blue); padding:8px; font-size:0.85em;" onclick="document.getElementById('inst_list_${loanIdVal}').style.display = document.getElementById('inst_list_${loanIdVal}').style.display==='none'?'block':'none'">👀 展開/收合 分期明細</button>
+                <div id="inst_list_${loanIdVal}" style="display:none; margin-top:10px;">${childHtml}</div>
+            </div>
+        </div>`;
+    } else {
+        // 一般帳單
+        let payBtn = (!isCleared) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${loanIdVal}','${encodeURIComponent(l.item)}',${l.totalDue}, false)">📲 顯示繳款條碼</button>` : '';
+        return `<div class="card">${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '$' + l.totalDue}</b></div>${payBtn}</div>`;
+    }
 }).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無帳單</p>';
 }
+
 function switchLoanTab(tabIndex) { currentLoanTab = tabIndex; document.querySelectorAll('.loan-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderLoans(); }
 
-// 📲 顯示繳款條碼彈窗（步驟1：選擇金額 → 步驟2：paymentQrBox overlay，與優惠券核銷條碼相同機制）
-window.showPaymentQR = async function(loanId, encodedItem, totalDue) {
+// 📲 顯示繳款條碼彈窗（支援一般帳單與 BNPL 分期）
+window.showPaymentQR = async function(loanOrInstId, encodedItem, totalDue, isInstallment = false) {
 let itemName = decodeURIComponent(encodedItem);
 
-// 步驟 1：Swal 輸入繳費金額（含「全額繳款」快速帶入按鈕）
 const { value: amt } = await Swal.fire({
 title: '📲 產生繳款條碼',
 html: `
@@ -1548,11 +1559,13 @@ return v;
 });
 if (!amt) return;
 
-// 步驟 2：顯示 paymentQrBox overlay（與 couponQrBox 相同模式）
-const qrContent = `PAY|${loanId}|${store.userData.id}|${amt}`;
+// 根據是否為分期付款切換前綴
+const prefix = isInstallment ? "PAY_INST" : "PAY";
+const qrContent = `${prefix}|${loanOrInstId}|${store.userData.id}|${amt}`;
+
 document.getElementById('paymentQrTitle').innerText = `【${itemName}】繳款條碼`;
 document.getElementById('paymentQrAmt').innerText = `繳費金額：$${amt}`;
-document.getElementById('paymentQrId').innerText = loanId;
+document.getElementById('paymentQrId').innerText = loanOrInstId;
 paymentQr.clear();
 paymentQr.makeCode(qrContent);
 document.getElementById('paymentQrBox').style.display = 'flex';
@@ -1586,8 +1599,8 @@ function showQR() { qr.clear(); qr.makeCode(store.userData.id); document.getElem
 function changeTheme() { const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark'); }
 function toggleLayoutMode() { const container = document.getElementById('appContainer'); container.classList.toggle('full-desktop'); }
 
-// 🖥️📱 自動偵測螢幕寬度切換電腦版/手機版（即時監聽視窗大小變化，不記憶使用者手動覆寫的選擇）
-const AUTO_LAYOUT_BREAKPOINT = 768; // px，螢幕寬度 ≥ 此值時自動切換為電腦版寬版
+// 🖥️📱 自動偵測螢幕寬度切換電腦版/手機版
+const AUTO_LAYOUT_BREAKPOINT = 768; 
 function applyAutoLayoutMode() {
 const container = document.getElementById('appContainer');
 if (!container) return;
@@ -1600,9 +1613,9 @@ container.classList.remove('full-desktop');
 let autoLayoutResizeTimer = null;
 window.addEventListener('resize', function() {
 clearTimeout(autoLayoutResizeTimer);
-autoLayoutResizeTimer = setTimeout(applyAutoLayoutMode, 150); // 防抖，避免拖曳視窗邊框時頻繁觸發
+autoLayoutResizeTimer = setTimeout(applyAutoLayoutMode, 150); 
 });
-applyAutoLayoutMode(); // 頁面載入當下立即執行一次自動判斷
+applyAutoLayoutMode(); 
 
 async function updateProfileName() {
 if (!store || !store.userData) return;
@@ -1645,10 +1658,8 @@ async function triggerLogout() {
   });
   if (!confirmResult.isConfirmed) return;
 
-  // 先停止心跳，避免在登出過程中仍送出 updateSessionActivity
   if (_sessionHeartbeatTimer) { clearInterval(_sessionHeartbeatTimer); _sessionHeartbeatTimer = null; }
 
-  // 呼叫後端 logout：標記 session 為已登出，寫入 SecurityEvents
   if (currentSessionId && store && store.userData) {
     let logoutOk = false;
     try {
@@ -1663,7 +1674,6 @@ async function triggerLogout() {
     }
 
     if (!logoutOk) {
-      // 登出 API 失敗：重啟心跳，告知使用者，不執行 reload
       startSessionHeartbeat();
       Swal.fire({
         title: '⚠️ 登出失敗',
@@ -1674,7 +1684,6 @@ async function triggerLogout() {
     }
   }
 
-  // 後端確認登出成功，顯示提示後執行 reload
   await Swal.fire({
     title: '登出成功', text: '您已安全登出本系統，再見！',
     icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '回到登入頁'
@@ -1686,9 +1695,8 @@ async function triggerLogout() {
 // 📋 LDMS 法律資訊中心（前台）
 // =====================================================================
 
-let legalDocs = null; // 快取：null=尚未嘗試, []=取得但空 or 失敗, [...]= 有資料
+let legalDocs = null; 
 
-// 靜默取得法律文件（不顯示排隊動畫）
 async function fetchLegalDocsIfNeeded() {
 if (legalDocs !== null) return;
 try {
@@ -1698,7 +1706,6 @@ legalDocs = (j.success && Array.isArray(j.docs)) ? j.docs : [];
 } catch(e) { legalDocs = []; }
 }
 
-// 開啟法律資訊中心清單
 window.openLegalCenter = async function() {
 document.getElementById('legalCenterBox').style.display = 'flex';
 if (legalDocs === null) {
@@ -1724,7 +1731,6 @@ el.innerHTML = legalDocs.map(doc => `
                </div>`).join('');
 }
 
-// 開啟單一文件詳細頁
 window.openLegalDoc = function(docId) {
 let doc = (legalDocs || []).find(d => d.docId === docId); if (!doc) return;
 document.getElementById('legalDocDetailTitle').innerText = doc.title;
@@ -1743,7 +1749,6 @@ document.getElementById('legalCenterBox').style.display = 'none';
 document.getElementById('legalDocDetailBox').style.display = 'flex';
 }
 
-// 從同意書 Swal 內點擊條款連結 → 開啟 fixed 閱讀器 overlay，完全不影響 Swal 狀態
 window.openLegalDocFromConsent = function(docId) {
 let doc = (legalDocs || []).find(d => d.docId === docId);
 let overlay = document.getElementById('legalReaderOverlay');
@@ -1763,11 +1768,10 @@ contentEl.innerHTML = `
                ${doc.contactInfo ? `<div style="margin-top:24px; padding:12px 14px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; font-size:0.88em;"><b>📬 聯絡資訊</b><br><span style="font-weight:normal; color:#475569;">${doc.contactInfo}</span></div>` : ''}
                <div style="height:40px;"></div>`;
 overlay.style.display = 'flex';
-contentEl.scrollTop = 0; // 每次開啟都捲回頂部
+contentEl.scrollTop = 0; 
 };
 
-// ── Feature 功能識別常數（集中定義，避免散落的字串字面量）──
-// 未來新增 POINTS / MEMBERSHIP_LEVELS / CUSTOMER_SERVICE / AI_ASSISTANT 等功能時，在此處新增一行即可
+// ── Feature 功能識別常數 ──
 const FEATURES = {
   MEMBER:          'MEMBER',
   BNPL:            'BNPL',
@@ -1826,10 +1830,7 @@ window.terminateSessionById = async function(sessionId) {
   } catch(e) { Swal.fire('錯誤', '網路異常，請稍後再試。', 'error').then(openSessionManager); }
 };
 
-// checkFirstLoginConsent 已整合至 doLogin 進度清單流程，此函式保留為向後相容空殼
-async function checkFirstLoginConsent(uid) { return true; }
-
-// ── 先享後付：BNPL 同意書（首次進入帳單頁且有 BNPL 項目時觸發，使用伺服器端 checkConsents）──
+// ── 先享後付：BNPL 同意書 ──
 async function checkBnplConsentAndShow() {
 if (!store || !store.userData) return;
 const hasBnpl = (store.loans || []).some(l => String(l.item).includes('先享後付'));
@@ -1839,7 +1840,7 @@ let checkRes;
 try {
   const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL }) });
   checkRes = await raw.json();
-} catch(e) { return; } // 網路異常靜默忽略，不阻斷帳單功能
+} catch(e) { return; } 
 if (!checkRes || !checkRes.success || checkRes.allConsented) return;
 
 await fetchLegalDocsIfNeeded();
@@ -1876,10 +1877,6 @@ if (isConfirmed) {
   Swal.fire({ title: '提示', text: '您尚未同意先享後付條款。若需使用此功能，請同意相關條款後再進入。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 3000, showConfirmButton: false });
 }
 }
-
-// =====================================================================
-// 📋 LDMS 結束
-// =====================================================================
 
 
 // --- 👤 訪客回報客服功能 ---
@@ -1999,7 +1996,7 @@ let res = await fetchWithQueue(SCRIPT_URL, { action: 'sendChat', tid: tid, sende
 if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 500); }
 }
 </script>
-<!-- 📄 法律文件閱讀器（position:fixed，掛在 body 最上層，用於同意書流程內點擊條款閱讀，不影響 Swal 狀態） -->
+<!-- 📄 法律文件閱讀器 -->
 <div id="legalReaderOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:2147483647; flex-direction:column; overflow:hidden; font-family:inherit;">
 <div style="position:sticky; top:0; background:#fff; padding:14px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #e5e7eb; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
 <button onclick="document.getElementById('legalReaderOverlay').style.display='none'" style="all:unset; cursor:pointer; border:1px solid #e5e7eb; padding:6px 14px; border-radius:20px; font-size:0.82em; font-weight:bold; color:#374151; background:#f9fafb; flex-shrink:0;">← 關閉</button>
