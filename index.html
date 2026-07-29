@@ -87,11 +87,13 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 .shortcut-item { background: var(--card); border: 1px solid var(--border); padding: 12px 5px; border-radius: 15px; text-align: center; font-size: 0.75em; cursor: pointer; display: none; }
 .shortcut-item.visible { display: block; }
 
+/* 🏷️ 訂單／通知 可滑動頁籤 */
 .tab-bar-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .tab-bar-scroll::-webkit-scrollbar { display: none; }
 .pill-tab { flex-shrink: 0; padding: 8px 14px; border-radius: 20px; background: var(--card); border: 1px solid var(--border); font-size: 0.8em; font-weight: bold; color: var(--text); cursor: pointer; white-space: nowrap; opacity: 0.75; transition: 0.15s; }
 .pill-tab.active { background: var(--pink); color: #fff; border-color: var(--pink); opacity: 1; }
 
+/* ⏱️ 訂單時間線專屬 CSS */
 .order-timeline { margin: 5px 0 5px 5px; padding-left: 5px; }
 .timeline-node { --node-color: #a1a1aa; --node-shadow: rgba(161, 161, 170, 0.35); position: relative; padding-left: 24px; padding-bottom: 18px; text-align: left; }
 .timeline-node:last-child { padding-bottom: 5px; }
@@ -106,6 +108,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 .timeline-node.latest-node .timeline-node-time { opacity: 0.85; color: var(--node-color) !important; }
 .timeline-node-desc { font-size: 0.8em; font-weight: normal; opacity: 0.75; color: var(--text); line-height: 1.4; }
 
+/* 🎧 客服交談室 UI */
 .chat-container { display:flex; flex-direction:column; height: 60vh; background:#f1f5f9; border-radius:10px; overflow:hidden; }
 .chat-box { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; text-align:left; }
 .msg-bubble { max-width:80%; padding:10px 14px; border-radius:15px; font-size:14px; line-height:1.4; word-wrap:break-word; }
@@ -120,6 +123,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 .footer-info { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 0.75em; color: #888; line-height: 1.6; }
 .footer-info .about-link { color: var(--pink); text-decoration: underline; cursor: pointer; margin-top: 10px; display: inline-block; }
 
+/* 📋 法律資訊中心 Overlay */
 .legal-mask { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:1000; flex-direction:column; overflow:hidden; }
 .legal-header { position:sticky; top:0; background:var(--bg); padding:15px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); z-index:1; flex-shrink:0; }
 .legal-back-btn { background:none; border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:20px; font-size:0.8em; font-weight:bold; cursor:pointer; width:auto; margin:0; }
@@ -302,7 +306,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：V86.0</div>
+<div>版本：V86.0 (BNPL 2.0 + 會員停權保護系統)</div>
 <div>更新日期：2026-07-29</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
 <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
@@ -389,6 +393,115 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-R9BdkOiXB76vR0Mcp9wzWGka0p72QCZ4Vx_sV-CFA1ERRTcgilyvZdOOIvqUjENr/exec"; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
+
+// ==========================================
+// 💡 系統核心常數與裝置管理函式 💡
+// ==========================================
+const FEATURES = {
+  MEMBER:          'MEMBER',
+  BNPL:            'BNPL',
+  AI_ASSISTANT:    'AI_ASSISTANT',
+  POINTS:          'POINTS',
+  MEMBERSHIP_LEVELS: 'MEMBERSHIP_LEVELS',
+  CUSTOMER_SERVICE:  'CUSTOMER_SERVICE'
+};
+
+window.openSessionManager = async function() {
+  Swal.fire({ title: '載入裝置清單...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  let res;
+  try {
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getSessions', uid: store.userData.id }) });
+    res = await raw.json();
+  } catch(e) { Swal.fire('錯誤', '無法取得裝置清單，請稍後再試。', 'error'); return; }
+  Swal.close();
+  if (!res || !res.success) { Swal.fire('錯誤', res ? res.message : '無回應', 'error'); return; }
+
+  const sessions = res.sessions || [];
+  if (sessions.length === 0) { Swal.fire({ title: '📱 登入裝置', text: '目前無登入記錄。', icon: 'info', confirmButtonColor: 'var(--pink)' }); return; }
+
+  const listHtml = sessions.map(function(s) {
+    const isCurrent = s.sessionId === currentSessionId;
+    const isActive = s.isActive;
+    const statusColor = isCurrent ? '#10b981' : (isActive ? '#3b82f6' : '#94a3b8');
+    const statusLabel = isCurrent ? '目前裝置' : (isActive ? '登入中' : '已登出');
+    const terminateBtn = (!isCurrent && isActive)
+      ? '<button onclick="terminateSessionById(\'' + s.sessionId + '\')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:transparent;color:var(--red);border:1px solid var(--red);font-size:0.8em;font-weight:bold;cursor:pointer;">🔴 終止此裝置</button>'
+      : '';
+    return '<div style="background:' + (isCurrent ? 'rgba(16,185,129,0.07)' : 'rgba(0,0,0,0.03)') + ';border:1px solid ' + (isCurrent ? '#10b981' : 'var(--border)') + ';border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
+      + '<span style="font-size:0.78em;color:#aaa;font-weight:normal;">....' + s.sessionId.slice(-8) + '</span>'
+      + '<span style="background:' + statusColor + ';color:#fff;font-size:0.72em;padding:2px 8px;border-radius:6px;">' + statusLabel + '</span>'
+      + '</div>'
+      + '<div style="font-size:0.82em;margin-bottom:2px;">登入時間：' + (s.loginTime || '—') + '</div>'
+      + '<div style="font-size:0.82em;opacity:0.65;">最後活動：' + (s.lastActivityTime || '—') + '</div>'
+      + terminateBtn + '</div>';
+  }).join('');
+
+  Swal.fire({
+    title: '📱 目前登入裝置', confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉', width: '90%',
+    html: '<div style="text-align:left;max-height:55vh;overflow-y:auto;padding-right:4px;">' + listHtml + '</div>'
+  });
+};
+
+window.terminateSessionById = async function(sessionId) {
+  const { isConfirmed } = await Swal.fire({ title: '確定要終止此裝置？', text: '該裝置將被強制登出。', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定終止', cancelButtonText: '取消' });
+  if (!isConfirmed) { openSessionManager(); return; }
+  try {
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'terminateSession', uid: store.userData.id, sessionId: sessionId, currentSessionId: currentSessionId }) });
+    const res = await raw.json();
+    if (res && res.success) Swal.fire('已終止', res.message, 'success').then(openSessionManager);
+    else Swal.fire('錯誤', res ? res.message : '操作失敗', 'error').then(openSessionManager);
+  } catch(e) { Swal.fire('錯誤', '網路異常，請稍後再試。', 'error').then(openSessionManager); }
+};
+
+// BNPL 條款同意書檢查
+async function checkBnplConsentAndShow() {
+if (!store || !store.userData) return;
+const hasBnpl = (store.loans || []).some(l => String(l.item).includes('先享後付'));
+if (!hasBnpl) return;
+
+let checkRes;
+try {
+  const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL }) });
+  checkRes = await raw.json();
+} catch(e) { return; } 
+if (!checkRes || !checkRes.success || checkRes.allConsented) return;
+
+await fetchLegalDocsIfNeeded();
+const missingDocs = checkRes.missing || [];
+const links = missingDocs.map(function(doc) {
+  return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--blue);font-weight:bold;text-decoration:underline;">《' + doc.title + '》</a>';
+}).join('、');
+const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
+
+const { isConfirmed } = await Swal.fire({
+title: '💳 先享後付服務同意書',
+html: '<div style="text-align:left;font-size:0.95em;line-height:1.8;">'
+    + '<p style="color:#888;font-size:0.88em;margin-top:0;">您的帳戶已開通先享後付服務，繼續使用前請閱讀並同意相關條款（點擊可閱讀全文）：</p>'
+    + '<div style="background:var(--card,#f5f5f5);border-radius:10px;padding:12px;margin:10px 0;font-size:0.9em;">' + links + '</div>'
+    + '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;font-weight:bold;">'
+    + '<input type="checkbox" id="bnpl_consent_chk" style="width:22px;height:22px;flex-shrink:0;margin-top:2px;accent-color:var(--blue);">'
+    + '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
+    + '</label></div>',
+showCancelButton: true, confirmButtonText: '✅ 同意並繼續', cancelButtonText: '暫不同意',
+confirmButtonColor: 'var(--blue)', cancelButtonColor: '#94a3b8', allowOutsideClick: false,
+preConfirm: function() {
+  if (!document.getElementById('bnpl_consent_chk').checked) { Swal.showValidationMessage('請勾選同意後才能繼續使用先享後付服務'); return false; }
+  return true;
+}
+});
+
+if (isConfirmed) {
+  try {
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.BNPL, consentMethod: '線上勾選同意', sessionId: currentSessionId }) });
+  } catch(e) {}
+  localStorage.setItem('bnplConsent_v1_' + store.userData.id, new Date().toISOString());
+} else {
+  openTab(0);
+  Swal.fire({ title: '提示', text: '您尚未同意先享後付條款。若需使用此功能，請同意相關條款後再進入。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 3000, showConfirmButton: false });
+}
+}
+// ==========================================
 
 const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
 const couponQr = new QRCode(document.getElementById("couponQrcode"), { width: 200, height: 200 });
@@ -1543,7 +1656,6 @@ Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.nu
 }
 }
 
-// ── 帳單 (Loans) 與 Installments (BNPL) 展開介面 ──
 function renderLoans() {
 if (!store || !store.loans) return;
 const filteredLoans = store.loans.filter(l => { const statusStr = String(l.status||''); const isCleared = (statusStr === '已結清' || statusStr === 'Macro已結清'); const isOverdue = (!isCleared && l.penalty > 0); if (currentLoanTab === 1) return isCleared; else if (currentLoanTab === 2) return isOverdue; else return !isCleared && !isOverdue; });
@@ -1552,9 +1664,8 @@ const sortL = document.getElementById('sortL').value; filteredLoans.sort((a, b) 
 document.getElementById('lList').innerHTML = filteredLoans.map(l => {
     let sStr = String(l.status||'');
     let isCleared = (sStr === 'processed_cleared' || sStr === '已結清' || sStr === 'Macro已結清');
-    let loanIdVal = l.row; // 🌟 修正：用 l.row 當 ID 最安全
+    let loanIdVal = l.row; 
     
-    // 若為 BNPL 分期計畫，渲染子項目結構
     if (l.loanType === 'BNPL_INSTALLMENT') {
         let childHtml = '';
         let installments = (store.installments || []).filter(inst => String(inst.loanId) === String(l.item));
@@ -1587,7 +1698,6 @@ document.getElementById('lList').innerHTML = filteredLoans.map(l => {
             </div>
         </div>`;
     } else {
-        // 一般帳單 (狀態為未結清或逾期時必定顯示繳款按鈕)
         let payBtn = (!isCleared) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${loanIdVal}','${encodeURIComponent(l.item)}',${l.totalDue}, false)">📲 顯示繳款條碼</button>` : '';
         return `<div class="card">${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '$' + l.totalDue}</b></div>${payBtn}</div>`;
     }
@@ -1596,7 +1706,6 @@ document.getElementById('lList').innerHTML = filteredLoans.map(l => {
 
 function switchLoanTab(tabIndex) { currentLoanTab = tabIndex; document.querySelectorAll('.loan-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderLoans(); }
 
-// 📲 顯示繳款條碼彈窗
 window.showPaymentQR = async function(loanOrInstId, encodedItem, totalDue, isInstallment = false) {
 let itemName = decodeURIComponent(encodedItem);
 
@@ -1750,104 +1859,6 @@ async function triggerLogout() {
   });
   location.reload();
 }
-
-// 🚫 提交停權申訴
-async function submitSuspensionAppeal() {
-    let desc = document.getElementById('suspAppealDesc').value.trim();
-    if(!desc) return Swal.fire('提示', '請填寫申訴理由', 'warning');
-    
-    let fetchRes = await fetchWithQueue(SCRIPT_URL, { 
-        action: 'submitTicket', 
-        uid: store.userData.id, 
-        cat: '帳號問題', 
-        subcat: '停權申訴', 
-        subject: '會員停權申訴', 
-        desc: "【停權申訴】\n" + desc 
-    }, "申訴單送出中...");
-    
-    if (fetchRes && fetchRes.success) {
-        Swal.fire('申訴已送出', '管理員將會進行審核，請靜候聯絡。', 'success');
-        document.getElementById('suspAppealDesc').value = '';
-    } else {
-        Swal.fire('錯誤', '申訴送出失敗，請稍後再試。', 'error');
-    }
-}
-
-let legalDocs = null; 
-
-async function fetchLegalDocsIfNeeded() {
-if (legalDocs !== null) return;
-try {
-let r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchLegalDocs' }) });
-let j = await r.json();
-legalDocs = (j.success && Array.isArray(j.docs)) ? j.docs : [];
-} catch(e) { legalDocs = []; }
-}
-
-window.openLegalCenter = async function() {
-document.getElementById('legalCenterBox').style.display = 'flex';
-if (legalDocs === null) {
-document.getElementById('legalDocListContainer').innerHTML = '<p style="text-align:center; opacity:0.4; font-size:0.9em; margin-top:40px;">資料載入中...</p>';
-await fetchLegalDocsIfNeeded();
-}
-renderLegalDocListFront();
-}
-
-function renderLegalDocListFront() {
-const el = document.getElementById('legalDocListContainer'); if (!el) return;
-if (!legalDocs || legalDocs.length === 0) {
-el.innerHTML = '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin-top:40px;">目前尚無已發布的法律文件。</p>'; return;
-}
-el.innerHTML = legalDocs.map(doc => `
-               <div class="legal-doc-card" onclick="openLegalDoc('${doc.docId}')">
-                   <div>
-                       <div style="font-size:0.72em; color:var(--pink); margin-bottom:3px;">${doc.docId}</div>
-                       <div style="font-weight:bold; font-size:0.95em;">${doc.title}</div>
-                       <div style="font-size:0.72em; opacity:0.5; margin-top:3px;">版本：${doc.version} ｜ 生效：${doc.effectiveDate || '未設定'}</div>
-                   </div>
-                   <span style="font-size:1.2em; opacity:0.4; margin-left:8px;">›</span>
-               </div>`).join('');
-}
-
-window.openLegalDoc = function(docId) {
-let doc = (legalDocs || []).find(d => d.docId === docId); if (!doc) return;
-document.getElementById('legalDocDetailTitle').innerText = doc.title;
-document.getElementById('legalDocDetailContent').innerHTML = `
-               <div class="legal-doc-meta">
-                   <span class="lm-label">文件編號</span><b>${doc.docId}</b>
-                   <span class="lm-label">版本</span><b>${doc.version || '—'}</b>
-                   <span class="lm-label">生效日期</span><b>${doc.effectiveDate || '未設定'}</b>
-                   <span class="lm-label">最後修訂</span><b>${doc.lastRevised || '未設定'}</b>
-                   <span class="lm-label">制定單位</span><b>${doc.department || '—'}</b>
-               </div>
-               <div class="legal-doc-content">${(doc.content || '（本文件內容尚待管理員填寫）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-               ${doc.contactInfo ? `<div class="legal-contact-box"><b>📬 聯絡資訊</b><br><span style="font-weight:normal;">${doc.contactInfo}</span></div>` : ''}
-               <div style="height:30px;"></div>`;
-document.getElementById('legalCenterBox').style.display = 'none';
-document.getElementById('legalDocDetailBox').style.display = 'flex';
-}
-
-window.openLegalDocFromConsent = function(docId) {
-let doc = (legalDocs || []).find(d => d.docId === docId);
-let overlay = document.getElementById('legalReaderOverlay');
-let titleEl = document.getElementById('legalReaderTitle');
-let contentEl = document.getElementById('legalReaderContent');
-if (!doc) {
-titleEl.innerText = docId;
-contentEl.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:40px;">此文件尚未發布，請聯絡管理員。</p>';
-overlay.style.display = 'flex'; return;
-}
-titleEl.innerText = doc.title;
-contentEl.innerHTML = `
-               <div style="background:#f8fafc; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:0.85em; line-height:1.9; color:#64748b;">
-                   <b style="color:#db2777;">${doc.docId}</b> ｜ 版本：${doc.version || '—'} ｜ 生效日期：${doc.effectiveDate || '未設定'} ｜ 制定單位：${doc.department || '—'}
-               </div>
-               <div style="white-space:pre-wrap; line-height:2; color:#1e293b;">${(doc.content || '（本文件內容尚待管理員填寫後發布）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-               ${doc.contactInfo ? `<div style="margin-top:24px; padding:12px 14px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; font-size:0.88em;"><b>📬 聯絡資訊</b><br><span style="font-weight:normal; color:#475569;">${doc.contactInfo}</span></div>` : ''}
-               <div style="height:40px;"></div>`;
-overlay.style.display = 'flex';
-contentEl.scrollTop = 0; 
-};
 
 window.openGuestTicketForm = function() {
 Swal.fire({
