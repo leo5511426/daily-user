@@ -1976,6 +1976,84 @@ box.innerHTML += `<div class="msg-bubble msg-user">${msg}<div class="msg-time">�
 let res = await fetchWithQueue(SCRIPT_URL, { action: 'sendChat', tid: tid, sender: store.userData.id, msg: msg }, "發送中...");
 if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 500); }
 }
+    // ==========================================
+// 📋 LDMS 法律資訊中心與文件閱讀器邏輯
+// ==========================================
+let legalDocs = null; 
+
+async function fetchLegalDocsIfNeeded() {
+    if (legalDocs !== null) return;
+    try {
+        let r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchLegalDocs' }) });
+        let j = await r.json();
+        legalDocs = (j.success && Array.isArray(j.docs)) ? j.docs : [];
+    } catch(e) { legalDocs = []; }
+}
+
+window.openLegalCenter = async function() {
+    document.getElementById('legalCenterBox').style.display = 'flex';
+    if (legalDocs === null) {
+        document.getElementById('legalDocListContainer').innerHTML = '<p style="text-align:center; opacity:0.4; font-size:0.9em; margin-top:40px;">資料載入中...</p>';
+        await fetchLegalDocsIfNeeded();
+    }
+    renderLegalDocListFront();
+}
+
+function renderLegalDocListFront() {
+    const el = document.getElementById('legalDocListContainer'); if (!el) return;
+    if (!legalDocs || legalDocs.length === 0) {
+        el.innerHTML = '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin-top:40px;">目前尚無已發布的法律文件。</p>'; return;
+    }
+    el.innerHTML = legalDocs.map(doc => `
+       <div class="legal-doc-card" onclick="openLegalDoc('${doc.docId}')">
+           <div>
+               <div style="font-size:0.72em; color:var(--pink); margin-bottom:3px;">${doc.docId}</div>
+               <div style="font-weight:bold; font-size:0.95em;">${doc.title}</div>
+               <div style="font-size:0.72em; opacity:0.5; margin-top:3px;">版本：${doc.version} ｜ 生效：${doc.effectiveDate || '未設定'}</div>
+           </div>
+           <span style="font-size:1.2em; opacity:0.4; margin-left:8px;">›</span>
+       </div>`).join('');
+}
+
+window.openLegalDoc = function(docId) {
+    let doc = (legalDocs || []).find(d => d.docId === docId); if (!doc) return;
+    document.getElementById('legalDocDetailTitle').innerText = doc.title;
+    document.getElementById('legalDocDetailContent').innerHTML = `
+       <div class="legal-doc-meta">
+           <span class="lm-label">文件編號</span><b>${doc.docId}</b>
+           <span class="lm-label">版本</span><b>${doc.version || '—'}</b>
+           <span class="lm-label">生效日期</span><b>${doc.effectiveDate || '未設定'}</b>
+           <span class="lm-label">最後修訂</span><b>${doc.lastRevised || '未設定'}</b>
+           <span class="lm-label">制定單位</span><b>${doc.department || '—'}</b>
+       </div>
+       <div class="legal-doc-content">${(doc.content || '（本文件內容尚待管理員填寫）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+       ${doc.contactInfo ? `<div class="legal-contact-box"><b>📬 聯絡資訊</b><br><span style="font-weight:normal;">${doc.contactInfo}</span></div>` : ''}
+       <div style="height:30px;"></div>`;
+    document.getElementById('legalCenterBox').style.display = 'none';
+    document.getElementById('legalDocDetailBox').style.display = 'flex';
+}
+
+window.openLegalDocFromConsent = function(docId) {
+    let doc = (legalDocs || []).find(d => d.docId === docId);
+    let overlay = document.getElementById('legalReaderOverlay');
+    let titleEl = document.getElementById('legalReaderTitle');
+    let contentEl = document.getElementById('legalReaderContent');
+    if (!doc) {
+        titleEl.innerText = docId;
+        contentEl.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:40px;">此文件尚未發布，請聯絡管理員。</p>';
+        overlay.style.display = 'flex'; return;
+    }
+    titleEl.innerText = doc.title;
+    contentEl.innerHTML = `
+       <div style="background:#f8fafc; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:0.85em; line-height:1.9; color:#64748b;">
+           <b style="color:#db2777;">${doc.docId}</b> ｜ 版本：${doc.version || '—'} ｜ 生效日期：${doc.effectiveDate || '未設定'} ｜ 制定單位：${doc.department || '—'}
+       </div>
+       <div style="white-space:pre-wrap; line-height:2; color:#1e293b;">${(doc.content || '（本文件內容尚待管理員填寫後發布）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+       ${doc.contactInfo ? `<div style="margin-top:24px; padding:12px 14px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; font-size:0.88em;"><b>📬 聯絡資訊</b><br><span style="font-weight:normal; color:#475569;">${doc.contactInfo}</span></div>` : ''}
+       <div style="height:40px;"></div>`;
+    overlay.style.display = 'flex';
+    contentEl.scrollTop = 0; 
+};
 </script>
 
 <div id="legalReaderOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:2147483647; flex-direction:column; overflow:hidden; font-family:inherit;">
