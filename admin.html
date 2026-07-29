@@ -89,7 +89,32 @@
     <button class="m-btn full-btn" style="background:var(--red); font-size:16px;" onclick="scrollToSection('return_section')">🚨 退貨 / 退款 審核中心</button>
     <button class="m-btn full-btn" style="background:var(--blue); font-size:16px;" onclick="scrollToSection('invoice_section')">🧾 電子發票管理中心</button>
     <button class="m-btn full-btn" style="background:#8b5cf6; font-size:16px;" onclick="scrollToSection('cs_section')">🎧 線上客服與推播中心</button>
+    <button class="m-btn full-btn" style="background:#111827; font-size:16px;" onclick="scrollToSection('suspend_section')">🚫 會員停權與限制管理</button>
     <button class="m-btn full-btn" style="background:#0f172a; font-size:16px;" onclick="scrollToSection('ldms_section')">📋 法律文件管理系統 (LDMS)</button>
+</div>
+
+<!-- ✨ 會員停權與限制管理 區塊 ✨ -->
+<div class="card" id="suspend_section" style="border: 2px solid var(--red);">
+    <h3 style="margin:0 0 10px; color: var(--red);">🚫 會員停權與限制管理</h3>
+    <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
+        <h4 style="margin:0 0 5px 0; color:var(--dark);">🛑 執行會員停權</h4>
+        <p style="font-size:0.8em; color:#666; margin-top:0;">被停權的會員登入時，將被強制引導至停權申訴畫面，無法存取任何服務。</p>
+        <select id="suspend_uid"></select>
+        <input type="text" id="suspend_reason" placeholder="停權原因（必填，會員登入時會看到此原因）">
+        <select id="suspend_days">
+            <option value="3">限制登入 3 天</option>
+            <option value="7">限制登入 7 天</option>
+            <option value="30">限制登入 30 天</option>
+            <option value="0">永久停權 (無限期)</option>
+        </select>
+        <button onclick="suspendUserSubmit()" style="background:var(--red); margin-top:10px;">執行停權</button>
+    </div>
+    <div>
+        <h4 style="margin:0 0 5px 0; color:var(--dark);">🟢 解除停權狀態</h4>
+        <p style="font-size:0.8em; color:#666; margin-top:0;">若會員申訴成功，可在此強制手動解除其停權狀態。</p>
+        <select id="lift_suspension_uid"></select>
+        <button onclick="liftSuspensionSubmit()" style="background:var(--green); margin-top:10px;">強制解除停權</button>
+    </div>
 </div>
 
 <div class="card" style="border: 2px solid var(--blue);">
@@ -314,9 +339,9 @@
 
 <script>
     // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbxr2ho5KpYY-_GiItuL-FzjlKSqulHQfNrTb4PqoOCtz__czyQOlP9pLGUwY2lmPMs3/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbw-R9BdkOiXB76vR0Mcp9wzWGka0p72QCZ4Vx_sV-CFA1ERRTcgilyvZdOOIvqUjENr/exec"; 
     
-    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
+    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
 
     async function confirmActionWithPush(title) {
@@ -415,7 +440,7 @@
     async function refresh() {
         let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
         if (res.success) {
-            U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{}; LEGAL_DB = res.legalDocs||[];
+            U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{}; LEGAL_DB = res.legalDocs||[]; ACTIVE_SUSPENSIONS = res.activeSuspensions||[];
             updateSelects(); renderAdminTimeline(); renderLegalDocList_Admin();
             const nowTime = getNowDateTimeString();
             if (document.getElementById('t_log_time')) document.getElementById('t_log_time').value = nowTime; 
@@ -428,11 +453,18 @@
         document.getElementById('l_uid').innerHTML = uOpts; 
         document.getElementById('cp_uid').innerHTML = uOpts;
         document.getElementById('bnpl_plan_uid').innerHTML = uOpts;
+        document.getElementById('suspend_uid').innerHTML = '<option value="">--請選擇要停權的會員--</option>' + uOpts;
         document.getElementById('nt_uid').innerHTML = '<option value="ALL">📢 群發所有會員</option>' + uOpts;
         document.getElementById('o_new_uid').innerHTML = '<option value="">--請選擇購買會員--</option>' + uOpts;
         document.getElementById('inv_new_uid').innerHTML = '<option value="">--請選擇所屬會員--</option>' + uOpts;
         document.getElementById('bnpl_uid').innerHTML = '<option value="">--請選擇要調整的會員--</option>' + uOpts;
         
+        let suspOpts = '<option value="">--請選擇目前停權中的會員--</option>';
+        if (ACTIVE_SUSPENSIONS.length > 0) {
+            suspOpts += ACTIVE_SUSPENSIONS.map(s => `<option value="${s.uid}">${s.uid} (至: ${s.endTime || '永久'})</option>`).join('');
+        }
+        document.getElementById('lift_suspension_uid').innerHTML = suspOpts;
+
         document.getElementById('t_order_id').innerHTML = O_DB.map(o => `<option value="${o.id}">單號:${o.id} (${o.status})</option>`).join('');
         
         let linkOrderOpts = '<option value="">-- 請選擇關聯訂單 (選填) --</option>'; O_DB.forEach(o => { linkOrderOpts += `<option value="${o.id}">${o.id} - ${(o.item||'').substring(0, 15)}</option>`; });
@@ -450,6 +482,35 @@
         document.getElementById('o_new_address_select').innerHTML = '<option value="">--快速選--</option>' + (SETTINGS["門市清單"] || []).map(a => `<option value="${a}">${a}</option>`).join('');
         
         document.getElementById('cs_ticket_select').innerHTML = '<option value="">-- 選擇工單 --</option>' + TIC_DB.filter(t=>t.status!='已結案').map(t=>`<option value="${t.tid}">${t.tid} (${t.status})</option>`).join('');
+    }
+
+    // 🚫 執行停權
+    async function suspendUserSubmit() {
+        let uid = document.getElementById('suspend_uid').value;
+        let reason = document.getElementById('suspend_reason').value.trim();
+        let days = document.getElementById('suspend_days').value;
+        if(!uid || !reason) return Swal.fire("提示", "請選擇會員並確實填寫停權原因！", "warning");
+
+        let notifyMode = await confirmActionWithPush('執行停權');
+        if(!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'suspendUser', uid: uid, reason: reason, days: Number(days), notifyMode: notifyMode }, "執行停權設定中...");
+        if(!res.aborted) {
+            handlePostSuccess(res);
+            document.getElementById('suspend_reason').value = "";
+        }
+    }
+
+    // 🟢 解除停權
+    async function liftSuspensionSubmit() {
+        let uid = document.getElementById('lift_suspension_uid').value;
+        if(!uid) return Swal.fire("提示", "目前沒有選擇任何執行中的停權會員。", "warning");
+
+        let notifyMode = await confirmActionWithPush('解除停權');
+        if(!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'liftSuspension', uid: uid, notifyMode: notifyMode }, "解除停權設定中...");
+        if(!res.aborted) handlePostSuccess(res);
     }
 
     async function updateBnplLimit() {
