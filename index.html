@@ -87,13 +87,11 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 .shortcut-item { background: var(--card); border: 1px solid var(--border); padding: 12px 5px; border-radius: 15px; text-align: center; font-size: 0.75em; cursor: pointer; display: none; }
 .shortcut-item.visible { display: block; }
 
-/* 🏷️ 訂單／通知 可滑動頁籤 */
 .tab-bar-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .tab-bar-scroll::-webkit-scrollbar { display: none; }
 .pill-tab { flex-shrink: 0; padding: 8px 14px; border-radius: 20px; background: var(--card); border: 1px solid var(--border); font-size: 0.8em; font-weight: bold; color: var(--text); cursor: pointer; white-space: nowrap; opacity: 0.75; transition: 0.15s; }
 .pill-tab.active { background: var(--pink); color: #fff; border-color: var(--pink); opacity: 1; }
 
-/* ⏱️ 訂單時間線專屬 CSS */
 .order-timeline { margin: 5px 0 5px 5px; padding-left: 5px; }
 .timeline-node { --node-color: #a1a1aa; --node-shadow: rgba(161, 161, 170, 0.35); position: relative; padding-left: 24px; padding-bottom: 18px; text-align: left; }
 .timeline-node:last-child { padding-bottom: 5px; }
@@ -108,7 +106,6 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 .timeline-node.latest-node .timeline-node-time { opacity: 0.85; color: var(--node-color) !important; }
 .timeline-node-desc { font-size: 0.8em; font-weight: normal; opacity: 0.75; color: var(--text); line-height: 1.4; }
 
-/* 🎧 客服交談室 UI */
 .chat-container { display:flex; flex-direction:column; height: 60vh; background:#f1f5f9; border-radius:10px; overflow:hidden; }
 .chat-box { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; text-align:left; }
 .msg-bubble { max-width:80%; padding:10px 14px; border-radius:15px; font-size:14px; line-height:1.4; word-wrap:break-word; }
@@ -123,7 +120,6 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 .footer-info { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 0.75em; color: #888; line-height: 1.6; }
 .footer-info .about-link { color: var(--pink); text-decoration: underline; cursor: pointer; margin-top: 10px; display: inline-block; }
 
-/* 📋 法律資訊中心 Overlay */
 .legal-mask { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:1000; flex-direction:column; overflow:hidden; }
 .legal-header { position:sticky; top:0; background:var(--bg); padding:15px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); z-index:1; flex-shrink:0; }
 .legal-back-btn { background:none; border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:20px; font-size:0.8em; font-weight:bold; cursor:pointer; width:auto; margin:0; }
@@ -137,12 +133,11 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 .close-btn { position:absolute; top:-10px; right:-10px; background:var(--red); color:white; border:none; border-radius:50%; width:32px; height:32px; font-size:16px; cursor:pointer; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; z-index: 10; }
 
-/* 🚫 停權畫面專屬樣式 */
-#suspendedView {
-    display: none; height: 100vh; flex-direction: column; justify-content: center; align-items: center;
-    padding: 40px; box-sizing: border-box; text-align: center; background: #fff5f5;
+/* 🚫 全域停權橫幅 */
+.suspension-banner {
+    background: var(--red); color: white; text-align: center; padding: 12px;
+    font-size: 0.85em; font-weight: bold; z-index: 200; position: sticky; top: 0; width: 100%; box-sizing: border-box;
 }
-[data-theme='dark'] #suspendedView { background: #1a0505; }
 </style>
 </head>
 <body data-theme="light">
@@ -165,25 +160,16 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 </div>
 </div>
 
-<!-- 🚫 停權與申訴專屬畫面 -->
-<div id="suspendedView">
-    <div style="font-size: 4em; margin-bottom: 10px; animation: lp-shake 0.5s ease;">🚫</div>
-    <h2 style="color:var(--red); margin-top:0;">帳號已停權</h2>
-    <p style="color:#666; font-size:0.9em; margin-top:0;">很抱歉，您的帳號目前受到限制，無法存取會員系統與各項服務。</p>
-    <div style="background:white; border:1px solid #fca5a5; padding:15px; border-radius:15px; width:100%; text-align:left; margin:15px 0; box-shadow: 0 4px 10px rgba(255,0,0,0.05);">
-        <p style="margin:5px 0; font-size:0.95em;"><b>停權原因：</b><br><span id="suspReason" style="color:var(--red);"></span></p>
-        <p style="margin:10px 0 5px 0; font-size:0.95em;"><b>停權期限：</b><br><span id="suspEndTime" style="color:#eab308; font-weight:bold;"></span></p>
-    </div>
-    <div style="width:100%; margin-top:10px; background:rgba(0,0,0,0.03); padding:15px; border-radius:15px; box-sizing:border-box;">
-        <p style="margin:0 0 10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">💬 提出申訴</p>
-        <textarea id="suspAppealDesc" rows="3" placeholder="若您認為停權判定有誤，請在此輸入您的申訴理由與相關說明..." style="width:100%; padding:10px; border-radius:10px; border:1px solid #ccc;"></textarea>
-        <button class="btn" style="background:var(--blue); margin-top:10px; font-size:0.9em;" onclick="submitSuspensionAppeal()">送出申訴單</button>
-    </div>
-    <button class="btn" style="background:transparent; color:#999; border:1px solid #ccc; margin-top:20px; font-size:0.9em;" onclick="triggerLogout()">登出系統</button>
+<!-- 📱 正常/唯讀 會員系統畫面 -->
+<div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
+
+<!-- 🚫 停權唯讀橫幅 -->
+<div id="suspensionBanner" class="suspension-banner" style="display:none;">
+    ⚠️ 您的帳號已被停權：<span id="bannerSuspReason"></span><br>
+    <span style="font-size:0.9em; font-weight:normal; opacity:0.9;">(目前僅開放唯讀查詢與帳單繳款)</span>
+    <button onclick="submitSuspensionAppeal()" style="background:white; color:var(--red); border:none; padding:4px 10px; border-radius:10px; font-size:0.9em; font-weight:bold; margin-left:10px; cursor:pointer;">👉 我要申訴</button>
 </div>
 
-<!-- 📱 正常會員系統畫面 -->
-<div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
 <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
 
 <div id="p0" class="page" style="display:block;">
@@ -306,7 +292,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：V86.0 (BNPL 2.0 + 會員停權保護系統)</div>
+<div>版本：V87.0 (BNPL 2.0 + 唯讀停權系統)</div>
 <div>更新日期：2026-07-29</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
 <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
@@ -390,7 +376,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-R9BdkOiXB76vR0Mcp9wzWGka0p72QCZ4Vx_sV-CFA1ERRTcgilyvZdOOIvqUjENr/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5unbZjaWySmOGdcayDuNe3ukK7yHugAZX4AQ1DC-VCh7XRJFId3xgipdKlR4yWD1t/exec"; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
 
@@ -454,7 +440,6 @@ window.terminateSessionById = async function(sessionId) {
   } catch(e) { Swal.fire('錯誤', '網路異常，請稍後再試。', 'error').then(openSessionManager); }
 };
 
-// BNPL 條款同意書檢查
 async function checkBnplConsentAndShow() {
 if (!store || !store.userData) return;
 const hasBnpl = (store.loans || []).some(l => String(l.item).includes('先享後付'));
@@ -507,8 +492,10 @@ const qr = new QRCode(document.getElementById("qrcode"), { width: 200, height: 2
 const couponQr = new QRCode(document.getElementById("couponQrcode"), { width: 200, height: 200 });
 const paymentQr = new QRCode(document.getElementById("paymentQrcode"), { width: 230, height: 230 });
 
+// 📅 時間顯示修正器 (後端已格式化，前端只需直接取前 10 碼避免錯亂)
 function formatDateString(dStr) {
 if (!dStr) return '';
+if (typeof dStr === 'string' && dStr.match(/^\d{4}-\d{2}-\d{2}/)) return dStr.substring(0, 10);
 let d = new Date(String(dStr).replace(/-/g, '/'));
 if (isNaN(d.getTime())) return String(dStr);
 return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -633,7 +620,7 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V86.0 (BNPL 2.0 + 會員停權保護系統)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V87.0 (BNPL 2.0 + 唯讀停權系統)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -821,18 +808,6 @@ async function doLogin() {
   setLoginStep('ls_log', 'done');
   await uiDelay(300);
 
-  // 🚫 檢查停權狀態
-  if (store.userData && store.userData.isSuspended) {
-      document.getElementById('suspReason').innerText = store.userData.suspensionReason || '未提供原因';
-      document.getElementById('suspEndTime').innerText = store.userData.suspensionEndTime || '永久停權';
-      
-      hideLoginOverlay();
-      document.getElementById('loginView').style.display = 'none';
-      document.getElementById('appView').style.display = 'none';
-      document.getElementById('suspendedView').style.display = 'flex';
-      return;
-  }
-
   setLoginStep('ls_perm', 'running');
   let checkRes;
   try {
@@ -929,6 +904,15 @@ async function doLogin() {
 
   setLoginStep('ls_load', 'running');
   await uiDelay(300);
+  
+  // 🚫 處理停權橫幅顯示
+  if (store.userData && store.userData.isSuspended) {
+      document.getElementById('suspensionBanner').style.display = 'block';
+      document.getElementById('bannerSuspReason').innerText = store.userData.suspensionReason || '違反系統規範';
+  } else {
+      document.getElementById('suspensionBanner').style.display = 'none';
+  }
+  
   render();
   setLoginStep('ls_load', 'done');
   
@@ -970,17 +954,14 @@ async function silentSyncData() {
             res.sessionId = currentSessionId;
             store = res; 
             
-            // 🚫 背景同步時若發現被停權，強制踢到停權畫面
+            // 🚫 背景同步時處理停權橫幅
             if (store.userData.isSuspended) {
-                document.getElementById('suspReason').innerText = store.userData.suspensionReason || '未提供原因';
-                document.getElementById('suspEndTime').innerText = store.userData.suspensionEndTime || '永久停權';
-                document.getElementById('appView').style.display = 'none';
-                document.getElementById('suspendedView').style.display = 'flex';
+                document.getElementById('suspensionBanner').style.display = 'block';
+                document.getElementById('bannerSuspReason').innerText = store.userData.suspensionReason || '違反系統規範';
             } else {
-                document.getElementById('suspendedView').style.display = 'none';
-                document.getElementById('appView').style.display = 'block';
-                render(); 
+                document.getElementById('suspensionBanner').style.display = 'none';
             }
+            render(); 
         }
     } catch (e) { 
         console.log("Sync Error:", e); 
@@ -989,25 +970,22 @@ async function silentSyncData() {
     }
 }
 
-// 🚫 提交停權申訴
+// 🚫 提交停權申訴 (橫幅上的按鈕觸發)
 async function submitSuspensionAppeal() {
-    let desc = document.getElementById('suspAppealDesc').value.trim();
-    if(!desc) return Swal.fire('提示', '請填寫申訴理由', 'warning');
-    
-    let fetchRes = await fetchWithQueue(SCRIPT_URL, { 
-        action: 'submitTicket', 
-        uid: store.userData.id, 
-        cat: '帳號問題', 
-        subcat: '停權申訴', 
-        subject: '會員停權申訴', 
-        desc: "【停權申訴】\n" + desc 
-    }, "申訴單送出中...");
-    
-    if (fetchRes && fetchRes.success) {
-        Swal.fire('申訴已送出', '管理員將會進行審核，請靜候聯絡。', 'success');
-        document.getElementById('suspAppealDesc').value = '';
-    } else {
-        Swal.fire('錯誤', '申訴送出失敗，請稍後再試。', 'error');
+    const { value: text } = await Swal.fire({
+        title: '提出停權申訴',
+        input: 'textarea',
+        inputPlaceholder: '請詳細說明您的狀況與申訴理由...',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--blue)',
+        confirmButtonText: '送出申訴',
+        cancelButtonText: '取消',
+        inputValidator: (v) => (!v || !v.trim()) ? '請填寫申訴理由' : null
+    });
+    if (text) {
+        let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: store.userData.id, pw: savedPw, cat: '帳號問題', subcat: '停權申訴', subject: '會員停權申訴', desc: "【停權申訴】\n" + text.trim() }, "申訴單送出中...");
+        if (fetchRes && fetchRes.success) Swal.fire('申訴已送出', '管理員將會進行審核，請靜候聯絡。', 'success');
+        else Swal.fire('錯誤', '申訴送出失敗，請稍後再試。', 'error');
     }
 }
 
@@ -1015,7 +993,7 @@ let _sessionHeartbeatTimer = null;
 function startSessionHeartbeat() {
   if (_sessionHeartbeatTimer) clearInterval(_sessionHeartbeatTimer);
   _sessionHeartbeatTimer = setInterval(function() {
-    if (!currentSessionId || !store || !store.userData || store.userData.isSuspended) return;
+    if (!currentSessionId || !store || !store.userData) return;
     fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSessionActivity', uid: store.userData.id, sessionId: currentSessionId }) }).catch(function(){});
   }, 5 * 60 * 1000);
 }
@@ -1118,7 +1096,7 @@ return `
 }
 
 function checkAutoCompleteOrders() {
-if (!store || !store.orders) return;
+if (!store || !store.orders || store.userData.isSuspended) return; // 🚫 停權期間不觸發自動結單
 const nowTime = Date.now(); 
 let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
 
@@ -1146,7 +1124,7 @@ o.status = "訂單已完成";
 }
 
 function render() {
-if (!store || store.userData.isSuspended) return;
+if (!store) return;
 const u = store.userData || {}; 
 document.getElementById('uName').innerText = u.name || '會員'; 
 document.getElementById('uBal').innerText = (u.bal || 0).toLocaleString();
@@ -1280,34 +1258,40 @@ let isCompleted = statusStr === "訂單已完成";
 let isReturning = statusStr.includes("退貨") || statusStr.includes("退款");
 
 let actionBtnsHtml = "";
-if (isDelivered && !isCompleted && !isReturning) {
-let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => String(n.status||'').includes(s)));
-let deadlineHtml = ""; let canReturn = false;
 
-if (deliveredNode && deliveredNode.time) {
-let dDate = new Date(String(deliveredNode.time).replace(/-/g, '/'));
-if (!isNaN(dDate.getTime())) {
-let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000);
-let nowTime = Date.now();
-if (nowTime <= limitTime) {
-canReturn = true; 
-let limitObj = new Date(limitTime);
-let yyyy = limitObj.getFullYear();
-let mm = String(limitObj.getMonth() + 1).padStart(2, '0'); 
-let dd = String(limitObj.getDate()).padStart(2, '0');
-deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${yyyy}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
+// 🚫 停權狀態攔截所有訂單操作按鈕
+if (store.userData && store.userData.isSuspended) {
+    actionBtnsHtml = `<div style="text-align:center; padding:8px; background:#fee2e2; color:#b91c1c; border-radius:8px; margin-top:10px; font-size:0.8em; font-weight:bold;">🚫 停權期間無法執行訂單操作</div>`;
 } else {
-deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
-}
-}
-}
+    if (isDelivered && !isCompleted && !isReturning) {
+    let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => String(n.status||'').includes(s)));
+    let deadlineHtml = ""; let canReturn = false;
 
-if (canReturn) { actionBtnsHtml += `<button class="btn" style="background:var(--green); margin-top:15px;" onclick="completeOrder('${o.id}')">✅ 完成訂單</button>`; actionBtnsHtml += deadlineHtml; actionBtnsHtml += `<button class="btn" style="background:transparent; color:var(--red); border:1px solid var(--red); margin-top:5px;" onclick="applyReturn('${o.id}')">🚨 申請退貨/退款</button>`; } 
-else { actionBtnsHtml += deadlineHtml; }
-}
+    if (deliveredNode && deliveredNode.time) {
+    let dDate = new Date(String(deliveredNode.time).replace(/-/g, '/'));
+    if (!isNaN(dDate.getTime())) {
+    let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000);
+    let nowTime = Date.now();
+    if (nowTime <= limitTime) {
+    canReturn = true; 
+    let limitObj = new Date(limitTime);
+    let yyyy = limitObj.getFullYear();
+    let mm = String(limitObj.getMonth() + 1).padStart(2, '0'); 
+    let dd = String(limitObj.getDate()).padStart(2, '0');
+    deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${yyyy}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
+    } else {
+    deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
+    }
+    }
+    }
 
-if (statusStr === "申請取消中") actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:#64748b; width:100%; display:block;" onclick="withdrawCancelOrder('${o.id}')">↩️ 撤回取消申請</button>`;
-else if (isCancellable && !isDelivered) actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:transparent; color:var(--red); border:1px solid var(--red); width:100%; display:block;" onclick="applyCancelOrder('${o.id}')">❌ 申請取消訂單</button>`;
+    if (canReturn) { actionBtnsHtml += `<button class="btn" style="background:var(--green); margin-top:15px;" onclick="completeOrder('${o.id}')">✅ 完成訂單</button>`; actionBtnsHtml += deadlineHtml; actionBtnsHtml += `<button class="btn" style="background:transparent; color:var(--red); border:1px solid var(--red); margin-top:5px;" onclick="applyReturn('${o.id}')">🚨 申請退貨/退款</button>`; } 
+    else { actionBtnsHtml += deadlineHtml; }
+    }
+
+    if (statusStr === "申請取消中") actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:#64748b; width:100%; display:block;" onclick="withdrawCancelOrder('${o.id}')">↩️ 撤回取消申請</button>`;
+    else if (isCancellable && !isDelivered) actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:transparent; color:var(--red); border:1px solid var(--red); width:100%; display:block;" onclick="applyCancelOrder('${o.id}')">❌ 申請取消訂單</button>`;
+}
 
 return `<div class="card"><div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div><div style="margin:5px 0;"><b>狀態: ${statusStr}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${briefItemHtml}</div><div style="font-size:1.1em; color:var(--red); margin:5px 0;"><b>訂單總金額: $${o.total || o.totalAmount || 0}</b></div><div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">${o.ship || '未知物流'} | 單號: ${o.track || '無'}</div><button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup('${o.id}')">🔍 查看訂單詳細資訊</button>${actionBtnsHtml}</div>`;
 }).join('') || `<p style="text-align:center; opacity:0.3;">${currentOrderTab === 'ALL' ? '無訂單紀錄' : '此分類目前無訂單'}</p>`;
@@ -1427,6 +1411,7 @@ Swal.fire({ title: '📋 訂單詳細資訊', html: htmlContent, confirmButtonCo
 }
 
 async function applyCancelOrder(oid) {
+if (store.userData && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法執行訂單操作', 'warning');
 const { value: reason } = await Swal.fire({ title: '申請取消訂單', input: 'select', inputOptions: { '不想買了 / 改變心意': '不想買了 / 改變心意', '修改商品規格或數量': '修改商品規格或數量', '付款方式設定錯誤': '付款方式設定錯誤', '賣家未回覆 / 出貨過慢': '賣家未回覆 / 出貨過慢', '其他原因': '其他原因' }, inputPlaceholder: '請選擇取消原因', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定取消', cancelButtonText: '保留訂單' });
 if (reason) {
 try {
@@ -1437,6 +1422,7 @@ if (res && res.success) Swal.fire('申請成功', res.message, 'success').then((
 }
 
 async function withdrawCancelOrder(oid) {
+if (store.userData && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法執行訂單操作', 'warning');
 const { isConfirmed } = await Swal.fire({ title: '撤回取消申請', html: '<div style="color:var(--red); font-weight:bold;">若您選擇撤回此筆訂單取消申請，則您無法再次提出取消訂單要求。<br><br>您確定要繼續嗎？</div>', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--green)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定撤回', cancelButtonText: '不撤回' });
 if (isConfirmed) {
 try {
@@ -1447,6 +1433,7 @@ if (res && res.success) Swal.fire('撤回成功', res.message, 'success').then((
 }
 
 async function completeOrder(oid) {
+if (store.userData && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法執行訂單操作', 'warning');
 const { isConfirmed } = await Swal.fire({ title: '確認完成訂單？', html: `<div style="font-weight:bold; color:var(--red); line-height:1.6;">在點選完成訂單之前，請務必檢查您所收到的商品是否正確無誤(無退貨/退款需求)。<br><br>提醒您，一旦確認完成訂單後，訂單款項將撥款給賣家。</div>`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--green)', cancelButtonColor: '#94a3b8', confirmButtonText: '確認收件無誤', cancelButtonText: '取消' });
 if (isConfirmed) {
 try {
@@ -1470,6 +1457,7 @@ canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'
 }
 
 async function applyReturn(oid) {
+if (store.userData && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法執行訂單操作', 'warning');
 returnPhotoBase64 = null; const o = (store.orders || []).find(ord => ord.id === String(oid)); if(!o) return;
 let rawItem = o.desc || o.item || '無商品明細'; let itemsArray = String(rawItem).includes(';') && !String(rawItem).includes('\n') ? String(rawItem).split(';') : String(rawItem).split('\n'); itemsArray = itemsArray.map(i => i.trim().replace(/^- /, '')).filter(i => i);
 let checkboxesHtml = itemsArray.map((item, idx) => `<label style="display:flex; align-items:center; gap:8px; margin:5px 0; text-align:left; font-size:15px; cursor:pointer;"><input type="checkbox" class="return-item-checkbox" value="${item.replace(/"/g, '&quot;')}" style="width:20px; height:20px; margin:0; flex-shrink:0;"><span style="flex:1; line-height:1.3;">${item}</span></label>`).join('');
@@ -1656,6 +1644,7 @@ Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.nu
 }
 }
 
+// ── 帳單 (Loans) 與 Installments (BNPL) 展開介面 ──
 function renderLoans() {
 if (!store || !store.loans) return;
 const filteredLoans = store.loans.filter(l => { const statusStr = String(l.status||''); const isCleared = (statusStr === '已結清' || statusStr === 'Macro已結清'); const isOverdue = (!isCleared && l.penalty > 0); if (currentLoanTab === 1) return isCleared; else if (currentLoanTab === 2) return isOverdue; else return !isCleared && !isOverdue; });
@@ -1682,7 +1671,7 @@ document.getElementById('lList').innerHTML = filteredLoans.map(l => {
                     <span style="color:${statusColor}; font-weight:bold;">${instStatus}</span>
                 </div>
                 <div style="font-size:0.8em; margin-top:4px;">應繳: $${inst.amount + inst.lateFee} (含罰金 $${inst.lateFee})</div>
-                <div style="font-size:0.75em; color:#666; margin-top:2px;">到期日: ${inst.dueDate}</div>
+                <div style="font-size:0.75em; color:#666; margin-top:2px;">到期日: ${formatDateString(inst.dueDate)}</div>
                 ${payBtn}
             </div>`;
         }).join('');
@@ -1787,6 +1776,7 @@ autoLayoutResizeTimer = setTimeout(applyAutoLayoutMode, 150);
 applyAutoLayoutMode(); 
 
 async function updateProfileName() {
+if (store && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法修改個人資料', 'warning');
 if (!store || !store.userData) return;
 const confirmStep1 = await Swal.fire({ title: '確定要修改基本資料嗎？', text: '您即將變更您的會員個人資料。', icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonText: '取消', confirmButtonText: '確定前往' });
 if (!confirmStep1.isConfirmed) return;
@@ -1803,6 +1793,7 @@ else if (res) showCustomerServiceAlert("基本資料更新失敗", res.message |
 }
 
 async function updateUserPassword() {
+if (store && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法修改密碼', 'warning');
 if (!store || !store.userData) return;
 const confirmStep1 = await Swal.fire({ title: '確定要變更登入密碼嗎？', text: '密碼變更成功後，系統將強制安全登出，您需要使用新密碼重新登入。', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '確定前往' });
 if (!confirmStep1.isConfirmed) return;
@@ -1913,6 +1904,7 @@ showConfirmButton: false, showCloseButton: true
 }
 
 window.showNewTicketForm = function() {
+if (store && store.userData.isSuspended) return Swal.fire('提示', '停權期間僅能查看歷史工單，如需申訴請使用置頂橫幅中的「我要申訴」按鈕，或透過訪客通報聯絡官方。', 'warning');
 Swal.fire({
 title: '建立新通報',
 html: `
@@ -1949,15 +1941,24 @@ window.openChatWindow = function(tid) {
 let msgs = (store.chatMessages || []).filter(m => m.tid === tid);
 let chatHtml = msgs.map(m => `<div class="msg-bubble ${m.sender==='Admin'?'msg-admin':'msg-user'}">${m.msg}<div class="msg-time">${m.time}</div></div>`).join('');
 
+let chatInputHtml = "";
+if (store && store.userData.isSuspended) {
+    chatInputHtml = `<div style="padding:10px; text-align:center; color:var(--red); font-size:13px; font-weight:bold;">🚫 停權期間無法傳送新訊息</div>`;
+} else {
+    chatInputHtml = `
+       <div class="chat-input-area">
+           <input type="text" id="user_chat_input" placeholder="輸入訊息...">
+           <button onclick="sendUserChat('${tid}')" style="background:var(--pink); color:#fff; border:none;">傳送</button>
+       </div>
+    `;
+}
+
 Swal.fire({
 title: `即時交談 (${tid})`,
 html: `
                    <div class="chat-container">
                        <div class="chat-box" id="user_chat_box">${chatHtml}</div>
-                       <div class="chat-input-area">
-                           <input type="text" id="user_chat_input" placeholder="輸入訊息...">
-                           <button onclick="sendUserChat('${tid}')" style="background:var(--pink); color:#fff; border:none;">傳送</button>
-                       </div>
+                       ${chatInputHtml}
                    </div>
                `,
 showConfirmButton: false, showCloseButton: true, width: '90%', padding: '10px'
@@ -1966,6 +1967,7 @@ setTimeout(() => { let box = document.getElementById('user_chat_box'); if(box) b
 }
 
 window.sendUserChat = async function(tid) {
+if (store && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法發送訊息', 'warning');
 let input = document.getElementById('user_chat_input'); let msg = input.value.trim();
 if(!msg) return; input.value = '';
 let box = document.getElementById('user_chat_box');
@@ -1976,7 +1978,6 @@ if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 5
 }
 </script>
 
-<!-- 📄 法律文件閱讀器 -->
 <div id="legalReaderOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:2147483647; flex-direction:column; overflow:hidden; font-family:inherit;">
 <div style="position:sticky; top:0; background:#fff; padding:14px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #e5e7eb; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
 <button onclick="document.getElementById('legalReaderOverlay').style.display='none'" style="all:unset; cursor:pointer; border:1px solid #e5e7eb; padding:6px 14px; border-radius:20px; font-size:0.82em; font-weight:bold; color:#374151; background:#f9fafb; flex-shrink:0;">← 關閉</button>
