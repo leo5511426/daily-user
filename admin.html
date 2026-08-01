@@ -72,7 +72,7 @@
             <button class="q-btn" style="background:#8b5cf6" onclick="quickGoNotify()">📤 發送推播</button>
             <button class="q-btn" style="background:#db2777" onclick="quickGoCoupon()">➕ 發送優惠券</button>
         </div>
-        <div id="couponRedeemBtn" style="display:none;"><button onclick="submitRedeem()" style="background:var(--accent); font-size:18px; padding:20px;">立即核銷此券</button></div>
+        <div id="couponRedeemBtn" style="display:none;"><button onclick="submitRedeem()" style="background:var(--accent); font-size:18px; padding:20px;">力即核銷此券</button></div>
         <button onclick="closeQuick()" style="background:none; color:#999; margin-top:15px; border:none; font-size:14px;">取消</button>
     </div>
 </div>
@@ -98,7 +98,7 @@
     <h3 style="margin:0 0 10px; color: var(--red);">🚫 會員停權與限制管理</h3>
     <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
         <h4 style="margin:0 0 5px 0; color:var(--dark);">🛑 執行會員停權</h4>
-        <p style="font-size:0.8em; color:#666; margin-top:0;">被停權的會員登入時，將被強制引導至停權申訴畫面，無法存取任何服務。</p>
+        <p style="font-size:0.8em; color:#666; margin-top:0;">被停權的會員可正常開啟系統唯讀查詢，但無法執行任何訂單或修改操作。</p>
         <select id="suspend_uid"></select>
         <input type="text" id="suspend_reason" placeholder="停權原因（必填，會員登入時會看到此原因）">
         <select id="suspend_days">
@@ -230,19 +230,19 @@
     <button onclick="addLoan()" style="background:var(--accent); margin-top:10px;">確認撥發借款</button>
 </div>
 
-<!-- ✨ BNPL 2.0 分期計畫建立區塊 ✨ -->
+<!-- ✨ BNPL 2.0 分期計畫建立區塊 (修正版) ✨ -->
 <div class="card" id="bnpl_plan_section" style="border: 2px solid var(--blue);">
     <h3 style="margin:0 0 5px; color:var(--blue);">💳 建立/轉換 BNPL 分期計畫</h3>
     <p style="font-size:0.8em; color:#666; margin:0 0 8px 0;">將既有一般帳單或未分期的先享後付訂單，轉換為多期分期付款計畫。</p>
     <label class="section-label">選擇會員<span class="req"> *</span></label>
-    <select id="bnpl_plan_uid"></select>
-    <label class="section-label">指定關聯母帳單(關鍵字/名稱)<span class="req"> *</span></label>
-    <input type="text" id="bnpl_plan_keyword" placeholder="請輸入貸款項目名稱以配對，例：先享後付">
+    <select id="bnpl_plan_uid" onchange="loadEligibleLoans()"></select>
+    <label class="section-label">指定關聯母帳單<span class="req"> *</span></label>
+    <select id="bnpl_plan_loan_id"><option value="">-- 請先選擇會員 --</option></select>
     <label class="section-label">欲建立的分期期數<span class="req"> *</span></label>
     <input type="number" id="bnpl_plan_periods" value="3" min="2" max="24">
     <label class="section-label">總利息/手續費(%)</label>
     <input type="number" id="bnpl_plan_interest" value="0" min="0" placeholder="例：輸入 5 代表加收 5% 總利息">
-    <button onclick="createBnplPlanSubmit()" style="background:var(--blue); margin-top:10px;">🚀 產生並發布分期計畫</button>
+    <button onclick="createLoanPlanSubmit()" style="background:var(--blue); margin-top:10px;">🚀 產生並發布分期計畫</button>
 </div>
 
 <div class="card" id="coupon_section">
@@ -338,8 +338,7 @@
 <div id="wizModal" class="modal"><div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div></div>
 
 <script>
-    // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbw5unbZjaWySmOGdcayDuNe3ukK7yHugAZX4AQ1DC-VCh7XRJFId3xgipdKlR4yWD1t/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbw0hKjR6oKkAKnh92VMFj_cbsPUR1s0Df0ozruAJQ1Jlz976hOsttIhRdwv1VVUyoQ4/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
@@ -452,7 +451,10 @@
         let uOpts = U_DB.map(u => `<option value="${u.id}">${u.name} (ID: ${u.id})</option>`).join('');
         document.getElementById('l_uid').innerHTML = uOpts; 
         document.getElementById('cp_uid').innerHTML = uOpts;
-        document.getElementById('bnpl_plan_uid').innerHTML = uOpts;
+        
+        document.getElementById('bnpl_plan_uid').innerHTML = '<option value="">--請選擇要分期的會員--</option>' + uOpts;
+        document.getElementById('bnpl_plan_loan_id').innerHTML = '<option value="">-- 請先選擇會員 --</option>';
+
         document.getElementById('suspend_uid').innerHTML = '<option value="">--請選擇要停權的會員--</option>' + uOpts;
         document.getElementById('nt_uid').innerHTML = '<option value="ALL">📢 群發所有會員</option>' + uOpts;
         document.getElementById('o_new_uid').innerHTML = '<option value="">--請選擇購買會員--</option>' + uOpts;
@@ -484,7 +486,6 @@
         document.getElementById('cs_ticket_select').innerHTML = '<option value="">-- 選擇工單 --</option>' + TIC_DB.filter(t=>t.status!='已結案').map(t=>`<option value="${t.tid}">${t.tid} (${t.status})</option>`).join('');
     }
 
-    // 🚫 執行停權
     async function suspendUserSubmit() {
         let uid = document.getElementById('suspend_uid').value;
         let reason = document.getElementById('suspend_reason').value.trim();
@@ -501,7 +502,6 @@
         }
     }
 
-    // 🟢 解除停權
     async function liftSuspensionSubmit() {
         let uid = document.getElementById('lift_suspension_uid').value;
         if(!uid) return Swal.fire("提示", "目前沒有選擇任何執行中的停權會員。", "warning");
@@ -527,17 +527,29 @@
         if(!res.aborted) handlePostSuccess(res);
     }
 
-    async function createBnplPlanSubmit() {
+    // 🚨 BNPL 2.0 修正：動態載入 SINGLE 帳單
+    function loadEligibleLoans() {
         let uid = document.getElementById('bnpl_plan_uid').value;
-        let kw = document.getElementById('bnpl_plan_keyword').value.trim();
+        let eligible = L_DB.filter(l => l.uid === uid && l.loanType === 'SINGLE' && l.status !== 'PAID');
+        if (eligible.length === 0) {
+            document.getElementById('bnpl_plan_loan_id').innerHTML = '<option value="">-- 該會員無可用的一般帳單 --</option>';
+        } else {
+            document.getElementById('bnpl_plan_loan_id').innerHTML = eligible.map(l => `<option value="${l.id}">${l.item} (剩餘應繳: $${l.totalDue})</option>`).join('');
+        }
+    }
+
+    // 🚨 BNPL 2.0 修正：呼叫 createLoanPlan
+    async function createLoanPlanSubmit() {
+        let uid = document.getElementById('bnpl_plan_uid').value;
+        let loanId = document.getElementById('bnpl_plan_loan_id').value;
         let periods = document.getElementById('bnpl_plan_periods').value;
         let interest = document.getElementById('bnpl_plan_interest').value;
-        if(!uid || !kw || !periods) return Swal.fire("提示", "請填寫必填欄位", "warning");
+        if(!uid || !loanId || !periods) return Swal.fire("提示", "請確實填寫與選擇所有必填欄位", "warning");
 
         let notifyMode = await confirmActionWithPush('建立分期計畫');
         if(!notifyMode) return;
 
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'createBnplPlan', uid: uid, loanItemKeyword: kw, periods: Number(periods), interestRate: Number(interest), notifyMode: notifyMode }, "產生分期中...");
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'createLoanPlan', uid: uid, loanId: loanId, periods: Number(periods), interestRate: Number(interest), notifyMode: notifyMode }, "產生分期中...");
         if(!res.aborted) handlePostSuccess(res);
     }
 
@@ -874,13 +886,12 @@
 
             if (code.startsWith("PAY|")) {
                 const parts = code.split("|");
-                // PAY|loanId|uid|amt (保留對舊版相容)
                 if (parts.length === 4) {
                     const [, loanId, uid, amt] = parts;
                     const user = U_DB.find(u => u.id === uid);
                     const loan = L_DB.find(l => String(l.id) === loanId || String(l.row) === loanId);
                     if (!user || !loan) return Swal.fire("查無資料", `找不到帳單 ${loanId} 或會員 ${uid}`, "error");
-                    if (loan.status === "已結清" || loan.status === "Macro已結清") return Swal.fire("提示", "此帳單已結清！", "warning");
+                    if (loan.status === "PAID") return Swal.fire("提示", "此帳單已結清！", "warning");
                     
                     FORM = { uid: uid, loanRef: String(loan.row), amt: amt };
                     CUR_MODE = "pay"; CUR_STEP = FLOWS.pay.length - 2; 
@@ -891,7 +902,7 @@
                 }
             }
             
-            // BNPL 2.0 新分期繳款條碼 (PAY_INST|installmentId|uid|amt)
+            // 🚨 修正 API 名稱為 payInstallment 
             if (code.startsWith("PAY_INST|")) {
                 const parts = code.split("|");
                 if (parts.length === 4) {
@@ -905,7 +916,7 @@
                         cancelButtonText: '取消'
                     }).then(async (res) => {
                         if (res.isConfirmed) {
-                            let fetchRes = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payBnplInstallment', installmentId: instId, amt: Number(amt), method: '現金收款' }, "收款處理中...");
+                            let fetchRes = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payInstallment', installmentId: instId, amt: Number(amt), method: '現金收款' }, "收款處理中...");
                             if (!fetchRes.aborted) handlePostSuccess(fetchRes);
                         }
                     });
@@ -916,7 +927,7 @@
             if (code.startsWith("CP")) {
                 const cp = CP_DB.find(c => String(c.id) === code);
                 if (cp) {
-                    if (cp.status === "已使用" || cp.status === "已核銷") return Swal.fire("提示", "此券已核銷過！", "warning"); 
+                    if (cp.status === "已使用" || cp.status === "已過期") return Swal.fire("提示", "此券已無法使用！", "warning"); 
                     FORM.cpId = code; const owner = U_DB.find(u => u.id === cp.uid); document.getElementById('targetName').innerText = "🎟️ 識別到優惠券"; document.getElementById('targetDesc').innerText = `券名：${cp.title}\n持有人：${owner ? owner.name : '未知'}`; document.getElementById('quickBtns').style.display = 'none'; document.getElementById('couponRedeemBtn').style.display = 'block'; document.getElementById('quickActionModal').style.display = 'flex';
                 } else Swal.fire("查無此券", "找不到券號：" + code, "error");
             } else {
@@ -972,9 +983,9 @@
     function renderStep() {
         const flow = FLOWS[CUR_MODE]; let stepInfo = flow[CUR_STEP]; if (CUR_STEP === 0 && FORM.uid && stepInfo.f === "uid") { CUR_STEP++; stepInfo = flow[CUR_STEP]; }
         let html = `<h3>${stepInfo.t}</h3>`;
-        if (stepInfo.type === "user") html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`; else if (stepInfo.type === "number") html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`; else if (stepInfo.type === "loan") { const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清" && l.loanType !== "BNPL_INSTALLMENT"); if (userLoans.length === 0) html += `<p style="color:var(--red); font-weight:bold;">此會員目前無待繳的「一般」帳單 (分期請掃碼或讓買家自行繳納)</p><input type="hidden" id="wiz_val" value="">`; else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.totalDue})</option>`).join('')}</select>`; } else html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
+        if (stepInfo.type === "user") html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`; else if (stepInfo.type === "number") html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`; else if (stepInfo.type === "loan") { const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "PAID" && l.loanType !== "INSTALLMENT"); if (userLoans.length === 0) html += `<p style="color:var(--red); font-weight:bold;">此會員目前無待繳的「一般」帳單 (分期請掃碼或讓買家自行繳納)</p><input type="hidden" id="wiz_val" value="">`; else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.totalDue})</option>`).join('')}</select>`; } else html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
         document.getElementById('wizBody').innerHTML = html; const nextBtn = document.getElementById('nextBtn');
-        if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "已結清" && l.status !== "Macro已結清" && l.loanType !== "BNPL_INSTALLMENT").length === 0) nextBtn.style.display = 'none'; else { nextBtn.style.display = 'block'; nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步"; }
+        if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "PAID" && l.loanType !== "INSTALLMENT").length === 0) nextBtn.style.display = 'none'; else { nextBtn.style.display = 'block'; nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步"; }
     }
     
     function wizNext() {
@@ -1072,7 +1083,6 @@
 
     async function editLegalDocForm(docId) {
         let doc = LEGAL_DB.find(d => d.docId === docId); if (!doc) return;
-        // Escape HTML special chars in content for textarea display
         let safeContent = (doc.content || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         const { value: fd } = await Swal.fire({
             title: `✏️ 編輯 ${doc.docId}`,
