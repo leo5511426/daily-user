@@ -356,9 +356,8 @@
 
 <script>
     // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbwO6VFnnCp3yYXBz14xGtNSUxar75UT3IVrpeX1TNgSciE2K28DaeKxPNZn67rf_fzY/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbzRD6q1fUCU0-7VMpyykI5Uptr8msYGXx4KVWURWPFAhPnUuhRcjM5-iSHtwB3mFHEp/exec"; 
     
-    // 🚨 修正：新增 INST_DB 接收 Installments
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], INST_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
 
@@ -459,7 +458,6 @@
         let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
         if (res.success) {
             U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{}; LEGAL_DB = res.legalDocs||[]; ACTIVE_SUSPENSIONS = res.activeSuspensions||[]; 
-            // 🚨 修正：接回 Installments 資料
             INST_DB = res.installments||[];
             
             updateSelects(); renderAdminTimeline(); renderLegalDocList_Admin();
@@ -483,7 +481,6 @@
         document.getElementById('inv_new_uid').innerHTML = '<option value="">--請選擇所屬會員--</option>' + uOpts;
         document.getElementById('bnpl_uid').innerHTML = '<option value="">--請選擇要調整的會員--</option>' + uOpts;
         
-        // 🚨 修正：BNPL 管理總管的會員選單
         document.getElementById('bnpl_manage_uid').innerHTML = '<option value="">--請選擇會員查看明細--</option>' + uOpts;
         
         let suspOpts = '<option value="">--請選擇目前停權中的會員--</option>';
@@ -1028,7 +1025,6 @@
                 }
             }
             
-            // 🚨 修正 API 名稱為 payInstallment 
             if (code.startsWith("PAY_INST|")) {
                 const parts = code.split("|");
                 if (parts.length === 4) {
