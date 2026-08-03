@@ -356,7 +356,7 @@
 
 <script>
     // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbwwQC3ZxVMkhunZ6cX4PfAAMysQNVDdezqY6KTWyCzz1UOUbz8bJT224jGi6ctrxFck/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbyET3MAImpZWF4YSbxbFKfCwQOQq4tpCxd7kjiNLh-z4JPv1A84qsVyeY6kYoEgqaf9/exec"; 
     
     // 🚨 修正：新增 INST_DB 接收 Installments
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], INST_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
@@ -574,7 +574,7 @@
         let notifyMode = await confirmActionWithPush('確認執行單期收款');
         if(!notifyMode) return;
 
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payInstallment', installmentId: instId, amt: amt, method: '現金收款/系統手動', notifyMode: notifyMode }, "處理中...");
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payInstallment', installmentId: instId, amt: amt, method: '現金收款/系統手手動', notifyMode: notifyMode }, "處理中...");
         if(!res.aborted) handlePostSuccess(res);
     }
 
@@ -1042,7 +1042,7 @@
                         cancelButtonText: '取消'
                     }).then(async (res) => {
                         if (res.isConfirmed) {
-                            let fetchRes = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payInstallment', installmentId: instId, amt: Number(amt), method: '現金收款' }, "收款處理中...");
+                            let fetchRes = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payInstallment', installmentId: instId, amt: Number(amt), method: '現金收款/系統手動' }, "收款處理中...");
                             if (!fetchRes.aborted) handlePostSuccess(fetchRes);
                         }
                     });
