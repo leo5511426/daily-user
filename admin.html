@@ -80,7 +80,7 @@
 <h2 style="text-align:center; letter-spacing:1px;">小佑管理後台</h2>
 
 <div class="menu-grid">
-    <button class="m-btn full-btn" onclick="startScan()">📷 啟 ডান掃描 (會員/券/繳款條碼)</button>
+    <button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (會員/券/繳款條碼)</button>
     <div class="m-btn" onclick="openWiz('add')">💰 手動加值</div>
     <div class="m-btn" onclick="openWiz('sub')">🛒 手動扣除</div>
     <div class="m-btn" onclick="openWiz('pay')">🤝 一般還款入帳</div>
@@ -91,6 +91,38 @@
     <button class="m-btn full-btn" style="background:#8b5cf6; font-size:16px;" onclick="scrollToSection('cs_section')">🎧 線上客服與推播中心</button>
     <button class="m-btn full-btn" style="background:#111827; font-size:16px;" onclick="scrollToSection('suspend_section')">🚫 會員停權與限制管理</button>
     <button class="m-btn full-btn" style="background:#0f172a; font-size:16px;" onclick="scrollToSection('ldms_section')">📋 法律文件管理系統 (LDMS)</button>
+</div>
+
+<!-- ✨ BNPL 2.0 管理總管區塊 (新增) ✨ -->
+<div class="card" id="bnpl_manage_section" style="border: 2px solid var(--blue);">
+    <h3 style="margin:0 0 10px; color: var(--blue);">💼 先享後付 (BNPL) 總管</h3>
+    <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
+        <h4 style="margin:0 0 5px 0; color:var(--dark);">🚨 全系統批次結算</h4>
+        <p style="font-size:0.8em; color:#666; margin-top:0;">掃描所有分期帳單，自動將到期未繳轉為逾期，並計算每日 $10 滯納金。</p>
+        <button onclick="batchUpdateOverdue()" style="background:var(--red);">執行批次逾期結算</button>
+    </div>
+    <div>
+        <h4 style="margin:0 0 5px 0; color:var(--dark);">📋 會員分期明細與操作</h4>
+        <select id="bnpl_manage_uid" onchange="loadBnplManageList()"></select>
+        <div id="bnpl_manage_list" style="margin-top: 10px; max-height: 500px; overflow-y: auto; background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0;">
+            <p style="text-align:center; opacity:0.5; margin:0;">請選擇會員以載入明細</p>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="bnpl_plan_section">
+    <h3 style="margin:0 0 5px;">💳 建立/轉換 BNPL 分期計畫</h3>
+    <p style="font-size:0.8em; color:#666; margin:0 0 8px 0;">將既有一般帳單轉換為多期分期付款計畫。</p>
+    <label class="section-label">選擇會員<span class="req"> *</span></label>
+    <select id="bnpl_plan_uid" onchange="loadEligibleLoans()"></select>
+    <label class="section-label">指定關聯母帳單<span class="req"> *</span></label>
+    <!-- 下拉選單綁定精準 loanId -->
+    <select id="bnpl_plan_loan_id"><option value="">-- 請先選擇會員 --</option></select>
+    <label class="section-label">欲建立的分期期數<span class="req"> *</span></label>
+    <input type="number" id="bnpl_plan_periods" value="3" min="2" max="24">
+    <label class="section-label">總利息/手續費(%)</label>
+    <input type="number" id="bnpl_plan_interest" value="0" min="0" placeholder="例：輸入 5 代表加收 5% 總利息">
+    <button onclick="createLoanPlanSubmit()" style="background:var(--blue); margin-top:10px;">🚀 產生並發布分期計畫</button>
 </div>
 
 <!-- ✨ 會員停權與限制管理 區塊 ✨ -->
@@ -117,8 +149,8 @@
     </div>
 </div>
 
-<div class="card" style="border: 2px solid var(--blue);">
-    <h3 style="margin:0 0 10px; color: var(--blue);">💳 調整先享後付額度</h3>
+<div class="card">
+    <h3 style="margin:0 0 10px;">💳 調整先享後付額度</h3>
     <p style="font-size:0.85em; color:#666; margin-top:0;">強制調整會員的先享後付信用總額度 (最高 500，輸入 0 則代表停權)。</p>
     <select id="bnpl_uid"></select>
     <input type="number" id="bnpl_limit" placeholder="輸入新額度 (例：500)  ← 必填" max="500" min="0">
@@ -230,22 +262,6 @@
     <button onclick="addLoan()" style="background:var(--accent); margin-top:10px;">確認撥發借款</button>
 </div>
 
-<!-- ✨ BNPL 2.0 分期計畫建立區塊 (修正版) ✨ -->
-<div class="card" id="bnpl_plan_section" style="border: 2px solid var(--blue);">
-    <h3 style="margin:0 0 5px; color:var(--blue);">💳 建立/轉換 BNPL 分期計畫</h3>
-    <p style="font-size:0.8em; color:#666; margin:0 0 8px 0;">將既有一般帳單或未分期的先享後付訂單，轉換為多期分期付款計畫。</p>
-    <label class="section-label">選擇會員<span class="req"> *</span></label>
-    <select id="bnpl_plan_uid" onchange="loadEligibleLoans()"></select>
-    <label class="section-label">指定關聯母帳單<span class="req"> *</span></label>
-    <!-- 改為下拉選單綁定精準 loanId -->
-    <select id="bnpl_plan_loan_id"><option value="">-- 請先選擇會員 --</option></select>
-    <label class="section-label">欲建立的分期期數<span class="req"> *</span></label>
-    <input type="number" id="bnpl_plan_periods" value="3" min="2" max="24">
-    <label class="section-label">總利息/手續費(%)</label>
-    <input type="number" id="bnpl_plan_interest" value="0" min="0" placeholder="例：輸入 5 代表加收 5% 總利息">
-    <button onclick="createLoanPlanSubmit()" style="background:var(--blue); margin-top:10px;">🚀 產生並發布分期計畫</button>
-</div>
-
 <div class="card" id="coupon_section">
     <h3 style="margin:0 0 5px;">🎟️ 發送實體優惠券</h3>
     <p style="font-size:0.8em; color:var(--red); margin:0 0 8px 0;"><span class="req">*</span> 為必填欄位</p>
@@ -342,7 +358,8 @@
     // ⚠️ 替換為您的最新 GAS 部署網址
     const GAS = "https://script.google.com/macros/s/AKfycbwwQC3ZxVMkhunZ6cX4PfAAMysQNVDdezqY6KTWyCzz1UOUbz8bJT224jGi6ctrxFck/exec"; 
     
-    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
+    // 🚨 修正：新增 INST_DB 接收 Installments
+    let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], INST_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
 
     async function confirmActionWithPush(title) {
@@ -441,7 +458,10 @@
     async function refresh() {
         let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
         if (res.success) {
-            U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{}; LEGAL_DB = res.legalDocs||[]; ACTIVE_SUSPENSIONS = res.activeSuspensions||[];
+            U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{}; LEGAL_DB = res.legalDocs||[]; ACTIVE_SUSPENSIONS = res.activeSuspensions||[]; 
+            // 🚨 修正：接回 Installments 資料
+            INST_DB = res.installments||[];
+            
             updateSelects(); renderAdminTimeline(); renderLegalDocList_Admin();
             const nowTime = getNowDateTimeString();
             if (document.getElementById('t_log_time')) document.getElementById('t_log_time').value = nowTime; 
@@ -462,6 +482,9 @@
         document.getElementById('o_new_uid').innerHTML = '<option value="">--請選擇購買會員--</option>' + uOpts;
         document.getElementById('inv_new_uid').innerHTML = '<option value="">--請選擇所屬會員--</option>' + uOpts;
         document.getElementById('bnpl_uid').innerHTML = '<option value="">--請選擇要調整的會員--</option>' + uOpts;
+        
+        // 🚨 修正：BNPL 管理總管的會員選單
+        document.getElementById('bnpl_manage_uid').innerHTML = '<option value="">--請選擇會員查看明細--</option>' + uOpts;
         
         let suspOpts = '<option value="">--請選擇目前停權中的會員--</option>';
         if (ACTIVE_SUSPENSIONS.length > 0) {
@@ -488,7 +511,109 @@
         document.getElementById('cs_ticket_select').innerHTML = '<option value="">-- 選擇工單 --</option>' + TIC_DB.filter(t=>t.status!='已結案').map(t=>`<option value="${t.tid}">${t.tid} (${t.status})</option>`).join('');
     }
 
-    // 🚫 執行停權
+    // ==================== 💼 BNPL 2.0 管理總管 UI 邏輯 ====================
+    function loadBnplManageList() {
+        let uid = document.getElementById('bnpl_manage_uid').value;
+        let listEl = document.getElementById('bnpl_manage_list');
+        if(!uid) { listEl.innerHTML = '<p style="text-align:center; opacity:0.5; margin:0;">請選擇會員以載入明細</p>'; return; }
+        
+        let uLoans = L_DB.filter(l => l.uid === uid && l.loanType === 'INSTALLMENT');
+        if(uLoans.length === 0) { listEl.innerHTML = '<p style="text-align:center; opacity:0.5; margin:0;">此會員目前無分期帳單紀錄</p>'; return; }
+
+        listEl.innerHTML = uLoans.map(l => {
+            let insts = INST_DB.filter(i => i.loanId === l.id);
+            insts.sort((a,b) => a.installmentNo - b.installmentNo);
+            
+            let instHtml = insts.map(i => {
+                let rem = Math.max(0, i.amount + i.lateFee - i.paidAmount);
+                let waiveBtn = (i.lateFee > 0 && i.status !== 'WAIVED' && i.status !== 'PAID') 
+                    ? `<button onclick="adminWaiveInstallment('${i.installmentId}')" style="padding:4px 8px; font-size:11px; background:var(--orange);">減免滯納金</button>` : '';
+                let payBtn = (i.status !== 'PAID' && rem > 0)
+                    ? `<button onclick="adminPayInstallment('${i.installmentId}', ${rem})" style="padding:4px 8px; font-size:11px; background:var(--green);">單期/部分繳款</button>` : '';
+                
+                return `
+                <div style="background:#fff; border:1px solid #ddd; padding:10px; border-radius:8px; margin-top:8px; font-size:0.85em;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <b>第 ${i.installmentNo}/${i.totalInstallments} 期</b>
+                        <span style="color:${i.status==='PAID'?'var(--green)':'var(--red)'}; font-weight:bold;">${i.status}</span>
+                    </div>
+                    <div style="color:#666; margin:3px 0;">應繳本金: $${i.amount} | 已繳: $${i.paidAmount} | 滯納金: $${i.lateFee}</div>
+                    <div style="color:var(--red); font-weight:bold; margin-bottom:8px;">本期剩餘應繳: $${rem}</div>
+                    <div style="display:flex; gap:8px;">${payBtn}${waiveBtn}</div>
+                </div>`;
+            }).join('');
+
+            let payAllBtn = (l.status !== 'PAID') ? `<button onclick="adminPayAllInstallments('${l.id}')" style="width:100%; margin-top:10px; background:var(--primary); font-size:0.9em;">💰 提前全部結清</button>` : '';
+
+            return `
+            <div style="background:#f1f5f9; border:2px solid var(--blue); padding:15px; border-radius:10px; margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="color:var(--dark); font-size:1.1em;">${l.item}</b>
+                    <span style="font-size:0.8em; background:${l.status==='PAID'?'var(--green)':'var(--red)'}; color:#fff; padding:3px 8px; border-radius:6px; font-weight:bold;">${l.status}</span>
+                </div>
+                <div style="font-size:0.9em; color:#555; margin-top:8px; font-weight:bold;">總剩餘應繳餘額: <span style="color:var(--red);">$${l.totalDue}</span></div>
+                ${payAllBtn}
+                <div style="margin-top:15px;">${instHtml}</div>
+            </div>`;
+        }).join('');
+    }
+
+    async function adminPayInstallment(instId, remAmt) {
+        let { value: amtStr } = await Swal.fire({
+            title: '單期/部分付款',
+            input: 'number',
+            inputLabel: `本期剩餘應繳：$${remAmt}`,
+            inputValue: remAmt,
+            showCancelButton: true,
+            confirmButtonText: '確定收款'
+        });
+        if(!amtStr) return;
+        let amt = Number(amtStr);
+        if(amt <= 0 || amt > remAmt) return Swal.fire('錯誤', '金額無效或大於應繳餘額', 'error');
+        
+        let notifyMode = await confirmActionWithPush('確認執行單期收款');
+        if(!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payInstallment', installmentId: instId, amt: amt, method: '現金收款/系統手動', notifyMode: notifyMode }, "處理中...");
+        if(!res.aborted) handlePostSuccess(res);
+    }
+
+    async function adminPayAllInstallments(loanId) {
+        let { value: amtStr } = await Swal.fire({
+            title: '提前全部結清',
+            input: 'number',
+            inputLabel: '請輸入結清總金額',
+            showCancelButton: true,
+            confirmButtonText: '確定全部結清'
+        });
+        if(!amtStr) return;
+        let amt = Number(amtStr);
+        if(amt <= 0) return Swal.fire('錯誤', '金額無效', 'error');
+
+        let notifyMode = await confirmActionWithPush('確認提前全部結清');
+        if(!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'payAllInstallments', loanId: loanId, amt: amt, method: '現金收款/系統手動', notifyMode: notifyMode }, "處理中...");
+        if(!res.aborted) handlePostSuccess(res);
+    }
+
+    async function adminWaiveInstallment(instId) {
+        let notifyMode = await confirmActionWithPush('確認減免此期滯納金？');
+        if(!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'waivedInstallment', installmentId: instId, notifyMode: notifyMode }, "處理中...");
+        if(!res.aborted) handlePostSuccess(res);
+    }
+
+    async function batchUpdateOverdue() {
+        let notifyMode = await confirmActionWithPush('確認批次結算全系統的逾期狀態與滯納金？\n(將掃描所有會員的所有子單)');
+        if(!notifyMode) return;
+
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOverdue', notifyMode: notifyMode }, "結算中...");
+        if(!res.aborted) handlePostSuccess(res);
+    }
+    // ======================================================================
+
     async function suspendUserSubmit() {
         let uid = document.getElementById('suspend_uid').value;
         let reason = document.getElementById('suspend_reason').value.trim();
@@ -505,7 +630,6 @@
         }
     }
 
-    // 🟢 解除停權
     async function liftSuspensionSubmit() {
         let uid = document.getElementById('lift_suspension_uid').value;
         if(!uid) return Swal.fire("提示", "目前沒有選擇任何執行中的停權會員。", "warning");
@@ -531,7 +655,6 @@
         if(!res.aborted) handlePostSuccess(res);
     }
 
-    // 🚨 BNPL 2.0 修正：動態載入 SINGLE 帳單
     function loadEligibleLoans() {
         let uid = document.getElementById('bnpl_plan_uid').value;
         let eligible = L_DB.filter(l => l.uid === uid && l.loanType === 'SINGLE' && l.status !== 'PAID');
@@ -542,7 +665,6 @@
         }
     }
 
-    // 🚨 BNPL 2.0 修正：呼叫 createLoanPlan
     async function createLoanPlanSubmit() {
         let uid = document.getElementById('bnpl_plan_uid').value;
         let loanId = document.getElementById('bnpl_plan_loan_id').value;
