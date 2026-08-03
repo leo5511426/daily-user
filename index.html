@@ -413,7 +413,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyET3MAImpZWF4YSbxbFKfCwQOQq4tpCxd7kjiNLh-z4JPv1A84qsVyeY6kYoEgqaf9/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwO6VFnnCp3yYXBz14xGtNSUxar75UT3IVrpeX1TNgSciE2K28DaeKxPNZn67rf_fzY/exec"; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
 
@@ -1682,6 +1682,7 @@ Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.nu
 } else if (indInvWonList.length > 0) {
 triggerConfetti(); let inv = indInvWonList[0]; let pData = {}; try { pData = JSON.parse(inv.prizeData); } catch(e){}
 Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.num}</b> 幸運中獎啦！<br><br><span style="color:var(--red); font-size:1.5em; font-weight:bold;">${pData.prizeName || '專屬獎'}</span><br><b style="color:var(--orange); font-size:1.3em;">獎金 $${pData.prizeAmt || 0}</b>`, icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '太棒了！' }).then(() => { localStorage.setItem('wonNotified_' + inv.num, 'true'); checkWinningInvoices(); });
+}
 }
 
 // ── 🚨 BNPL 2.0 修正：帳單 (Loans) 與 Installments (BNPL) 展開介面 ──
