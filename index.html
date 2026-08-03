@@ -143,7 +143,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
     font-size: 0.85em; font-weight: bold; z-index: 200; position: sticky; top: 0; width: 100%; box-sizing: border-box;
 }
 
-/* 🚫 停權畫面專屬樣式 */
+/* 🚫 停權畫面專屬樣式 (供非唯讀時使用) */
 #suspendedView {
     display: none; height: 100vh; flex-direction: column; justify-content: center; align-items: center;
     padding: 40px; box-sizing: border-box; text-align: center; background: #fff5f5;
@@ -413,7 +413,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwwQC3ZxVMkhunZ6cX4PfAAMysQNVDdezqY6KTWyCzz1UOUbz8bJT224jGi6ctrxFck/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyET3MAImpZWF4YSbxbFKfCwQOQq4tpCxd7kjiNLh-z4JPv1A84qsVyeY6kYoEgqaf9/exec"; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
 
@@ -1173,7 +1173,7 @@ let totalBnpl = (u.bnplLimit !== undefined && u.bnplLimit !== "") ? Number(u.bnp
 let outstanding = 0;
 
 (store.loans || []).forEach(l => { 
-  // 🚨 修正5：確保 BNPL 額度不會被一般非 BNPL Loan 壓縮
+  // 🚨 確保 BNPL 額度不會被一般非 BNPL Loan 壓縮
   if(l.status !== "PAID" && (l.loanType === 'INSTALLMENT' || String(l.item).includes('先享後付'))) {
       outstanding += (l.totalDue || 0); 
   }
@@ -1682,7 +1682,6 @@ Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.nu
 } else if (indInvWonList.length > 0) {
 triggerConfetti(); let inv = indInvWonList[0]; let pData = {}; try { pData = JSON.parse(inv.prizeData); } catch(e){}
 Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.num}</b> 幸運中獎啦！<br><br><span style="color:var(--red); font-size:1.5em; font-weight:bold;">${pData.prizeName || '專屬獎'}</span><br><b style="color:var(--orange); font-size:1.3em;">獎金 $${pData.prizeAmt || 0}</b>`, icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '太棒了！' }).then(() => { localStorage.setItem('wonNotified_' + inv.num, 'true'); checkWinningInvoices(); });
-}
 }
 
 // ── 🚨 BNPL 2.0 修正：帳單 (Loans) 與 Installments (BNPL) 展開介面 ──
