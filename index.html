@@ -143,7 +143,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
     font-size: 0.85em; font-weight: bold; z-index: 200; position: sticky; top: 0; width: 100%; box-sizing: border-box;
 }
 
-/* 🚫 停權畫面專屬樣式 (保留備用) */
+/* 🚫 停權畫面專屬樣式 */
 #suspendedView {
     display: none; height: 100vh; flex-direction: column; justify-content: center; align-items: center;
     padding: 40px; box-sizing: border-box; text-align: center; background: #fff5f5;
@@ -169,6 +169,23 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <div style="text-align:center; margin-top:20px; font-size:0.78em; color:#aaa;">
 <span onclick="openLegalCenter()" style="cursor:pointer; color:var(--pink); text-decoration:underline;">📋 查看使用條款與隱私權政策</span>
 </div>
+</div>
+
+<!-- 🚫 停權與申訴專屬畫面 (供非唯讀時使用) -->
+<div id="suspendedView">
+    <div style="font-size: 4em; margin-bottom: 10px; animation: lp-shake 0.5s ease;">🚫</div>
+    <h2 style="color:var(--red); margin-top:0;">帳號已停權</h2>
+    <p style="color:#666; font-size:0.9em; margin-top:0;">很抱歉，您的帳號目前受到限制，無法存取會員系統與各項服務。</p>
+    <div style="background:white; border:1px solid #fca5a5; padding:15px; border-radius:15px; width:100%; text-align:left; margin:15px 0; box-shadow: 0 4px 10px rgba(255,0,0,0.05);">
+        <p style="margin:5px 0; font-size:0.95em;"><b>停權原因：</b><br><span id="suspReason" style="color:var(--red);"></span></p>
+        <p style="margin:10px 0 5px 0; font-size:0.95em;"><b>停權期限：</b><br><span id="suspEndTime" style="color:#eab308; font-weight:bold;"></span></p>
+    </div>
+    <div style="width:100%; margin-top:10px; background:rgba(0,0,0,0.03); padding:15px; border-radius:15px; box-sizing:border-box;">
+        <p style="margin:0 0 10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">💬 提出申訴</p>
+        <textarea id="suspAppealDesc" rows="3" placeholder="若您認為停權判定有誤，請在此輸入您的申訴理由與相關說明..." style="width:100%; padding:10px; border-radius:10px; border:1px solid #ccc;"></textarea>
+        <button class="btn" style="background:var(--blue); margin-top:10px; font-size:0.9em;" onclick="submitSuspensionAppeal()">送出申訴單</button>
+    </div>
+    <button class="btn" style="background:transparent; color:#999; border:1px solid #ccc; margin-top:20px; font-size:0.9em;" onclick="triggerLogout()">登出系統</button>
 </div>
 
 <!-- 📱 正常/唯讀 會員系統畫面 -->
@@ -303,8 +320,8 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：V88.0 (BNPL 2.0 一致性修正版)</div>
-<div>更新日期：2026-08-02</div>
+<div>版本：V89.0 (BNPL 2.0 正確性與一致性修正)</div>
+<div>更新日期：2026-08-03</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
 <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
 <span style="margin: 0 6px; opacity:0.4;">｜</span>
@@ -396,7 +413,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm3FOqvfJcl34w_2iuOGNePylP5ipSJZ4eYvIMRDH7Bu_lENiXqPiOkzZWE1Gvlofm/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3S8lOdRUg6z0fiYWOYGRN9rz1B7ADL5TfPbicFFISxPWOQL_BVhkBdM8OFyqrIXC6/exec"; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
 
@@ -649,7 +666,7 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V88.0 (BNPL 2.0 一致性修正版)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V89.0 (BNPL 2.0 正確性與一致性修正)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -1156,7 +1173,10 @@ let totalBnpl = (u.bnplLimit !== undefined && u.bnplLimit !== "") ? Number(u.bnp
 let outstanding = 0;
 
 (store.loans || []).forEach(l => { 
-if(l.status !== "PAID") outstanding += (l.totalDue || 0); 
+  // 🚨 修正5：確保 BNPL 額度不會被一般非 BNPL Loan 壓縮
+  if(l.status !== "PAID" && (l.loanType === 'INSTALLMENT' || String(l.item).includes('先享後付'))) {
+      outstanding += (l.totalDue || 0); 
+  }
 });
 let availBnpl = totalBnpl - outstanding;
 
