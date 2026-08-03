@@ -80,7 +80,7 @@
 <h2 style="text-align:center; letter-spacing:1px;">小佑管理後台</h2>
 
 <div class="menu-grid">
-    <button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (會員/券/繳款條碼)</button>
+    <button class="m-btn full-btn" onclick="startScan()">📷 啟 ডান掃描 (會員/券/繳款條碼)</button>
     <div class="m-btn" onclick="openWiz('add')">💰 手動加值</div>
     <div class="m-btn" onclick="openWiz('sub')">🛒 手動扣除</div>
     <div class="m-btn" onclick="openWiz('pay')">🤝 一般還款入帳</div>
@@ -340,7 +340,7 @@
 
 <script>
     // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycby3S8lOdRUg6z0fiYWOYGRN9rz1B7ADL5TfPbicFFISxPWOQL_BVhkBdM8OFyqrIXC6/exec"; 
+    const GAS = "https://script.google.com/macros/s/AKfycbwwQC3ZxVMkhunZ6cX4PfAAMysQNVDdezqY6KTWyCzz1UOUbz8bJT224jGi6ctrxFck/exec"; 
     
     let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
     let html5QrCode, dragSrcEl = null;
@@ -488,6 +488,7 @@
         document.getElementById('cs_ticket_select').innerHTML = '<option value="">-- 選擇工單 --</option>' + TIC_DB.filter(t=>t.status!='已結案').map(t=>`<option value="${t.tid}">${t.tid} (${t.status})</option>`).join('');
     }
 
+    // 🚫 執行停權
     async function suspendUserSubmit() {
         let uid = document.getElementById('suspend_uid').value;
         let reason = document.getElementById('suspend_reason').value.trim();
@@ -504,6 +505,7 @@
         }
     }
 
+    // 🟢 解除停權
     async function liftSuspensionSubmit() {
         let uid = document.getElementById('lift_suspension_uid').value;
         if(!uid) return Swal.fire("提示", "目前沒有選擇任何執行中的停權會員。", "warning");
