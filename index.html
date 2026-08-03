@@ -413,7 +413,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3S8lOdRUg6z0fiYWOYGRN9rz1B7ADL5TfPbicFFISxPWOQL_BVhkBdM8OFyqrIXC6/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwwQC3ZxVMkhunZ6cX4PfAAMysQNVDdezqY6KTWyCzz1UOUbz8bJT224jGi6ctrxFck/exec"; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
 
@@ -1704,7 +1704,7 @@ document.getElementById('lList').innerHTML = filteredLoans.map(l => {
             let instStatus = tStatus(inst.status);
             let remainingDue = Math.max(0, inst.amount + (inst.lateFee || 0) - (inst.paidAmount || 0)); 
             
-            let payBtn = (inst.status !== 'PAID' && remainingDue > 0) ? `<button class="btn" style="background:#3b82f6; padding:6px 10px; font-size:0.75em; border-radius:6px; margin-top:5px; width:100%;" onclick="showPaymentQR('${inst.installmentId}', '${encodeURIComponent(l.item + ' - 第' + inst.installmentNo + '期')}', ${remainingDue}, true)">📲 繳納 $${remainingDue}</button>` : '';
+            let payBtn = (inst.status !== 'PAID' && remainingDue > 0) ? `<button class="btn" style="background:#3b82f6; padding:6px 10px; font-size:0.75em; border-radius:6px; margin-top:5px; width:100%;" onclick="showPaymentQR('${inst.installmentId}', '${encodeURIComponent(l.item + ' - 第' + inst.installmentNo + '期')}', ${remainingDue}, true, false)">📲 繳納 $${remainingDue}</button>` : '';
             let statusColor = inst.status === 'PAID' ? 'var(--green)' : (inst.status === 'OVERDUE' ? 'var(--red)' : 'var(--orange)');
             return `
             <div style="background:rgba(0,0,0,0.03); padding:10px; border-radius:8px; margin-top:8px; border:1px solid #eee;">
@@ -1718,18 +1718,22 @@ document.getElementById('lList').innerHTML = filteredLoans.map(l => {
             </div>`;
         }).join('');
 
+        // 🚨 修正：新增全部結清的掃碼按鈕
+        let payAllBtn = (!isCleared && l.totalDue > 0) ? `<button class="btn" style="background:var(--primary); padding:8px 12px; font-size:0.85em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item + ' (全部結清)')}',${l.totalDue}, false, true)">💰 產生全部結清條碼</button>` : '';
+
         return `
         <div class="card" style="border: 1px solid var(--blue);">
             ${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '<span class="overdue-tag" style="background:var(--blue);">分期計畫</span>')}
             <div style="font-size:1.1em; margin-bottom:5px; color:var(--blue);">${l.item}</div>
             <div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">總分期: ${l.installmentCount} 期 (已繳 ${l.completedInstall} 期)</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '剩餘 $' + l.totalDue}</b></div>
+            ${payAllBtn}
             <div style="margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;">
                 <button class="btn" style="background:transparent; color:var(--blue); border:1px solid var(--blue); padding:8px; font-size:0.85em;" onclick="document.getElementById('inst_list_${loanIdVal}').style.display = document.getElementById('inst_list_${loanIdVal}').style.display==='none'?'block':'none'">👀 展開/收合 分期明細</button>
                 <div id="inst_list_${loanIdVal}" style="display:none; margin-top:10px;">${childHtml}</div>
             </div>
         </div>`;
     } else {
-        let payBtn = (!isCleared) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item)}',${l.totalDue}, false)">📲 顯示繳款條碼</button>` : '';
+        let payBtn = (!isCleared) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item)}',${l.totalDue}, false, false)">📲 顯示繳款條碼</button>` : '';
         return `<div class="card">${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${l.item}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '$' + l.totalDue}</b></div>${payBtn}</div>`;
     }
 }).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無帳單</p>';
@@ -1737,7 +1741,8 @@ document.getElementById('lList').innerHTML = filteredLoans.map(l => {
 
 function switchLoanTab(tabIndex) { currentLoanTab = tabIndex; document.querySelectorAll('.loan-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderLoans(); }
 
-window.showPaymentQR = async function(loanOrInstId, encodedItem, totalDue, isInstallment = false) {
+// 🚨 修正：加入 isPayAll 旗標來產生 PAY_ALL 條碼 (由於 admin.html 沒有掃描 PAY_ALL 功能，所以此處暫時統一產生對管理員可用的通知，或由管理員於面板操作)
+window.showPaymentQR = async function(loanOrInstId, encodedItem, totalDue, isInstallment = false, isPayAll = false) {
 let itemName = decodeURIComponent(encodedItem);
 
 const { value: amt } = await Swal.fire({
@@ -1763,7 +1768,20 @@ return v;
 });
 if (!amt) return;
 
-const prefix = isInstallment ? "PAY_INST" : "PAY";
+// 備註：若為 PAY_ALL 需管理端支援。我們將其轉化為出示給管理員看，由管理員於 BNPL 總管直接點選「全部結清」。
+if (isPayAll) {
+    Swal.fire({
+        title: '請出示此畫面給管理員',
+        html: `<div style="font-size:16px;">管理員請至後台 <b>[BNPL 總管]</b><br>選擇會員後點擊 <b>[💰 提前全部結清]</b>。<br><br>結清總額：<b style="color:var(--red); font-size:1.5em;">$${amt}</b></div>`,
+        icon: 'info',
+        confirmButtonColor: 'var(--pink)'
+    });
+    return;
+}
+
+let prefix = "PAY";
+if (isInstallment) prefix = "PAY_INST";
+
 const qrContent = `${prefix}|${loanOrInstId}|${store.userData.id}|${amt}`;
 
 document.getElementById('paymentQrTitle').innerText = `【${itemName}】繳款條碼`;
@@ -1777,7 +1795,12 @@ document.getElementById('paymentQrBox').style.display = 'flex';
 function renderCoupons() {
 if (!store || !store.coupons) return; const todayStr = new Date().toISOString().split('T')[0];
 const filteredCoupons = store.coupons.filter(c => { const statusStr = String(c.status||''); const isUsed = (statusStr === '已使用' || statusStr === '已核銷' || statusStr === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; } if (currentCouponTab === 1) return isUsed; else if (currentCouponTab === 2) return !isUsed && isExpired; else return !isUsed && !isExpired; });
-const sortC = document.getElementById('sortC').value; filteredCoupons.sort((a, b) => { const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.expiry||'').replace(/-/g, '/')).getTime() || 0; return sortC === 'asc' ? da - db : db - da; });
+const sortC = document.getElementById('sortC').value; 
+filteredCoupons.sort((a, b) => { 
+    const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; 
+    const db = new Date(String(b.expiry||'').replace(/-/g, '/')).getTime() || 0; 
+    return sortC === 'asc' ? da - db : db - da; 
+});
 document.getElementById('cpList').innerHTML = filteredCoupons.map(c => {
 const statusStr = String(c.status||''); const isUsed = (statusStr === '已使用' || statusStr === '已核銷' || statusStr === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; }
 let tagHtml = '<span class="overdue-tag" style="background:var(--pink);">可使用</span>'; if (isUsed) tagHtml = '<span class="overdue-tag" style="background:var(--green);">已核銷</span>'; else if (isExpired) tagHtml = '<span class="overdue-tag" style="background:#7f8c8d;">已過期</span>';
