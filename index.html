@@ -413,7 +413,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNZN87KkzV133I2blg8ictXn1Qfd0ya1KPZaK97mjHb4pA_wgjthJgYQoep8CG-DJi/exec"; 
+const SCRIPT_URL = ""; 
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
 
@@ -829,7 +829,7 @@ async function doLogin() {
     res = await raw.json();
   } catch(e) {
     setLoginStep('ls_auth', 'failed');
-    showLoginError('無法連線至伺服器<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+    showLoginError('系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
     return;
   }
 
