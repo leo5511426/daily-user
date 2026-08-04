@@ -47,9 +47,10 @@ console.log(
             "text/plain;charset=utf-8"
         },
 
-        body: JSON.stringify(
-          req.body || {}
-        ),
+        body:
+  typeof req.body === "string"
+    ? req.body
+    : JSON.stringify(req.body || {}),
 
         redirect: "follow"
       });
