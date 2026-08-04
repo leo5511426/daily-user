@@ -2012,10 +2012,22 @@ html: `
                `,
 showCancelButton: true, confirmButtonText: '送出通報', confirmButtonColor: '#3b82f6', cancelButtonText: '取消',
 preConfirm: () => {
-let cat = document.getElementById('tic_cat').value, subcat = document.getElementById('tic_subcat').value.trim();
-let subject = document.getElementById('tic_subject').value.trim(), desc = document.getElementById('tic_desc').value.trim();
-if(!subcat || !subject || !desc) { Swal.showValidationMessage('請確實填寫所有欄位'); return false; }
-return { cat, subcat, subject, desc };
+    const category = document.getElementById('tic_cat').value;
+    const subCategory = document.getElementById('tic_subcat').value.trim();
+    const subject = document.getElementById('tic_subject').value.trim();
+    const message = document.getElementById('tic_desc').value.trim();
+
+    if (!subCategory || !subject || !message) {
+        Swal.showValidationMessage('請確實填寫所有欄位');
+        return false;
+    }
+
+    return {
+        category: category,
+        subCategory: subCategory,
+        subject: subject,
+        message: message
+    };
 }
 }).then(async (res) => {
 if (res.isConfirmed) {
@@ -2062,7 +2074,16 @@ if(!msg) return; input.value = '';
 let box = document.getElementById('user_chat_box');
 box.innerHTML += `<div class="msg-bubble msg-user">${escapeHTML(msg)}<div class="msg-time">傳送中...</div></div>`; box.scrollTop = box.scrollHeight;
 
-let res = await fetchWithQueue(SCRIPT_URL, { action: 'sendChat', tid: tid, sender: store.userData.id, msg: msg }, "發送中...");
+let res = await fetchWithQueue(
+    SCRIPT_URL,
+    {
+        action: 'sendChat',
+        tid: tid,
+        sender: store.userData.id,
+        message: msg
+    },
+    "發送中..."
+);
 if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 500); }
 }
 
