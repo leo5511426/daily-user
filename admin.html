@@ -691,7 +691,15 @@
 
         if(!uid || !msg) return Swal.fire("提示", "請填寫通知內容", "warning");
         
-        let res = await fetchWithQueue(GAS, { action: 'sendCustomNotification', type: 'sendCustomNotification', uid: uid, msg: msg, mainCat: mainCat, subTag: subTag, color: color }, "發送中...");
+        let res = await fetchWithQueue(GAS, {
+    action: 'sendCustomNotification',
+    type: 'sendCustomNotification',
+    uid: uid,
+    content: msg,
+    category: mainCat,
+    tag: subTag,
+    color: color
+}, "發送中...");
         if(!res.aborted) handlePostSuccess(res);
     }
     
