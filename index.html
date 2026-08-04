@@ -1026,7 +1026,19 @@ async function submitSuspensionAppeal() {
         inputValidator: (v) => (!v || !v.trim()) ? '請填寫申訴理由' : null
     });
     if (text) {
-        let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: store.userData.id, pw: savedPw, cat: '帳號問題', subcat: '停權申訴', subject: '會員停權申訴', desc: "【停權申訴】\n" + text.trim() }, "申訴單送出中...");
+        let fetchRes = await fetchWithQueue(
+    SCRIPT_URL,
+    {
+        action: 'submitTicket',
+        uid: store.userData.id,
+        pw: savedPw,
+        category: '帳號問題',
+        subCategory: '停權申訴',
+        subject: '會員停權申訴',
+        message: "【停權申訴】\n" + text.trim()
+    },
+    "申訴送出中..."
+);
         if (fetchRes && fetchRes.success) Swal.fire('申訴已送出', '管理員將會進行審核，請靜候聯絡。', 'success');
         else Swal.fire('錯誤', '申訴送出失敗，請稍後再試。', 'error');
     }
@@ -1942,7 +1954,18 @@ return { name, contact, desc };
 }).then(async (res) => {
 if (res.isConfirmed) {
 let fullDesc = "【訪客通報】\n聯絡方式: " + res.value.contact + "\n問題描述: " + res.value.desc;
-let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: '訪客_' + res.value.name, cat: '系統問題', subcat: '登入障礙/忘記密碼', subject: '訪客登入問題通報', desc: fullDesc }, "通報送出中...");
+let fetchRes = await fetchWithQueue(
+    SCRIPT_URL,
+    {
+        action: 'submitTicket',
+        uid: '訪客_' + res.value.name,
+        category: '系統問題',
+        subCategory: '登入障礙/忘記密碼',
+        subject: '訪客登入問題通報',
+        message: fullDesc
+    },
+    "通報送出中..."
+);
 if (fetchRes && fetchRes.success) Swal.fire('通報成功', '您的問題已送出！管理員會盡快透過您留下的聯絡方式協助您。', 'success');
 else Swal.fire('錯誤', '通報失敗，請稍後再試。', 'error');
 }
