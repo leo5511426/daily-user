@@ -727,7 +727,16 @@
     window.sendAdminChat = async function(tid) {
         let input = document.getElementById('admin_chat_input'); let msg = input.value.trim(); if(!msg) return; input.value = '';
         let box = document.getElementById('admin_chat_box'); box.innerHTML += `<div class="msg-bubble msg-admin">${msg}<div class="msg-time">傳送中...</div></div>`; box.scrollTop = box.scrollHeight;
-        let res = await fetchWithQueue(GAS, { action: 'sendChat', tid: tid, sender: 'Admin', msg: msg }, "發送中...");
+        let res = await fetchWithQueue(
+    GAS,
+    {
+        action: 'sendChat',
+        tid: tid,
+        sender: 'Admin',
+        message: msg
+    },
+    "發送中..."
+);
         if(!res.aborted && res.success) { Swal.close(); refresh(); setTimeout(()=>openChatModal(), 500); }
     };
 
