@@ -29,7 +29,15 @@ export default async function handler(req, res) {
     // ========================================================
     // 將前端送來的資料轉送給 Google Apps Script
     // ========================================================
+console.log(
+  "Proxy request body:",
+  JSON.stringify(req.body || {})
+);
 
+console.log(
+  "Proxy GAS URL:",
+  GAS_URL
+);
     const gasResponse =
       await fetch(GAS_URL, {
         method: "POST",
@@ -52,7 +60,15 @@ export default async function handler(req, res) {
 
     const text =
       await gasResponse.text();
+console.log(
+  "GAS final URL:",
+  gasResponse.url
+);
 
+console.log(
+  "GAS HTTP status:",
+  gasResponse.status
+);
     // ========================================================
     // GAS 正常情況應回 JSON
     // ========================================================
