@@ -191,33 +191,56 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <!-- 📱 正常/唯讀 會員系統畫面 -->
 <div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
 
-<!-- 🚫 停權唯讀橫幅 -->
-<div id="suspensionBanner" class="suspension-banner" style="display:none;">
+<!-- ========================================================
+     🚫 會員停權通知橫幅
+========================================================= -->
 
-    <div>
-        ⚠️ 您的帳號已被停權：
-        <span id="bannerSuspReason">違反系統規範</span>
+<div
+    id="suspensionBanner"
+    class="suspension-banner"
+    style="display:none;"
+>
+
+    <div style="font-weight:bold;">
+        ⚠️ 您的帳號目前已被停權
+    </div>
+
+    <div
+        style="
+            margin-top:5px;
+            font-size:0.92em;
+            font-weight:normal;
+        "
+    >
+        停權原因：
+        <span
+            id="bannerSuspReason"
+            style="font-weight:bold;"
+        ></span>
     </div>
 
     <div
         id="bannerSuspPeriod"
         style="
-            font-size:0.9em;
+            margin-top:3px;
+            font-size:0.85em;
             font-weight:normal;
             opacity:0.9;
-            margin-top:4px;
         "
-    ></div>
+    >
+        停權期間：讀取中...
+    </div>
 
     <div
         style="
-            font-size:0.9em;
+            margin-top:5px;
+            font-size:0.85em;
             font-weight:normal;
             opacity:0.9;
-            margin-top:4px;
         "
     >
-        目前僅開放唯讀查詢、帳單繳款及停權申訴
+        停權期間僅開放資料查詢、既有帳單繳款、
+        帳號安全管理及客服申訴。
     </div>
 
     <button
