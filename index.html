@@ -1020,9 +1020,8 @@ render();
   startSessionHeartbeat();
   checkWinningInvoices();
 }
-function updateSuspensionUI() {
-    // ============================================================
-// 停權會員操作權限檢查
+// ============================================================
+// 🚫 停權會員操作權限檢查
 // ============================================================
 
 function blockIfSuspended(actionName = '此功能') {
@@ -1031,7 +1030,10 @@ function blockIfSuspended(actionName = '此功能') {
             ? store.userData
             : null;
 
-    if (!userData || !userData.isSuspended) {
+    if (
+        !userData ||
+        !userData.isSuspended
+    ) {
         return false;
     }
 
@@ -1047,25 +1049,43 @@ function blockIfSuspended(actionName = '此功能') {
 
     return true;
 }
+
+
+// ============================================================
+// 🚫 更新停權會員介面
+// ============================================================
+
+function updateSuspensionUI() {
+
     const banner =
-        document.getElementById('suspensionBanner');
+        document.getElementById(
+            'suspensionBanner'
+        );
 
     const reasonText =
-        document.getElementById('bannerSuspReason');
-    const periodText = document.getElementById('bannerSuspPeriod');
+        document.getElementById(
+            'bannerSuspReason'
+        );
 
-    // HTML 尚未建立時，不要讓整個登入流程報錯
+    const periodText =
+        document.getElementById(
+            'bannerSuspPeriod'
+        );
+
     if (!banner) {
         console.warn(
             '[Suspension] 找不到 suspensionBanner'
         );
+
         return;
     }
+
 
     const userData =
         store && store.userData
             ? store.userData
             : null;
+
 
     const suspended =
         !!(
@@ -1073,20 +1093,61 @@ function blockIfSuspended(actionName = '此功能') {
             userData.isSuspended
         );
 
-    if (suspended) {
-        banner.style.display = 'block';
 
-        if (reasonText) {
-            reasonText.innerText =
-                userData.suspensionReason ||
-                (
-                    userData.suspension &&
-                    userData.suspension.reason
-                ) ||
-                '違反系統規範';
-        }
+    // --------------------------------------------------------
+    // 🟢 沒有停權
+    // --------------------------------------------------------
 
-        if (periodText) {
+    if (!suspended) {
+
+        banner.style.display =
+            'none';
+
+        document.body.classList.remove(
+            'account-suspended'
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 🔴 目前停權
+    // --------------------------------------------------------
+
+    banner.style.display =
+        'block';
+
+
+    document.body.classList.add(
+        'account-suspended'
+    );
+
+
+    // --------------------------------------------------------
+    // 停權原因
+    // --------------------------------------------------------
+
+    const reason =
+        userData.suspensionReason ||
+        (
+            userData.suspension &&
+            userData.suspension.reason
+        ) ||
+        '違反系統規範';
+
+
+    if (reasonText) {
+
+        reasonText.innerText =
+            reason;
+    }
+
+
+    // --------------------------------------------------------
+    // 停權期間
+    // --------------------------------------------------------
+
     const startTime =
         userData.suspensionStart ||
         (
@@ -1094,6 +1155,7 @@ function blockIfSuspended(actionName = '此功能') {
             userData.suspension.startTime
         ) ||
         '';
+
 
     const endTime =
         userData.suspensionEnd ||
@@ -1103,26 +1165,28 @@ function blockIfSuspended(actionName = '此功能') {
         ) ||
         '';
 
-    if (startTime || endTime) {
-        periodText.innerText =
-            '停權期間：' +
-            (startTime || '立即生效') +
-            ' ～ ' +
-            (endTime || '另行通知');
-    } else {
-        periodText.innerText = '';
-    }
-}
-        document.body.classList.add(
-            'account-suspended'
-        );
 
-    } else {
-        banner.style.display = 'none';
+    if (periodText) {
 
-        document.body.classList.remove(
-            'account-suspended'
-        );
+        if (startTime || endTime) {
+
+            periodText.innerText =
+                '停權期間：' +
+                (
+                    startTime ||
+                    '立即生效'
+                ) +
+                ' ～ ' +
+                (
+                    endTime ||
+                    '另行通知'
+                );
+
+        } else {
+
+            periodText.innerText =
+                '停權期間：直到管理員解除';
+        }
     }
 }
 async function silentSyncData() {
