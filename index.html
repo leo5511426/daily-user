@@ -193,9 +193,51 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 <!-- 🚫 停權唯讀橫幅 -->
 <div id="suspensionBanner" class="suspension-banner" style="display:none;">
-    ⚠️ 您的帳號已被停權：<span id="bannerSuspReason"></span><br>
-    <span style="font-size:0.9em; font-weight:normal; opacity:0.9;">(目前僅開放唯讀查詢與帳單繳款)</span>
-    <button onclick="submitSuspensionAppeal()" style="background:white; color:var(--red); border:none; padding:4px 10px; border-radius:10px; font-size:0.9em; font-weight:bold; margin-left:10px; cursor:pointer;">👉 我要申訴</button>
+
+    <div>
+        ⚠️ 您的帳號已被停權：
+        <span id="bannerSuspReason">違反系統規範</span>
+    </div>
+
+    <div
+        id="bannerSuspPeriod"
+        style="
+            font-size:0.9em;
+            font-weight:normal;
+            opacity:0.9;
+            margin-top:4px;
+        "
+    ></div>
+
+    <div
+        style="
+            font-size:0.9em;
+            font-weight:normal;
+            opacity:0.9;
+            margin-top:4px;
+        "
+    >
+        目前僅開放唯讀查詢、帳單繳款及停權申訴
+    </div>
+
+    <button
+        type="button"
+        onclick="submitSuspensionAppeal()"
+        style="
+            background:white;
+            color:var(--red);
+            border:none;
+            padding:6px 12px;
+            border-radius:10px;
+            font-size:0.9em;
+            font-weight:bold;
+            margin-top:8px;
+            cursor:pointer;
+        "
+    >
+        👉 我要申訴
+    </button>
+
 </div>
 
 <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
@@ -951,14 +993,9 @@ async function doLogin() {
   setLoginStep('ls_load', 'running');
   await uiDelay(300);
   
-  if (store.userData && store.userData.isSuspended) {
-      document.getElementById('suspensionBanner').style.display = 'block';
-      document.getElementById('bannerSuspReason').innerText = store.userData.suspensionReason || '違反系統規範';
-  } else {
-      document.getElementById('suspensionBanner').style.display = 'none';
-  }
-  
-  render();
+updateSuspensionUI();
+
+render();
   setLoginStep('ls_load', 'done');
   
   document.getElementById('lp-pct').innerText = '100%';
@@ -983,7 +1020,111 @@ async function doLogin() {
   startSessionHeartbeat();
   checkWinningInvoices();
 }
+function updateSuspensionUI() {
+    // ============================================================
+// 停權會員操作權限檢查
+// ============================================================
 
+function blockIfSuspended(actionName = '此功能') {
+    const userData =
+        store && store.userData
+            ? store.userData
+            : null;
+
+    if (!userData || !userData.isSuspended) {
+        return false;
+    }
+
+    Swal.fire({
+        icon: 'warning',
+        title: '帳號目前已停權',
+        html:
+            `停權期間暫時無法使用「<b>${actionName}</b>」。<br><br>` +
+            `目前仍可查看資料、繳納既有帳單、管理帳號安全及提出停權申訴。`,
+        confirmButtonText: '我知道了',
+        confirmButtonColor: 'var(--red)'
+    });
+
+    return true;
+}
+    const banner =
+        document.getElementById('suspensionBanner');
+
+    const reasonText =
+        document.getElementById('bannerSuspReason');
+    const periodText = document.getElementById('bannerSuspPeriod');
+
+    // HTML 尚未建立時，不要讓整個登入流程報錯
+    if (!banner) {
+        console.warn(
+            '[Suspension] 找不到 suspensionBanner'
+        );
+        return;
+    }
+
+    const userData =
+        store && store.userData
+            ? store.userData
+            : null;
+
+    const suspended =
+        !!(
+            userData &&
+            userData.isSuspended
+        );
+
+    if (suspended) {
+        banner.style.display = 'block';
+
+        if (reasonText) {
+            reasonText.innerText =
+                userData.suspensionReason ||
+                (
+                    userData.suspension &&
+                    userData.suspension.reason
+                ) ||
+                '違反系統規範';
+        }
+
+        if (periodText) {
+    const startTime =
+        userData.suspensionStart ||
+        (
+            userData.suspension &&
+            userData.suspension.startTime
+        ) ||
+        '';
+
+    const endTime =
+        userData.suspensionEnd ||
+        (
+            userData.suspension &&
+            userData.suspension.endTime
+        ) ||
+        '';
+
+    if (startTime || endTime) {
+        periodText.innerText =
+            '停權期間：' +
+            (startTime || '立即生效') +
+            ' ～ ' +
+            (endTime || '另行通知');
+    } else {
+        periodText.innerText = '';
+    }
+}
+        document.body.classList.add(
+            'account-suspended'
+        );
+
+    } else {
+        banner.style.display = 'none';
+
+        document.body.classList.remove(
+            'account-suspended'
+        );
+    }
+}
 async function silentSyncData() {
     if (
         !store ||
@@ -1008,12 +1149,7 @@ async function silentSyncData() {
             res.sessionId = currentSessionId;
             store = res; 
             
-            if (store.userData.isSuspended) {
-                document.getElementById('suspensionBanner').style.display = 'block';
-                document.getElementById('bannerSuspReason').innerText = store.userData.suspensionReason || '違反系統規範';
-            } else {
-                document.getElementById('suspensionBanner').style.display = 'none';
-            }
+           updateSuspensionUI();
             render(); 
         }
     } catch (e) { 
@@ -1832,8 +1968,44 @@ return `<div class="card" style="opacity: ${isUsed || isExpired ? '0.6' : '1'};"
 }
 function switchCouponTab(tabIndex) { currentCouponTab = tabIndex; document.querySelectorAll('.coupon-tab').forEach((el, idx) => { if (idx === tabIndex) el.classList.add('active'); else el.classList.remove('active'); }); renderCoupons(); }
 
-function showCouponQR(couponId, couponName) { couponQr.clear(); couponQr.makeCode(couponId); document.getElementById('couponQrTitle').innerText = `【${couponName}】核銷條碼`; document.getElementById('couponQrBox').style.display = 'flex'; event.stopPropagation(); }
+function showCouponQR(couponId, couponName) {
 
+    // 🚫 停權會員禁止使用優惠券
+    if (
+        store &&
+        store.userData &&
+        store.userData.isSuspended
+    ) {
+        Swal.fire({
+            icon: 'warning',
+            title: '帳號目前已停權',
+            text: '停權期間暫時無法使用或核銷優惠券。',
+            confirmButtonText: '我知道了',
+            confirmButtonColor: 'var(--red)'
+        });
+
+        return;
+    }
+
+    couponQr.clear();
+    couponQr.makeCode(couponId);
+
+    document.getElementById(
+        'couponQrTitle'
+    ).innerText =
+        `【${couponName}】核銷條碼`;
+
+    document.getElementById(
+        'couponQrBox'
+    ).style.display = 'flex';
+
+    if (
+        typeof event !== 'undefined' &&
+        event
+    ) {
+        event.stopPropagation();
+    }
+}
 function openTab(i) { 
 document.querySelectorAll('.page').forEach(p => p.style.display='none'); 
 document.getElementById('p'+i).style.display='block'; 
