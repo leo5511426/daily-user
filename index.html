@@ -1666,7 +1666,18 @@ async function silentSyncData() {
         sessionId: currentSessionId
     })
 }).then(r => r.json());
-        
+        // --------------------------------------------------------
+// 🚨 Session 已遭終止／失效
+// --------------------------------------------------------
+
+if (
+    res &&
+    res.success === false &&
+    res.errorCode === 'SESSION_EXPIRED'
+) {
+    handleSessionExpired();
+    return;
+}
         if (res.success) { 
             res.sessionId = currentSessionId;
             store = res; 
@@ -1712,12 +1723,108 @@ async function submitSuspensionAppeal() {
 }
 
 let _sessionHeartbeatTimer = null;
+
+
+// ============================================================
+// ❤️ 啟動 Session Heartbeat
+// ============================================================
+
 function startSessionHeartbeat() {
-  if (_sessionHeartbeatTimer) clearInterval(_sessionHeartbeatTimer);
-  _sessionHeartbeatTimer = setInterval(function() {
-    if (!currentSessionId || !store || !store.userData) return;
-    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSessionActivity', uid: store.userData.id, sessionId: currentSessionId }) }).catch(function(){});
-  }, 5 * 60 * 1000);
+
+  // 避免重複建立計時器
+  if (_sessionHeartbeatTimer) {
+    clearInterval(
+      _sessionHeartbeatTimer
+    );
+  }
+
+
+  // ----------------------------------------------------------
+  // Heartbeat 本體
+  // ----------------------------------------------------------
+
+  async function sendHeartbeat() {
+
+    if (
+      !currentSessionId ||
+      !store ||
+      !store.userData ||
+      !store.userData.id
+    ) {
+      return;
+    }
+
+
+    try {
+
+      const raw =
+        await fetch(
+          SCRIPT_URL,
+          {
+            method: 'POST',
+
+            body: JSON.stringify({
+              action:
+                'updateSessionActivity',
+
+              uid:
+                store.userData.id,
+
+              sessionId:
+                currentSessionId
+            })
+          }
+        );
+
+
+      const res =
+        await raw.json();
+
+
+      // ------------------------------------------------------
+      // 🚨 Session 已被終止／失效
+      // ------------------------------------------------------
+
+      if (
+        res &&
+        res.success === false &&
+        res.errorCode ===
+          'SESSION_EXPIRED'
+      ) {
+
+        handleSessionExpired();
+
+        return;
+      }
+
+
+    } catch (e) {
+
+      // 網路暫時斷線不直接登出
+      console.warn(
+        '[Session Heartbeat] 連線失敗：',
+        e
+      );
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // 啟動後先檢查一次
+  // ----------------------------------------------------------
+
+  sendHeartbeat();
+
+
+  // ----------------------------------------------------------
+  // 每 1 分鐘檢查一次
+  // ----------------------------------------------------------
+
+  _sessionHeartbeatTimer =
+    setInterval(
+      sendHeartbeat,
+      60 * 1000
+    );
 }
 
 function customizeShortcuts() {
@@ -1737,6 +1844,106 @@ if(res.isConfirmed) { localStorage.setItem('myShortcuts', JSON.stringify(res.val
 });
 }
 
+    // ============================================================
+// 🚨 Session 已失效／遭遠端終止
+// ============================================================
+
+function handleSessionExpired() {
+
+  // ----------------------------------------------------------
+  // 1. 停止 Heartbeat
+  // ----------------------------------------------------------
+
+  if (_sessionHeartbeatTimer) {
+
+    clearInterval(
+      _sessionHeartbeatTimer
+    );
+
+    _sessionHeartbeatTimer =
+      null;
+  }
+
+
+  // ----------------------------------------------------------
+  // 2. 清除目前 Session
+  // ----------------------------------------------------------
+
+  currentSessionId =
+    null;
+
+
+  // ----------------------------------------------------------
+  // 3. 清除登入密碼
+  // ----------------------------------------------------------
+
+  savedPw =
+    '';
+
+
+  // ----------------------------------------------------------
+  // 4. 清除會員資料
+  // ----------------------------------------------------------
+
+  store =
+    null;
+
+
+  // ----------------------------------------------------------
+  // 5. 關閉會員主畫面
+  // ----------------------------------------------------------
+
+  const appView =
+    document.getElementById(
+      'appView'
+    );
+
+  if (appView) {
+    appView.style.display =
+      'none';
+  }
+
+
+  // ----------------------------------------------------------
+  // 6. 顯示登入畫面
+  // ----------------------------------------------------------
+
+  const loginView =
+    document.getElementById(
+      'loginView'
+    );
+
+  if (loginView) {
+    loginView.style.display =
+      'block';
+  }
+
+
+  // ----------------------------------------------------------
+  // 7. 提示會員
+  // ----------------------------------------------------------
+
+  Swal.fire({
+    icon: 'warning',
+
+    title:
+      '登入工作階段已結束',
+
+    html:
+      '此裝置的登入工作階段已被終止，或登入狀態已失效。<br><br>' +
+      '如需繼續使用，請重新登入。',
+
+    confirmButtonText:
+      '重新登入',
+
+    confirmButtonColor:
+      'var(--pink)',
+
+    allowOutsideClick:
+      false
+  });
+}
+    
 function renderShortcuts() {
 let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6,7]');
 document.querySelectorAll('.shortcut-item').forEach(el => el.classList.remove('visible'));
