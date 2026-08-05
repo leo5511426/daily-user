@@ -991,12 +991,12 @@ async function doLogin() {
   await uiDelay(300);
 
   setLoginStep('ls_load', 'running');
-  await uiDelay(300);
-  
-updateSuspensionUI();
+await uiDelay(300);
 
+// 先完成資料渲染
 render();
-  setLoginStep('ls_load', 'done');
+
+setLoginStep('ls_load', 'done');
   
   document.getElementById('lp-pct').innerText = '100%';
   document.getElementById('lp-bar').style.width = '100%';
@@ -1012,13 +1012,18 @@ render();
 
   await uiDelay(800);
 
-  _loginInProgress = false; 
-  hideLoginOverlay();
-  document.getElementById('loginView').style.display = 'none';
-  document.getElementById('appView').style.display = 'block';
+ _loginInProgress = false;
 
-  startSessionHeartbeat();
-  checkWinningInvoices();
+hideLoginOverlay();
+
+document.getElementById('loginView').style.display = 'none';
+document.getElementById('appView').style.display = 'block';
+
+// 🚫 主畫面真正顯示後，再套用停權介面
+updateSuspensionUI();
+
+startSessionHeartbeat();
+checkWinningInvoices();
 }
 // ============================================================
 // 🚫 停權會員操作權限檢查
@@ -1401,10 +1406,91 @@ let outstanding = 0;
 });
 let availBnpl = totalBnpl - outstanding;
 
-const elUBnpl = document.getElementById('uBnpl'); if (elUBnpl) elUBnpl.innerText = availBnpl.toLocaleString();
-const elLoanAvail = document.getElementById('lbl_loan_avail'); if (elLoanAvail) elLoanAvail.innerText = availBnpl.toLocaleString();
-const elLoanTotal = document.getElementById('lbl_loan_total'); if (elLoanTotal) elLoanTotal.innerText = totalBnpl.toLocaleString();
-const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut) elLoanOut.innerText = `未結清: $${outstanding.toLocaleString()}`;
+const isSuspended =
+    !!u.isSuspended;
+
+const elUBnpl =
+    document.getElementById('uBnpl');
+
+const elLoanAvail =
+    document.getElementById('lbl_loan_avail');
+
+const elLoanTotal =
+    document.getElementById('lbl_loan_total');
+
+const elLoanOut =
+    document.getElementById('lbl_loan_outstanding');
+
+
+// --------------------------------------------------------
+// 🚫 停權會員：BNPL 暫停使用
+// --------------------------------------------------------
+
+if (isSuspended) {
+
+    // 首頁額度
+    if (elUBnpl) {
+        elUBnpl.innerText =
+            '暫停使用';
+
+        elUBnpl.style.fontSize =
+            '0.65em';
+
+        elUBnpl.style.color =
+            'var(--red)';
+    }
+
+
+    // 帳單頁可用額度
+    if (elLoanAvail) {
+        elLoanAvail.innerText =
+            '暫停使用';
+    }
+
+
+    // 原始總額度仍保留顯示
+    if (elLoanTotal) {
+        elLoanTotal.innerText =
+            totalBnpl.toLocaleString();
+    }
+
+
+} else {
+
+    // ----------------------------------------------------
+    // 🟢 正常會員
+    // ----------------------------------------------------
+
+    if (elUBnpl) {
+        elUBnpl.innerText =
+            availBnpl.toLocaleString();
+
+        elUBnpl.style.fontSize =
+            '';
+
+        elUBnpl.style.color =
+            '';
+    }
+
+
+    if (elLoanAvail) {
+        elLoanAvail.innerText =
+            availBnpl.toLocaleString();
+    }
+
+
+    if (elLoanTotal) {
+        elLoanTotal.innerText =
+            totalBnpl.toLocaleString();
+    }
+}
+
+
+// 既有欠款仍然必須顯示
+if (elLoanOut) {
+    elLoanOut.innerText =
+        `未結清: $${outstanding.toLocaleString()}`;
+}
 
 renderShortcuts();
 renderNotifications(); 
