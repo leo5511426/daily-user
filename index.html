@@ -259,7 +259,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 </div>
 <div class="card" style="text-align:center; padding:20px 10px; margin:0; border-left:4px solid var(--blue);">
 <div style="font-size:0.75em; opacity:0.6;">先享後付 額度</div>
-<div style="font-size:2em; color:var(--blue); margin-top:5px;">$ <span id="uBnpl">0</span></div>
+<div style="font-size:2em; color:var(--blue); margin-top:5px;"><span id="uBnplDisplay">$<span id="uBnpl">0</span></span></div>
 </div>
 </div>
 
@@ -304,7 +304,14 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <div class="card" style="background:var(--card); padding:15px; border-left:5px solid var(--blue); margin-bottom:15px;">
 <span style="font-size:0.8em; opacity:0.6;">💳 先享後付信用總額度</span>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-<b style="font-size:1.3em; color:var(--blue);">$ <span id="lbl_loan_avail">0</span> / <span id="lbl_loan_total">500</span></b>
+<b
+    id="bnplLimitDisplay"
+    style="font-size:1.3em; color:var(--blue);"
+>
+    $<span id="lbl_loan_avail">0</span>
+    /
+    $<span id="lbl_loan_total">500</span>
+</b>
 <span style="font-size:0.75em; background:#fee2e2; color:var(--red); padding:3px 6px; border-radius:5px;" id="lbl_loan_outstanding">未結清: $0</span>
 </div>
 </div>
@@ -1420,7 +1427,15 @@ const elLoanTotal =
 
 const elLoanOut =
     document.getElementById('lbl_loan_outstanding');
+const elUBnplDisplay =
+    document.getElementById(
+        'uBnplDisplay'
+    );
 
+const elBnplLimitDisplay =
+    document.getElementById(
+        'bnplLimitDisplay'
+    );
 
 // --------------------------------------------------------
 // 🚫 停權會員：BNPL 暫停使用
@@ -1428,64 +1443,78 @@ const elLoanOut =
 
 if (isSuspended) {
 
-    // 首頁額度
-    if (elUBnpl) {
-        elUBnpl.innerText =
-            '暫停使用';
+    // ========================================================
+    // 🚫 停權會員：首頁 BNPL 顯示
+    // ========================================================
 
-        elUBnpl.style.fontSize =
-            '0.65em';
+    if (elUBnplDisplay) {
 
-        elUBnpl.style.color =
-            'var(--red)';
+        elUBnplDisplay.innerHTML =
+            '<span style="color:var(--red); font-size:0.72em;">' +
+            '🚫 暫停使用' +
+            '</span>';
     }
 
 
-    // 帳單頁可用額度
-    if (elLoanAvail) {
-        elLoanAvail.innerText =
-            '暫停使用';
+    // ========================================================
+    // 🚫 停權會員：帳單頁 BNPL 顯示
+    // ========================================================
+
+    if (elBnplLimitDisplay) {
+
+        elBnplLimitDisplay.innerHTML =
+            '<span style="color:var(--red);">' +
+            '🚫 暫停使用' +
+            '</span>' +
+
+            '<span style="' +
+            'display:block;' +
+            'margin-top:3px;' +
+            'font-size:0.58em;' +
+            'font-weight:normal;' +
+            'color:#666;' +
+            '">' +
+
+            '原信用總額度：$' +
+            totalBnpl.toLocaleString() +
+
+            '</span>';
     }
-
-
-    // 原始總額度仍保留顯示
-    if (elLoanTotal) {
-        elLoanTotal.innerText =
-            totalBnpl.toLocaleString();
-    }
-
 
 } else {
 
-    // ----------------------------------------------------
-    // 🟢 正常會員
-    // ----------------------------------------------------
+    // ========================================================
+    // 🟢 正常會員：首頁 BNPL 顯示
+    // ========================================================
 
-    if (elUBnpl) {
-        elUBnpl.innerText =
-            availBnpl.toLocaleString();
+    if (elUBnplDisplay) {
 
-        elUBnpl.style.fontSize =
-            '';
-
-        elUBnpl.style.color =
-            '';
+        elUBnplDisplay.innerHTML =
+            '$<span id="uBnpl">' +
+            availBnpl.toLocaleString() +
+            '</span>';
     }
 
 
-    if (elLoanAvail) {
-        elLoanAvail.innerText =
-            availBnpl.toLocaleString();
-    }
+    // ========================================================
+    // 🟢 正常會員：帳單頁 BNPL 顯示
+    // ========================================================
 
+    if (elBnplLimitDisplay) {
 
-    if (elLoanTotal) {
-        elLoanTotal.innerText =
-            totalBnpl.toLocaleString();
+        elBnplLimitDisplay.innerHTML =
+            '$<span id="lbl_loan_avail">' +
+            availBnpl.toLocaleString() +
+            '</span>' +
+
+            ' / ' +
+
+            '$<span id="lbl_loan_total">' +
+            totalBnpl.toLocaleString() +
+            '</span>';
     }
 }
-
-
+    
 // 既有欠款仍然必須顯示
 if (elLoanOut) {
     elLoanOut.innerText =
