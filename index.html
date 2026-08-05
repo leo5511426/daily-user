@@ -985,15 +985,24 @@ async function doLogin() {
 }
 
 async function silentSyncData() {
-    if (!store || !store.userData || !store.userData.id || !savedPw) return;
+    if (
+        !store ||
+        !store.userData ||
+        !store.userData.id ||
+        !currentSessionId
+    ) return;
     const indicator = document.getElementById('syncIndicator'); 
     if (indicator) indicator.style.display = 'flex';
     
     try {
-        const res = await fetch(SCRIPT_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'syncData', uid: store.userData.id, pw: savedPw }) 
-        }).then(r => r.json());
+        const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+        action: 'syncMemberData',
+        uid: store.userData.id,
+        sessionId: currentSessionId
+    })
+}).then(r => r.json());
         
         if (res.success) { 
             res.sessionId = currentSessionId;
