@@ -524,25 +524,280 @@ window.openSessionManager = async function() {
 
   const sessions = res.sessions || [];
   if (sessions.length === 0) { Swal.fire({ title: '📱 登入裝置', text: '目前無登入記錄。', icon: 'info', confirmButtonColor: 'var(--pink)' }); return; }
+    
+const listHtml = sessions.map(function(s) {
 
-  const listHtml = sessions.map(function(s) {
-    const isCurrent = s.sessionId === currentSessionId;
-    const isActive = s.isActive;
-    const statusColor = isCurrent ? '#10b981' : (isActive ? '#3b82f6' : '#94a3b8');
-    const statusLabel = isCurrent ? '目前裝置' : (isActive ? '登入中' : '已登出');
-    const terminateBtn = (!isCurrent && isActive)
-      ? '<button onclick="terminateSessionById(\'' + s.sessionId + '\')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:transparent;color:var(--red);border:1px solid var(--red);font-size:0.8em;font-weight:bold;cursor:pointer;">🔴 終止此裝置</button>'
-      : '';
-    return '<div style="background:' + (isCurrent ? 'rgba(16,185,129,0.07)' : 'rgba(0,0,0,0.03)') + ';border:1px solid ' + (isCurrent ? '#10b981' : 'var(--border)') + ';border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-      + '<span style="font-size:0.78em;color:#aaa;font-weight:normal;">....' + s.sessionId.slice(-8) + '</span>'
-      + '<span style="background:' + statusColor + ';color:#fff;font-size:0.72em;padding:2px 8px;border-radius:6px;">' + statusLabel + '</span>'
-      + '</div>'
-      + '<div style="font-size:0.82em;margin-bottom:2px;">登入時間：' + (s.loginTime || '—') + '</div>'
-      + '<div style="font-size:0.82em;opacity:0.65;">最後活動：' + (s.lastActivityTime || '—') + '</div>'
-      + terminateBtn + '</div>';
-  }).join('');
+    const isCurrent =
+        s.sessionId === currentSessionId;
 
+    const isActive =
+        !!s.isActive;
+
+
+    // --------------------------------------------------------
+    // 狀態
+    // --------------------------------------------------------
+
+    const statusColor =
+        isCurrent
+            ? '#10b981'
+            : (
+                isActive
+                    ? '#3b82f6'
+                    : '#94a3b8'
+            );
+
+    const statusLabel =
+        isCurrent
+            ? '目前裝置'
+            : (
+                isActive
+                    ? '登入中'
+                    : '已登出'
+            );
+
+
+    // --------------------------------------------------------
+    // 裝置名稱
+    // --------------------------------------------------------
+
+    const deviceName =
+        s.deviceName ||
+        '未知裝置';
+
+    const platform =
+        s.platform ||
+        '未知平台';
+
+    const browser =
+        s.browser ||
+        '未知瀏覽器';
+
+
+    // --------------------------------------------------------
+    // 裝置圖示
+    // --------------------------------------------------------
+
+    let deviceIcon =
+        '💻';
+
+    const deviceText =
+        String(deviceName).toLowerCase();
+
+    if (
+        deviceText.includes('iphone') ||
+        deviceText.includes('android 手機')
+    ) {
+        deviceIcon =
+            '📱';
+
+    } else if (
+        deviceText.includes('ipad') ||
+        deviceText.includes('平板')
+    ) {
+        deviceIcon =
+            '📱';
+    }
+
+
+    // --------------------------------------------------------
+    // Session 顯示
+    // --------------------------------------------------------
+
+    const shortSession =
+        s.sessionId
+            ? '••••' + s.sessionId.slice(-8)
+            : '—';
+
+
+    // --------------------------------------------------------
+    // 終止裝置按鈕
+    // --------------------------------------------------------
+
+    const terminateBtn =
+        (!isCurrent && isActive)
+
+            ? (
+                '<button ' +
+                'onclick="terminateSessionById(\'' +
+                s.sessionId +
+                '\')" ' +
+
+                'style="' +
+                'margin-top:10px;' +
+                'width:100%;' +
+                'padding:8px;' +
+                'border-radius:8px;' +
+                'background:transparent;' +
+                'color:var(--red);' +
+                'border:1px solid var(--red);' +
+                'font-size:0.8em;' +
+                'font-weight:bold;' +
+                'cursor:pointer;' +
+                '">' +
+
+                '🔴 終止此裝置' +
+
+                '</button>'
+            )
+
+            : '';
+
+
+    // --------------------------------------------------------
+    // 卡片 HTML
+    // --------------------------------------------------------
+
+    return (
+
+        '<div style="' +
+
+            'background:' +
+            (
+                isCurrent
+                    ? 'rgba(16,185,129,0.07)'
+                    : 'rgba(0,0,0,0.03)'
+            ) +
+            ';' +
+
+            'border:1px solid ' +
+            (
+                isCurrent
+                    ? '#10b981'
+                    : 'var(--border)'
+            ) +
+            ';' +
+
+            'border-radius:12px;' +
+            'padding:12px;' +
+            'margin-bottom:10px;' +
+            'text-align:left;' +
+
+        '">' +
+
+
+        // ----------------------------------------------------
+        // 第一列：裝置 + 狀態
+        // ----------------------------------------------------
+
+        '<div style="' +
+            'display:flex;' +
+            'justify-content:space-between;' +
+            'align-items:center;' +
+            'gap:10px;' +
+        '">' +
+
+            '<div style="' +
+                'font-size:1em;' +
+                'font-weight:bold;' +
+            '">' +
+
+                deviceIcon +
+                ' ' +
+                deviceName +
+
+            '</div>' +
+
+            '<span style="' +
+
+                'background:' +
+                statusColor +
+                ';' +
+
+                'color:#fff;' +
+                'font-size:0.72em;' +
+                'padding:3px 8px;' +
+                'border-radius:6px;' +
+                'white-space:nowrap;' +
+
+            '">' +
+
+                statusLabel +
+
+            '</span>' +
+
+        '</div>' +
+
+
+        // ----------------------------------------------------
+        // 第二列：瀏覽器 + 平台
+        // ----------------------------------------------------
+
+        '<div style="' +
+            'font-size:0.82em;' +
+            'margin-top:4px;' +
+            'color:#666;' +
+        '">' +
+
+            browser +
+            ' · ' +
+            platform +
+
+        '</div>' +
+
+
+        // ----------------------------------------------------
+        // Session
+        // ----------------------------------------------------
+
+        '<div style="' +
+            'font-size:0.72em;' +
+            'margin-top:5px;' +
+            'color:#aaa;' +
+        '">' +
+
+            '工作階段：' +
+            shortSession +
+
+        '</div>' +
+
+
+        // ----------------------------------------------------
+        // 時間資訊
+        // ----------------------------------------------------
+
+        '<div style="' +
+            'margin-top:9px;' +
+            'padding-top:8px;' +
+            'border-top:1px solid var(--border);' +
+        '">' +
+
+            '<div style="' +
+                'font-size:0.82em;' +
+                'margin-bottom:3px;' +
+            '">' +
+
+                '登入時間：' +
+                (
+                    s.loginTime ||
+                    '—'
+                ) +
+
+            '</div>' +
+
+            '<div style="' +
+                'font-size:0.82em;' +
+                'opacity:0.65;' +
+            '">' +
+
+                '最後活動：' +
+                (
+                    s.lastActivityTime ||
+                    '—'
+                ) +
+
+            '</div>' +
+
+        '</div>' +
+
+
+        terminateBtn +
+
+        '</div>'
+    );
+
+}).join('');
+    
   Swal.fire({
     title: '📱 目前登入裝置', confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉', width: '90%',
     html: '<div style="text-align:left;max-height:55vh;overflow-y:auto;padding-right:4px;">' + listHtml + '</div>'
@@ -878,7 +1133,129 @@ function showLoginError(msg) {
   if (errEl) { errEl.style.display = 'block'; errEl.innerHTML = '<b>Reason:</b><br>' + msg; }
   if (retryEl) retryEl.style.display = 'block';
 }
+// ============================================================
+// 💻 取得目前登入裝置資訊
+// ============================================================
 
+function getLoginDeviceInfo() {
+
+    const ua =
+        navigator.userAgent || '';
+
+    // --------------------------------------------------------
+    // 平台
+    // --------------------------------------------------------
+
+    let platform =
+        navigator.platform ||
+        '未知平台';
+
+    if (
+        navigator.userAgentData &&
+        navigator.userAgentData.platform
+    ) {
+        platform =
+            navigator.userAgentData.platform;
+    }
+
+
+    // --------------------------------------------------------
+    // 瀏覽器
+    // --------------------------------------------------------
+
+    let browser =
+        '未知瀏覽器';
+
+    if (/Edg\//i.test(ua)) {
+
+        browser =
+            'Microsoft Edge';
+
+    } else if (/OPR\//i.test(ua)) {
+
+        browser =
+            'Opera';
+
+    } else if (/Chrome\//i.test(ua)) {
+
+        browser =
+            'Google Chrome';
+
+    } else if (/Firefox\//i.test(ua)) {
+
+        browser =
+            'Mozilla Firefox';
+
+    } else if (
+        /Safari\//i.test(ua)
+    ) {
+
+        browser =
+            'Safari';
+    }
+
+
+    // --------------------------------------------------------
+    // 裝置類型
+    // --------------------------------------------------------
+
+    let deviceName =
+        '電腦';
+
+    if (/iPhone/i.test(ua)) {
+
+        deviceName =
+            'iPhone';
+
+    } else if (/iPad/i.test(ua)) {
+
+        deviceName =
+            'iPad';
+
+    } else if (/Android/i.test(ua)) {
+
+        if (/Mobile/i.test(ua)) {
+
+            deviceName =
+                'Android 手機';
+
+        } else {
+
+            deviceName =
+                'Android 平板';
+        }
+
+    } else if (/Windows/i.test(ua)) {
+
+        deviceName =
+            'Windows 電腦';
+
+    } else if (
+        /Macintosh|Mac OS X/i.test(ua)
+    ) {
+
+        deviceName =
+            'Mac';
+
+    } else if (/Linux/i.test(ua)) {
+
+        deviceName =
+            'Linux 電腦';
+    }
+
+
+    // --------------------------------------------------------
+    // 回傳結果
+    // --------------------------------------------------------
+
+    return {
+        userAgent: ua,
+        deviceName: deviceName,
+        platform: platform,
+        browser: browser
+    };
+}
+    
 async function doLogin() {
   if (_loginInProgress) return;
   _loginInProgress = true;
@@ -896,14 +1273,60 @@ async function doLogin() {
   await uiDelay(500);
   
   let res;
-  try {
-    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: uid, pw: upw }) });
-    res = await raw.json();
-  } catch(e) {
-    setLoginStep('ls_auth', 'failed');
-    showLoginError('系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
-    return;
-  }
+
+try {
+
+  // 💻 取得目前登入裝置資訊
+  const deviceInfo =
+    getLoginDeviceInfo();
+
+  const raw =
+    await fetch(
+      SCRIPT_URL,
+      {
+        method: 'POST',
+
+        body: JSON.stringify({
+          action: 'login',
+
+          uid: uid,
+
+          pw: upw,
+
+          userAgent:
+            deviceInfo.userAgent,
+
+          deviceName:
+            deviceInfo.deviceName,
+
+          platform:
+            deviceInfo.platform,
+
+          browser:
+            deviceInfo.browser
+        })
+      }
+    );
+
+  res =
+    await raw.json();
+
+} catch(e) {
+
+  setLoginStep(
+    'ls_auth',
+    'failed'
+  );
+
+  showLoginError(
+    '系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心' +
+    '<br><small style="font-weight:normal;opacity:0.7;">' +
+    e.message +
+    '</small>'
+  );
+
+  return;
+}
 
   if (!res.success) {
     setLoginStep('ls_auth', 'failed', '驗證帳號密碼失敗');
