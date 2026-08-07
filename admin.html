@@ -458,7 +458,9 @@
         } else { Swal.fire('錯誤', res.message, 'error'); }
     }
 
-    window.onload = refresh;
+    window.addEventListener("load", async () => {
+    await refresh();
+});
 
     async function refresh() {
         let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
