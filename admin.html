@@ -859,9 +859,81 @@ note = `[顏色:${document.getElementById('t_log_color').value}] ` + note;
 
 let notifyMode = await confirmActionWithPush('發佈最新節點');
 if (!notifyMode) return;
+let order = O_DB.find(o => o.id === oid);
 
-let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateTimeline', oid: oid, time: time.replace('T', ' '), status: status, note: note, packageId: document.getElementById('t_log_package').value, notifyMode: notifyMode }, "發佈時間線中...");
-if(!res.aborted) handlePostSuccess(res);
+if (!order) {
+    return Swal.fire(
+        "錯誤",
+        "找不到訂單資料",
+        "error"
+    );
+}
+let order = O_DB.find(o => o.id === oid);
+
+if (!order) {
+    return Swal.fire(
+        "錯誤",
+        "找不到訂單資料",
+        "error"
+    );
+}
+
+    let newTrack =
+    document
+        .getElementById("t_log_package")
+        .value
+        .trim();
+
+if (!newTrack) {
+    newTrack = order.track;
+}
+    
+let res = await fetchWithQueue(
+    GAS,
+    {
+        action: 'adminAction',
+        type: 'updateOrder',
+
+        oid: order.id,
+        uid: order.uid,
+
+        status: status,
+
+        item: order.item,
+
+        code: order.code,
+
+        subtotal: order.subtotal,
+
+        shipFee: order.shipFee,
+
+        discShip: order.discShip,
+
+        discSeller: order.discSeller,
+
+        discCoin: order.discCoin,
+
+        total: order.total,
+
+        ship: order.ship,
+
+        address: order.address,
+
+        track: newTrack,
+
+        payment: order.payment,
+
+        note: note,
+
+        time: time.replace('T', ' '),
+
+        notifyMode: notifyMode
+    },
+    "發佈時間線中..."
+);
+
+if (!res.aborted)
+    handlePostSuccess(res);
 }
 
 function addOrderItemRow() {
