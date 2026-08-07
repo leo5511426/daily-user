@@ -841,8 +841,29 @@
         let notifyMode = await confirmActionWithPush('發佈訂單');
         if (!notifyMode) return;
 
-        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: document.getElementById('o_new_vcode').value, subtotal: calcData.subtotal, shipFee: Number(document.getElementById('o_new_shipping').value), discShip: Number(document.getElementById('o_new_ship_discount').value), discSeller: Number(document.getElementById('o_new_seller_discount').value), discCoin: Number(document.getElementById('o_new_coin_discount').value), total: calcData.totalAmount, ship: document.getElementById('o_new_log_method').value, address: document.getElementById('o_new_address').value, track: document.getElementById('o_new_log_id').value, note: document.getElementById('o_new_log_note').value, payment: payment, invoiceJson: invJsonStr, cpid: document.getElementById('o_new_use_coupon').value, time: document.getElementById('o_new_time').value.replace('T', ' '), deadline: deadlineVal, notifyMode: notifyMode }, "正在佈署全新交易...");
-        if(!res.aborted) handlePostSuccess(res);
+let res = await fetchWithQueue(
+    GAS,
+    {
+        action: 'adminAction',
+        type: 'updateOrder',
+        ...
+        notifyMode: notifyMode
+    },
+    "正在佈署全新交易..."
+);
+
+// ⭐ 新增這一行
+console.log("updateOrder 回傳：", res);
+
+// ⭐ 新增這一行
+Swal.fire(
+    "Debug",
+    JSON.stringify(res, null, 2),
+    "info"
+);
+
+if(!res.aborted)
+    handlePostSuccess(res);
     }
 
     async function updateOrderTimelineSubmit() {
