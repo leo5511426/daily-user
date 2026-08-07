@@ -356,8 +356,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 
 <script>
 // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbzZFtRF-Nw6QVpNe41ppR4dSSDLux5IlzHKjzG9_FtiDmBlKy5RRL-ce_S9ushKMOCm/exec"; 
-    const GAS = "https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec"; 
+const GAS = "https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec"; 
 const ADMIN_TOKEN = 'ADMIN_SEC_2026';
 
 let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], INST_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
@@ -842,8 +841,31 @@ let deadlineVal = (payment === "先享後付") ? document.getElementById('o_new_
 let notifyMode = await confirmActionWithPush('發佈訂單');
 if (!notifyMode) return;
 
-let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: document.getElementById('o_new_vcode').value, subtotal: calcData.subtotal, shipFee: Number(document.getElementById('o_new_shipping').value), discShip: Number(document.getElementById('o_new_ship_discount').value), discSeller: Number(document.getElementById('o_new_seller_discount').value), discCoin: Number(document.getElementById('o_new_coin_discount').value), total: calcData.totalAmount, ship: document.getElementById('o_new_log_method').value, address: document.getElementById('o_new_address').value, track: document.getElementById('o_new_log_id').value, note: document.getElementById('o_new_log_note').value, payment: payment, invoiceJson: invJsonStr, cpid: document.getElementById('o_new_use_coupon').value, time: document.getElementById('o_new_time').value.replace('T', ' '), deadline: deadlineVal, notifyMode: notifyMode }, "正在佈署全新交易...");
-if(!res.aborted) handlePostSuccess(res);
+        let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: document.getElementById('o_new_vcode').value, subtotal: calcData.subtotal, shipFee: Number(document.getElementById('o_new_shipping').value), discShip: Number(document.getElementById('o_new_ship_discount').value), discSeller: Number(document.getElementById('o_new_seller_discount').value), discCoin: Number(document.getElementById('o_new_coin_discount').value), total: calcData.totalAmount, ship: document.getElementById('o_new_log_method').value, address: document.getElementById('o_new_address').value, track: document.getElementById('o_new_log_id').value, note: document.getElementById('o_new_log_note').value, payment: payment, invoiceJson: invJsonStr, cpid: document.getElementById('o_new_use_coupon').value, time: document.getElementById('o_new_time').value.replace('T', ' '), deadline: deadlineVal, notifyMode: notifyMode }, "正在佈署全新交易...");
+        if(!res.aborted) handlePostSuccess(res);
+let res = await fetchWithQueue(
+    GAS,
+    {
+        action: 'adminAction',
+        type: 'updateOrder',
+        ...
+        notifyMode: notifyMode
+    },
+    "正在佈署全新交易..."
+);
+
+// ⭐ 新增這一行
+console.log("updateOrder 回傳：", res);
+
+// ⭐ 新增這一行
+Swal.fire(
+    "Debug",
+    JSON.stringify(res, null, 2),
+    "info"
+);
+
+if(!res.aborted)
+    handlePostSuccess(res);
 }
 
 async function updateOrderTimelineSubmit() {
