@@ -840,7 +840,7 @@ let deadlineVal = (payment === "先享後付") ? document.getElementById('o_new_
 
 let notifyMode = await confirmActionWithPush('發佈訂單');
 if (!notifyMode) return;
-  
+  console.log("notifyMode =", notifyMode);
 }
 
 async function updateOrderTimelineSubmit() {
@@ -857,7 +857,7 @@ note = `[顏色:${document.getElementById('t_log_color').value}] ` + note;
 
 let notifyMode = await confirmActionWithPush('發佈最新節點');
 if (!notifyMode) return;
-
+console.log("準備送出 fetch");
 let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateTimeline', oid: oid, time: time.replace('T', ' '), status: status, note: note, packageId: document.getElementById('t_log_package').value, notifyMode: notifyMode }, "發佈時間線中...");
 if(!res.aborted) handlePostSuccess(res);
 }
