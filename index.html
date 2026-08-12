@@ -191,56 +191,33 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <!-- 📱 正常/唯讀 會員系統畫面 -->
 <div id="appView" style="display:none; height: 100%; width: 100%; position: relative;">
 
-<!-- ========================================================
-     🚫 會員停權通知橫幅
-========================================================= -->
+<!-- 🚫 停權唯讀橫幅 -->
+<div id="suspensionBanner" class="suspension-banner" style="display:none;">
 
-<div
-    id="suspensionBanner"
-    class="suspension-banner"
-    style="display:none;"
->
-
-    <div style="font-weight:bold;">
-        ⚠️ 您的帳號目前已被停權
-    </div>
-
-    <div
-        style="
-            margin-top:5px;
-            font-size:0.92em;
-            font-weight:normal;
-        "
-    >
-        停權原因：
-        <span
-            id="bannerSuspReason"
-            style="font-weight:bold;"
-        ></span>
+    <div>
+        ⚠️ 您的帳號已被停權：
+        <span id="bannerSuspReason">違反系統規範</span>
     </div>
 
     <div
         id="bannerSuspPeriod"
         style="
-            margin-top:3px;
-            font-size:0.85em;
+            font-size:0.9em;
             font-weight:normal;
             opacity:0.9;
+            margin-top:4px;
         "
-    >
-        停權期間：讀取中...
-    </div>
+    ></div>
 
     <div
         style="
-            margin-top:5px;
-            font-size:0.85em;
+            font-size:0.9em;
             font-weight:normal;
             opacity:0.9;
+            margin-top:4px;
         "
     >
-        停權期間僅開放資料查詢、既有帳單繳款、
-        帳號安全管理及客服申訴。
+        目前僅開放唯讀查詢、帳單繳款及停權申訴
     </div>
 
     <button
@@ -282,7 +259,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 </div>
 <div class="card" style="text-align:center; padding:20px 10px; margin:0; border-left:4px solid var(--blue);">
 <div style="font-size:0.75em; opacity:0.6;">先享後付 額度</div>
-<div style="font-size:2em; color:var(--blue); margin-top:5px;"><span id="uBnplDisplay">$<span id="uBnpl">0</span></span></div>
+<div style="font-size:2em; color:var(--blue); margin-top:5px;">$ <span id="uBnpl">0</span></div>
 </div>
 </div>
 
@@ -327,14 +304,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <div class="card" style="background:var(--card); padding:15px; border-left:5px solid var(--blue); margin-bottom:15px;">
 <span style="font-size:0.8em; opacity:0.6;">💳 先享後付信用總額度</span>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-<b
-    id="bnplLimitDisplay"
-    style="font-size:1.3em; color:var(--blue);"
->
-    $<span id="lbl_loan_avail">0</span>
-    /
-    $<span id="lbl_loan_total">500</span>
-</b>
+<b style="font-size:1.3em; color:var(--blue);">$ <span id="lbl_loan_avail">0</span> / <span id="lbl_loan_total">500</span></b>
 <span style="font-size:0.75em; background:#fee2e2; color:var(--red); padding:3px 6px; border-radius:5px;" id="lbl_loan_outstanding">未結清: $0</span>
 </div>
 </div>
@@ -487,7 +457,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
 const SCRIPT_URL = '/api/gas';
 
-let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnPhotoBase64 = null, currentSessionId = "";
+let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnAttachments = [], currentSessionId = "";
 
 // 🚨 Enum 狀態翻譯對照表
 const STATUS_MAP = {
@@ -524,280 +494,25 @@ window.openSessionManager = async function() {
 
   const sessions = res.sessions || [];
   if (sessions.length === 0) { Swal.fire({ title: '📱 登入裝置', text: '目前無登入記錄。', icon: 'info', confirmButtonColor: 'var(--pink)' }); return; }
-    
-const listHtml = sessions.map(function(s) {
 
-    const isCurrent =
-        s.sessionId === currentSessionId;
+  const listHtml = sessions.map(function(s) {
+    const isCurrent = s.sessionId === currentSessionId;
+    const isActive = s.isActive;
+    const statusColor = isCurrent ? '#10b981' : (isActive ? '#3b82f6' : '#94a3b8');
+    const statusLabel = isCurrent ? '目前裝置' : (isActive ? '登入中' : '已登出');
+    const terminateBtn = (!isCurrent && isActive)
+      ? '<button onclick="terminateSessionById(\'' + s.sessionId + '\')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:transparent;color:var(--red);border:1px solid var(--red);font-size:0.8em;font-weight:bold;cursor:pointer;">🔴 終止此裝置</button>'
+      : '';
+    return '<div style="background:' + (isCurrent ? 'rgba(16,185,129,0.07)' : 'rgba(0,0,0,0.03)') + ';border:1px solid ' + (isCurrent ? '#10b981' : 'var(--border)') + ';border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
+      + '<span style="font-size:0.78em;color:#aaa;font-weight:normal;">....' + s.sessionId.slice(-8) + '</span>'
+      + '<span style="background:' + statusColor + ';color:#fff;font-size:0.72em;padding:2px 8px;border-radius:6px;">' + statusLabel + '</span>'
+      + '</div>'
+      + '<div style="font-size:0.82em;margin-bottom:2px;">登入時間：' + (s.loginTime || '—') + '</div>'
+      + '<div style="font-size:0.82em;opacity:0.65;">最後活動：' + (s.lastActivityTime || '—') + '</div>'
+      + terminateBtn + '</div>';
+  }).join('');
 
-    const isActive =
-        !!s.isActive;
-
-
-    // --------------------------------------------------------
-    // 狀態
-    // --------------------------------------------------------
-
-    const statusColor =
-        isCurrent
-            ? '#10b981'
-            : (
-                isActive
-                    ? '#3b82f6'
-                    : '#94a3b8'
-            );
-
-    const statusLabel =
-        isCurrent
-            ? '目前裝置'
-            : (
-                isActive
-                    ? '登入中'
-                    : '已登出'
-            );
-
-
-    // --------------------------------------------------------
-    // 裝置名稱
-    // --------------------------------------------------------
-
-    const deviceName =
-        s.deviceName ||
-        '未知裝置';
-
-    const platform =
-        s.platform ||
-        '未知平台';
-
-    const browser =
-        s.browser ||
-        '未知瀏覽器';
-
-
-    // --------------------------------------------------------
-    // 裝置圖示
-    // --------------------------------------------------------
-
-    let deviceIcon =
-        '💻';
-
-    const deviceText =
-        String(deviceName).toLowerCase();
-
-    if (
-        deviceText.includes('iphone') ||
-        deviceText.includes('android 手機')
-    ) {
-        deviceIcon =
-            '📱';
-
-    } else if (
-        deviceText.includes('ipad') ||
-        deviceText.includes('平板')
-    ) {
-        deviceIcon =
-            '📱';
-    }
-
-
-    // --------------------------------------------------------
-    // Session 顯示
-    // --------------------------------------------------------
-
-    const shortSession =
-        s.sessionId
-            ? '••••' + s.sessionId.slice(-8)
-            : '—';
-
-
-    // --------------------------------------------------------
-    // 終止裝置按鈕
-    // --------------------------------------------------------
-
-    const terminateBtn =
-        (!isCurrent && isActive)
-
-            ? (
-                '<button ' +
-                'onclick="terminateSessionById(\'' +
-                s.sessionId +
-                '\')" ' +
-
-                'style="' +
-                'margin-top:10px;' +
-                'width:100%;' +
-                'padding:8px;' +
-                'border-radius:8px;' +
-                'background:transparent;' +
-                'color:var(--red);' +
-                'border:1px solid var(--red);' +
-                'font-size:0.8em;' +
-                'font-weight:bold;' +
-                'cursor:pointer;' +
-                '">' +
-
-                '🔴 終止此裝置' +
-
-                '</button>'
-            )
-
-            : '';
-
-
-    // --------------------------------------------------------
-    // 卡片 HTML
-    // --------------------------------------------------------
-
-    return (
-
-        '<div style="' +
-
-            'background:' +
-            (
-                isCurrent
-                    ? 'rgba(16,185,129,0.07)'
-                    : 'rgba(0,0,0,0.03)'
-            ) +
-            ';' +
-
-            'border:1px solid ' +
-            (
-                isCurrent
-                    ? '#10b981'
-                    : 'var(--border)'
-            ) +
-            ';' +
-
-            'border-radius:12px;' +
-            'padding:12px;' +
-            'margin-bottom:10px;' +
-            'text-align:left;' +
-
-        '">' +
-
-
-        // ----------------------------------------------------
-        // 第一列：裝置 + 狀態
-        // ----------------------------------------------------
-
-        '<div style="' +
-            'display:flex;' +
-            'justify-content:space-between;' +
-            'align-items:center;' +
-            'gap:10px;' +
-        '">' +
-
-            '<div style="' +
-                'font-size:1em;' +
-                'font-weight:bold;' +
-            '">' +
-
-                deviceIcon +
-                ' ' +
-                deviceName +
-
-            '</div>' +
-
-            '<span style="' +
-
-                'background:' +
-                statusColor +
-                ';' +
-
-                'color:#fff;' +
-                'font-size:0.72em;' +
-                'padding:3px 8px;' +
-                'border-radius:6px;' +
-                'white-space:nowrap;' +
-
-            '">' +
-
-                statusLabel +
-
-            '</span>' +
-
-        '</div>' +
-
-
-        // ----------------------------------------------------
-        // 第二列：瀏覽器 + 平台
-        // ----------------------------------------------------
-
-        '<div style="' +
-            'font-size:0.82em;' +
-            'margin-top:4px;' +
-            'color:#666;' +
-        '">' +
-
-            browser +
-            ' · ' +
-            platform +
-
-        '</div>' +
-
-
-        // ----------------------------------------------------
-        // Session
-        // ----------------------------------------------------
-
-        '<div style="' +
-            'font-size:0.72em;' +
-            'margin-top:5px;' +
-            'color:#aaa;' +
-        '">' +
-
-            '工作階段：' +
-            shortSession +
-
-        '</div>' +
-
-
-        // ----------------------------------------------------
-        // 時間資訊
-        // ----------------------------------------------------
-
-        '<div style="' +
-            'margin-top:9px;' +
-            'padding-top:8px;' +
-            'border-top:1px solid var(--border);' +
-        '">' +
-
-            '<div style="' +
-                'font-size:0.82em;' +
-                'margin-bottom:3px;' +
-            '">' +
-
-                '登入時間：' +
-                (
-                    s.loginTime ||
-                    '—'
-                ) +
-
-            '</div>' +
-
-            '<div style="' +
-                'font-size:0.82em;' +
-                'opacity:0.65;' +
-            '">' +
-
-                '最後活動：' +
-                (
-                    s.lastActivityTime ||
-                    '—'
-                ) +
-
-            '</div>' +
-
-        '</div>' +
-
-
-        terminateBtn +
-
-        '</div>'
-    );
-
-}).join('');
-    
   Swal.fire({
     title: '📱 目前登入裝置', confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉', width: '90%',
     html: '<div style="text-align:left;max-height:55vh;overflow-y:auto;padding-right:4px;">' + listHtml + '</div>'
@@ -1133,129 +848,7 @@ function showLoginError(msg) {
   if (errEl) { errEl.style.display = 'block'; errEl.innerHTML = '<b>Reason:</b><br>' + msg; }
   if (retryEl) retryEl.style.display = 'block';
 }
-// ============================================================
-// 💻 取得目前登入裝置資訊
-// ============================================================
 
-function getLoginDeviceInfo() {
-
-    const ua =
-        navigator.userAgent || '';
-
-    // --------------------------------------------------------
-    // 平台
-    // --------------------------------------------------------
-
-    let platform =
-        navigator.platform ||
-        '未知平台';
-
-    if (
-        navigator.userAgentData &&
-        navigator.userAgentData.platform
-    ) {
-        platform =
-            navigator.userAgentData.platform;
-    }
-
-
-    // --------------------------------------------------------
-    // 瀏覽器
-    // --------------------------------------------------------
-
-    let browser =
-        '未知瀏覽器';
-
-    if (/Edg\//i.test(ua)) {
-
-        browser =
-            'Microsoft Edge';
-
-    } else if (/OPR\//i.test(ua)) {
-
-        browser =
-            'Opera';
-
-    } else if (/Chrome\//i.test(ua)) {
-
-        browser =
-            'Google Chrome';
-
-    } else if (/Firefox\//i.test(ua)) {
-
-        browser =
-            'Mozilla Firefox';
-
-    } else if (
-        /Safari\//i.test(ua)
-    ) {
-
-        browser =
-            'Safari';
-    }
-
-
-    // --------------------------------------------------------
-    // 裝置類型
-    // --------------------------------------------------------
-
-    let deviceName =
-        '電腦';
-
-    if (/iPhone/i.test(ua)) {
-
-        deviceName =
-            'iPhone';
-
-    } else if (/iPad/i.test(ua)) {
-
-        deviceName =
-            'iPad';
-
-    } else if (/Android/i.test(ua)) {
-
-        if (/Mobile/i.test(ua)) {
-
-            deviceName =
-                'Android 手機';
-
-        } else {
-
-            deviceName =
-                'Android 平板';
-        }
-
-    } else if (/Windows/i.test(ua)) {
-
-        deviceName =
-            'Windows 電腦';
-
-    } else if (
-        /Macintosh|Mac OS X/i.test(ua)
-    ) {
-
-        deviceName =
-            'Mac';
-
-    } else if (/Linux/i.test(ua)) {
-
-        deviceName =
-            'Linux 電腦';
-    }
-
-
-    // --------------------------------------------------------
-    // 回傳結果
-    // --------------------------------------------------------
-
-    return {
-        userAgent: ua,
-        deviceName: deviceName,
-        platform: platform,
-        browser: browser
-    };
-}
-    
 async function doLogin() {
   if (_loginInProgress) return;
   _loginInProgress = true;
@@ -1273,60 +866,14 @@ async function doLogin() {
   await uiDelay(500);
   
   let res;
-
-try {
-
-  // 💻 取得目前登入裝置資訊
-  const deviceInfo =
-    getLoginDeviceInfo();
-
-  const raw =
-    await fetch(
-      SCRIPT_URL,
-      {
-        method: 'POST',
-
-        body: JSON.stringify({
-          action: 'login',
-
-          uid: uid,
-
-          pw: upw,
-
-          userAgent:
-            deviceInfo.userAgent,
-
-          deviceName:
-            deviceInfo.deviceName,
-
-          platform:
-            deviceInfo.platform,
-
-          browser:
-            deviceInfo.browser
-        })
-      }
-    );
-
-  res =
-    await raw.json();
-
-} catch(e) {
-
-  setLoginStep(
-    'ls_auth',
-    'failed'
-  );
-
-  showLoginError(
-    '系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心' +
-    '<br><small style="font-weight:normal;opacity:0.7;">' +
-    e.message +
-    '</small>'
-  );
-
-  return;
-}
+  try {
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: uid, pw: upw }) });
+    res = await raw.json();
+  } catch(e) {
+    setLoginStep('ls_auth', 'failed');
+    showLoginError('系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+    return;
+  }
 
   if (!res.success) {
     setLoginStep('ls_auth', 'failed', '驗證帳號密碼失敗');
@@ -1444,12 +991,12 @@ try {
   await uiDelay(300);
 
   setLoginStep('ls_load', 'running');
-await uiDelay(300);
+  await uiDelay(300);
+  
+updateSuspensionUI();
 
-// 先完成資料渲染
 render();
-
-setLoginStep('ls_load', 'done');
+  setLoginStep('ls_load', 'done');
   
   document.getElementById('lp-pct').innerText = '100%';
   document.getElementById('lp-bar').style.width = '100%';
@@ -1465,21 +1012,17 @@ setLoginStep('ls_load', 'done');
 
   await uiDelay(800);
 
- _loginInProgress = false;
+  _loginInProgress = false; 
+  hideLoginOverlay();
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('appView').style.display = 'block';
 
-hideLoginOverlay();
-
-document.getElementById('loginView').style.display = 'none';
-document.getElementById('appView').style.display = 'block';
-
-// 🚫 主畫面真正顯示後，再套用停權介面
-updateSuspensionUI();
-
-startSessionHeartbeat();
-checkWinningInvoices();
+  startSessionHeartbeat();
+  checkWinningInvoices();
 }
-// ============================================================
-// 🚫 停權會員操作權限檢查
+function updateSuspensionUI() {
+    // ============================================================
+// 停權會員操作權限檢查
 // ============================================================
 
 function blockIfSuspended(actionName = '此功能') {
@@ -1488,10 +1031,7 @@ function blockIfSuspended(actionName = '此功能') {
             ? store.userData
             : null;
 
-    if (
-        !userData ||
-        !userData.isSuspended
-    ) {
+    if (!userData || !userData.isSuspended) {
         return false;
     }
 
@@ -1507,43 +1047,25 @@ function blockIfSuspended(actionName = '此功能') {
 
     return true;
 }
-
-
-// ============================================================
-// 🚫 更新停權會員介面
-// ============================================================
-
-function updateSuspensionUI() {
-
     const banner =
-        document.getElementById(
-            'suspensionBanner'
-        );
+        document.getElementById('suspensionBanner');
 
     const reasonText =
-        document.getElementById(
-            'bannerSuspReason'
-        );
+        document.getElementById('bannerSuspReason');
+    const periodText = document.getElementById('bannerSuspPeriod');
 
-    const periodText =
-        document.getElementById(
-            'bannerSuspPeriod'
-        );
-
+    // HTML 尚未建立時，不要讓整個登入流程報錯
     if (!banner) {
         console.warn(
             '[Suspension] 找不到 suspensionBanner'
         );
-
         return;
     }
-
 
     const userData =
         store && store.userData
             ? store.userData
             : null;
-
 
     const suspended =
         !!(
@@ -1551,61 +1073,20 @@ function updateSuspensionUI() {
             userData.isSuspended
         );
 
+    if (suspended) {
+        banner.style.display = 'block';
 
-    // --------------------------------------------------------
-    // 🟢 沒有停權
-    // --------------------------------------------------------
+        if (reasonText) {
+            reasonText.innerText =
+                userData.suspensionReason ||
+                (
+                    userData.suspension &&
+                    userData.suspension.reason
+                ) ||
+                '違反系統規範';
+        }
 
-    if (!suspended) {
-
-        banner.style.display =
-            'none';
-
-        document.body.classList.remove(
-            'account-suspended'
-        );
-
-        return;
-    }
-
-
-    // --------------------------------------------------------
-    // 🔴 目前停權
-    // --------------------------------------------------------
-
-    banner.style.display =
-        'block';
-
-
-    document.body.classList.add(
-        'account-suspended'
-    );
-
-
-    // --------------------------------------------------------
-    // 停權原因
-    // --------------------------------------------------------
-
-    const reason =
-        userData.suspensionReason ||
-        (
-            userData.suspension &&
-            userData.suspension.reason
-        ) ||
-        '違反系統規範';
-
-
-    if (reasonText) {
-
-        reasonText.innerText =
-            reason;
-    }
-
-
-    // --------------------------------------------------------
-    // 停權期間
-    // --------------------------------------------------------
-
+        if (periodText) {
     const startTime =
         userData.suspensionStart ||
         (
@@ -1613,7 +1094,6 @@ function updateSuspensionUI() {
             userData.suspension.startTime
         ) ||
         '';
-
 
     const endTime =
         userData.suspensionEnd ||
@@ -1623,28 +1103,26 @@ function updateSuspensionUI() {
         ) ||
         '';
 
+    if (startTime || endTime) {
+        periodText.innerText =
+            '停權期間：' +
+            (startTime || '立即生效') +
+            ' ～ ' +
+            (endTime || '另行通知');
+    } else {
+        periodText.innerText = '';
+    }
+}
+        document.body.classList.add(
+            'account-suspended'
+        );
 
-    if (periodText) {
+    } else {
+        banner.style.display = 'none';
 
-        if (startTime || endTime) {
-
-            periodText.innerText =
-                '停權期間：' +
-                (
-                    startTime ||
-                    '立即生效'
-                ) +
-                ' ～ ' +
-                (
-                    endTime ||
-                    '另行通知'
-                );
-
-        } else {
-
-            periodText.innerText =
-                '停權期間：直到管理員解除';
-        }
+        document.body.classList.remove(
+            'account-suspended'
+        );
     }
 }
 async function silentSyncData() {
@@ -1666,18 +1144,7 @@ async function silentSyncData() {
         sessionId: currentSessionId
     })
 }).then(r => r.json());
-        // --------------------------------------------------------
-// 🚨 Session 已遭終止／失效
-// --------------------------------------------------------
-
-if (
-    res &&
-    res.success === false &&
-    res.errorCode === 'SESSION_EXPIRED'
-) {
-    handleSessionExpired();
-    return;
-}
+        
         if (res.success) { 
             res.sessionId = currentSessionId;
             store = res; 
@@ -1723,108 +1190,12 @@ async function submitSuspensionAppeal() {
 }
 
 let _sessionHeartbeatTimer = null;
-
-
-// ============================================================
-// ❤️ 啟動 Session Heartbeat
-// ============================================================
-
 function startSessionHeartbeat() {
-
-  // 避免重複建立計時器
-  if (_sessionHeartbeatTimer) {
-    clearInterval(
-      _sessionHeartbeatTimer
-    );
-  }
-
-
-  // ----------------------------------------------------------
-  // Heartbeat 本體
-  // ----------------------------------------------------------
-
-  async function sendHeartbeat() {
-
-    if (
-      !currentSessionId ||
-      !store ||
-      !store.userData ||
-      !store.userData.id
-    ) {
-      return;
-    }
-
-
-    try {
-
-      const raw =
-        await fetch(
-          SCRIPT_URL,
-          {
-            method: 'POST',
-
-            body: JSON.stringify({
-              action:
-                'updateSessionActivity',
-
-              uid:
-                store.userData.id,
-
-              sessionId:
-                currentSessionId
-            })
-          }
-        );
-
-
-      const res =
-        await raw.json();
-
-
-      // ------------------------------------------------------
-      // 🚨 Session 已被終止／失效
-      // ------------------------------------------------------
-
-      if (
-        res &&
-        res.success === false &&
-        res.errorCode ===
-          'SESSION_EXPIRED'
-      ) {
-
-        handleSessionExpired();
-
-        return;
-      }
-
-
-    } catch (e) {
-
-      // 網路暫時斷線不直接登出
-      console.warn(
-        '[Session Heartbeat] 連線失敗：',
-        e
-      );
-    }
-  }
-
-
-  // ----------------------------------------------------------
-  // 啟動後先檢查一次
-  // ----------------------------------------------------------
-
-  sendHeartbeat();
-
-
-  // ----------------------------------------------------------
-  // 每 1 分鐘檢查一次
-  // ----------------------------------------------------------
-
-  _sessionHeartbeatTimer =
-    setInterval(
-      sendHeartbeat,
-      60 * 1000
-    );
+  if (_sessionHeartbeatTimer) clearInterval(_sessionHeartbeatTimer);
+  _sessionHeartbeatTimer = setInterval(function() {
+    if (!currentSessionId || !store || !store.userData) return;
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSessionActivity', uid: store.userData.id, sessionId: currentSessionId }) }).catch(function(){});
+  }, 5 * 60 * 1000);
 }
 
 function customizeShortcuts() {
@@ -1844,106 +1215,6 @@ if(res.isConfirmed) { localStorage.setItem('myShortcuts', JSON.stringify(res.val
 });
 }
 
-    // ============================================================
-// 🚨 Session 已失效／遭遠端終止
-// ============================================================
-
-function handleSessionExpired() {
-
-  // ----------------------------------------------------------
-  // 1. 停止 Heartbeat
-  // ----------------------------------------------------------
-
-  if (_sessionHeartbeatTimer) {
-
-    clearInterval(
-      _sessionHeartbeatTimer
-    );
-
-    _sessionHeartbeatTimer =
-      null;
-  }
-
-
-  // ----------------------------------------------------------
-  // 2. 清除目前 Session
-  // ----------------------------------------------------------
-
-  currentSessionId =
-    null;
-
-
-  // ----------------------------------------------------------
-  // 3. 清除登入密碼
-  // ----------------------------------------------------------
-
-  savedPw =
-    '';
-
-
-  // ----------------------------------------------------------
-  // 4. 清除會員資料
-  // ----------------------------------------------------------
-
-  store =
-    null;
-
-
-  // ----------------------------------------------------------
-  // 5. 關閉會員主畫面
-  // ----------------------------------------------------------
-
-  const appView =
-    document.getElementById(
-      'appView'
-    );
-
-  if (appView) {
-    appView.style.display =
-      'none';
-  }
-
-
-  // ----------------------------------------------------------
-  // 6. 顯示登入畫面
-  // ----------------------------------------------------------
-
-  const loginView =
-    document.getElementById(
-      'loginView'
-    );
-
-  if (loginView) {
-    loginView.style.display =
-      'block';
-  }
-
-
-  // ----------------------------------------------------------
-  // 7. 提示會員
-  // ----------------------------------------------------------
-
-  Swal.fire({
-    icon: 'warning',
-
-    title:
-      '登入工作階段已結束',
-
-    html:
-      '此裝置的登入工作階段已被終止，或登入狀態已失效。<br><br>' +
-      '如需繼續使用，請重新登入。',
-
-    confirmButtonText:
-      '重新登入',
-
-    confirmButtonColor:
-      'var(--pink)',
-
-    allowOutsideClick:
-      false
-  });
-}
-    
 function renderShortcuts() {
 let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6,7]');
 document.querySelectorAll('.shortcut-item').forEach(el => el.classList.remove('visible'));
@@ -2066,113 +1337,10 @@ let outstanding = 0;
 });
 let availBnpl = totalBnpl - outstanding;
 
-const isSuspended =
-    !!u.isSuspended;
-
-const elUBnpl =
-    document.getElementById('uBnpl');
-
-const elLoanAvail =
-    document.getElementById('lbl_loan_avail');
-
-const elLoanTotal =
-    document.getElementById('lbl_loan_total');
-
-const elLoanOut =
-    document.getElementById('lbl_loan_outstanding');
-const elUBnplDisplay =
-    document.getElementById(
-        'uBnplDisplay'
-    );
-
-const elBnplLimitDisplay =
-    document.getElementById(
-        'bnplLimitDisplay'
-    );
-
-// --------------------------------------------------------
-// 🚫 停權會員：BNPL 暫停使用
-// --------------------------------------------------------
-
-if (isSuspended) {
-
-    // ========================================================
-    // 🚫 停權會員：首頁 BNPL 顯示
-    // ========================================================
-
-    if (elUBnplDisplay) {
-
-        elUBnplDisplay.innerHTML =
-            '<span style="color:var(--red); font-size:0.72em;">' +
-            '🚫 暫停使用' +
-            '</span>';
-    }
-
-
-    // ========================================================
-    // 🚫 停權會員：帳單頁 BNPL 顯示
-    // ========================================================
-
-    if (elBnplLimitDisplay) {
-
-        elBnplLimitDisplay.innerHTML =
-            '<span style="color:var(--red);">' +
-            '🚫 暫停使用' +
-            '</span>' +
-
-            '<span style="' +
-            'display:block;' +
-            'margin-top:3px;' +
-            'font-size:0.58em;' +
-            'font-weight:normal;' +
-            'color:#666;' +
-            '">' +
-
-            '原信用總額度：$' +
-            totalBnpl.toLocaleString() +
-
-            '</span>';
-    }
-
-} else {
-
-    // ========================================================
-    // 🟢 正常會員：首頁 BNPL 顯示
-    // ========================================================
-
-    if (elUBnplDisplay) {
-
-        elUBnplDisplay.innerHTML =
-            '$<span id="uBnpl">' +
-            availBnpl.toLocaleString() +
-            '</span>';
-    }
-
-
-    // ========================================================
-    // 🟢 正常會員：帳單頁 BNPL 顯示
-    // ========================================================
-
-    if (elBnplLimitDisplay) {
-
-        elBnplLimitDisplay.innerHTML =
-            '$<span id="lbl_loan_avail">' +
-            availBnpl.toLocaleString() +
-            '</span>' +
-
-            ' / ' +
-
-            '$<span id="lbl_loan_total">' +
-            totalBnpl.toLocaleString() +
-            '</span>';
-    }
-}
-    
-// 既有欠款仍然必須顯示
-if (elLoanOut) {
-    elLoanOut.innerText =
-        `未結清: $${outstanding.toLocaleString()}`;
-}
+const elUBnpl = document.getElementById('uBnpl'); if (elUBnpl) elUBnpl.innerText = availBnpl.toLocaleString();
+const elLoanAvail = document.getElementById('lbl_loan_avail'); if (elLoanAvail) elLoanAvail.innerText = availBnpl.toLocaleString();
+const elLoanTotal = document.getElementById('lbl_loan_total'); if (elLoanTotal) elLoanTotal.innerText = totalBnpl.toLocaleString();
+const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut) elLoanOut.innerText = `未結清: $${outstanding.toLocaleString()}`;
 
 renderShortcuts();
 renderNotifications(); 
@@ -2477,77 +1645,29 @@ if (res && res.success) Swal.fire('訂單已完成', res.message, 'success').the
 }
 }
 
-function previewReturnImage(event) {
-const file = event.target.files[0]; if (!file) return;
-const reader = new FileReader(); reader.readAsDataURL(file);
-reader.onload = e => {
-const img = new Image(); img.src = e.target.result;
-img.onload = () => {
-const canvas = document.createElement('canvas'); let width = img.width; let height = img.height; const max_size = 1000; 
-if (width > height && width > max_size) { height *= max_size / width; width = max_size; } else if (height > max_size) { width *= max_size / height; height = max_size; }
-canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height); returnPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7); 
+function updateReturnAttachmentPreview() {
+const box = document.getElementById('swal-ret-attachments-preview');
+if (!box) return;
+if (!returnAttachments.length) { box.innerHTML = '<div style="opacity:.55;text-align:center;padding:8px;">尚未選擇附件</div>'; return; }
+box.innerHTML = returnAttachments.map((a,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-top:6px;"><span style="font-size:18px;">${a.type==='video'?'🎥':'🖼️'}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(a.name)}</span><span style="font-size:12px;color:#64748b;">${Math.max(1,Math.round(a.size/1024))} KB</span><button type="button" onclick="removeReturnAttachment(${i})" style="width:auto;padding:6px 10px;margin:0;background:var(--red);">刪除</button></div>`).join('');
 }
+function removeReturnAttachment(index) { returnAttachments.splice(index,1); updateReturnAttachmentPreview(); }
+function handleReturnAttachments(event) {
+const files=Array.from(event.target.files||[]); if(!files.length) return;
+const MAX_TOTAL=20*1024*1024,MAX_FILES=8,MAX_IMAGES=6,MAX_VIDEOS=2,MAX_IMAGE=8*1024*1024,MAX_VIDEO=10*1024*1024;
+let next=[...returnAttachments],total=next.reduce((s,a)=>s+(Number(a.size)||0),0),imageCount=next.filter(a=>a.type==='image').length,videoCount=next.filter(a=>a.type==='video').length;
+const readAsDataUrl=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(new Error('讀取檔案失敗'));r.readAsDataURL(file);});
+const compressImage=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height,max=1280;if(w>h&&w>max){h*=max/w;w=max;}else if(h>max){w*=max/h;h=max;}const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));const ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',0.75));};img.onerror=()=>reject(new Error('圖片讀取失敗'));img.src=String(e.target.result||'');};r.onerror=()=>reject(new Error('圖片讀取失敗'));r.readAsDataURL(file);});
+(async()=>{for(const file of files){if(next.length>=MAX_FILES)throw new Error(`最多只能上傳 ${MAX_FILES} 個附件`);const isImage=file.type.startsWith('image/'),isVideo=file.type.startsWith('video/');if(!isImage&&!isVideo)throw new Error(`不支援的檔案格式：${file.name}`);if(isImage&&imageCount>=MAX_IMAGES)throw new Error(`最多 ${MAX_IMAGES} 張照片`);if(isVideo&&videoCount>=MAX_VIDEOS)throw new Error(`最多 ${MAX_VIDEOS} 部影片`);if(isImage&&file.size>MAX_IMAGE)throw new Error(`照片「${file.name}」超過 8 MB`);if(isVideo&&file.size>MAX_VIDEO)throw new Error(`影片「${file.name}」超過 10 MB`);if(total+file.size>MAX_TOTAL)throw new Error('所有附件合計不得超過 20 MB');let dataUrl=isImage?await compressImage(file):await readAsDataUrl(file);next.push({type:isVideo?'video':'image',name:file.name,mimeType:file.type,size:file.size,dataUrl});total+=file.size;if(isImage)imageCount++;else videoCount++;}returnAttachments=next;updateReturnAttachmentPreview();event.target.value='';})().catch(err=>{Swal.fire('無法加入附件',err.message||'附件處理失敗','warning');event.target.value='';});
 }
-}
-
 async function applyReturn(oid) {
 if (store.userData && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法執行訂單操作', 'warning');
-returnPhotoBase64 = null; const o = (store.orders || []).find(ord => ord.id === String(oid)); if(!o) return;
-let rawItem = o.desc || o.item || '無商品明細'; let itemsArray = String(rawItem).includes(';') && !String(rawItem).includes('\n') ? String(rawItem).split(';') : String(rawItem).split('\n'); itemsArray = itemsArray.map(i => i.trim().replace(/^- /, '')).filter(i => i);
-let checkboxesHtml = itemsArray.map((item, idx) => `<label style="display:flex; align-items:center; gap:8px; margin:5px 0; text-align:left; font-size:15px; cursor:pointer;"><input type="checkbox" class="return-item-checkbox" value="${escapeHTML(item)}" style="width:20px; height:20px; margin:0; flex-shrink:0;"><span style="flex:1; line-height:1.3;">${escapeHTML(item)}</span></label>`).join('');
-if(itemsArray.length === 0) checkboxesHtml = `<input id="swal-ret-items-fallback" class="swal2-input" placeholder="請輸入退貨商品明細" style="width:100%; margin:0; box-sizing:border-box;">`;
-
-const { value: formValues } = await Swal.fire({
-title: '申請退貨/退款',
-html: `
-                   <div style="text-align:left; font-size:16px;">
-                       <label style="display:block; font-weight:bold; color:var(--dark); margin-bottom:5px;">🚨 選擇申請類型：</label>
-                       <select id="swal-ret-type" class="swal2-select" style="width:100%; margin:0 0 10px 0; display:flex; box-sizing:border-box;">
-                           <option value="退貨退款">退貨退款 (需寄回商品)</option>
-                           <option value="僅退款">僅退款 (未收到貨或與賣家協商免寄回)</option>
-                       </select>
-                       <label style="display:block; font-weight:bold; color:var(--dark); margin-bottom:5px;">🛍️ 請勾選欲退貨的商品：</label>
-                       <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px; max-height:150px; overflow-y:auto; box-sizing:border-box;">${checkboxesHtml}</div>
-                       <label style="display:block; font-weight:bold; color:var(--dark); margin-bottom:5px;">📝 選擇退貨原因：</label>
-                       <select id="swal-ret-reason" class="swal2-select" style="width:100%; margin:0 0 10px 0; display:flex; box-sizing:border-box;">
-                           <option value="商品瑕疵">商品瑕疵</option><option value="尺寸/規格不合">尺寸/規格不合</option><option value="寄錯商品">寄錯商品</option><option value="商品缺件">商品缺件</option><option value="個人因素(鑑賞期內)">個人因素(鑑賞期內)</option><option value="其他原因">其他原因</option>
-                       </select>
-                       <textarea id="swal-ret-desc" class="swal2-textarea" placeholder="請詳細描述退貨原因或商品狀況..." style="width:100%; margin:0 0 10px 0; height:80px; box-sizing:border-box;"></textarea>
-                       <label style="display:block; font-weight:bold; color:var(--dark); margin-bottom:5px;">💰 期望退款方式：</label>
-                       <select id="swal-ret-method-sel" class="swal2-select" style="width:100%; margin:0 0 10px 0; display:flex; box-sizing:border-box;" onchange="if(this.value=='其他') document.getElementById('swal-ret-method-other').style.display='block'; else document.getElementById('swal-ret-method-other').style.display='none';">
-                           <option value="退還至系統可用餘額">退還至系統可用餘額 (極速退款)</option><option value="信用卡刷退">信用卡刷退</option><option value="銀行轉帳">銀行轉帳</option><option value="街口/LINE Pay 等電子支付">街口/LINE Pay 等電子支付</option><option value="其他">其他...</option>
-                       </select>
-                       <input id="swal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%; margin:0 0 10px 0; box-sizing:border-box; display:none;">
-                       <label style="display:block; margin:10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">📸 上傳佐證相片 (必填)：</label>
-                       <input type="file" id="swal-ret-photo" accept="image/*" onchange="previewReturnImage(event)" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
-                   </div>
-               `,
-focusConfirm: false, showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '送出申請', cancelButtonText: '取消',
-preConfirm: () => {
-let items = "";
-if(itemsArray.length > 0) {
-const checkedBoxes = document.querySelectorAll('.return-item-checkbox:checked');
-if (checkedBoxes.length === 0) { Swal.showValidationMessage('請至少勾選一項退貨商品！'); return false; }
-items = Array.from(checkedBoxes).map(cb => cb.value).join('; ');
-} else {
-items = document.getElementById('swal-ret-items-fallback').value.trim();
-if(!items) { Swal.showValidationMessage('請輸入退貨商品明細！'); return false; }
-}
-const returnType = document.getElementById('swal-ret-type').value, reason = document.getElementById('swal-ret-reason').value, desc = document.getElementById('swal-ret-desc').value.trim();
-let method = document.getElementById('swal-ret-method-sel').value; if(method === '其他') method = document.getElementById('swal-ret-method-other').value.trim();
-if (!desc || !method || !returnPhotoBase64) { Swal.showValidationMessage('請確實填寫所有欄位並上傳佐證相片！'); return false; }
-return { returnType: returnType, items: items, reason: reason, desc: desc, method: method, photoBase64: returnPhotoBase64 };
-}
-});
-
-if (formValues) {
-try {
-let payload = { action: 'buyerApplyReturn', oid: oid, uid: store.userData.id, pw: savedPw, ...formValues };
-let res = await fetchWithQueue(SCRIPT_URL, payload, "上傳佐證相片並送出申請中...");
-if (res && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData());
-else if (res) Swal.fire('錯誤', res.message, 'error');
-} catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
-}
+returnAttachments=[]; const o=(store.orders||[]).find(ord=>ord.id===String(oid)); if(!o)return;
+let rawItem=o.desc||o.item||'無商品明細'; let itemsArray=String(rawItem).includes(';')&&!String(rawItem).includes('\n')?String(rawItem).split(';'):String(rawItem).split('\n'); itemsArray=itemsArray.map(i=>i.trim().replace(/^- /,'')).filter(i=>i);
+let checkboxesHtml=itemsArray.map(item=>`<label style="display:flex;align-items:center;gap:8px;margin:5px 0;text-align:left;font-size:15px;cursor:pointer;"><input type="checkbox" class="return-item-checkbox" value="${escapeHTML(item)}" style="width:20px;height:20px;margin:0;flex-shrink:0;"><span style="flex:1;line-height:1.3;">${escapeHTML(item)}</span></label>`).join('');
+if(itemsArray.length===0)checkboxesHtml=`<input id="swal-ret-items-fallback" class="swal2-input" placeholder="請輸入退貨商品明細" style="width:100%;margin:0;box-sizing:border-box;">`;
+const {value:formValues}=await Swal.fire({title:'申請退貨/退款',html:`<div style="text-align:left;font-size:16px;"><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">🚨 選擇申請類型：</label><select id="swal-ret-type" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;"><option value="退貨退款">退貨退款 (需寄回商品)</option><option value="僅退款">僅退款 (未收到貨或與賣家協商免寄回)</option></select><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">🛍️ 請勾選欲退貨的商品：</label><div style="background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:10px;max-height:150px;overflow-y:auto;box-sizing:border-box;">${checkboxesHtml}</div><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">📝 選擇退貨原因：</label><select id="swal-ret-reason" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;"><option value="商品瑕疵">商品瑕疵</option><option value="尺寸/規格不合">尺寸/規格不合</option><option value="寄錯商品">寄錯商品</option><option value="商品缺件">商品缺件</option><option value="個人因素(鑑賞期內)">個人因素(鑑賞期內)</option><option value="其他原因">其他原因</option></select><textarea id="swal-ret-desc" class="swal2-textarea" placeholder="請詳細描述退貨原因或商品狀況..." style="width:100%;margin:0 0 10px 0;height:80px;box-sizing:border-box;"></textarea><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">💰 期望退款方式：</label><select id="swal-ret-method-sel" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;" onchange="if(this.value=='其他')document.getElementById('swal-ret-method-other').style.display='block';else document.getElementById('swal-ret-method-other').style.display='none';"><option value="退還至系統可用餘額">退還至系統可用餘額 (極速退款)</option><option value="信用卡刷退">信用卡刷退</option><option value="銀行轉帳">銀行轉帳</option><option value="街口/LINE Pay 等電子支付">街口/LINE Pay 等電子支付</option><option value="其他">其他...</option></select><input id="swal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%;margin:0 0 10px 0;box-sizing:border-box;display:none;"><label style="display:block;margin:10px 0 5px;font-size:0.9em;font-weight:bold;color:var(--dark);">📎 上傳佐證資料（至少 1 個）</label><div style="font-size:12px;color:#64748b;margin-bottom:8px;line-height:1.5;">最多 6 張照片＋2 部影片、最多 8 個附件；所有附件原始大小合計 ≤ 20 MB。</div><input type="file" id="swal-ret-attachments" accept="image/*,video/mp4,video/quicktime,video/webm" multiple onchange="handleReturnAttachments(event)" style="width:100%;margin-bottom:8px;box-sizing:border-box;"><div id="swal-ret-attachments-preview" style="max-height:220px;overflow-y:auto;">尚未選擇附件</div></div>`,focusConfirm:false,showCancelButton:true,confirmButtonColor:'var(--red)',cancelButtonColor:'#94a3b8',confirmButtonText:'送出申請',cancelButtonText:'取消',preConfirm:()=>{let items='';if(itemsArray.length>0){const checkedBoxes=document.querySelectorAll('.return-item-checkbox:checked');if(checkedBoxes.length===0){Swal.showValidationMessage('請至少勾選一項退貨商品！');return false;}items=Array.from(checkedBoxes).map(cb=>cb.value).join('; ');}else{items=document.getElementById('swal-ret-items-fallback').value.trim();if(!items){Swal.showValidationMessage('請輸入退貨商品明細！');return false;}}const returnType=document.getElementById('swal-ret-type').value,reason=document.getElementById('swal-ret-reason').value,desc=document.getElementById('swal-ret-desc').value.trim();let method=document.getElementById('swal-ret-method-sel').value;if(method==='其他')method=document.getElementById('swal-ret-method-other').value.trim();if(!desc||!method||!returnAttachments.length){Swal.showValidationMessage('請完整填寫所有欄位，並至少上傳 1 個佐證照片或影片！');return false;}return{returnType,items,reason,desc,method,attachments:returnAttachments.map(({type,name,mimeType,size,dataUrl})=>({type,name,mimeType,size,dataUrl}))};}});
+if(formValues){try{let payload={action:'buyerApplyReturn',oid:oid,uid:store.userData.id,pw:savedPw,...formValues};let res=await fetchWithQueue(SCRIPT_URL,payload,'上傳佐證資料並送出申請中...');if(res&&res.success)Swal.fire('申請成功',res.message,'success').then(()=>silentSyncData());else if(res)Swal.fire('錯誤',res.message,'error');}catch(e){Swal.fire('錯誤','連線異常，請稍後再試','error');}}
 }
 
 function renderInvoices() {
