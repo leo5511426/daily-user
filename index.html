@@ -149,6 +149,93 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
     padding: 40px; box-sizing: border-box; text-align: center; background: #fff5f5;
 }
 [data-theme='dark'] #suspendedView { background: #1a0505; }
+
+/* ============================================================
+   APP OVERLAY MODAL
+   用於「彈窗中的預覽／子視窗」，避免再次呼叫 Swal.fire
+   把原本的 Swal 彈窗關閉。
+   ============================================================ */
+.app-overlay-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(0,0,0,.78);
+}
+.app-overlay-modal.is-open { display: flex; }
+.app-overlay-dialog {
+  position: relative;
+  width: min(96vw, 1100px);
+  max-height: 94vh;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+.app-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+.app-overlay-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  color: #111827;
+}
+.app-overlay-close {
+  width: 40px !important;
+  height: 40px;
+  flex: 0 0 40px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  font-size: 22px !important;
+  line-height: 40px;
+  cursor: pointer;
+}
+.app-overlay-body {
+  max-height: calc(94vh - 65px);
+  overflow: auto;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #0f172a;
+}
+.app-overlay-body.light { background: #f8fafc; }
+.app-overlay-body img,
+.app-overlay-body video,
+.app-overlay-body iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: calc(94vh - 120px);
+  margin: 0 auto;
+  border: 0;
+  border-radius: 10px;
+  object-fit: contain;
+}
+.app-overlay-message {
+  padding: 28px 20px;
+  text-align: center;
+  color: #334155;
+  background: #fff;
+  border-radius: 12px;
+}
+
 </style>
 </head>
 <body data-theme="light">
@@ -1673,16 +1760,32 @@ function removeReturnAttachment(index) { returnAttachments.splice(index,1); upda
 async function previewLocalReturnAttachment(index) {
   const a = returnAttachments[index];
   if (!a) return;
+  const safeName = escapeHTML(a.name || '附件預覽');
+
   if (a.type === 'image') {
-    await Swal.fire({title:a.name, html:`<img src="${a.dataUrl}" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:10px;">`, width:'auto', confirmButtonText:'關閉'});
+    openAppOverlay({
+      title: a.name || '圖片預覽',
+      html: `<img src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" alt="${safeName}">`
+    });
   } else if (a.type === 'video') {
-    await Swal.fire({title:a.name, html:`<video src="${a.dataUrl}" controls playsinline style="max-width:100%;max-height:65vh;border-radius:10px;"></video>`, width:'90%', confirmButtonText:'關閉'});
+    openAppOverlay({
+      title: a.name || '影片預覽',
+      html: `<video src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" controls playsinline preload="metadata"></video>`
+    });
   } else if (a.mimeType === 'application/pdf') {
-    await Swal.fire({title:a.name, html:`<iframe src="${a.dataUrl}" style="width:100%;height:65vh;border:0;border-radius:8px;"></iframe>`, width:'90%', confirmButtonText:'關閉'});
+    openAppOverlay({
+      title: a.name || 'PDF 預覽',
+      html: `<iframe src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" title="${safeName}"></iframe>`
+    });
   } else {
-    await Swal.fire({title:a.name, icon:'info', html:'此文件格式無法在瀏覽器本機直接預覽。<br><br>送出後將可在後台透過 Google Drive 預覽。', confirmButtonText:'知道了'});
+    openAppOverlay({
+      title: a.name || '文件預覽',
+      light: true,
+      html: `<div class="app-overlay-message">此文件格式無法在瀏覽器本機直接預覽。<br><br>送出後可在後台透過 Google Drive 預覽。</div>`
+    });
   }
 }
+
 function handleReturnAttachments(event) {
   const files=Array.from(event.target.files||[]); if(!files.length) return;
   const MAX_TOTAL=100*1024*1024,MAX_FILES=8,MAX_IMAGES=6,MAX_VIDEOS=2,MAX_IMAGE=8*1024*1024,MAX_VIDEO=50*1024*1024,MAX_DOCUMENT=20*1024*1024;
@@ -1707,7 +1810,7 @@ function handleReturnAttachments(event) {
     let dataUrl=isImage?await compressImage(file):await readAsDataUrl(file);
     const storedName = isImage ? file.name.replace(/\.[^.]+$/, '.jpg') : file.name; const storedMime = isImage ? 'image/jpeg' : detectedMime; next.push({type:isImage?'image':isVideo?'video':'document',name:storedName,mimeType:storedMime,size:file.size,dataUrl});
     total+=file.size;if(isImage)imageCount++;else if(isVideo)videoCount++;
-  }returnAttachments=next;updateReturnAttachmentPreview();event.target.value='';})().catch(err=>{Swal.fire('無法加入附件',err.message||'附件處理失敗','warning');event.target.value='';});
+  }returnAttachments=next;updateReturnAttachmentPreview();event.target.value='';})().catch(err=>{ const box=document.getElementById('swal-ret-attachments-preview'); if(box){ box.innerHTML='<div style="padding:10px;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;color:#be123c;text-align:center;">⚠️ '+escapeHTML(err.message||'附件處理失敗')+'</div>'; } event.target.value=''; });
 }
 function base64ByteLength_(dataUrl) {
   const raw = String(dataUrl||'').replace(/^data:[^;]+;base64,/,'');
@@ -2407,5 +2510,70 @@ window.openLegalDocFromConsent = function(docId) {
 };
 </script>
 
+
+<div id="app-overlay-modal" class="app-overlay-modal" aria-hidden="true">
+  <div class="app-overlay-dialog" role="dialog" aria-modal="true" aria-labelledby="app-overlay-title">
+    <div class="app-overlay-header">
+      <div id="app-overlay-title" class="app-overlay-title">預覽</div>
+      <button type="button" id="app-overlay-close" class="app-overlay-close" aria-label="關閉預覽">×</button>
+    </div>
+    <div id="app-overlay-body" class="app-overlay-body"></div>
+  </div>
+</div>
+
+<script>
+
+/* ============================================================
+   子視窗／預覽：不要用 Swal.fire 疊在既有 Swal 上
+   ============================================================ */
+let APP_OVERLAY_PREVIOUS_FOCUS = null;
+function openAppOverlay(options = {}) {
+  const modal = document.getElementById('app-overlay-modal');
+  const titleEl = document.getElementById('app-overlay-title');
+  const bodyEl = document.getElementById('app-overlay-body');
+  if (!modal || !titleEl || !bodyEl) return false;
+
+  APP_OVERLAY_PREVIOUS_FOCUS = document.activeElement;
+  titleEl.textContent = String(options.title || '預覽');
+  bodyEl.className = 'app-overlay-body' + (options.light ? ' light' : '');
+  bodyEl.innerHTML = String(options.html || '');
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('app-overlay-open');
+  document.getElementById('app-overlay-close')?.focus();
+  return true;
+}
+
+function closeAppOverlay() {
+  const modal = document.getElementById('app-overlay-modal');
+  const bodyEl = document.getElementById('app-overlay-body');
+  if (!modal) return;
+  modal.classList.remove('is-open');
+  modal.setAttribute('aria-hidden', 'true');
+  if (bodyEl) bodyEl.innerHTML = '';
+  document.body.classList.remove('app-overlay-open');
+  try { APP_OVERLAY_PREVIOUS_FOCUS?.focus?.(); } catch (e) {}
+  APP_OVERLAY_PREVIOUS_FOCUS = null;
+}
+
+(function initAppOverlay() {
+  const closeBtn = document.getElementById('app-overlay-close');
+  const modal = document.getElementById('app-overlay-modal');
+  const dialog = modal?.querySelector('.app-overlay-dialog');
+  closeBtn?.addEventListener('click', closeAppOverlay);
+  modal?.addEventListener('click', e => {
+    if (e.target === modal) closeAppOverlay();
+  });
+  dialog?.addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal?.classList.contains('is-open')) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAppOverlay();
+    }
+  }, true);
+})();
+
+</script>
 </body>
 </html>
