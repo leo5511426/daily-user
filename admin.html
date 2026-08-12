@@ -970,49 +970,114 @@ document.getElementById('lbl_subtotal').innerText = subtotal;
 let tot = subtotal + (Number(document.getElementById('o_new_shipping').value)||0) - (Number(document.getElementById('o_new_ship_discount').value)||0) - (Number(document.getElementById('o_new_seller_discount').value)||0) - (Number(document.getElementById('o_new_coin_discount').value)||0);
 document.getElementById('lbl_total_amount').innerText = Math.max(0, tot); return { subtotal, totalAmount: Math.max(0, tot) };
 }
-function renderReturnAuditPanel() {
-let oid = document.getElementById('r_audit_select').value;
-if(!oid) return;
-let order = O_DB.find(o => o.id === oid);
-if(!order || !order.returnData) return;
-document.getElementById('r_audit_title').innerText = `售後單：${oid} (${order.status})`;
-document.getElementById('r_audit_info').innerText =
-  `買家商品明細：${order.returnData.items}\n` +
-  `買家退款帳戶/期望方式：${order.returnData.method}\n` +
-  `原因：${order.returnData.reason}\n` +
-  `描述：${order.returnData.desc}`;
-let attachments = Array.isArray(order.returnData.attachments) ? order.returnData.attachments : [];
-if (!attachments.length) {
-  let legacy = String(order.returnData.photo || order.returnData.photoUrl || '').trim();
-  if (legacy) {
-    try {
-      let parsed = JSON.parse(legacy);
-      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-      if (Array.isArray(parsed)) attachments = parsed;
-      else attachments = [{type:'image',name:'佐證照片',viewUrl:legacy,url:legacy}];
-    } catch(e) {
-      attachments = [{type:'image',name:'佐證照片',viewUrl:legacy,url:legacy}];
-    }
+async function previewReturnAttachment(a) {
+  a = a || {};
+  const type = String(a.type || '').toLowerCase();
+  const mime = String(a.mimeType || '').toLowerCase();
+  const name = escapeHTML(a.name || '附件');
+  let url = String(a.url || a.viewUrl || '').trim();
+  let viewUrl = String(a.viewUrl || '').trim() || url;
+  if (!viewUrl && a.fileId) viewUrl = 'https://drive.google.com/file/d/' + encodeURIComponent(a.fileId) + '/view';
+  if (!url && a.fileId) url = 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(a.fileId);
+
+  if (type === 'image' && url) {
+    await Swal.fire({title:name,html:`<img src="${url.replace(/"/g,'&quot;')}" style="max-width:100%;max-height:72vh;object-fit:contain;border-radius:10px;">`,width:'90%',confirmButtonText:'關閉'});
+  } else if (type === 'video' && url) {
+    await Swal.fire({title:name,html:`<video src="${url.replace(/"/g,'&quot;')}" controls playsinline style="max-width:100%;max-height:70vh;border-radius:10px;"></video>`,width:'90%',confirmButtonText:'關閉'});
+  } else if ((mime === 'application/pdf' || mime.includes('wordprocessingml') || mime.includes('msword') || mime.includes('spreadsheetml') || mime.includes('ms-excel') || mime.includes('presentationml') || mime.includes('ms-powerpoint')) && url) {
+    const gview='https://docs.google.com/gview?embedded=1&url='+encodeURIComponent(url);
+    await Swal.fire({title:name,html:`<iframe src="${gview}" style="width:100%;height:70vh;border:0;border-radius:8px;"></iframe>`,width:'95%',confirmButtonText:'關閉'});
+  } else if (viewUrl) {
+    window.open(viewUrl,'_blank','noopener');
+  } else {
+    await Swal.fire({title:name,text:'目前沒有可用的預覽連結。',icon:'warning',confirmButtonText:'關閉'});
   }
 }
-let esc=v=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-let attachmentHtml=attachments.length
- ? `<div style="display:flex;flex-direction:column;gap:8px;">${attachments.map((a,i)=>{
-    a=a||{};
-    let fileId=String(a.fileId||'').trim();
-    let viewUrl=String(a.viewUrl||'').trim();
-    let url=String(a.url||'').trim();
-    if(!viewUrl && fileId) viewUrl='https://drive.google.com/file/d/'+encodeURIComponent(fileId)+'/view';
-    if(!viewUrl) viewUrl=url;
-    let name=esc(a.name||`附件 ${i+1}`);
-    let isVideo=String(a.type||'').toLowerCase()==='video'||String(a.mimeType||'').startsWith('video/');
-    return viewUrl
-      ? `<a href="${esc(viewUrl)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;background:${isVideo?'var(--dark)':'var(--blue)'};color:white;padding:10px;border-radius:8px;">${isVideo?'🎥':'🖼️'} 查看 ${name}</a>`
-      : `<div style="padding:10px;background:#fff;border:1px dashed var(--red);border-radius:8px;color:var(--red);text-align:center;">⚠️ ${name} 沒有可用連結</div>`;
-  }).join('')}</div>`
- : `<div style="padding:12px;background:#fff;border:1px dashed var(--red);border-radius:8px;color:var(--red);text-align:center;">⚠️ 此售後申請沒有可用的佐證照片／影片</div>`;
-document.getElementById('r_audit_actions').innerHTML=attachmentHtml+`<button onclick="processReturnAction('${oid}', 'execute_refund')" style="background:var(--green);color:white;padding:12px;border:none;border-radius:8px;cursor:pointer;">填入最終驗收金額並撥款</button>`;
-document.getElementById('r_audit_panel').style.display='block';
+
+function renderReturnAuditPanel() {
+let oid = document.getElementById('r_audit_select').value;
+if (!oid) return;
+
+let order = O_DB.find(o => o.id === oid);
+if (!order || !order.returnData) {
+document.getElementById('r_audit_panel').style.display = 'none';
+return;
+}
+
+document.getElementById('r_audit_title').innerText =
+`售後單：${oid} (${order.status})`;
+
+document.getElementById('r_audit_info').innerText =
+`買家商品明細：${order.returnData.items || ''}\n` +
+`買家退款帳戶/期望方式：${order.returnData.method || ''}\n` +
+`原因：${order.returnData.reason || ''}\n` +
+`描述：${order.returnData.desc || ''}`;
+
+let attachments = Array.isArray(order.returnData.attachments)
+? order.returnData.attachments
+: [];
+
+// 相容舊版 F 欄單一 URL 或 JSON 陣列
+if (!attachments.length) {
+let legacy = String(
+order.returnData.photo ||
+order.returnData.photoUrl ||
+''
+).trim();
+
+if (legacy) {
+try {
+let parsed = JSON.parse(legacy);
+if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+if (Array.isArray(parsed)) attachments = parsed;
+else attachments = [{type:'image',name:'佐證照片',url:legacy,viewUrl:legacy}];
+} catch (e) {
+attachments = [{
+type:'image',
+name:'佐證照片',
+url:legacy,
+viewUrl:legacy
+}];
+}
+}
+}
+
+const esc = (v) =>
+String(v || '')
+.replace(/&/g,'&amp;')
+.replace(/</g,'&lt;')
+.replace(/>/g,'&gt;')
+.replace(/"/g,'&quot;')
+.replace(/'/g,'&#39;');
+
+let attachmentHtml = '';
+if (!attachments.length) {
+  attachmentHtml = `<div style="padding:12px;background:#fff;border:1px dashed var(--red);border-radius:8px;color:var(--red);text-align:center;">⚠️ 此售後申請沒有可用的佐證照片／影片</div>`;
+} else {
+  attachmentHtml = `<div style="display:flex;flex-direction:column;gap:8px;"><strong style="color:var(--dark);">📎 佐證資料（${attachments.length} 個）</strong>${attachments.map((raw,i)=>{
+    const item = raw || {};
+    const name = esc(item.name || `附件 ${i+1}`);
+    const size = Number(item.size||0);
+    const sizeText = size >= 1024*1024 ? (size/(1024*1024)).toFixed(2)+' MB' : Math.max(1,Math.round(size/1024))+' KB';
+    const icon = item.type==='video' ? '🎥' : (item.type==='document' || String(item.mimeType||'').includes('pdf') ? '📄' : '🖼️');
+    window._returnAuditAttachments = attachments;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;"><span style="font-size:20px;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</div><div style="font-size:11px;color:#64748b;">${sizeText}</div></div><button type="button" onclick="previewReturnAttachmentFromIndex(${i})" style="background:var(--blue);color:#fff;border:0;border-radius:7px;padding:8px 12px;cursor:pointer;">預覽</button><a href="${String(item.viewUrl||item.url||'').replace(/"/g,'&quot;')}" target="_blank" rel="noopener noreferrer" style="background:#64748b;color:#fff;border-radius:7px;padding:8px 12px;text-decoration:none;">開啟</a></div>`;
+  }).join('')}</div>`;
+}
+window._returnAuditAttachments = [];
+function previewReturnAttachmentFromIndex(index){
+  const list = window._returnAuditAttachments || [];
+  if (list[index]) previewReturnAttachment(list[index]);
+}
+
+document.getElementById('r_audit_actions').innerHTML =
+attachmentHtml +
+`<button onclick="processReturnAction('${String(oid).replace(/'/g,"\\'")}', 'execute_refund')"
+style="background:var(--green);color:white;padding:12px;border:none;border-radius:8px;cursor:pointer;">
+填入最終驗收金額並撥款
+</button>`;
+
+document.getElementById('r_audit_panel').style.display = 'block';
 }
 
 // --- 📦 渲染與過濾時間線節點 ---
