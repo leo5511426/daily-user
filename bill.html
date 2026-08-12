@@ -1,28 +1,179 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 頁面無效</title>
-    <style>
-        /* 基礎排版設定 */
-        body {
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            background-color: #f4f7f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>帳單繳款提醒</title>
+<style>
+/* 基礎排版設定 */
+body {
+font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+background-color: #f4f7f6;
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 100vh;
+margin: 0;
+padding: 20px;
+box-sizing: border-box;
+}
 
-        <!-- 快速操作按鈕 -->
-        <a href="https://daily-user.vercel.app/" target="_blank" class="action-btn">
-            <span></span> 前往首頁
-        </a>
-    </div>
+/* 卡片設計 */
+.billing-card {
+background: #ffffff;
+padding: 30px 25px;
+border-radius: 16px;
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+width: 100%;
+max-width: 400px;
+text-align: center;
+}
+
+/* 標題與提示訊息 */
+.title {
+color: #d9534f;
+font-size: 22px;
+font-weight: bold;
+margin-bottom: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+}
+
+.subtitle {
+color: #666666;
+font-size: 14px;
+margin-bottom: 25px;
+line-height: 1.5;
+}
+
+/* 帳單資訊區塊 */
+.info-box {
+background: #f9f9f9;
+border-radius: 12px;
+padding: 20px;
+text-align: left;
+margin-bottom: 25px;
+}
+
+/* 條列式明細設計 */
+.detail-section-title {
+color: #333333;
+font-size: 15px;
+font-weight: bold;
+margin-bottom: 12px;
+padding-bottom: 8px;
+border-bottom: 2px solid #e0e0e0;
+}
+
+.detail-list {
+list-style: none;
+padding: 0;
+margin: 0 0 15px 0;
+border-bottom: 1px dashed #e0e0e0;
+padding-bottom: 15px;
+}
+
+.detail-item {
+display: flex;
+justify-content: space-between;
+font-size: 14px;
+color: #555555;
+margin-bottom: 8px;
+}
+
+.detail-item:last-child {
+margin-bottom: 0;
+}
+
+.detail-price {
+color: #333333;
+font-weight: 500;
+}
+
+/* 底部總計與日期 */
+.info-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 12px;
+}
+
+.info-row:last-child {
+margin-bottom: 0;
+}
+
+.label {
+color: #777777;
+font-size: 15px;
+}
+
+.value {
+color: #333333;
+font-size: 15px;
+font-weight: 600;
+}
+
+.highlight-date {
+color: #d9534f;
+}
+
+.amount-value {
+color: #d9534f;
+font-size: 22px;
+font-weight: bold;
+}
+
+/* 按鈕設計 */
+.action-btn {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+background: #007bff;
+color: #ffffff;
+text-decoration: none;
+padding: 16px;
+border-radius: 10px;
+font-size: 16px;
+font-weight: bold;
+transition: background 0.3s ease, transform 0.1s ease;
+}
+
+.action-btn:hover {
+background: #0056b3;
+}
+
+.action-btn:active {
+transform: scale(0.98);
+}
+</style>
+</head>
+<body>
+
+<div class="billing-card">
+<!-- 頂部標題 -->
+<div class="title">
+<span>⚠️</span> 錯誤代碼：404 代碼說明：客戶請求無效。
+</div>
+<p class="subtitle"u無效的頁面。請前往首頁。</p>
+
+<!-- 帳單明細區塊 -->
+<div class="info-box">
+
+            <div class="detail-section-title"></div>
+            <div class="detail-section-title"></div>
+    
+</div>
+</div>
+
+<!-- 快速操作按鈕 -->
+<a href="https://daily-user.vercel.app/" target="_blank" class="action-btn">
+<span></span> 返回首頁
+</a>
+</div>
 
 </body>
+</html>
 </html>
