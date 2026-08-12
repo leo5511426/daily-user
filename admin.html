@@ -806,11 +806,32 @@ let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'processCance
 if(!res.aborted) handlePostSuccess(res); return;
 }
 let order = O_DB.find(o => o.id === oid);
-if(confirm(`訂單應付實額為 $${order.total}，是否執行自動化加回買家餘額金流？`)) {
-let notifyMode = await confirmActionWithPush('訂單取消與退款');
+if (!order) return Swal.fire('錯誤', '找不到訂單資料', 'error');
+
+let payment = String(order.payment || order.payMethod || order.paymentMethod || '').trim();
+let isCOD = payment === '貨到付款';
+let isBNPL = payment === '先享後付';
+
+let refundText = isCOD
+  ? '此訂單為「貨到付款」，系統不會自動加回付款金額。是否繼續將訂單判定為不成立？'
+  : isBNPL
+    ? '此訂單為「先享後付」，系統只會依帳單實際已繳金額處理退款，不會把整筆未繳金額加回餘額。是否繼續？'
+    : `訂單應付實額為 $${order.total}，是否執行自動化加回買家餘額金流？`;
+
+if(confirm(refundText)) {
+let notifyMode = await confirmActionWithPush(isCOD ? '訂單取消' : '訂單取消與退款');
 if (!notifyMode) return;
 
-let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'processCancel', mode: mode, oid: oid, reason: reason, refundCoin: true, refundTotal: true, notifyMode: notifyMode });
+let res = await fetchWithQueue(GAS, {
+  action: 'adminAction',
+  type: 'processCancel',
+  mode: mode,
+  oid: oid,
+  reason: reason,
+  refundCoin: !isCOD,
+  refundTotal: !isCOD,
+  notifyMode: notifyMode
+});
 if(!res.aborted) handlePostSuccess(res);
 }
 }
@@ -950,13 +971,48 @@ let tot = subtotal + (Number(document.getElementById('o_new_shipping').value)||0
 document.getElementById('lbl_total_amount').innerText = Math.max(0, tot); return { subtotal, totalAmount: Math.max(0, tot) };
 }
 function renderReturnAuditPanel() {
-let oid = document.getElementById('r_audit_select').value; if(!oid) return;
+let oid = document.getElementById('r_audit_select').value;
+if(!oid) return;
 let order = O_DB.find(o => o.id === oid);
 if(!order || !order.returnData) return;
 document.getElementById('r_audit_title').innerText = `售後單：${oid} (${order.status})`;
-document.getElementById('r_audit_info').innerText = `買家商品明細：${order.returnData.items}\n買家退款帳戶/期望方式：${order.returnData.method}\n原因：${order.returnData.reason}\n描述：${order.returnData.desc}`;
-document.getElementById('r_audit_actions').innerHTML = `<button onclick="processReturnAction('${oid}', 'execute_refund')" style="background:var(--green); color:white; padding:12px; border:none; border-radius:8px; cursor:pointer;">填入最終驗收金額並撥款</button>`;
-document.getElementById('r_audit_panel').style.display = 'block';
+document.getElementById('r_audit_info').innerText =
+  `買家商品明細：${order.returnData.items}\n` +
+  `買家退款帳戶/期望方式：${order.returnData.method}\n` +
+  `原因：${order.returnData.reason}\n` +
+  `描述：${order.returnData.desc}`;
+let attachments = Array.isArray(order.returnData.attachments) ? order.returnData.attachments : [];
+if (!attachments.length) {
+  let legacy = String(order.returnData.photo || order.returnData.photoUrl || '').trim();
+  if (legacy) {
+    try {
+      let parsed = JSON.parse(legacy);
+      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+      if (Array.isArray(parsed)) attachments = parsed;
+      else attachments = [{type:'image',name:'佐證照片',viewUrl:legacy,url:legacy}];
+    } catch(e) {
+      attachments = [{type:'image',name:'佐證照片',viewUrl:legacy,url:legacy}];
+    }
+  }
+}
+let esc=v=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+let attachmentHtml=attachments.length
+ ? `<div style="display:flex;flex-direction:column;gap:8px;">${attachments.map((a,i)=>{
+    a=a||{};
+    let fileId=String(a.fileId||'').trim();
+    let viewUrl=String(a.viewUrl||'').trim();
+    let url=String(a.url||'').trim();
+    if(!viewUrl && fileId) viewUrl='https://drive.google.com/file/d/'+encodeURIComponent(fileId)+'/view';
+    if(!viewUrl) viewUrl=url;
+    let name=esc(a.name||`附件 ${i+1}`);
+    let isVideo=String(a.type||'').toLowerCase()==='video'||String(a.mimeType||'').startsWith('video/');
+    return viewUrl
+      ? `<a href="${esc(viewUrl)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;background:${isVideo?'var(--dark)':'var(--blue)'};color:white;padding:10px;border-radius:8px;">${isVideo?'🎥':'🖼️'} 查看 ${name}</a>`
+      : `<div style="padding:10px;background:#fff;border:1px dashed var(--red);border-radius:8px;color:var(--red);text-align:center;">⚠️ ${name} 沒有可用連結</div>`;
+  }).join('')}</div>`
+ : `<div style="padding:12px;background:#fff;border:1px dashed var(--red);border-radius:8px;color:var(--red);text-align:center;">⚠️ 此售後申請沒有可用的佐證照片／影片</div>`;
+document.getElementById('r_audit_actions').innerHTML=attachmentHtml+`<button onclick="processReturnAction('${oid}', 'execute_refund')" style="background:var(--green);color:white;padding:12px;border:none;border-radius:8px;cursor:pointer;">填入最終驗收金額並撥款</button>`;
+document.getElementById('r_audit_panel').style.display='block';
 }
 
 // --- 📦 渲染與過濾時間線節點 ---
