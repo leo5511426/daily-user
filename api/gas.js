@@ -27,23 +27,30 @@ export default async function handler(req, res) {
     // ========================================================
     // 整理 Request Body
     // ========================================================
-    let requestBody;
-
-    if (typeof req.body === "string") {
-      requestBody = req.body;
-    } else {
-      requestBody = JSON.stringify(req.body || {});
-    }
+    const requestBody =
+      typeof req.body === "string"
+        ? req.body
+        : JSON.stringify(req.body || {});
 
     console.log("========== GAS PROXY ==========");
-    console.log("Request method:", req.method);
-    console.log("Request body length:", Buffer.byteLength(requestBody, "utf8"));
-    console.log("GAS URL:", GAS_URL);
+    console.log(
+      "Request body length:",
+      Buffer.byteLength(requestBody, "utf8")
+    );
+
+    console.log(
+      "GAS URL:",
+      GAS_URL
+    );
 
     // ========================================================
-    // 轉送到 Google Apps Script
+    // 第一次請求
+    //
+    // ⚠️ 不使用 redirect: "follow"
+    // 因為 Apps Script Web App 可能回傳 302，
+    // Node fetch 自動跟隨時可能改變 POST 行為。
     // ========================================================
-    const gasResponse = await fetch(GAS_URL, {
+    let gasResponse = await fetch(GAS_URL, {
       method: "POST",
 
       headers: {
@@ -52,32 +59,158 @@ export default async function handler(req, res) {
 
       body: requestBody,
 
-      redirect: "follow"
+      redirect: "manual"
     });
 
-    // ========================================================
-    // 取得 GAS 原始回應
-    // ========================================================
-    const text = await gasResponse.text();
+    console.log(
+      "GAS first status:",
+      gasResponse.status
+    );
 
-    console.log("GAS final URL:", gasResponse.url);
-    console.log("GAS HTTP status:", gasResponse.status);
-    console.log("GAS content-type:", gasResponse.headers.get("content-type"));
-    console.log("GAS response length:", Buffer.byteLength(text, "utf8"));
+    console.log(
+      "GAS first location:",
+      gasResponse.headers.get("location")
+    );
+
+    // ========================================================
+    // 手動處理 Google Apps Script redirect
+    // ========================================================
+    if (
+      gasResponse.status >= 300 &&
+      gasResponse.status < 400
+    ) {
+      const redirectUrl =
+        gasResponse.headers.get("location");
+
+      if (!redirectUrl) {
+        return res.status(502).json({
+          success: false,
+          message: "Google Apps Script 重新導向失敗",
+          errorCode: "GAS_REDIRECT_NO_LOCATION"
+        });
+      }
+
+      console.log(
+        "Following GAS redirect:",
+        redirectUrl
+      );
+
+      // ======================================================
+      // ⚠️ 重新導向後仍然明確使用 POST
+      // ======================================================
+      gasResponse = await fetch(
+        redirectUrl,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body: requestBody,
+
+          redirect: "manual"
+        }
+      );
+
+      console.log(
+        "GAS redirected status:",
+        gasResponse.status
+      );
+
+      console.log(
+        "GAS redirected location:",
+        gasResponse.headers.get("location")
+      );
+    }
+
+    // ========================================================
+    // 如果還有第二層 redirect，再處理一次
+    // ========================================================
+    if (
+      gasResponse.status >= 300 &&
+      gasResponse.status < 400
+    ) {
+      const secondRedirect =
+        gasResponse.headers.get("location");
+
+      if (!secondRedirect) {
+        return res.status(502).json({
+          success: false,
+          message: "Google Apps Script 第二次重新導向失敗",
+          errorCode: "GAS_SECOND_REDIRECT_NO_LOCATION"
+        });
+      }
+
+      console.log(
+        "Following second GAS redirect:",
+        secondRedirect
+      );
+
+      gasResponse = await fetch(
+        secondRedirect,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body: requestBody,
+
+          redirect: "manual"
+        }
+      );
+
+      console.log(
+        "GAS final status:",
+        gasResponse.status
+      );
+    }
+
+    // ========================================================
+    // 取得 GAS 最終回應
+    // ========================================================
+    const text =
+      await gasResponse.text();
+
+    console.log(
+      "GAS final URL:",
+      gasResponse.url
+    );
+
+    console.log(
+      "GAS final HTTP status:",
+      gasResponse.status
+    );
+
+    console.log(
+      "GAS final content-type:",
+      gasResponse.headers.get("content-type")
+    );
+
+    console.log(
+      "GAS response length:",
+      Buffer.byteLength(text, "utf8")
+    );
+
     console.log(
       "GAS response preview:",
       text.substring(0, 1000)
     );
 
     // ========================================================
-    // 清除可能存在的 BOM / 空白
+    // 清理 BOM / 空白
     // ========================================================
-    const cleanText = text
-      .replace(/^\uFEFF/, "")
-      .trim();
+    const cleanText =
+      text
+        .replace(/^\uFEFF/, "")
+        .trim();
 
     // ========================================================
-    // 嘗試解析 JSON
+    // 解析 JSON
     // ========================================================
     let data;
 
@@ -96,25 +229,37 @@ export default async function handler(req, res) {
 
       return res.status(502).json({
         success: false,
-        message: "Google Apps Script 回傳格式異常",
-        errorCode: "GAS_NON_JSON_RESPONSE",
+        message:
+          "Google Apps Script 回傳格式異常",
 
-        // 暫時保留診斷資訊
-        // 不把完整 GAS 回應送給前端，避免洩漏過多內容
-        gasStatus: gasResponse.status,
+        errorCode:
+          "GAS_NON_JSON_RESPONSE",
+
+        gasStatus:
+          gasResponse.status,
+
         gasContentType:
-          gasResponse.headers.get("content-type") || "",
+          gasResponse.headers.get(
+            "content-type"
+          ) || "",
+
+        gasFinalUrl:
+          gasResponse.url || "",
+
         gasResponsePreview:
-          cleanText.substring(0, 500)
+          cleanText.substring(0, 1000)
       });
     }
 
     // ========================================================
-    // GAS 已經正常回 JSON
-    // 原樣轉回前端
+    // GAS JSON 原樣回傳
     // ========================================================
     return res
-      .status(gasResponse.ok ? 200 : 502)
+      .status(
+        gasResponse.ok
+          ? 200
+          : 502
+      )
       .json(data);
 
   } catch (error) {
@@ -126,6 +271,7 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       success: false,
+
       message:
         "Proxy 連線失敗：" +
         (
@@ -134,7 +280,9 @@ export default async function handler(req, res) {
             ? error.message
             : String(error)
         ),
-      errorCode: "GAS_PROXY_ERROR"
+
+      errorCode:
+        "GAS_PROXY_ERROR"
     });
   }
 }
