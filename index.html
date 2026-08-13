@@ -1623,7 +1623,24 @@ returnHtml = `
                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款金額：</b>$${o.returnData.amt || '審核/處理中'}</p>
                    <p style="margin: 3px 0; font-size: 0.9em;"><b>退款方式：</b>${escapeHTML(o.returnData.method)}</p>
                    ${!(o.returnData.items || '').includes('[僅退款]') ? `<p style="margin: 3px 0; font-size: 0.9em;"><b>退貨物流：</b>${escapeHTML(o.returnData.ship || '待賣家確認')} ${returnTrack ? '(單號: ' + escapeHTML(returnTrack) + ')' : ''}</p>` : ''}
-                   ${o.returnData.photo ? `<div style="margin-top: 10px;"><a href="${o.returnData.photo}" target="_blank"><img src="${o.returnData.photo}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #fca5a5;"></a><p style="font-size:0.7em; color:var(--red); margin:3px 0 0 0; text-align:center;">點擊圖片可放大查看</p></div>` : ''}
+                   ${(Array.isArray(o.returnData.attachments) && o.returnData.attachments.length > 0) ? `
+                     <div style="margin-top:10px;">
+                       <div style="font-size:0.85em;font-weight:bold;color:var(--red);margin-bottom:6px;">📎 佐證資料</div>
+                       ${o.returnData.attachments.map(function(a, idx){
+                         a = a || {};
+                         const rawUrl = String(a.viewUrl || a.url || '').trim();
+                         const safeUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : '';
+                         const name = escapeHTML(String(a.name || ('附件 ' + (idx + 1))));
+                         const type = String(a.type || 'image');
+                         const icon = type === 'video' ? '🎥' : (type === 'document' ? '📄' : '🖼️');
+                         if (!safeUrl) return `<div style="padding:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;margin-top:6px;color:#9a3412;">${icon} ${name}：檔案連結無效</div>`;
+                         return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border:1px solid #fca5a5;border-radius:8px;margin-top:6px;">
+                           <span>${icon}</span>
+                           <a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--red);text-decoration:none;">${name}</a>
+                           <span style="font-size:12px;color:#64748b;white-space:nowrap;">開啟</span>
+                         </div>`;
+                       }).join('')}
+                     </div>` : ((typeof o.returnData.photo === 'string' && /^https?:\/\//i.test(o.returnData.photo.trim())) ? `<div style="margin-top: 10px;"><a href="${escapeHTML(o.returnData.photo.trim())}" target="_blank" rel="noopener noreferrer"><img src="${escapeHTML(o.returnData.photo.trim())}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #fca5a5;"></a><p style="font-size:0.7em; color:var(--red); margin:3px 0 0 0; text-align:center;">點擊圖片可放大查看</p></div>` : '')}
                </div>`;
 }
 
