@@ -924,12 +924,59 @@ if(!res.aborted) handlePostSuccess(res);
 }
 
 async function processReturnAction(oid, mode) {
-let amt = prompt("請確認退款金額："); if(amt===null) return;
-let notifyMode = await confirmActionWithPush('執行退款撥發');
-if (!notifyMode) return;
+  const order = O_DB.find(o => o.id === oid);
+  if (!order || !order.returnData) return;
 
-let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'auditReturn', oid: oid, mode: mode, amt: Number(amt), notifyMode: notifyMode });
-if(!res.aborted) handlePostSuccess(res);
+  const amtEl = document.getElementById('r_audit_amt');
+  const reasonEl = document.getElementById('r_audit_reason');
+  const shipEl = document.getElementById('r_audit_ship');
+  const trackEl = document.getElementById('r_audit_track');
+  const deadlineEl = document.getElementById('r_audit_deadline');
+
+  const amount = amtEl ? Number(amtEl.value) : 0;
+  const reason = reasonEl ? reasonEl.value.trim() : '';
+  const ship = shipEl ? shipEl.value.trim() : '';
+  const track = trackEl ? trackEl.value.trim() : '';
+  const deadline = deadlineEl ? deadlineEl.value : '';
+
+  if (mode === 'reject' && !reason) {
+    if (reasonEl) { reasonEl.focus(); reasonEl.style.borderColor = 'var(--red)'; }
+    return;
+  }
+  if (mode === 'approve_return' && (!ship || !deadline)) {
+    if (!ship && shipEl) shipEl.focus();
+    else if (deadlineEl) deadlineEl.focus();
+    return;
+  }
+  if ((mode === 'execute_refund' || mode === 'approve_refund_only') && (!Number.isFinite(amount) || amount < 0)) {
+    if (amtEl) amtEl.focus();
+    return;
+  }
+
+  let confirmText = '執行售後審核';
+  if (mode === 'reject') confirmText = '拒絕此售後申請';
+  if (mode === 'approve_return') confirmText = '同意退貨並發佈退貨物流';
+  if (mode === 'approve_refund_only') confirmText = `直接退款 $${amount}`;
+  if (mode === 'execute_refund') confirmText = `完成驗收並退款 $${amount}`;
+
+  const notifyMode = await confirmActionWithPush(confirmText);
+  if (!notifyMode) return;
+
+  const payload = {
+    action: 'adminAction',
+    type: 'auditReturn',
+    oid,
+    mode,
+    amt: amount,
+    reason,
+    ship,
+    track,
+    deadline,
+    notifyMode
+  };
+
+  const res = await fetchWithQueue(GAS, payload);
+  if (!res.aborted) handlePostSuccess(res);
 }
 
 async function createNewOrderSubmit() {
@@ -1163,8 +1210,12 @@ document.getElementById('r_audit_panel').style.display = 'none';
 return;
 }
 
+const currentStatus = String(order.status || '');
+const returnItems = String(order.returnData.items || '');
+const isRefundOnly = returnItems.indexOf('[僅退款]') === 0;
+
 document.getElementById('r_audit_title').innerText =
-`售後單：${oid} (${order.status})`;
+`售後單：${oid} (${currentStatus})`;
 
 document.getElementById('r_audit_info').innerText =
 `買家商品明細：${order.returnData.items || ''}\n` +
@@ -1176,14 +1227,8 @@ let attachments = Array.isArray(order.returnData.attachments)
 ? order.returnData.attachments
 : [];
 
-// 相容舊版 F 欄單一 URL 或 JSON 陣列
 if (!attachments.length) {
-let legacy = String(
-order.returnData.photo ||
-order.returnData.photoUrl ||
-''
-).trim();
-
+let legacy = String(order.returnData.photo || order.returnData.photoUrl || '').trim();
 if (legacy) {
 try {
 let parsed = JSON.parse(legacy);
@@ -1191,18 +1236,12 @@ if (typeof parsed === 'string') parsed = JSON.parse(parsed);
 if (Array.isArray(parsed)) attachments = parsed;
 else attachments = [{type:'image',name:'佐證照片',url:legacy,viewUrl:legacy}];
 } catch (e) {
-attachments = [{
-type:'image',
-name:'佐證照片',
-url:legacy,
-viewUrl:legacy
-}];
+attachments = [{type:'image',name:'佐證照片',url:legacy,viewUrl:legacy}];
 }
 }
 }
 
-const esc = (v) =>
-String(v || '')
+const esc = (v) => String(v || '')
 .replace(/&/g,'&amp;')
 .replace(/</g,'&lt;')
 .replace(/>/g,'&gt;')
@@ -1211,31 +1250,56 @@ String(v || '')
 
 let attachmentHtml = '';
 if (!attachments.length) {
-  attachmentHtml = `<div style="padding:12px;background:#fff;border:1px dashed var(--red);border-radius:8px;color:var(--red);text-align:center;">⚠️ 此售後申請沒有可用的佐證照片／影片</div>`;
+attachmentHtml = `<div style="padding:12px;background:#fff;border:1px dashed var(--red);border-radius:8px;color:var(--red);text-align:center;">⚠️ 此售後申請沒有可用的佐證照片／影片</div>`;
 } else {
-  attachmentHtml = `<div style="display:flex;flex-direction:column;gap:8px;"><strong style="color:var(--dark);">📎 佐證資料（${attachments.length} 個）</strong>${attachments.map((raw,i)=>{
-    const item = raw || {};
-    const name = esc(item.name || `附件 ${i+1}`);
-    const size = Number(item.size||0);
-    const sizeText = size >= 1024*1024 ? (size/(1024*1024)).toFixed(2)+' MB' : Math.max(1,Math.round(size/1024))+' KB';
-    const icon = item.type==='video' ? '🎥' : (item.type==='document' || String(item.mimeType||'').includes('pdf') ? '📄' : '🖼️');
-    window._returnAuditAttachments = attachments;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;"><span style="font-size:20px;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</div><div style="font-size:11px;color:#64748b;">${sizeText}</div></div><button type="button" onclick="previewReturnAttachmentFromIndex(${i})" style="background:var(--blue);color:#fff;border:0;border-radius:7px;padding:8px 12px;cursor:pointer;">預覽</button><a href="${String(item.viewUrl||item.url||'').replace(/"/g,'&quot;')}" target="_blank" rel="noopener noreferrer" style="background:#64748b;color:#fff;border-radius:7px;padding:8px 12px;text-decoration:none;">開啟</a></div>`;
-  }).join('')}</div>`;
+window._returnAuditAttachments = attachments;
+attachmentHtml = `<div style="display:flex;flex-direction:column;gap:8px;"><strong style="color:var(--dark);">📎 佐證資料（${attachments.length} 個）</strong>${attachments.map((raw,i)=>{
+const item = raw || {};
+const name = esc(item.name || `附件 ${i+1}`);
+const size = Number(item.size||0);
+const sizeText = size >= 1024*1024 ? (size/(1024*1024)).toFixed(2)+' MB' : Math.max(1,Math.round(size/1024))+' KB';
+const icon = item.type==='video' ? '🎥' : (item.type==='document' || String(item.mimeType||'').includes('pdf') ? '📄' : '🖼️');
+const openUrl = String(item.viewUrl || item.url || '');
+return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;"><span style="font-size:20px;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</div><div style="font-size:11px;color:#64748b;">${sizeText}</div></div><button type="button" onclick="previewReturnAttachmentFromIndex(${i})" style="background:var(--blue);color:#fff;border:0;border-radius:7px;padding:8px 12px;cursor:pointer;">預覽</button><a href="${esc(openUrl)}" target="_blank" rel="noopener noreferrer" style="background:#64748b;color:#fff;border-radius:7px;padding:8px 12px;text-decoration:none;">開啟</a></div>`;
+}).join('')}</div>`;
 }
-window._returnAuditAttachments = [];
+
+window._returnAuditAttachments = attachments;
 function previewReturnAttachmentFromIndex(index){
   const list = window._returnAuditAttachments || [];
   if (list[index]) previewReturnAttachment(list[index]);
 }
 
-document.getElementById('r_audit_actions').innerHTML =
-attachmentHtml +
-`<button onclick="processReturnAction('${String(oid).replace(/'/g,"\\'")}', 'execute_refund')"
-style="background:var(--green);color:white;padding:12px;border:none;border-radius:8px;cursor:pointer;">
-填入最終驗收金額並撥款
-</button>`;
+let actionHtml = '';
 
+if (currentStatus === '申請退貨/退款中') {
+  actionHtml += `<div style="display:grid;gap:8px;margin-top:4px;">`;
+  actionHtml += `<label style="font-size:13px;font-weight:bold;color:var(--dark);">拒絕原因（拒絕時必填）</label><textarea id="r_audit_reason" class="admin-input" style="width:100%;min-height:70px;box-sizing:border-box;resize:vertical;" placeholder="請填寫拒絕原因"></textarea>`;
+
+  if (!isRefundOnly) {
+    actionHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
+    actionHtml += `<div><label style="font-size:13px;font-weight:bold;">退貨物流方式</label><input id="r_audit_ship" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="例如：黑貓宅急便"></div>`;
+    actionHtml += `<div><label style="font-size:13px;font-weight:bold;">寄件截止日</label><input id="r_audit_deadline" type="date" class="admin-input" style="width:100%;box-sizing:border-box;"></div>`;
+    actionHtml += `</div>`;
+    actionHtml += `<div><label style="font-size:13px;font-weight:bold;">退貨追蹤單號（可選）</label><input id="r_audit_track" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="尚未有單號可留空"></div>`;
+    actionHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'reject')" style="background:var(--dark);color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">拒絕申請</button><button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'approve_return')" style="background:var(--blue);color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">同意退貨</button></div>`;
+  } else {
+    actionHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'reject')" style="background:var(--dark);color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">拒絕申請</button><button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'approve_refund_only')" style="background:var(--green);color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">同意並退款</button></div>`;
+  }
+
+  actionHtml += `<div><label style="font-size:13px;font-weight:bold;">最終退款金額</label><input id="r_audit_amt" type="number" min="0" step="1" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="請輸入實際退款金額"></div>`;
+  actionHtml += `</div>`;
+} else if (currentStatus === '賣家同意-待退貨' || currentStatus === '退貨驗收中') {
+  actionHtml += `<div style="display:grid;gap:8px;margin-top:4px;">`;
+  actionHtml += `<div style="padding:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;font-size:13px;">目前已進入退貨驗收階段。確認收到並驗收商品後，再填寫最終退款金額。</div>`;
+  actionHtml += `<div><label style="font-size:13px;font-weight:bold;">最終退款金額</label><input id="r_audit_amt" type="number" min="0" step="1" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="請輸入最終退款金額"></div>`;
+  actionHtml += `<button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'execute_refund')" style="background:var(--green);color:#fff;padding:12px;border:0;border-radius:8px;cursor:pointer;">✅ 驗收完成並撥款</button>`;
+  actionHtml += `</div>`;
+} else if (currentStatus === '退款完成') {
+  actionHtml = `<div style="padding:12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#047857;font-weight:bold;">✅ 此售後申請已完成退款，無法重複操作。</div>`;
+}
+
+document.getElementById('r_audit_actions').innerHTML = attachmentHtml + actionHtml;
 document.getElementById('r_audit_panel').style.display = 'block';
 }
 
