@@ -1850,7 +1850,7 @@ async function uploadOneReturnAttachment(attachment, oid, fileIndex, totalFiles)
   }
   const last = await postSmallJson({action:'attachmentUploadCommit',uploadId:init.uploadId,uid:store.userData.id,pw:savedPw});
   if (!last.success) throw new Error(last.message || '附件完成確認失敗');
-  return last.attachment;
+  return { ...last.attachment, attachmentId: last.attachmentId };
 }
 async function applyReturn(oid) {
   if (store.userData && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法執行訂單操作', 'warning');
