@@ -956,6 +956,7 @@ async function processReturnAction(oid, mode) {
   let confirmText = '執行售後審核';
   if (mode === 'reject') confirmText = '拒絕此售後申請';
   if (mode === 'approve_return') confirmText = '同意退貨並發佈退貨物流';
+  if (mode === 'mark_received') confirmText = '確認已收到退貨並開始驗收';
   if (mode === 'approve_refund_only') confirmText = `直接退款 $${amount}`;
   if (mode === 'execute_refund') confirmText = `完成驗收並退款 $${amount}`;
 
@@ -1289,9 +1290,14 @@ if (currentStatus === '申請退貨/退款中') {
 
   actionHtml += `<div><label style="font-size:13px;font-weight:bold;">最終退款金額</label><input id="r_audit_amt" type="number" min="0" step="1" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="請輸入實際退款金額"></div>`;
   actionHtml += `</div>`;
-} else if (currentStatus === '賣家同意-待退貨' || currentStatus === '退貨驗收中') {
+} else if (currentStatus === '賣家同意-待退貨') {
   actionHtml += `<div style="display:grid;gap:8px;margin-top:4px;">`;
-  actionHtml += `<div style="padding:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;font-size:13px;">目前已進入退貨驗收階段。確認收到並驗收商品後，再填寫最終退款金額。</div>`;
+  actionHtml += `<div style="padding:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;font-size:13px;">等待買家寄回商品。收到退貨後，請先標記「退貨驗收中」，完成檢查後再退款。</div>`;
+  actionHtml += `<button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'mark_received')" style="background:#f59e0b;color:#fff;padding:12px;border:0;border-radius:8px;cursor:pointer;">📦 已收到退貨，開始驗收</button>`;
+  actionHtml += `</div>`;
+} else if (currentStatus === '退貨驗收中') {
+  actionHtml += `<div style="display:grid;gap:8px;margin-top:4px;">`;
+  actionHtml += `<div style="padding:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#c2410c;font-size:13px;">目前正在退貨驗收。確認商品狀況後，再填寫最終退款金額。</div>`;
   actionHtml += `<div><label style="font-size:13px;font-weight:bold;">最終退款金額</label><input id="r_audit_amt" type="number" min="0" step="1" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="請輸入最終退款金額"></div>`;
   actionHtml += `<button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'execute_refund')" style="background:var(--green);color:#fff;padding:12px;border:0;border-radius:8px;cursor:pointer;">✅ 驗收完成並撥款</button>`;
   actionHtml += `</div>`;
