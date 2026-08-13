@@ -1059,40 +1059,98 @@ document.getElementById('lbl_total_amount').innerText = Math.max(0, tot); return
 }
 async function previewReturnAttachment(a) {
   a = a || {};
+
   const type = String(a.type || '').toLowerCase();
   const mime = String(a.mimeType || '').toLowerCase();
   const rawName = String(a.name || '附件');
   const name = escapeHTML(rawName);
-  let url = String(a.url || a.viewUrl || '').trim();
-  let viewUrl = String(a.viewUrl || '').trim() || url;
-  if (!viewUrl && a.fileId) viewUrl = 'https://drive.google.com/file/d/' + encodeURIComponent(a.fileId) + '/view';
-  if (!url && a.fileId) url = 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(a.fileId);
 
-  if (type === 'image' && url) {
+  const fileId = String(a.fileId || '').trim();
+  const url = String(a.url || '').trim();
+  const viewUrl = String(a.viewUrl || '').trim();
+
+  // Google Drive 的 /preview 頁面最適合放進 iframe，
+  // 避免直接把 Drive 的下載/檢視 URL 當成 <img>/<video> src。
+  const drivePreviewUrl = fileId
+    ? `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`
+    : '';
+
+  // 圖片：Drive thumbnail 通常比 uc?export=view 穩定，
+  // 並且不會要求瀏覽器直接處理 Drive 的重新導向。
+  if (type === 'image' && fileId) {
+    const thumbnailUrl =
+      `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`;
+
     openAppOverlay({
       title: rawName,
-      html: `<img src="${url.replace(/"/g,'&quot;')}" alt="${name}">`
+      html: `
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:auto;background:#111;border-radius:10px;">
+          <img
+            src="${thumbnailUrl.replace(/"/g,'&quot;')}"
+            alt="${name}"
+            style="display:block;max-width:100%;max-height:76vh;width:auto;height:auto;object-fit:contain;border-radius:6px;"
+            onerror="this.onerror=null;this.src='${drivePreviewUrl.replace(/'/g,'&#39;')}';this.style.width='100%';this.style.height='76vh';this.style.objectFit='contain';"
+          >
+        </div>`
     });
-  } else if (type === 'video' && url) {
-    openAppOverlay({
-      title: rawName,
-      html: `<video src="${url.replace(/"/g,'&quot;')}" controls playsinline preload="metadata"></video>`
-    });
-  } else if ((mime === 'application/pdf' || mime.includes('wordprocessingml') || mime.includes('msword') || mime.includes('spreadsheetml') || mime.includes('ms-excel') || mime.includes('presentationml') || mime.includes('ms-powerpoint')) && url) {
-    const gview='https://docs.google.com/gview?embedded=1&url='+encodeURIComponent(url);
-    openAppOverlay({
-      title: rawName,
-      html: `<iframe src="${gview}" title="${name}"></iframe>`
-    });
-  } else if (viewUrl) {
-    window.open(viewUrl,'_blank','noopener');
-  } else {
-    openAppOverlay({
-      title: rawName,
-      light: true,
-      html: '<div class="app-overlay-message">目前沒有可用的預覽連結。</div>'
-    });
+    return;
   }
+
+  // 影片：使用 Drive /preview iframe，避免直接以 <video src> 讀 Drive URL。
+  if (type === 'video' && drivePreviewUrl) {
+    openAppOverlay({
+      title: rawName,
+      html: `<iframe src="${drivePreviewUrl.replace(/"/g,'&quot;')}" title="${name}" style="width:100%;height:76vh;border:0;border-radius:10px;background:#111;" allow="autoplay; fullscreen" allowfullscreen></iframe>`
+    });
+    return;
+  }
+
+  // PDF / Office 文件：優先使用 Google Viewer；若只有 fileId，
+  // 直接使用 Drive /preview iframe。
+  if (
+    mime === 'application/pdf' ||
+    mime.includes('wordprocessingml') ||
+    mime.includes('msword') ||
+    mime.includes('spreadsheetml') ||
+    mime.includes('ms-excel') ||
+    mime.includes('presentationml') ||
+    mime.includes('ms-powerpoint')
+  ) {
+    if (url) {
+      const gview =
+        'https://docs.google.com/gview?embedded=1&url=' +
+        encodeURIComponent(url);
+
+      openAppOverlay({
+        title: rawName,
+        html: `<iframe src="${gview.replace(/"/g,'&quot;')}" title="${name}" style="width:100%;height:76vh;border:0;border-radius:10px;background:#fff;"></iframe>`
+      });
+      return;
+    }
+
+    if (drivePreviewUrl) {
+      openAppOverlay({
+        title: rawName,
+        html: `<iframe src="${drivePreviewUrl.replace(/"/g,'&quot;')}" title="${name}" style="width:100%;height:76vh;border:0;border-radius:10px;background:#fff;"></iframe>`
+      });
+      return;
+    }
+  }
+
+  // 沒有 fileId 時，仍保留舊資料相容性。
+  if (viewUrl) {
+    openAppOverlay({
+      title: rawName,
+      html: `<iframe src="${viewUrl.replace(/"/g,'&quot;')}" title="${name}" style="width:100%;height:76vh;border:0;border-radius:10px;background:#fff;"></iframe>`
+    });
+    return;
+  }
+
+  openAppOverlay({
+    title: rawName,
+    light: true,
+    html: '<div class="app-overlay-message">目前沒有可用的預覽資料。</div>'
+  });
 }
 
 function renderReturnAuditPanel() {
