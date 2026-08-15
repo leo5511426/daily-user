@@ -449,8 +449,8 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：V89.0 (BNPL 2.0 正確性與一致性修正)</div>
-<div>更新日期：2026-08-03</div>
+<div>版本：V90.1 (登入穩定性與長密碼修正)</div>
+<div>更新日期：2026-08-15</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
 <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
 <span style="margin: 0 6px; opacity:0.4;">｜</span>
@@ -795,7 +795,7 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V89.0 (BNPL 2.0 正確性與一致性修正)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V90.1 (登入穩定性與長密碼修正)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -941,7 +941,7 @@ async function doLogin() {
   _loginInProgress = true;
 
   const uid = document.getElementById('acc').value.trim();
-  const upw = document.getElementById('pw').value.trim();
+  const upw = document.getElementById('pw').value;
   if (!uid || !upw) {
     _loginInProgress = false;
     return Swal.fire({ title: '提示', text: '請輸入完整資料', icon: 'warning', confirmButtonColor: 'var(--pink)' });
@@ -1303,9 +1303,19 @@ if(res.isConfirmed) { localStorage.setItem('myShortcuts', JSON.stringify(res.val
 }
 
 function renderShortcuts() {
-let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6,7]');
-document.querySelectorAll('.shortcut-item').forEach(el => el.classList.remove('visible'));
-current.forEach(id => { let item = document.getElementById('sc_' + id); if(item) item.classList.add('visible'); });
+  let current = [1,2,3,4,5,6,7];
+  try {
+    const raw = localStorage.getItem('myShortcuts');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) current = parsed;
+    }
+  } catch (e) {
+    console.warn('[renderShortcuts] localStorage 設定損壞，已回復預設快捷鍵。', e);
+    try { localStorage.removeItem('myShortcuts'); } catch (_) {}
+  }
+  document.querySelectorAll('.shortcut-item').forEach(el => el.classList.remove('visible'));
+  current.forEach(id => { let item = document.getElementById('sc_' + id); if(item) item.classList.add('visible'); });
 }
 
 let currentNotifyTab = 'ALL';
@@ -1343,7 +1353,7 @@ if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', blo
 }
 
 function renderNotifications() {
-let allNotifications = store.notifications || [];
+let allNotifications = Array.isArray(store && store.notifications) ? store.notifications : [];
 renderNotifyTabBar(allNotifications);
 
 let filteredByTab = currentNotifyTab === 'ALL' ? allNotifications : allNotifications.filter(n => getNotifyMainCat(n) === currentNotifyTab);
@@ -1380,7 +1390,7 @@ return `
 }
 
 function checkAutoCompleteOrders() {
-if (!store || !store.orders || store.userData.isSuspended) return; 
+if (!store || !Array.isArray(store.orders) || !store.userData || store.userData.isSuspended) return; 
 const nowTime = Date.now(); 
 let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
 
@@ -1408,36 +1418,64 @@ o.status = "訂單已完成";
 }
 
 function render() {
-if (!store) return;
-const u = store.userData || {}; 
-document.getElementById('uName').innerText = u.name || '會員'; 
-document.getElementById('uBal').innerText = (u.bal || 0).toLocaleString();
+  if (!store) return;
 
-let totalBnpl = (u.bnplLimit !== undefined && u.bnplLimit !== "") ? Number(u.bnplLimit) : 500;
-let outstanding = 0;
+  // 登入資料是後端回傳的 API payload；先做型別正規化，避免單一會員資料異常讓整個登入流程卡在 85%。
+  store.userData = (store.userData && typeof store.userData === 'object') ? store.userData : {};
+  ['history','orders','loans','installments','coupons','invoices','notifications','tickets','chatMessages'].forEach(function(key) {
+    if (!Array.isArray(store[key])) store[key] = [];
+  });
 
-(store.loans || []).forEach(l => { 
-  // 🚨 確保 BNPL 額度不會被一般非 BNPL Loan 壓縮
-  if(l.status !== "PAID" && (l.loanType === 'INSTALLMENT' || String(l.item).includes('先享後付'))) {
-      outstanding += (l.totalDue || 0); 
-  }
-});
-let availBnpl = totalBnpl - outstanding;
+  const u = store.userData;
+  document.getElementById('uName').innerText = u.name || '會員';
+  document.getElementById('uBal').innerText = (Number(u.bal) || 0).toLocaleString();
 
-const elUBnpl = document.getElementById('uBnpl'); if (elUBnpl) elUBnpl.innerText = availBnpl.toLocaleString();
-const elLoanAvail = document.getElementById('lbl_loan_avail'); if (elLoanAvail) elLoanAvail.innerText = availBnpl.toLocaleString();
-const elLoanTotal = document.getElementById('lbl_loan_total'); if (elLoanTotal) elLoanTotal.innerText = totalBnpl.toLocaleString();
-const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut) elLoanOut.innerText = `未結清: $${outstanding.toLocaleString()}`;
+  let totalBnpl = (u.bnplLimit !== undefined && u.bnplLimit !== '') ? Number(u.bnplLimit) : 500;
+  if (!Number.isFinite(totalBnpl)) totalBnpl = 500;
+  let outstanding = 0;
+  store.loans.forEach(function(l) {
+    if (l && l.status !== 'PAID' && (l.loanType === 'INSTALLMENT' || String(l.item || '').includes('先享後付'))) {
+      outstanding += Number(l.totalDue) || 0;
+    }
+  });
 
-renderShortcuts();
-renderNotifications(); 
+  let availBnpl = Math.max(0, totalBnpl - outstanding);
+  const elUBnpl = document.getElementById('uBnpl'); if (elUBnpl) elUBnpl.innerText = availBnpl.toLocaleString();
+  const elLoanAvail = document.getElementById('lbl_loan_avail'); if (elLoanAvail) elLoanAvail.innerText = availBnpl.toLocaleString();
+  const elLoanTotal = document.getElementById('lbl_loan_total'); if (elLoanTotal) elLoanTotal.innerText = totalBnpl.toLocaleString();
+  const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut) elLoanOut.innerText = `未結清: $${outstanding.toLocaleString()}`;
 
-const sortH = document.getElementById('sortH').value; let sortedHistory = [...(store.history || [])];
-sortedHistory.sort((a, b) => { const da = new Date(String(a.date||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.date||'').replace(/-/g, '/')).getTime() || 0; return sortH === 'asc' ? da - db : db - da; });
-document.getElementById('hList').innerHTML = sortedHistory.map(h => `<div class="card" style="padding:15px;"><div style="display:flex; justify-content:space-between;"><b>${h.item}</b><span style="color:${h.amt>=0?'var(--green)':'var(--red)'}">${h.amt>=0?'+':''}${h.amt}</span></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><small style="opacity:0.5;">${h.date}</small><small style="opacity:0.6; font-weight:bold;">餘額: ${h.bal}</small></div>${h.note ? `<div class="note-box" style="font-size:0.75em; padding-top:3px; margin-top:5px;">備註：${escapeHTML(h.note)}</div>` : ''}</div>`).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
+  // 每個模組獨立容錯：即使單一歷史資料異常，也不能阻斷登入成功與其他功能載入。
+  const safeRender = function(name, fn) {
+    try { fn(); }
+    catch (e) {
+      console.error('[render/' + name + '] 初始化失敗：', e);
+      const map = { loans:'lList', coupons:'cpList', invoices:'invList', orders:'oList', history:'hList', notifications:'ntListPreview' };
+      const el = document.getElementById(map[name]);
+      if (el) el.innerHTML = '<p style="text-align:center;opacity:.45;padding:20px;">此區資料暫時無法載入，其他功能仍可正常使用。</p>';
+    }
+  };
 
-renderLoans(); renderCoupons(); renderInvoices(); renderOrders(); 
+  safeRender('shortcuts', renderShortcuts);
+  safeRender('notifications', renderNotifications);
+
+  const sortHEl = document.getElementById('sortH');
+  const sortH = sortHEl ? sortHEl.value : 'desc';
+  let sortedHistory = [...store.history];
+  sortedHistory.sort((a, b) => {
+    const da = new Date(String(a && (a.date || a.time) || '').replace(/-/g, '/')).getTime() || 0;
+    const db = new Date(String(b && (b.date || b.time) || '').replace(/-/g, '/')).getTime() || 0;
+    return sortH === 'asc' ? da - db : db - da;
+  });
+  const hList = document.getElementById('hList');
+  if (hList) hList.innerHTML = sortedHistory.map(h => `<div class="card" style="padding:15px;"><div style="display:flex; justify-content:space-between;"><b>${escapeHTML(h.item || h.type || '')}</b><span style="color:${Number(h.amt) >= 0 ? 'var(--green)' : 'var(--red)'}">${Number(h.amt) >= 0 ? '+' : ''}${Number(h.amt) || 0}</span></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><small style="opacity:0.5;">${escapeHTML(h.date || h.time || '')}</small><small style="opacity:0.6; font-weight:bold;">餘額: ${Number(h.bal) || 0}</small></div>${h.note ? `<div class="note-box" style="font-size:0.75em; padding-top:3px; margin-top:5px;">備註：${escapeHTML(h.note)}</div>` : ''}</div>`).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
+
+  safeRender('loans', renderLoans);
+  safeRender('coupons', renderCoupons);
+  safeRender('invoices', renderInvoices);
+  safeRender('orders', renderOrders);
 }
+
 
 let currentOrderTab = 'ALL';
 const ORDER_TABS = [
@@ -1525,8 +1563,9 @@ function escapeHTML(str) {
 }
 
 function renderOrders() {
-const sortO = document.getElementById('sortO').value; 
-let allOrders = [...(store.orders || [])];
+const sortEl = document.getElementById('sortO');
+const sortO = sortEl ? sortEl.value : 'desc';
+let allOrders = Array.isArray(store && store.orders) ? [...store.orders] : [];
 allOrders.sort((a, b) => { const da = a.time ? new Date(String(a.time||'').replace(/-/g, '/')).getTime() : 0; const db = b.time ? new Date(String(b.time||'').replace(/-/g, '/')).getTime() : 0; return sortO === 'asc' ? da - db : db - da; });
 
 renderOrderTabBar(allOrders);
@@ -1910,8 +1949,8 @@ let parsed = JSON.parse(o.invoice); parsed.oid = o.id; parsed.source = 'order'; 
 }
 });
 }
-if (store.invoices) {
-store.invoices.forEach(inv => {
+if (invoices.length) {
+invoices.forEach(inv => {
 inv.source = 'invoice'; let itemsArr = []; try { itemsArr = JSON.parse(inv.items); } catch(e) { itemsArr = []; } inv.itemsParsed = itemsArr; combinedInvoices.push(inv);
 });
 }
@@ -2027,8 +2066,9 @@ Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.nu
 
 // ── 🚨 BNPL 2.0 修正：帳單 (Loans) 與 Installments (BNPL) 展開介面 ──
 function renderLoans() {
-if (!store || !store.loans) return;
-const filteredLoans = store.loans.filter(l => { const statusStr = String(l.status||''); const isCleared = (statusStr === 'PAID'); const isOverdue = (!isCleared && l.penalty > 0); if (currentLoanTab === 1) return isCleared; else if (currentLoanTab === 2) return isOverdue; else return !isCleared && !isOverdue; });
+if (!store) return;
+const loans = Array.isArray(store.loans) ? store.loans : [];
+const filteredLoans = loans.filter(l => { const statusStr = String(l.status||''); const isCleared = (statusStr === 'PAID'); const isOverdue = (!isCleared && l.penalty > 0); if (currentLoanTab === 1) return isCleared; else if (currentLoanTab === 2) return isOverdue; else return !isCleared && !isOverdue; });
 const sortL = document.getElementById('sortL').value; filteredLoans.sort((a, b) => { const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.expiry||'').replace(/-/g, '/')).getTime() || 0; return sortL === 'asc' ? da - db : db - da; });
 
 document.getElementById('lList').innerHTML = filteredLoans.map(l => {
@@ -2037,7 +2077,7 @@ document.getElementById('lList').innerHTML = filteredLoans.map(l => {
     
     if (l.loanType === 'INSTALLMENT') {
         let childHtml = '';
-        let installments = (store.installments || []).filter(inst => String(inst.loanId) === String(l.id));
+        let installments = (Array.isArray(store.installments) ? store.installments : []).filter(inst => String(inst.loanId) === String(l.id));
         installments.sort((a, b) => a.installmentNo - b.installmentNo);
         
         childHtml = installments.map(inst => {
@@ -2130,8 +2170,10 @@ document.getElementById('paymentQrBox').style.display = 'flex';
 };
 
 function renderCoupons() {
-if (!store || !store.coupons) return; const todayStr = new Date().toISOString().split('T')[0];
-const filteredCoupons = store.coupons.filter(c => { const statusStr = String(c.status||''); const isUsed = (statusStr === '已使用' || statusStr === '已核銷' || statusStr === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; } if (currentCouponTab === 1) return isUsed; else if (currentCouponTab === 2) return !isUsed && isExpired; else return !isUsed && !isExpired; });
+if (!store) return;
+const coupons = Array.isArray(store.coupons) ? store.coupons : [];
+const todayStr = new Date().toISOString().split('T')[0];
+const filteredCoupons = coupons.filter(c => { const statusStr = String(c.status||''); const isUsed = (statusStr === '已使用' || statusStr === '已核銷' || statusStr === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; } if (currentCouponTab === 1) return isUsed; else if (currentCouponTab === 2) return !isUsed && isExpired; else return !isUsed && !isExpired; });
 const sortC = document.getElementById('sortC').value; 
 filteredCoupons.sort((a, b) => { 
     const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; 
