@@ -1012,83 +1012,23 @@ let note = document.getElementById('t_log_note').value.trim();
 let dt = document.getElementById('t_log_dl_date').value;
 if (dt) note += ` [${document.getElementById('t_log_dl_type').value}:${dt}]`;
 note = `[顏色:${document.getElementById('t_log_color').value}] ` + note;
+let packageId = document.getElementById('t_log_package').value.trim();
 
 let notifyMode = await confirmActionWithPush('發佈最新節點');
 if (!notifyMode) return;
-let order = O_DB.find(o => o.id === oid);
 
-if (!order) {
-    return Swal.fire(
-        "錯誤",
-        "找不到訂單資料",
-        "error"
-    );
-}
+let res = await fetchWithQueue(GAS, {
+  action: 'adminAction',
+  type: 'updateTimeline',
+  oid: oid,
+  status: status,
+  time: time.replace('T', ' '),
+  note: note,
+  packageId: packageId,
+  notifyMode: notifyMode
+}, "發佈時間線中...");
 
-if (!order) {
-    return Swal.fire(
-        "錯誤",
-        "找不到訂單資料",
-        "error"
-    );
-}
-
-    let newTrack =
-    document
-        .getElementById("t_log_package")
-        .value
-        .trim();
-
-if (!newTrack) {
-    newTrack = order.track;
-}
-    
-let res = await fetchWithQueue(
-    GAS,
-    {
-        action: 'adminAction',
-        type: 'updateOrder',
-
-        oid: order.id,
-        uid: order.uid,
-
-        status: status,
-
-        item: order.item,
-
-        code: order.code,
-
-        subtotal: order.subtotal,
-
-        shipFee: order.shipFee,
-
-        discShip: order.discShip,
-
-        discSeller: order.discSeller,
-
-        discCoin: order.discCoin,
-
-        total: order.total,
-
-        ship: order.ship,
-
-        address: order.address,
-
-        track: newTrack,
-
-        payment: order.payment,
-
-        note: note,
-
-        time: time.replace('T', ' '),
-
-        notifyMode: notifyMode
-    },
-    "發佈時間線中..."
-);
-
-if (!res.aborted)
-    handlePostSuccess(res);
+if (!res.aborted) handlePostSuccess(res);
 }
 
 function addOrderItemRow() {
