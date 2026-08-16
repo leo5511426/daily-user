@@ -958,7 +958,7 @@ async function doLogin() {
     res = await raw.json();
   } catch(e) {
     setLoginStep('ls_auth', 'failed');
-    showLoginError('系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+    showLoginError('系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心。<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
     return;
   }
 
@@ -1452,7 +1452,7 @@ function render() {
       console.error('[render/' + name + '] 初始化失敗：', e);
       const map = { loans:'lList', coupons:'cpList', invoices:'invList', orders:'oList', history:'hList', notifications:'ntListPreview' };
       const el = document.getElementById(map[name]);
-      if (el) el.innerHTML = '<p style="text-align:center;opacity:.45;padding:20px;">此區資料暫時無法載入，其他功能仍可正常使用。</p>';
+      if (el) el.innerHTML = '<p style="text-align:center;opacity:.45;padding:20px;">此功能暫時無法載入，其他功能仍可正常使用。若問題持續發生請聯絡客服中心。</p>';
     }
   };
 
