@@ -422,7 +422,11 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <h4 style="margin: 0 0 10px 0; color: var(--primary);">➕ 發佈最新物流節點</h4>
 <div id="package_selector_container" style="display:none; margin-bottom:10px; background:#fff; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
 <label style="font-size:0.85em; font-weight:bold; color:var(--primary);">📦 選擇所屬包裹：</label>
-<select id="t_log_package" style="margin-top:5px;"></select>
+<select id="t_log_package" style="margin-top:5px;" onchange="toggleTimelineReturnTrack()"></select>
+<div id="t_log_return_track_wrap" style="display:none;margin-top:8px;">
+<label style="font-size:0.85em;font-weight:bold;color:var(--primary);">↩️ 退貨物流單號：</label>
+<input type="text" id="t_log_return_track" placeholder="尚未有單號可留空" style="width:100%;box-sizing:border-box;margin-top:5px;">
+</div>
 </div>
 <input type="datetime-local" id="t_log_time">
 <select id="t_log_status"></select>
@@ -1013,6 +1017,8 @@ let dt = document.getElementById('t_log_dl_date').value;
 if (dt) note += ` [${document.getElementById('t_log_dl_type').value}:${dt}]`;
 note = `[顏色:${document.getElementById('t_log_color').value}] ` + note;
 let packageId = document.getElementById('t_log_package').value.trim();
+let packageType = packageId === 'RETURN' ? 'RETURN' : 'OUTBOUND';
+let returnTrack = packageType === 'RETURN' ? (document.getElementById('t_log_return_track')?.value.trim() || '') : '';
 
 let notifyMode = await confirmActionWithPush('發佈最新節點');
 if (!notifyMode) return;
@@ -1025,6 +1031,8 @@ let res = await fetchWithQueue(GAS, {
   time: time.replace('T', ' '),
   note: note,
   packageId: packageId,
+  packageType: packageType,
+  returnTrack: returnTrack,
   notifyMode: notifyMode
 }, "發佈時間線中...");
 
@@ -1222,7 +1230,7 @@ if (currentStatus === '申請退貨/退款中') {
     actionHtml += `<div><label style="font-size:13px;font-weight:bold;">退貨物流方式</label><input id="r_audit_ship" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="例如：黑貓宅急便"></div>`;
     actionHtml += `<div><label style="font-size:13px;font-weight:bold;">寄件截止日</label><input id="r_audit_deadline" type="date" class="admin-input" style="width:100%;box-sizing:border-box;"></div>`;
     actionHtml += `</div>`;
-    actionHtml += `<div><label style="font-size:13px;font-weight:bold;">退貨追蹤單號（可選）</label><input id="r_audit_track" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="尚未有單號可留空"></div>`;
+    actionHtml += `<div style="padding:10px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;color:#64748b;font-size:12px;">💡 退貨物流單號請在下方「獨立發佈最新物流進度」選擇「↩️ 退貨」後直接輸入；之後也可在同一時間線節點編輯。系統會自動寫入 Returns.J。</div>`;
     actionHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'reject')" style="background:var(--dark);color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">拒絕申請</button><button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'approve_return')" style="background:var(--blue);color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">同意退貨</button></div>`;
   } else {
     actionHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'reject')" style="background:var(--dark);color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">拒絕申請</button><button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'approve_refund_only')" style="background:var(--green);color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">同意並退款</button></div>`;
@@ -1249,21 +1257,45 @@ document.getElementById('r_audit_actions').innerHTML = attachmentHtml + actionHt
 document.getElementById('r_audit_panel').style.display = 'block';
 }
 
+// --- 📦 時間線包裹類型切換 ---
+function toggleTimelineReturnTrack() {
+  const sel = document.getElementById('t_log_package');
+  const wrap = document.getElementById('t_log_return_track_wrap');
+  if (!sel || !wrap) return;
+  const isReturn = sel.value === 'RETURN';
+  wrap.style.display = isReturn ? 'block' : 'none';
+  const trackEl = document.getElementById('t_log_return_track');
+  if (isReturn && trackEl && !trackEl.dataset.initialized) {
+    const oid = document.getElementById('t_order_id')?.value;
+    const order = O_DB.find(o => o.id === oid);
+    trackEl.value = order && order.returnData ? String(order.returnData.track || '') : '';
+    trackEl.dataset.initialized = '1';
+  }
+  if (!isReturn && trackEl) { trackEl.value = ''; trackEl.dataset.initialized = ''; }
+}
+
 // --- 📦 渲染與過濾時間線節點 ---
 function renderAdminTimeline() {
 let oid = document.getElementById('t_order_id').value; if(!oid) return;
 let order = O_DB.find(o => o.id === oid);
 if(!order) return;
 let tracks = (order.track||"").split(',').map(t=>t.trim()).filter(t=>t);
-if(order.returnData && !(order.returnData.items || '').includes('[僅退款]')) tracks.push("退貨包裹(未編號)");
-
-let optionsHtml = '<option value="">🌐 共用 / 無指定包裹</option>' + tracks.map(t=>`<option value="${t}">${t}</option>`).join('');
+let hasReturn = !!(order.returnData && !(String(order.returnData.items || '')).includes('[僅退款]'));
+let returnTrack = hasReturn ? String(order.returnData.track || '').trim() : '';
+let optionsHtml = '<option value="">🌐 共用 / 無指定包裹</option>' + tracks.map(t=>`<option value="${escapeHTML(t)}">📦 寄出：${escapeHTML(t)}</option>`).join('');
+if (hasReturn) optionsHtml += `<option value="RETURN">↩️ 退貨：${escapeHTML(returnTrack || '待提供單號')}</option>`;
 document.getElementById('t_log_package').innerHTML = optionsHtml;
+const returnTrackInput = document.getElementById('t_log_return_track');
+if (returnTrackInput) returnTrackInput.dataset.initialized = '';
+toggleTimelineReturnTrack();
 
-if (tracks.length > 0) {
+let filterOptionsHtml = '<option value="">🌐 共用 / 無指定包裹</option>' + tracks.map(t=>`<option value="${escapeHTML(t)}">📦 寄出：${escapeHTML(t)}</option>`).join('');
+if (hasReturn) filterOptionsHtml += `<option value="RETURN">↩️ 退貨：${escapeHTML(returnTrack || '待提供單號')}</option>`;
+
+if (tracks.length > 0 || hasReturn) {
 document.getElementById('package_selector_container').style.display = 'block';
 document.getElementById('package_filter_container').style.display = 'block';
-document.getElementById('t_log_filter_package').innerHTML = '<option value="ALL">顯示全部時間線</option>' + optionsHtml;
+document.getElementById('t_log_filter_package').innerHTML = '<option value="ALL">顯示全部時間線</option>' + filterOptionsHtml;
 } else {
 document.getElementById('package_selector_container').style.display = 'none';
 document.getElementById('package_filter_container').style.display = 'none';
@@ -1282,7 +1314,14 @@ let filterPkg = document.getElementById('t_log_filter_package').value;
 let tLogs = order.timeline || [];
 
 if(filterPkg !== "ALL") {
-tLogs = tLogs.filter(t => (t.packageId || "") === filterPkg);
+  tLogs = tLogs.filter(t => {
+    if (filterPkg === 'RETURN') {
+      if (String(t.packageType || '').toUpperCase() === 'RETURN') return true;
+      const rt = order.returnData ? String(order.returnData.track || '').trim() : '';
+      return rt && String(t.packageId || '').trim() === rt || String(t.packageId || '').trim() === '退貨包裹(未編號)';
+    }
+    return (t.packageId || "") === filterPkg && String(t.packageType || 'OUTBOUND').toUpperCase() !== 'RETURN';
+  });
 }
 
 if(tLogs.length > 0) {
@@ -1290,7 +1329,9 @@ document.getElementById('admin_timeline_container').innerHTML = tLogs.map((t, id
 let colorMatch = t.rawMsg ? t.rawMsg.match(/\[顏色:(#[0-9a-fA-F]{3,6})\]/) : null; 
 let nodeColor = colorMatch ? colorMatch[1] : (idx === 0 && filterPkg === "ALL" ? '#db2777' : '#94a3b8'); 
 let cleanNote = (t.note || '').replace(/\[顏色:.*?\]/g, '').trim();
-let pkgLabel = t.packageId ? `<span style="background:var(--blue); color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:5px;">📦 ${t.packageId}</span>` : '';
+let isReturnNode = String(t.packageType || '').toUpperCase() === 'RETURN' || t.packageId === 'RETURN' || t.packageId === '退貨包裹(未編號)' || (order.returnData && String(order.returnData.track || '').trim() && String(t.packageId || '').trim() === String(order.returnData.track || '').trim());
+let returnLabel = order.returnData && String(order.returnData.track || '').trim() ? String(order.returnData.track).trim() : '待提供單號';
+let pkgLabel = t.packageId ? `<span style="background:${isReturnNode?'#f59e0b':'var(--blue)'}; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:5px;">${isReturnNode?'↩️ 退貨：'+escapeHTML(returnLabel):'📦 '+escapeHTML(t.packageId)}</span>` : '';
 
 return `
                <div class="admin-node ${idx === 0 ? 'latest-node' : ''}" style="--node-color:${nodeColor}; --node-shadow:${nodeColor}40;" draggable="true" data-oid="${order.id}" data-rawmsg="${btoa(encodeURIComponent(t.rawMsg))}" data-time="${btoa(encodeURIComponent(t.time))}" data-status="${btoa(encodeURIComponent(t.status))}" data-note="${btoa(encodeURIComponent(t.note))}" ondragstart="handleDragStart.call(this, event)" ondragover="handleDragOver(event)" ondragenter="handleDragEnter.call(this, event)" ondragleave="handleDragLeave.call(this, event)" ondrop="handleDrop.call(this, event)" ondragend="handleDragEnd.call(this, event)">
@@ -1316,9 +1357,11 @@ let pkg = b64Pkg ? decodeURIComponent(atob(b64Pkg)) : "";
 
 let order = O_DB.find(o => o.id === oid);
 let tracks = (order.track||"").split(',').map(t=>t.trim()).filter(t=>t);
-if(order.returnData && !(order.returnData.items || '').includes('[僅退款]')) tracks.push("退貨包裹(未編號)");
-
-let pkgOptions = '<option value="">🌐 共用 / 無指定</option>' + tracks.map(t => `<option value="${t}" ${t===pkg?'selected':''}>${t}</option>`).join('');
+let hasReturn = !!(order.returnData && !(String(order.returnData.items || '')).includes('[僅退款]'));
+let currentReturnTrack = hasReturn ? String(order.returnData.track || '').trim() : '';
+let pkgIsReturn = pkg === 'RETURN' || pkg === '退貨包裹(未編號)' || (currentReturnTrack && pkg === currentReturnTrack);
+let pkgOptions = '<option value="">🌐 共用 / 無指定</option>' + tracks.map(t => `<option value="${escapeHTML(t)}" ${!pkgIsReturn && t===pkg?'selected':''}>📦 寄出：${escapeHTML(t)}</option>`).join('');
+if (hasReturn) pkgOptions += `<option value="RETURN" ${pkgIsReturn?'selected':''}>↩️ 退貨：${escapeHTML(currentReturnTrack || '待提供單號')}</option>`;
 
 let formattedTime = time.replace(' ', 'T');
 if (formattedTime.length === 16) formattedTime += ':00'; 
@@ -1337,7 +1380,9 @@ html: `
                    <input type="text" id="swal_edit_note" class="swal2-input" value="${note.replace(/\[包裹:.*?\]/g, '').replace(/\[顏色:.*?\]/g, '').replace(/\[[寄取]件截止日:.*?\]/g, '').trim()}" style="width:100%; margin:5px 0 15px 0; box-sizing:border-box;">
                    
                    <label style="font-weight:bold; color:var(--dark);">📦 所屬包裹：</label>
-                   <select id="swal_edit_pkg" class="swal2-select" style="width:100%; margin:5px 0 15px 0; display:flex; box-sizing:border-box;">${pkgOptions}</select>
+                   <select id="swal_edit_pkg" class="swal2-select" style="width:100%; margin:5px 0 8px 0; display:flex; box-sizing:border-box;">${pkgOptions}</select>
+                   <label style="font-weight:bold; color:var(--dark);">↩️ 退貨物流單號：</label>
+                   <input type="text" id="swal_edit_return_track" class="swal2-input" value="${escapeHTML(currentReturnTrack)}" placeholder="僅選擇退貨包裹時使用，可留空清除" style="width:100%; margin:5px 0 15px 0; box-sizing:border-box;">
                </div>
            `,
 focusConfirm: false,
@@ -1353,14 +1398,16 @@ return {
 newTime: document.getElementById('swal_edit_time').value.replace('T', ' '),
 newStatus: document.getElementById('swal_edit_status').value.trim(),
 newNote: document.getElementById('swal_edit_note').value.trim(),
-newPkg: document.getElementById('swal_edit_pkg').value
+newPkg: document.getElementById('swal_edit_pkg').value,
+newReturnTrack: document.getElementById('swal_edit_return_track').value.trim()
 }
 }
 }).then(async (result) => {
 if (result.isConfirmed) {
 let f = result.value;
 let finalNote = f.newNote;
-if(f.newPkg) finalNote = "[包裹:" + f.newPkg + "] " + finalNote;
+if(f.newPkg === 'RETURN') finalNote = "[包裹類型:退貨] " + (f.newReturnTrack ? "[退貨單號:" + f.newReturnTrack + "] " : "") + finalNote;
+else if(f.newPkg) finalNote = "[包裹類型:寄出] [包裹:" + f.newPkg + "] " + finalNote;
 let colorMatch = rawMsg.match(/\[顏色:(#[0-9a-fA-F]{3,6})\]/);
 if(colorMatch) finalNote = "[顏色:" + colorMatch[1] + "] " + finalNote;
 let dlMatch = rawMsg.match(/\[([取寄]件截止日):(.*?)]/);
