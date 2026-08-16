@@ -1699,7 +1699,7 @@ if (gen.deadline) globalDeadlineHtml = `<p><span style="color:var(--red);">📅 
 }
 
 if (o.returnData && !(o.returnData.items || '').includes('[僅退款]')) {
-let retLogs = (o.timeline || []).filter(n => n.packageId === '退貨包裹(未編號)' || (returnTrack && String(n.packageId) === returnTrack));
+let retLogs = (o.timeline || []).filter(n => String(n.packageType || '').toUpperCase() === 'RETURN' || n.packageId === 'RETURN' || n.packageId === '退貨包裹(未編號)' || (returnTrack && String(n.packageId) === returnTrack));
 if (retLogs.length > 0) {
 let gen = generateTimelineHtml(retLogs, "退貨運送中", "退貨包裹處理中", updateTime);
 let deadHtml = gen.deadline ? `<p style="margin:5px 0 0 0;"><span style="color:var(--red); font-size:0.9em;">📅 寄件/取件截止日：</span><b style="color:var(--red); font-size: 0.95em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${gen.deadline}</b></p>` : '';
@@ -2104,7 +2104,7 @@ document.getElementById('lList').innerHTML = filteredLoans.map(l => {
         <div class="card" style="border: 1px solid var(--blue);">
             ${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '<span class="overdue-tag" style="background:var(--blue);">分期計畫</span>')}
             <div style="font-size:1.1em; margin-bottom:5px; color:var(--blue);">${escapeHTML(l.item)}</div>
-            <div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">總分期: ${l.installmentCount} 期 (已繳 ${l.completedInstall} 期)</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '剩餘 $' + l.totalDue}</b></div>
+            <div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">總分期: ${Number(l.installmentCount) || 0} 期 (已繳 ${Math.min(Number(l.completedInstall) || 0, Number(l.installmentCount) || 0)} 期)</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '剩餘 $' + l.totalDue}</b></div>
             ${payAllBtn}
             <div style="margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;">
                 <button class="btn" style="background:transparent; color:var(--blue); border:1px solid var(--blue); padding:8px; font-size:0.85em;" onclick="document.getElementById('inst_list_${loanIdVal}').style.display = document.getElementById('inst_list_${loanIdVal}').style.display==='none'?'block':'none'">👀 展開/收合 分期明細</button>
