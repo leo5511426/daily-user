@@ -75,7 +75,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 .lp-progress-fill { background: linear-gradient(90deg, #FF8FA3, #FFD1DC); height: 100%; width: 0%; transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); border-radius: 4px; box-shadow: 0 0 10px rgba(255, 143, 163, 0.5); }
 
 @media (prefers-reduced-motion: reduce) {
-.lp-spin, .lp-pop, .lp-shake, .lp-pulse, .lp-progress-fill, .lp-step, .lp-icon { animation: none !important; transition: none !important; }
+    .lp-spin, .lp-pop, .lp-shake, .lp-pulse, .lp-progress-fill, .lp-step, .lp-icon { animation: none !important; transition: none !important; }
 }
 
 .settings-section-title { font-size: 1.1em; margin: 20px 0 10px 5px; color: var(--pink); display: flex; align-items: center; gap: 6px; }
@@ -139,101 +139,101 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 
 /* 🚫 全域停權橫幅 */
 .suspension-banner {
-background: var(--red); color: white; text-align: center; padding: 12px;
-font-size: 0.85em; font-weight: bold; z-index: 200; position: sticky; top: 0; width: 100%; box-sizing: border-box;
+    background: var(--red); color: white; text-align: center; padding: 12px;
+    font-size: 0.85em; font-weight: bold; z-index: 200; position: sticky; top: 0; width: 100%; box-sizing: border-box;
 }
 
 /* 🚫 停權畫面專屬樣式 (供非唯讀時使用) */
 #suspendedView {
-display: none; height: 100vh; flex-direction: column; justify-content: center; align-items: center;
-padding: 40px; box-sizing: border-box; text-align: center; background: #fff5f5;
+    display: none; height: 100vh; flex-direction: column; justify-content: center; align-items: center;
+    padding: 40px; box-sizing: border-box; text-align: center; background: #fff5f5;
 }
 [data-theme='dark'] #suspendedView { background: #1a0505; }
 
 /* ============================================================
-  APP OVERLAY MODAL
-  用於「彈窗中的預覽／子視窗」，避免再次呼叫 Swal.fire
-  把原本的 Swal 彈窗關閉。
-  ============================================================ */
+   APP OVERLAY MODAL
+   用於「彈窗中的預覽／子視窗」，避免再次呼叫 Swal.fire
+   把原本的 Swal 彈窗關閉。
+   ============================================================ */
 .app-overlay-modal {
-position: fixed;
-inset: 0;
-z-index: 10000;
-display: none;
-align-items: center;
-justify-content: center;
-padding: 20px;
-box-sizing: border-box;
-background: rgba(0,0,0,.78);
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(0,0,0,.78);
 }
 .app-overlay-modal.is-open { display: flex; }
 .app-overlay-dialog {
-position: relative;
-width: min(96vw, 1100px);
-max-height: 94vh;
-box-sizing: border-box;
-background: #fff;
-border-radius: 18px;
-overflow: hidden;
-box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  position: relative;
+  width: min(96vw, 1100px);
+  max-height: 94vh;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
 }
 .app-overlay-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-gap: 12px;
-padding: 12px 16px;
-border-bottom: 1px solid #e5e7eb;
-background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
 }
 .app-overlay-title {
-min-width: 0;
-overflow: hidden;
-text-overflow: ellipsis;
-white-space: nowrap;
-font-weight: 700;
-color: #111827;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  color: #111827;
 }
 .app-overlay-close {
-width: 40px !important;
-height: 40px;
-flex: 0 0 40px;
-margin: 0 !important;
-padding: 0 !important;
-border: 0 !important;
-border-radius: 999px !important;
-background: #f1f5f9 !important;
-color: #334155 !important;
-font-size: 22px !important;
-line-height: 40px;
-cursor: pointer;
+  width: 40px !important;
+  height: 40px;
+  flex: 0 0 40px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  font-size: 22px !important;
+  line-height: 40px;
+  cursor: pointer;
 }
 .app-overlay-body {
-max-height: calc(94vh - 65px);
-overflow: auto;
-padding: 16px;
-box-sizing: border-box;
-background: #0f172a;
+  max-height: calc(94vh - 65px);
+  overflow: auto;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #0f172a;
 }
 .app-overlay-body.light { background: #f8fafc; }
 .app-overlay-body img,
 .app-overlay-body video,
 .app-overlay-body iframe {
-display: block;
-width: 100%;
-max-width: 100%;
-max-height: calc(94vh - 120px);
-margin: 0 auto;
-border: 0;
-border-radius: 10px;
-object-fit: contain;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: calc(94vh - 120px);
+  margin: 0 auto;
+  border: 0;
+  border-radius: 10px;
+  object-fit: contain;
 }
 .app-overlay-message {
-padding: 28px 20px;
-text-align: center;
-color: #334155;
-background: #fff;
-border-radius: 12px;
+  padding: 28px 20px;
+  text-align: center;
+  color: #334155;
+  background: #fff;
+  border-radius: 12px;
 }
 
 </style>
@@ -260,19 +260,19 @@ border-radius: 12px;
 
 <!-- 🚫 停權與申訴專屬畫面 (供非唯讀時使用) -->
 <div id="suspendedView">
-<div style="font-size: 4em; margin-bottom: 10px; animation: lp-shake 0.5s ease;">🚫</div>
-<h2 style="color:var(--red); margin-top:0;">帳號已停權</h2>
-<p style="color:#666; font-size:0.9em; margin-top:0;">很抱歉，您的帳號目前受到限制，無法存取會員系統與各項服務。</p>
-<div style="background:white; border:1px solid #fca5a5; padding:15px; border-radius:15px; width:100%; text-align:left; margin:15px 0; box-shadow: 0 4px 10px rgba(255,0,0,0.05);">
-<p style="margin:5px 0; font-size:0.95em;"><b>停權原因：</b><br><span id="suspReason" style="color:var(--red);"></span></p>
-<p style="margin:10px 0 5px 0; font-size:0.95em;"><b>停權期限：</b><br><span id="suspEndTime" style="color:#eab308; font-weight:bold;"></span></p>
-</div>
-<div style="width:100%; margin-top:10px; background:rgba(0,0,0,0.03); padding:15px; border-radius:15px; box-sizing:border-box;">
-<p style="margin:0 0 10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">💬 提出申訴</p>
-<textarea id="suspAppealDesc" rows="3" placeholder="若您認為停權判定有誤，請在此輸入您的申訴理由與相關說明..." style="width:100%; padding:10px; border-radius:10px; border:1px solid #ccc;"></textarea>
-<button class="btn" style="background:var(--blue); margin-top:10px; font-size:0.9em;" onclick="submitSuspensionAppeal()">送出申訴單</button>
-</div>
-<button class="btn" style="background:transparent; color:#999; border:1px solid #ccc; margin-top:20px; font-size:0.9em;" onclick="triggerLogout()">登出系統</button>
+    <div style="font-size: 4em; margin-bottom: 10px; animation: lp-shake 0.5s ease;">🚫</div>
+    <h2 style="color:var(--red); margin-top:0;">帳號已停權</h2>
+    <p style="color:#666; font-size:0.9em; margin-top:0;">很抱歉，您的帳號目前受到限制，無法存取會員系統與各項服務。</p>
+    <div style="background:white; border:1px solid #fca5a5; padding:15px; border-radius:15px; width:100%; text-align:left; margin:15px 0; box-shadow: 0 4px 10px rgba(255,0,0,0.05);">
+        <p style="margin:5px 0; font-size:0.95em;"><b>停權原因：</b><br><span id="suspReason" style="color:var(--red);"></span></p>
+        <p style="margin:10px 0 5px 0; font-size:0.95em;"><b>停權期限：</b><br><span id="suspEndTime" style="color:#eab308; font-weight:bold;"></span></p>
+    </div>
+    <div style="width:100%; margin-top:10px; background:rgba(0,0,0,0.03); padding:15px; border-radius:15px; box-sizing:border-box;">
+        <p style="margin:0 0 10px 0; font-size:0.9em; font-weight:bold; color:var(--dark);">💬 提出申訴</p>
+        <textarea id="suspAppealDesc" rows="3" placeholder="若您認為停權判定有誤，請在此輸入您的申訴理由與相關說明..." style="width:100%; padding:10px; border-radius:10px; border:1px solid #ccc;"></textarea>
+        <button class="btn" style="background:var(--blue); margin-top:10px; font-size:0.9em;" onclick="submitSuspensionAppeal()">送出申訴單</button>
+    </div>
+    <button class="btn" style="background:transparent; color:#999; border:1px solid #ccc; margin-top:20px; font-size:0.9em;" onclick="triggerLogout()">登出系統</button>
 </div>
 
 <!-- 📱 正常/唯讀 會員系統畫面 -->
@@ -281,49 +281,49 @@ border-radius: 12px;
 <!-- 🚫 停權唯讀橫幅 -->
 <div id="suspensionBanner" class="suspension-banner" style="display:none;">
 
-<div>
-⚠️ 您的帳號已被停權：
-<span id="bannerSuspReason">違反系統規範</span>
-</div>
+    <div>
+        ⚠️ 您的帳號已被停權：
+        <span id="bannerSuspReason">違反系統規範</span>
+    </div>
 
-<div
-id="bannerSuspPeriod"
-style="
-           font-size:0.9em;
-           font-weight:normal;
-           opacity:0.9;
-           margin-top:4px;
-       "
-></div>
+    <div
+        id="bannerSuspPeriod"
+        style="
+            font-size:0.9em;
+            font-weight:normal;
+            opacity:0.9;
+            margin-top:4px;
+        "
+    ></div>
 
-<div
-style="
-           font-size:0.9em;
-           font-weight:normal;
-           opacity:0.9;
-           margin-top:4px;
-       "
->
-目前僅開放唯讀查詢、帳單繳款及停權申訴
-</div>
+    <div
+        style="
+            font-size:0.9em;
+            font-weight:normal;
+            opacity:0.9;
+            margin-top:4px;
+        "
+    >
+        目前僅開放唯讀查詢、帳單繳款及停權申訴
+    </div>
 
-<button
-type="button"
-onclick="submitSuspensionAppeal()"
-style="
-           background:white;
-           color:var(--red);
-           border:none;
-           padding:6px 12px;
-           border-radius:10px;
-           font-size:0.9em;
-           font-weight:bold;
-           margin-top:8px;
-           cursor:pointer;
-       "
->
-👉 我要申訴
-</button>
+    <button
+        type="button"
+        onclick="submitSuspensionAppeal()"
+        style="
+            background:white;
+            color:var(--red);
+            border:none;
+            padding:6px 12px;
+            border-radius:10px;
+            font-size:0.9em;
+            font-weight:bold;
+            margin-top:8px;
+            cursor:pointer;
+        "
+    >
+        👉 我要申訴
+    </button>
 
 </div>
 
@@ -449,8 +449,6 @@ style="
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：V89.0 (BNPL 2.0 正確性與一致性修正)</div>
-<div>更新日期：2026-08-03</div>
 <div>版本：V90.1 (登入穩定性與長密碼修正)</div>
 <div>更新日期：2026-08-15</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
@@ -550,11 +548,11 @@ let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", return
 
 // 🚨 Enum 狀態翻譯對照表
 const STATUS_MAP = {
-'UNPAID': '未繳',
-'PARTIAL': '部分繳款',
-'PAID': '已繳/結清',
-'OVERDUE': '已逾期',
-'WAIVED': '已減免'
+    'UNPAID': '未繳',
+    'PARTIAL': '部分繳款',
+    'PAID': '已繳/結清',
+    'OVERDUE': '已逾期',
+    'WAIVED': '已減免'
 };
 
 function tStatus(s) { return STATUS_MAP[s] || s; }
@@ -563,60 +561,60 @@ function tStatus(s) { return STATUS_MAP[s] || s; }
 // 💡 系統核心常數與裝置管理函式 💡
 // ==========================================
 const FEATURES = {
-MEMBER:          'MEMBER',
-BNPL:            'BNPL',
-AI_ASSISTANT:    'AI_ASSISTANT',
-POINTS:          'POINTS',
-MEMBERSHIP_LEVELS: 'MEMBERSHIP_LEVELS',
-CUSTOMER_SERVICE:  'CUSTOMER_SERVICE'
+  MEMBER:          'MEMBER',
+  BNPL:            'BNPL',
+  AI_ASSISTANT:    'AI_ASSISTANT',
+  POINTS:          'POINTS',
+  MEMBERSHIP_LEVELS: 'MEMBERSHIP_LEVELS',
+  CUSTOMER_SERVICE:  'CUSTOMER_SERVICE'
 };
 
 window.openSessionManager = async function() {
-Swal.fire({ title: '載入裝置清單...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-let res;
-try {
-const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getSessions', uid: store.userData.id }) });
-res = await raw.json();
-} catch(e) { Swal.fire('錯誤', '無法取得裝置清單，請稍後再試。', 'error'); return; }
-Swal.close();
-if (!res || !res.success) { Swal.fire('錯誤', res ? res.message : '無回應', 'error'); return; }
+  Swal.fire({ title: '載入裝置清單...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  let res;
+  try {
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getSessions', uid: store.userData.id }) });
+    res = await raw.json();
+  } catch(e) { Swal.fire('錯誤', '無法取得裝置清單，請稍後再試。', 'error'); return; }
+  Swal.close();
+  if (!res || !res.success) { Swal.fire('錯誤', res ? res.message : '無回應', 'error'); return; }
 
-const sessions = res.sessions || [];
-if (sessions.length === 0) { Swal.fire({ title: '📱 登入裝置', text: '目前無登入記錄。', icon: 'info', confirmButtonColor: 'var(--pink)' }); return; }
+  const sessions = res.sessions || [];
+  if (sessions.length === 0) { Swal.fire({ title: '📱 登入裝置', text: '目前無登入記錄。', icon: 'info', confirmButtonColor: 'var(--pink)' }); return; }
 
-const listHtml = sessions.map(function(s) {
-const isCurrent = s.sessionId === currentSessionId;
-const isActive = s.isActive;
-const statusColor = isCurrent ? '#10b981' : (isActive ? '#3b82f6' : '#94a3b8');
-const statusLabel = isCurrent ? '目前裝置' : (isActive ? '登入中' : '已登出');
-const terminateBtn = (!isCurrent && isActive)
-? '<button onclick="terminateSessionById(\'' + s.sessionId + '\')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:transparent;color:var(--red);border:1px solid var(--red);font-size:0.8em;font-weight:bold;cursor:pointer;">🔴 終止此裝置</button>'
-: '';
-return '<div style="background:' + (isCurrent ? 'rgba(16,185,129,0.07)' : 'rgba(0,0,0,0.03)') + ';border:1px solid ' + (isCurrent ? '#10b981' : 'var(--border)') + ';border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;">'
-+ '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-+ '<span style="font-size:0.78em;color:#aaa;font-weight:normal;">....' + s.sessionId.slice(-8) + '</span>'
-+ '<span style="background:' + statusColor + ';color:#fff;font-size:0.72em;padding:2px 8px;border-radius:6px;">' + statusLabel + '</span>'
-+ '</div>'
-+ '<div style="font-size:0.82em;margin-bottom:2px;">登入時間：' + (s.loginTime || '—') + '</div>'
-+ '<div style="font-size:0.82em;opacity:0.65;">最後活動：' + (s.lastActivityTime || '—') + '</div>'
-+ terminateBtn + '</div>';
-}).join('');
+  const listHtml = sessions.map(function(s) {
+    const isCurrent = s.sessionId === currentSessionId;
+    const isActive = s.isActive;
+    const statusColor = isCurrent ? '#10b981' : (isActive ? '#3b82f6' : '#94a3b8');
+    const statusLabel = isCurrent ? '目前裝置' : (isActive ? '登入中' : '已登出');
+    const terminateBtn = (!isCurrent && isActive)
+      ? '<button onclick="terminateSessionById(\'' + s.sessionId + '\')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:transparent;color:var(--red);border:1px solid var(--red);font-size:0.8em;font-weight:bold;cursor:pointer;">🔴 終止此裝置</button>'
+      : '';
+    return '<div style="background:' + (isCurrent ? 'rgba(16,185,129,0.07)' : 'rgba(0,0,0,0.03)') + ';border:1px solid ' + (isCurrent ? '#10b981' : 'var(--border)') + ';border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
+      + '<span style="font-size:0.78em;color:#aaa;font-weight:normal;">....' + s.sessionId.slice(-8) + '</span>'
+      + '<span style="background:' + statusColor + ';color:#fff;font-size:0.72em;padding:2px 8px;border-radius:6px;">' + statusLabel + '</span>'
+      + '</div>'
+      + '<div style="font-size:0.82em;margin-bottom:2px;">登入時間：' + (s.loginTime || '—') + '</div>'
+      + '<div style="font-size:0.82em;opacity:0.65;">最後活動：' + (s.lastActivityTime || '—') + '</div>'
+      + terminateBtn + '</div>';
+  }).join('');
 
-Swal.fire({
-title: '📱 目前登入裝置', confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉', width: '90%',
-html: '<div style="text-align:left;max-height:55vh;overflow-y:auto;padding-right:4px;">' + listHtml + '</div>'
-});
+  Swal.fire({
+    title: '📱 目前登入裝置', confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉', width: '90%',
+    html: '<div style="text-align:left;max-height:55vh;overflow-y:auto;padding-right:4px;">' + listHtml + '</div>'
+  });
 };
 
 window.terminateSessionById = async function(sessionId) {
-const { isConfirmed } = await Swal.fire({ title: '確定要終止此裝置？', text: '該裝置將被強制登出。', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定終止', cancelButtonText: '取消' });
-if (!isConfirmed) { openSessionManager(); return; }
-try {
-const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'terminateSession', uid: store.userData.id, sessionId: sessionId, currentSessionId: currentSessionId }) });
-const res = await raw.json();
-if (res && res.success) Swal.fire('已終止', res.message, 'success').then(openSessionManager);
-else Swal.fire('錯誤', res ? res.message : '操作失敗', 'error').then(openSessionManager);
-} catch(e) { Swal.fire('錯誤', '網路異常，請稍後再試。', 'error').then(openSessionManager); }
+  const { isConfirmed } = await Swal.fire({ title: '確定要終止此裝置？', text: '該裝置將被強制登出。', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--red)', cancelButtonColor: '#94a3b8', confirmButtonText: '確定終止', cancelButtonText: '取消' });
+  if (!isConfirmed) { openSessionManager(); return; }
+  try {
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'terminateSession', uid: store.userData.id, sessionId: sessionId, currentSessionId: currentSessionId }) });
+    const res = await raw.json();
+    if (res && res.success) Swal.fire('已終止', res.message, 'success').then(openSessionManager);
+    else Swal.fire('錯誤', res ? res.message : '操作失敗', 'error').then(openSessionManager);
+  } catch(e) { Swal.fire('錯誤', '網路異常，請稍後再試。', 'error').then(openSessionManager); }
 };
 
 async function checkBnplConsentAndShow() {
@@ -626,43 +624,43 @@ if (!hasBnpl) return;
 
 let checkRes;
 try {
-const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL }) });
-checkRes = await raw.json();
+  const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL }) });
+  checkRes = await raw.json();
 } catch(e) { return; } 
 if (!checkRes || !checkRes.success || checkRes.allConsented) return;
 
 await fetchLegalDocsIfNeeded();
 const missingDocs = checkRes.missing || [];
 const links = missingDocs.map(function(doc) {
-return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--blue);font-weight:bold;text-decoration:underline;">《' + doc.title + '》</a>';
+  return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--blue);font-weight:bold;text-decoration:underline;">《' + doc.title + '》</a>';
 }).join('、');
 const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
 
 const { isConfirmed } = await Swal.fire({
 title: '💳 先享後付服務同意書',
 html: '<div style="text-align:left;font-size:0.95em;line-height:1.8;">'
-+ '<p style="color:#888;font-size:0.88em;margin-top:0;">您的帳戶已開通先享後付服務，繼續使用前請閱讀並同意相關條款（點擊可閱讀全文）：</p>'
-+ '<div style="background:var(--card,#f5f5f5);border-radius:10px;padding:12px;margin:10px 0;font-size:0.9em;">' + links + '</div>'
-+ '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;font-weight:bold;">'
-+ '<input type="checkbox" id="bnpl_consent_chk" style="width:22px;height:22px;flex-shrink:0;margin-top:2px;accent-color:var(--blue);">'
-+ '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
-+ '</label></div>',
+    + '<p style="color:#888;font-size:0.88em;margin-top:0;">您的帳戶已開通先享後付服務，繼續使用前請閱讀並同意相關條款（點擊可閱讀全文）：</p>'
+    + '<div style="background:var(--card,#f5f5f5);border-radius:10px;padding:12px;margin:10px 0;font-size:0.9em;">' + links + '</div>'
+    + '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;font-weight:bold;">'
+    + '<input type="checkbox" id="bnpl_consent_chk" style="width:22px;height:22px;flex-shrink:0;margin-top:2px;accent-color:var(--blue);">'
+    + '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
+    + '</label></div>',
 showCancelButton: true, confirmButtonText: '✅ 同意並繼續', cancelButtonText: '暫不同意',
 confirmButtonColor: 'var(--blue)', cancelButtonColor: '#94a3b8', allowOutsideClick: false,
 preConfirm: function() {
-if (!document.getElementById('bnpl_consent_chk').checked) { Swal.showValidationMessage('請勾選同意後才能繼續使用先享後付服務'); return false; }
-return true;
+  if (!document.getElementById('bnpl_consent_chk').checked) { Swal.showValidationMessage('請勾選同意後才能繼續使用先享後付服務'); return false; }
+  return true;
 }
 });
 
 if (isConfirmed) {
-try {
-await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.BNPL, consentMethod: '線上勾選同意', sessionId: currentSessionId }) });
-} catch(e) {}
-localStorage.setItem('bnplConsent_v1_' + store.userData.id, new Date().toISOString());
+  try {
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.BNPL, consentMethod: '線上勾選同意', sessionId: currentSessionId }) });
+  } catch(e) {}
+  localStorage.setItem('bnplConsent_v1_' + store.userData.id, new Date().toISOString());
 } else {
-openTab(0);
-Swal.fire({ title: '提示', text: '您尚未同意先享後付條款。若需使用此功能，請同意相關條款後再進入。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 3000, showConfirmButton: false });
+  openTab(0);
+  Swal.fire({ title: '提示', text: '您尚未同意先享後付條款。若需使用此功能，請同意相關條款後再進入。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 3000, showConfirmButton: false });
 }
 }
 
@@ -720,22 +718,22 @@ const startStandardUI = () => { if (isFinished) return; Swal.fire({ title: loadi
 const renderQueueHtml = (pos, title) => {
 let estMins = Math.max(1, Math.ceil(pos / 2)); 
 return `
-              <div style="display:flex; flex-direction:column; align-items:center; gap:20px; margin: 10px 0;">
-                  <div style="display:flex; align-items:center; gap:12px;">
-                      <div style="width:24px; height:24px; border:3px solid #e0e0e0; border-top:3px solid var(--pink); border-radius:50%; animation:sync-spin 0.8s linear infinite;"></div>
-                      <div style="font-weight:bold; color:#333; font-size:1.1em;">${title}</div>
-                  </div>
-                  <div style="font-weight:bold; color:var(--pink); font-size:1.1em; text-align:center;">目前系統較為繁忙，請耐心等候...</div>
-                  <div style="display:flex; align-items:center; justify-content:center; gap:15px; background:#f8fafc; padding:15px; border-radius:15px; width:100%; box-sizing:border-box; border:1px solid #e2e8f0;">
-                      <span style="font-size:30px; animation: queue-bounce 0.8s infinite alternate;">🚶</span>
-                      <div style="text-align:center; min-width:80px;">
-                          <div style="font-size:0.85em; color:#64748b; font-weight:bold;">前方還有</div>
-                          <div style="font-size:1.8em; font-weight:bold; color:var(--red); line-height:1.2;">${pos} <span style="font-size:0.5em; color:#64748b;">人</span></div>
-                          <div style="font-size:0.8em; color:#64748b; font-weight:bold; margin-top:5px;">預估時間 <span style="color:var(--orange);">${estMins}</span> 分鐘</div>
-                      </div>
-                      <span style="font-size:30px; animation: queue-bounce 0.8s infinite alternate 0.4s;">🚶‍♀️</span>
-                  </div>
-              </div>`;
+               <div style="display:flex; flex-direction:column; align-items:center; gap:20px; margin: 10px 0;">
+                   <div style="display:flex; align-items:center; gap:12px;">
+                       <div style="width:24px; height:24px; border:3px solid #e0e0e0; border-top:3px solid var(--pink); border-radius:50%; animation:sync-spin 0.8s linear infinite;"></div>
+                       <div style="font-weight:bold; color:#333; font-size:1.1em;">${title}</div>
+                   </div>
+                   <div style="font-weight:bold; color:var(--pink); font-size:1.1em; text-align:center;">目前系統較為繁忙，請耐心等候...</div>
+                   <div style="display:flex; align-items:center; justify-content:center; gap:15px; background:#f8fafc; padding:15px; border-radius:15px; width:100%; box-sizing:border-box; border:1px solid #e2e8f0;">
+                       <span style="font-size:30px; animation: queue-bounce 0.8s infinite alternate;">🚶</span>
+                       <div style="text-align:center; min-width:80px;">
+                           <div style="font-size:0.85em; color:#64748b; font-weight:bold;">前方還有</div>
+                           <div style="font-size:1.8em; font-weight:bold; color:var(--red); line-height:1.2;">${pos} <span style="font-size:0.5em; color:#64748b;">人</span></div>
+                           <div style="font-size:0.8em; color:#64748b; font-weight:bold; margin-top:5px;">預估時間 <span style="color:var(--orange);">${estMins}</span> 分鐘</div>
+                       </div>
+                       <span style="font-size:30px; animation: queue-bounce 0.8s infinite alternate 0.4s;">🚶‍♀️</span>
+                   </div>
+               </div>`;
 };
 
 const startQueueUI = () => { 
@@ -797,7 +795,6 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V89.0 (BNPL 2.0 正確性與一致性修正)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V90.1 (登入穩定性與長密碼修正)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
@@ -805,488 +802,487 @@ function togglePasswordVisibility() { document.getElementById('pw').type = docum
 let _loginInProgress = false;
 
 const LOGIN_STEPS = [
-{ id: 'ls_auth',    running: '驗證帳號密碼...',       done: '驗證完成' },
-{ id: 'ls_session', running: '建立安全工作階段...',   done: '建立完成' },
-{ id: 'ls_log',     running: '記錄登入資訊...',       done: '已記錄' },
-{ id: 'ls_perm',    running: '驗證會員權限...',       done: '驗證完成' },
-{ id: 'ls_legal',   running: '檢查法律文件...',       done: '已完成' },
-{ id: 'ls_notify',  running: '同步會員通知...',       done: '已同步' },
-{ id: 'ls_load',    running: '載入首頁...',           done: '已完成' }
+  { id: 'ls_auth',    running: '驗證帳號密碼...',       done: '驗證完成' },
+  { id: 'ls_session', running: '建立安全工作階段...',   done: '建立完成' },
+  { id: 'ls_log',     running: '記錄登入資訊...',       done: '已記錄' },
+  { id: 'ls_perm',    running: '驗證會員權限...',       done: '驗證完成' },
+  { id: 'ls_legal',   running: '檢查法律文件...',       done: '已完成' },
+  { id: 'ls_notify',  running: '同步會員通知...',       done: '已同步' },
+  { id: 'ls_load',    running: '載入首頁...',           done: '已完成' }
 ];
 
 const uiDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
 function setLoginStep(stepId, state, extraLabel) {
-const stepEl = document.getElementById(stepId);
-const icon = document.getElementById(stepId + '_icon');
-const label = document.getElementById(stepId + '_label');
-if (!icon || !label || !stepEl) return;
+  const stepEl = document.getElementById(stepId);
+  const icon = document.getElementById(stepId + '_icon');
+  const label = document.getElementById(stepId + '_label');
+  if (!icon || !label || !stepEl) return;
+  
+  const stateConfig = {
+    waiting: { icon: '⬜', animClass: '', className: 'lp-step waiting' },
+    running: { icon: '⏳', animClass: 'lp-spin', className: 'lp-step running' },
+    done:    { icon: '✅', animClass: 'lp-pop', className: 'lp-step done' },
+    failed:  { icon: '❌', animClass: 'lp-shake', className: 'lp-step failed' },
+    warn:    { icon: '⚠️', animClass: 'lp-shake', className: 'lp-step failed' }
+  };
 
-const stateConfig = {
-waiting: { icon: '⬜', animClass: '', className: 'lp-step waiting' },
-running: { icon: '⏳', animClass: 'lp-spin', className: 'lp-step running' },
-done:    { icon: '✅', animClass: 'lp-pop', className: 'lp-step done' },
-failed:  { icon: '❌', animClass: 'lp-shake', className: 'lp-step failed' },
-warn:    { icon: '⚠️', animClass: 'lp-shake', className: 'lp-step failed' }
-};
+  const cfg = stateConfig[state] || stateConfig.waiting;
+  
+  stepEl.className = cfg.className;
+  icon.style.opacity = '0';
+  icon.style.transform = 'scale(0.5)';
+  
+  setTimeout(() => {
+    icon.innerHTML = cfg.icon;
+    icon.className = `lp-icon ${cfg.animClass}`;
+    icon.style.opacity = '1';
+    icon.style.transform = 'scale(1)';
+  }, 150);
 
-const cfg = stateConfig[state] || stateConfig.waiting;
+  let stepDef = LOGIN_STEPS.find(s => s.id === stepId);
+  if (stepDef) {
+     if (state === 'running') label.textContent = extraLabel || stepDef.running;
+     if (state === 'done') label.textContent = extraLabel || stepDef.done;
+     if (state === 'failed' || state === 'warn') label.textContent = extraLabel || stepDef.running;
+     if (state === 'waiting') label.textContent = stepDef.running;
+  }
 
-stepEl.className = cfg.className;
-icon.style.opacity = '0';
-icon.style.transform = 'scale(0.5)';
+  if (state === 'running' || state === 'failed') {
+     stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 
-setTimeout(() => {
-icon.innerHTML = cfg.icon;
-icon.className = `lp-icon ${cfg.animClass}`;
-icon.style.opacity = '1';
-icon.style.transform = 'scale(1)';
-}, 150);
-
-let stepDef = LOGIN_STEPS.find(s => s.id === stepId);
-if (stepDef) {
-if (state === 'running') label.textContent = extraLabel || stepDef.running;
-if (state === 'done') label.textContent = extraLabel || stepDef.done;
-if (state === 'failed' || state === 'warn') label.textContent = extraLabel || stepDef.running;
-if (state === 'waiting') label.textContent = stepDef.running;
-}
-
-if (state === 'running' || state === 'failed') {
-stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-const doneSteps = document.querySelectorAll('.lp-step.done').length;
-const pct = Math.floor((doneSteps / LOGIN_STEPS.length) * 100);
-document.getElementById('lp-pct').innerText = pct + '%';
-document.getElementById('lp-bar').style.width = pct + '%';
+  const doneSteps = document.querySelectorAll('.lp-step.done').length;
+  const pct = Math.floor((doneSteps / LOGIN_STEPS.length) * 100);
+  document.getElementById('lp-pct').innerText = pct + '%';
+  document.getElementById('lp-bar').style.width = pct + '%';
 }
 
 function showLoginOverlay() {
-const stepsHtml = LOGIN_STEPS.map(s =>
-`<div id="${s.id}" class="lp-step waiting">
-     <span id="${s.id}_icon" class="lp-icon">⬜</span>
-     <span id="${s.id}_label" style="transition:color 0.3s ease;">${s.running}</span>
-   </div>`
-).join('');
+  const stepsHtml = LOGIN_STEPS.map(s =>
+    `<div id="${s.id}" class="lp-step waiting">
+      <span id="${s.id}_icon" class="lp-icon">⬜</span>
+      <span id="${s.id}_label" style="transition:color 0.3s ease;">${s.running}</span>
+    </div>`
+  ).join('');
 
-let overlay = document.getElementById('loginProgressOverlay');
-if (!overlay) {
-overlay = document.createElement('div');
-overlay.id = 'loginProgressOverlay';
-overlay.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,20,0.97);z-index:9999;flex-direction:column;justify-content:center;align-items:center;font-family:-apple-system,sans-serif;font-weight:900;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
-overlay.innerHTML = `
-     <div style="width:90%;max-width:420px;display:flex;flex-direction:column;max-height:90vh;">
-       <div style="text-align:center;margin-bottom:20px;flex-shrink:0;">
-         <div style="font-size:2.5em;margin-bottom:8px;animation:lp-pop 0.5s ease;">🔐</div>
-         <div id="lp-main-title" style="color:var(--pink);font-size:1.25em;margin-bottom:6px;transition:color 0.4s ease;">安全登入中</div>
-         <div id="lp-sub-title" style="color:rgba(255,255,255,0.8);font-size:0.9em;margin-bottom:4px;transition:color 0.4s ease;">正在建立安全連線...</div>
-         <div style="color:rgba(255,255,255,0.45);font-size:0.75em;font-weight:normal;">請稍候，系統正在驗證您的登入資訊。</div>
-       </div>
-       
-       <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.85em;color:var(--pink);flex-shrink:0;">
-         <span>登入進度</span>
-         <span id="lp-pct" style="transition:all 0.3s ease;">0%</span>
-       </div>
-       <div class="lp-progress-bg">
-         <div id="lp-bar" class="lp-progress-fill"></div>
-       </div>
+  let overlay = document.getElementById('loginProgressOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'loginProgressOverlay';
+    overlay.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,20,0.97);z-index:9999;flex-direction:column;justify-content:center;align-items:center;font-family:-apple-system,sans-serif;font-weight:900;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
+    overlay.innerHTML = `
+      <div style="width:90%;max-width:420px;display:flex;flex-direction:column;max-height:90vh;">
+        <div style="text-align:center;margin-bottom:20px;flex-shrink:0;">
+          <div style="font-size:2.5em;margin-bottom:8px;animation:lp-pop 0.5s ease;">🔐</div>
+          <div id="lp-main-title" style="color:var(--pink);font-size:1.25em;margin-bottom:6px;transition:color 0.4s ease;">安全登入中</div>
+          <div id="lp-sub-title" style="color:rgba(255,255,255,0.8);font-size:0.9em;margin-bottom:4px;transition:color 0.4s ease;">正在建立安全連線...</div>
+          <div style="color:rgba(255,255,255,0.45);font-size:0.75em;font-weight:normal;">請稍候，系統正在驗證您的登入資訊。</div>
+        </div>
+        
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.85em;color:var(--pink);flex-shrink:0;">
+          <span>登入進度</span>
+          <span id="lp-pct" style="transition:all 0.3s ease;">0%</span>
+        </div>
+        <div class="lp-progress-bg">
+          <div id="lp-bar" class="lp-progress-fill"></div>
+        </div>
 
-       <div id="loginStepsList" style="background:rgba(255,255,255,0.05);border-radius:16px;padding:12px;color:#fff;overflow-y:auto;flex:1;scroll-behavior:smooth;">
-           ${stepsHtml}
-       </div>
-       
-       <div id="loginErrorMsg" style="display:none;margin-top:20px;background:#fee2e2;border-radius:12px;padding:14px 18px;color:#b91c1c;font-size:0.9em;line-height:1.5;box-shadow:0 4px 12px rgba(220,38,38,0.2);flex-shrink:0;"></div>
-       <div id="loginRetryBtn" style="display:none;margin-top:14px;flex-shrink:0;">
-         <button onclick="hideLoginOverlay()" style="width:100%;padding:14px;border-radius:12px;background:var(--pink);color:#fff;border:none;font-size:1em;font-weight:900;cursor:pointer;transition:transform 0.2s ease;">返回重試</button>
-       </div>
-     </div>`;
-document.body.appendChild(overlay);
-} else {
-document.getElementById('lp-pct').innerText = '0%';
-document.getElementById('lp-bar').style.width = '0%';
-document.getElementById('lp-main-title').innerText = '安全登入中';
-document.getElementById('lp-sub-title').innerText = '正在建立安全連線...';
-document.getElementById('lp-main-title').style.color = 'var(--pink)';
-
-LOGIN_STEPS.forEach(s => setLoginStep(s.id, 'waiting'));
-
-const errEl = document.getElementById('loginErrorMsg');
-const retryEl = document.getElementById('loginRetryBtn');
-if (errEl) errEl.style.display = 'none';
-if (retryEl) retryEl.style.display = 'none';
-}
-overlay.style.display = 'flex';
+        <div id="loginStepsList" style="background:rgba(255,255,255,0.05);border-radius:16px;padding:12px;color:#fff;overflow-y:auto;flex:1;scroll-behavior:smooth;">
+            ${stepsHtml}
+        </div>
+        
+        <div id="loginErrorMsg" style="display:none;margin-top:20px;background:#fee2e2;border-radius:12px;padding:14px 18px;color:#b91c1c;font-size:0.9em;line-height:1.5;box-shadow:0 4px 12px rgba(220,38,38,0.2);flex-shrink:0;"></div>
+        <div id="loginRetryBtn" style="display:none;margin-top:14px;flex-shrink:0;">
+          <button onclick="hideLoginOverlay()" style="width:100%;padding:14px;border-radius:12px;background:var(--pink);color:#fff;border:none;font-size:1em;font-weight:900;cursor:pointer;transition:transform 0.2s ease;">返回重試</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+  } else {
+     document.getElementById('lp-pct').innerText = '0%';
+     document.getElementById('lp-bar').style.width = '0%';
+     document.getElementById('lp-main-title').innerText = '安全登入中';
+     document.getElementById('lp-sub-title').innerText = '正在建立安全連線...';
+     document.getElementById('lp-main-title').style.color = 'var(--pink)';
+     
+     LOGIN_STEPS.forEach(s => setLoginStep(s.id, 'waiting'));
+     
+     const errEl = document.getElementById('loginErrorMsg');
+     const retryEl = document.getElementById('loginRetryBtn');
+     if (errEl) errEl.style.display = 'none';
+     if (retryEl) retryEl.style.display = 'none';
+  }
+  overlay.style.display = 'flex';
 }
 
 function hideLoginOverlay() {
-const overlay = document.getElementById('loginProgressOverlay');
-if (overlay) overlay.style.display = 'none';
-_loginInProgress = false; 
+  const overlay = document.getElementById('loginProgressOverlay');
+  if (overlay) overlay.style.display = 'none';
+  _loginInProgress = false; 
 }
 
 function showLoginError(msg) {
-const errEl = document.getElementById('loginErrorMsg');
-const retryEl = document.getElementById('loginRetryBtn');
-const titleEl = document.getElementById('lp-main-title');
-
-if(titleEl) {
-titleEl.innerText = '❌ 登入失敗';
-titleEl.style.color = '#ff5252';
-titleEl.style.animation = 'lp-shake 0.4s ease';
-}
-
-if (errEl) { errEl.style.display = 'block'; errEl.innerHTML = '<b>Reason:</b><br>' + msg; }
-if (retryEl) retryEl.style.display = 'block';
+  const errEl = document.getElementById('loginErrorMsg');
+  const retryEl = document.getElementById('loginRetryBtn');
+  const titleEl = document.getElementById('lp-main-title');
+  
+  if(titleEl) {
+      titleEl.innerText = '❌ 登入失敗';
+      titleEl.style.color = '#ff5252';
+      titleEl.style.animation = 'lp-shake 0.4s ease';
+  }
+  
+  if (errEl) { errEl.style.display = 'block'; errEl.innerHTML = '<b>Reason:</b><br>' + msg; }
+  if (retryEl) retryEl.style.display = 'block';
 }
 
 async function doLogin() {
-if (_loginInProgress) return;
-_loginInProgress = true;
+  if (_loginInProgress) return;
+  _loginInProgress = true;
 
-const uid = document.getElementById('acc').value.trim();
-  const upw = document.getElementById('pw').value.trim();
+  const uid = document.getElementById('acc').value.trim();
   const upw = document.getElementById('pw').value;
-if (!uid || !upw) {
-_loginInProgress = false;
-return Swal.fire({ title: '提示', text: '請輸入完整資料', icon: 'warning', confirmButtonColor: 'var(--pink)' });
-}
+  if (!uid || !upw) {
+    _loginInProgress = false;
+    return Swal.fire({ title: '提示', text: '請輸入完整資料', icon: 'warning', confirmButtonColor: 'var(--pink)' });
+  }
 
-showLoginOverlay();
+  showLoginOverlay();
 
-setLoginStep('ls_auth', 'running');
-await uiDelay(500);
+  setLoginStep('ls_auth', 'running');
+  await uiDelay(500);
+  
+  let res;
+  try {
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: uid, pw: upw }) });
+    res = await raw.json();
+  } catch(e) {
+    setLoginStep('ls_auth', 'failed');
+    showLoginError('系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+    return;
+  }
 
-let res;
-try {
-const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: uid, pw: upw }) });
-res = await raw.json();
-} catch(e) {
-setLoginStep('ls_auth', 'failed');
-showLoginError('系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
-return;
-}
+  if (!res.success) {
+    setLoginStep('ls_auth', 'failed', '驗證帳號密碼失敗');
+    showLoginError(res.message || '帳號或密碼錯誤');
+    return; 
+  }
+  setLoginStep('ls_auth', 'done');
+  await uiDelay(300);
 
-if (!res.success) {
-setLoginStep('ls_auth', 'failed', '驗證帳號密碼失敗');
-showLoginError(res.message || '帳號或密碼錯誤');
-return; 
-}
-setLoginStep('ls_auth', 'done');
-await uiDelay(300);
+  setLoginStep('ls_session', 'running');
+  await uiDelay(400);
+  savedPw = upw;
+  store = res;
+  currentSessionId = res.sessionId || '';
+  setLoginStep('ls_session', 'done');
+  await uiDelay(300);
 
-setLoginStep('ls_session', 'running');
-await uiDelay(400);
-savedPw = upw;
-store = res;
-currentSessionId = res.sessionId || '';
-setLoginStep('ls_session', 'done');
-await uiDelay(300);
+  setLoginStep('ls_log', 'running');
+  await uiDelay(300);
+  setLoginStep('ls_log', 'done');
+  await uiDelay(300);
 
-setLoginStep('ls_log', 'running');
-await uiDelay(300);
-setLoginStep('ls_log', 'done');
-await uiDelay(300);
+  setLoginStep('ls_perm', 'running');
+  let checkRes;
+  try {
+    const raw = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.MEMBER })
+    });
+    checkRes = await raw.json();
+  } catch(e) {
+    setLoginStep('ls_perm', 'failed');
+    showLoginError('系統暫時無法確認您的條款同意狀態，請檢查網路連線後再試。<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+    return;
+  }
 
-setLoginStep('ls_perm', 'running');
-let checkRes;
-try {
-const raw = await fetch(SCRIPT_URL, {
-method: 'POST',
-body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.MEMBER })
-});
-checkRes = await raw.json();
-} catch(e) {
-setLoginStep('ls_perm', 'failed');
-showLoginError('系統暫時無法確認您的條款同意狀態，請檢查網路連線後再試。<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
-return;
-}
+  if (!checkRes || !checkRes.success) {
+    setLoginStep('ls_perm', 'failed');
+    showLoginError('同意書驗證失敗，請稍後再試。<br><small style="font-weight:normal;opacity:0.7;">' + (checkRes ? checkRes.message : '無回應') + '</small>');
+    return;
+  }
 
-if (!checkRes || !checkRes.success) {
-setLoginStep('ls_perm', 'failed');
-showLoginError('同意書驗證失敗，請稍後再試。<br><small style="font-weight:normal;opacity:0.7;">' + (checkRes ? checkRes.message : '無回應') + '</small>');
-return;
-}
+  setLoginStep('ls_perm', 'done');
+  await uiDelay(300);
 
-setLoginStep('ls_perm', 'done');
-await uiDelay(300);
+  setLoginStep('ls_legal', 'running');
+  await uiDelay(300);
 
-setLoginStep('ls_legal', 'running');
-await uiDelay(300);
+  if (!checkRes.allConsented) {
+    setLoginStep('ls_legal', 'warn', '發現新的法律文件需要重新同意');
 
-if (!checkRes.allConsented) {
-setLoginStep('ls_legal', 'warn', '發現新的法律文件需要重新同意');
+    await fetchLegalDocsIfNeeded();
+    const missingDocs = checkRes.missing || [];
+    const links = missingDocs.map(function(doc) {
+      return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--pink);font-weight:bold;text-decoration:underline;">《' + doc.title + '》</a>';
+    }).join('、');
+    const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
 
-await fetchLegalDocsIfNeeded();
-const missingDocs = checkRes.missing || [];
-const links = missingDocs.map(function(doc) {
-return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--pink);font-weight:bold;text-decoration:underline;">《' + doc.title + '》</a>';
-}).join('、');
-const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
+    const { isConfirmed } = await Swal.fire({
+      title: '📋 服務條款同意書',
+      html: '<div style="text-align:left;font-size:0.95em;line-height:1.8;">'
+          + '<p style="color:#888;font-size:0.88em;margin-top:0;">開始使用前，請閱讀並同意下列條款（點擊可閱讀全文）：</p>'
+          + '<div style="background:var(--card,#f5f5f5);border-radius:10px;padding:12px;margin:10px 0;font-size:0.9em;">' + links + '</div>'
+          + '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;font-weight:bold;">'
+          + '<input type="checkbox" id="consent_chk" style="width:22px;height:22px;flex-shrink:0;margin-top:2px;accent-color:var(--pink);">'
+          + '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
+          + '</label></div>',
+      showCancelButton: true, confirmButtonText: '✅ 同意並繼續使用', cancelButtonText: '不同意（登出）',
+      confirmButtonColor: '#2ecc71', cancelButtonColor: '#94a3b8',
+      allowOutsideClick: false, allowEscapeKey: false,
+      preConfirm: function() {
+        if (!document.getElementById('consent_chk').checked) {
+          Swal.showValidationMessage('請勾選同意後才能繼續使用本系統'); return false;
+        }
+        return true;
+      }
+    });
 
-const { isConfirmed } = await Swal.fire({
-title: '📋 服務條款同意書',
-html: '<div style="text-align:left;font-size:0.95em;line-height:1.8;">'
-+ '<p style="color:#888;font-size:0.88em;margin-top:0;">開始使用前，請閱讀並同意下列條款（點擊可閱讀全文）：</p>'
-+ '<div style="background:var(--card,#f5f5f5);border-radius:10px;padding:12px;margin:10px 0;font-size:0.9em;">' + links + '</div>'
-+ '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;font-weight:bold;">'
-+ '<input type="checkbox" id="consent_chk" style="width:22px;height:22px;flex-shrink:0;margin-top:2px;accent-color:var(--pink);">'
-+ '<span>我已閱讀並同意 ' + checkboxLabel + '</span>'
-+ '</label></div>',
-showCancelButton: true, confirmButtonText: '✅ 同意並繼續使用', cancelButtonText: '不同意（登出）',
-confirmButtonColor: '#2ecc71', cancelButtonColor: '#94a3b8',
-allowOutsideClick: false, allowEscapeKey: false,
-preConfirm: function() {
-if (!document.getElementById('consent_chk').checked) {
-Swal.showValidationMessage('請勾選同意後才能繼續使用本系統'); return false;
-}
-return true;
-}
-});
+    if (!isConfirmed) {
+      setLoginStep('ls_legal', 'failed', '使用者拒絕同意服務條款');
+      await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
+      location.reload(); return; 
+    }
 
-if (!isConfirmed) {
-setLoginStep('ls_legal', 'failed', '使用者拒絕同意服務條款');
-await Swal.fire({ title: '已取消', text: '您尚未同意服務條款，系統將返回登入頁。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 2500, showConfirmButton: false });
-location.reload(); return; 
-}
+    let recordRes;
+    try {
+      const raw = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.MEMBER, consentMethod: '線上勾選同意', sessionId: currentSessionId })
+      });
+      recordRes = await raw.json();
+    } catch(e) {
+      setLoginStep('ls_legal', 'failed', '同意書記錄寫入失敗');
+      showLoginError('您的同意記錄暫時無法寫入系統，請重新登入並同意條款。<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+      return;
+    }
 
-let recordRes;
-try {
-const raw = await fetch(SCRIPT_URL, {
-method: 'POST',
-body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.MEMBER, consentMethod: '線上勾選同意', sessionId: currentSessionId })
-});
-recordRes = await raw.json();
-} catch(e) {
-setLoginStep('ls_legal', 'failed', '同意書記錄寫入失敗');
-showLoginError('您的同意記錄暫時無法寫入系統，請重新登入並同意條款。<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
-return;
-}
+    if (!recordRes || !recordRes.success) {
+      setLoginStep('ls_legal', 'failed', '同意書記錄寫入失敗');
+      showLoginError('系統無法儲存您的同意記錄，請稍後再試。<br><small style="font-weight:normal;opacity:0.7;">' + (recordRes ? recordRes.message : '無回應') + '</small>');
+      return;
+    }
+    
+    setLoginStep('ls_legal', 'running');
+    await uiDelay(300);
+  }
 
-if (!recordRes || !recordRes.success) {
-setLoginStep('ls_legal', 'failed', '同意書記錄寫入失敗');
-showLoginError('系統無法儲存您的同意記錄，請稍後再試。<br><small style="font-weight:normal;opacity:0.7;">' + (recordRes ? recordRes.message : '無回應') + '</small>');
-return;
-}
+  setLoginStep('ls_legal', 'done');
+  localStorage.setItem('legalConsent_v1_' + store.userData.id, new Date().toISOString());
+  await uiDelay(300);
 
-setLoginStep('ls_legal', 'running');
-await uiDelay(300);
-}
+  setLoginStep('ls_notify', 'running');
+  await uiDelay(300); 
+  setLoginStep('ls_notify', 'done');
+  await uiDelay(300);
 
-setLoginStep('ls_legal', 'done');
-localStorage.setItem('legalConsent_v1_' + store.userData.id, new Date().toISOString());
-await uiDelay(300);
-
-setLoginStep('ls_notify', 'running');
-await uiDelay(300); 
-setLoginStep('ls_notify', 'done');
-await uiDelay(300);
-
-setLoginStep('ls_load', 'running');
-await uiDelay(300);
-
+  setLoginStep('ls_load', 'running');
+  await uiDelay(300);
+  
 updateSuspensionUI();
 
 render();
-setLoginStep('ls_load', 'done');
+  setLoginStep('ls_load', 'done');
+  
+  document.getElementById('lp-pct').innerText = '100%';
+  document.getElementById('lp-bar').style.width = '100%';
+  
+  const titleEl = document.getElementById('lp-main-title');
+  const subTitleEl = document.getElementById('lp-sub-title');
+  if(titleEl) {
+      titleEl.innerText = '🎉 登入成功';
+      titleEl.style.color = '#10b981';
+      titleEl.style.animation = 'lp-pop 0.5s ease';
+  }
+  if(subTitleEl) subTitleEl.innerText = '歡迎回來！';
 
-document.getElementById('lp-pct').innerText = '100%';
-document.getElementById('lp-bar').style.width = '100%';
+  await uiDelay(800);
 
-const titleEl = document.getElementById('lp-main-title');
-const subTitleEl = document.getElementById('lp-sub-title');
-if(titleEl) {
-titleEl.innerText = '🎉 登入成功';
-titleEl.style.color = '#10b981';
-titleEl.style.animation = 'lp-pop 0.5s ease';
-}
-if(subTitleEl) subTitleEl.innerText = '歡迎回來！';
+  _loginInProgress = false; 
+  hideLoginOverlay();
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('appView').style.display = 'block';
 
-await uiDelay(800);
-
-_loginInProgress = false; 
-hideLoginOverlay();
-document.getElementById('loginView').style.display = 'none';
-document.getElementById('appView').style.display = 'block';
-
-startSessionHeartbeat();
-checkWinningInvoices();
+  startSessionHeartbeat();
+  checkWinningInvoices();
 }
 function updateSuspensionUI() {
-// ============================================================
+    // ============================================================
 // 停權會員操作權限檢查
 // ============================================================
 
 function blockIfSuspended(actionName = '此功能') {
-const userData =
-store && store.userData
-? store.userData
-: null;
+    const userData =
+        store && store.userData
+            ? store.userData
+            : null;
 
-if (!userData || !userData.isSuspended) {
-return false;
+    if (!userData || !userData.isSuspended) {
+        return false;
+    }
+
+    Swal.fire({
+        icon: 'warning',
+        title: '帳號目前已停權',
+        html:
+            `停權期間暫時無法使用「<b>${actionName}</b>」。<br><br>` +
+            `目前仍可查看資料、繳納既有帳單、管理帳號安全及提出停權申訴。`,
+        confirmButtonText: '我知道了',
+        confirmButtonColor: 'var(--red)'
+    });
+
+    return true;
 }
+    const banner =
+        document.getElementById('suspensionBanner');
 
-Swal.fire({
-icon: 'warning',
-title: '帳號目前已停權',
-html:
-`停權期間暫時無法使用「<b>${actionName}</b>」。<br><br>` +
-`目前仍可查看資料、繳納既有帳單、管理帳號安全及提出停權申訴。`,
-confirmButtonText: '我知道了',
-confirmButtonColor: 'var(--red)'
-});
+    const reasonText =
+        document.getElementById('bannerSuspReason');
+    const periodText = document.getElementById('bannerSuspPeriod');
 
-return true;
+    // HTML 尚未建立時，不要讓整個登入流程報錯
+    if (!banner) {
+        console.warn(
+            '[Suspension] 找不到 suspensionBanner'
+        );
+        return;
+    }
+
+    const userData =
+        store && store.userData
+            ? store.userData
+            : null;
+
+    const suspended =
+        !!(
+            userData &&
+            userData.isSuspended
+        );
+
+    if (suspended) {
+        banner.style.display = 'block';
+
+        if (reasonText) {
+            reasonText.innerText =
+                userData.suspensionReason ||
+                (
+                    userData.suspension &&
+                    userData.suspension.reason
+                ) ||
+                '違反系統規範';
+        }
+
+        if (periodText) {
+    const startTime =
+        userData.suspensionStart ||
+        (
+            userData.suspension &&
+            userData.suspension.startTime
+        ) ||
+        '';
+
+    const endTime =
+        userData.suspensionEnd ||
+        (
+            userData.suspension &&
+            userData.suspension.endTime
+        ) ||
+        '';
+
+    if (startTime || endTime) {
+        periodText.innerText =
+            '停權期間：' +
+            (startTime || '立即生效') +
+            ' ～ ' +
+            (endTime || '另行通知');
+    } else {
+        periodText.innerText = '';
+    }
 }
-const banner =
-document.getElementById('suspensionBanner');
+        document.body.classList.add(
+            'account-suspended'
+        );
 
-const reasonText =
-document.getElementById('bannerSuspReason');
-const periodText = document.getElementById('bannerSuspPeriod');
+    } else {
+        banner.style.display = 'none';
 
-// HTML 尚未建立時，不要讓整個登入流程報錯
-if (!banner) {
-console.warn(
-'[Suspension] 找不到 suspensionBanner'
-);
-return;
-}
-
-const userData =
-store && store.userData
-? store.userData
-: null;
-
-const suspended =
-!!(
-userData &&
-userData.isSuspended
-);
-
-if (suspended) {
-banner.style.display = 'block';
-
-if (reasonText) {
-reasonText.innerText =
-userData.suspensionReason ||
-(
-userData.suspension &&
-userData.suspension.reason
-) ||
-'違反系統規範';
-}
-
-if (periodText) {
-const startTime =
-userData.suspensionStart ||
-(
-userData.suspension &&
-userData.suspension.startTime
-) ||
-'';
-
-const endTime =
-userData.suspensionEnd ||
-(
-userData.suspension &&
-userData.suspension.endTime
-) ||
-'';
-
-if (startTime || endTime) {
-periodText.innerText =
-'停權期間：' +
-(startTime || '立即生效') +
-' ～ ' +
-(endTime || '另行通知');
-} else {
-periodText.innerText = '';
-}
-}
-document.body.classList.add(
-'account-suspended'
-);
-
-} else {
-banner.style.display = 'none';
-
-document.body.classList.remove(
-'account-suspended'
-);
-}
+        document.body.classList.remove(
+            'account-suspended'
+        );
+    }
 }
 async function silentSyncData() {
-if (
-!store ||
-!store.userData ||
-!store.userData.id ||
-!currentSessionId
-) return;
-const indicator = document.getElementById('syncIndicator'); 
-if (indicator) indicator.style.display = 'flex';
-
-try {
-const res = await fetch(SCRIPT_URL, {
-method: 'POST',
-body: JSON.stringify({
-action: 'syncMemberData',
-uid: store.userData.id,
-sessionId: currentSessionId
-})
+    if (
+        !store ||
+        !store.userData ||
+        !store.userData.id ||
+        !currentSessionId
+    ) return;
+    const indicator = document.getElementById('syncIndicator'); 
+    if (indicator) indicator.style.display = 'flex';
+    
+    try {
+        const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+        action: 'syncMemberData',
+        uid: store.userData.id,
+        sessionId: currentSessionId
+    })
 }).then(r => r.json());
-
-if (res.success) { 
-res.sessionId = currentSessionId;
-store = res; 
-
-updateSuspensionUI();
-render(); 
-}
-} catch (e) { 
-console.log("Sync Error:", e); 
-} finally { 
-if (indicator) indicator.style.display = 'none'; 
-}
+        
+        if (res.success) { 
+            res.sessionId = currentSessionId;
+            store = res; 
+            
+           updateSuspensionUI();
+            render(); 
+        }
+    } catch (e) { 
+        console.log("Sync Error:", e); 
+    } finally { 
+        if (indicator) indicator.style.display = 'none'; 
+    }
 }
 
 async function submitSuspensionAppeal() {
-const { value: text } = await Swal.fire({
-title: '提出停權申訴',
-input: 'textarea',
-inputPlaceholder: '請詳細說明您的狀況與申訴理由...',
-showCancelButton: true,
-confirmButtonColor: 'var(--blue)',
-confirmButtonText: '送出申訴',
-cancelButtonText: '取消',
-inputValidator: (v) => (!v || !v.trim()) ? '請填寫申訴理由' : null
-});
-if (text) {
-let fetchRes = await fetchWithQueue(
-SCRIPT_URL,
-{
-action: 'submitTicket',
-uid: store.userData.id,
-pw: savedPw,
-category: '帳號問題',
-subCategory: '停權申訴',
-subject: '會員停權申訴',
-message: "【停權申訴】\n" + text.trim()
-},
-"申訴送出中..."
+    const { value: text } = await Swal.fire({
+        title: '提出停權申訴',
+        input: 'textarea',
+        inputPlaceholder: '請詳細說明您的狀況與申訴理由...',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--blue)',
+        confirmButtonText: '送出申訴',
+        cancelButtonText: '取消',
+        inputValidator: (v) => (!v || !v.trim()) ? '請填寫申訴理由' : null
+    });
+    if (text) {
+        let fetchRes = await fetchWithQueue(
+    SCRIPT_URL,
+    {
+        action: 'submitTicket',
+        uid: store.userData.id,
+        pw: savedPw,
+        category: '帳號問題',
+        subCategory: '停權申訴',
+        subject: '會員停權申訴',
+        message: "【停權申訴】\n" + text.trim()
+    },
+    "申訴送出中..."
 );
-if (fetchRes && fetchRes.success) Swal.fire('申訴已送出', '管理員將會進行審核，請靜候聯絡。', 'success');
-else Swal.fire('錯誤', '申訴送出失敗，請稍後再試。', 'error');
-}
+        if (fetchRes && fetchRes.success) Swal.fire('申訴已送出', '管理員將會進行審核，請靜候聯絡。', 'success');
+        else Swal.fire('錯誤', '申訴送出失敗，請稍後再試。', 'error');
+    }
 }
 
 let _sessionHeartbeatTimer = null;
 function startSessionHeartbeat() {
-if (_sessionHeartbeatTimer) clearInterval(_sessionHeartbeatTimer);
-_sessionHeartbeatTimer = setInterval(function() {
-if (!currentSessionId || !store || !store.userData) return;
-fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSessionActivity', uid: store.userData.id, sessionId: currentSessionId }) }).catch(function(){});
-}, 5 * 60 * 1000);
+  if (_sessionHeartbeatTimer) clearInterval(_sessionHeartbeatTimer);
+  _sessionHeartbeatTimer = setInterval(function() {
+    if (!currentSessionId || !store || !store.userData) return;
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSessionActivity', uid: store.userData.id, sessionId: currentSessionId }) }).catch(function(){});
+  }, 5 * 60 * 1000);
 }
 
 function customizeShortcuts() {
@@ -1307,9 +1303,6 @@ if(res.isConfirmed) { localStorage.setItem('myShortcuts', JSON.stringify(res.val
 }
 
 function renderShortcuts() {
-let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6,7]');
-document.querySelectorAll('.shortcut-item').forEach(el => el.classList.remove('visible'));
-current.forEach(id => { let item = document.getElementById('sc_' + id); if(item) item.classList.add('visible'); });
   let current = [1,2,3,4,5,6,7];
   try {
     const raw = localStorage.getItem('myShortcuts');
@@ -1360,7 +1353,6 @@ if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', blo
 }
 
 function renderNotifications() {
-let allNotifications = store.notifications || [];
 let allNotifications = Array.isArray(store && store.notifications) ? store.notifications : [];
 renderNotifyTabBar(allNotifications);
 
@@ -1373,11 +1365,11 @@ let previewData = previewSorted.slice(0, 3);
 ntListPreview.innerHTML = previewData.map(n => {
 let displayTime = formatDateString(n.time);
 return `
-                  <div class="card" style="padding:12px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:10px;">
-                      <span style="position:absolute; top:8px; right:8px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${n.subTag || '通知'}</span>
-                      <div style="font-size:11px; opacity:0.5; margin-bottom:4px;">${displayTime}</div>
-                      <div style="font-size:13px; font-weight:normal; line-height:1.4; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${n.content || ''}</div>
-                  </div>`;
+                   <div class="card" style="padding:12px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:10px;">
+                       <span style="position:absolute; top:8px; right:8px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${n.subTag || '通知'}</span>
+                       <div style="font-size:11px; opacity:0.5; margin-bottom:4px;">${displayTime}</div>
+                       <div style="font-size:13px; font-weight:normal; line-height:1.4; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${n.content || ''}</div>
+                   </div>`;
 }).join('') || '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin: 10px 0;">目前無最新通知</p>';
 }
 
@@ -1389,16 +1381,15 @@ let centerSorted = [...filteredByTab].sort((a, b) => { const da = new Date(Strin
 ntList.innerHTML = centerSorted.map(n => {
 let displayTime = formatDateString(n.time);
 return `
-              <div class="card" style="padding:15px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:12px;">
-                  <span style="position:absolute; top:12px; right:12px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:3px 8px; border-radius:6px; font-weight:bold;">${n.subTag || '通知'}</span>
-                  <div style="font-size:12px; opacity:0.6; margin-bottom:6px; font-weight:bold;">${displayTime}</div>
-                  <div style="font-size:15px; font-weight:normal; line-height:1.5; color:var(--text);">${n.content || ''}</div>
-              </div>`;
+               <div class="card" style="padding:15px; border-left:4px solid ${n.color || '#ccc'}; margin-bottom:12px;">
+                   <span style="position:absolute; top:12px; right:12px; background:${n.color || '#ccc'}; color:#fff; font-size:11px; padding:3px 8px; border-radius:6px; font-weight:bold;">${n.subTag || '通知'}</span>
+                   <div style="font-size:12px; opacity:0.6; margin-bottom:6px; font-weight:bold;">${displayTime}</div>
+                   <div style="font-size:15px; font-weight:normal; line-height:1.5; color:var(--text);">${n.content || ''}</div>
+               </div>`;
 }).join('') || '<p style="text-align:center; opacity:0.3; margin-top:40px;">目前無任何通知</p>';
 }
 
 function checkAutoCompleteOrders() {
-if (!store || !store.orders || store.userData.isSuspended) return; 
 if (!store || !Array.isArray(store.orders) || !store.userData || store.userData.isSuspended) return; 
 const nowTime = Date.now(); 
 let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
@@ -1427,27 +1418,14 @@ o.status = "訂單已完成";
 }
 
 function render() {
-if (!store) return;
-const u = store.userData || {}; 
-document.getElementById('uName').innerText = u.name || '會員'; 
-document.getElementById('uBal').innerText = (u.bal || 0).toLocaleString();
   if (!store) return;
 
-let totalBnpl = (u.bnplLimit !== undefined && u.bnplLimit !== "") ? Number(u.bnplLimit) : 500;
-let outstanding = 0;
   // 登入資料是後端回傳的 API payload；先做型別正規化，避免單一會員資料異常讓整個登入流程卡在 85%。
   store.userData = (store.userData && typeof store.userData === 'object') ? store.userData : {};
   ['history','orders','loans','installments','coupons','invoices','notifications','tickets','chatMessages'].forEach(function(key) {
     if (!Array.isArray(store[key])) store[key] = [];
   });
 
-(store.loans || []).forEach(l => { 
-  // 🚨 確保 BNPL 額度不會被一般非 BNPL Loan 壓縮
-  if(l.status !== "PAID" && (l.loanType === 'INSTALLMENT' || String(l.item).includes('先享後付'))) {
-      outstanding += (l.totalDue || 0); 
-  }
-});
-let availBnpl = totalBnpl - outstanding;
   const u = store.userData;
   document.getElementById('uName').innerText = u.name || '會員';
   document.getElementById('uBal').innerText = (Number(u.bal) || 0).toLocaleString();
@@ -1461,10 +1439,6 @@ let availBnpl = totalBnpl - outstanding;
     }
   });
 
-const elUBnpl = document.getElementById('uBnpl'); if (elUBnpl) elUBnpl.innerText = availBnpl.toLocaleString();
-const elLoanAvail = document.getElementById('lbl_loan_avail'); if (elLoanAvail) elLoanAvail.innerText = availBnpl.toLocaleString();
-const elLoanTotal = document.getElementById('lbl_loan_total'); if (elLoanTotal) elLoanTotal.innerText = totalBnpl.toLocaleString();
-const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut) elLoanOut.innerText = `未結清: $${outstanding.toLocaleString()}`;
   let availBnpl = Math.max(0, totalBnpl - outstanding);
   const elUBnpl = document.getElementById('uBnpl'); if (elUBnpl) elUBnpl.innerText = availBnpl.toLocaleString();
   const elLoanAvail = document.getElementById('lbl_loan_avail'); if (elLoanAvail) elLoanAvail.innerText = availBnpl.toLocaleString();
@@ -1482,14 +1456,9 @@ const elLoanOut = document.getElementById('lbl_loan_outstanding'); if (elLoanOut
     }
   };
 
-renderShortcuts();
-renderNotifications(); 
   safeRender('shortcuts', renderShortcuts);
   safeRender('notifications', renderNotifications);
 
-const sortH = document.getElementById('sortH').value; let sortedHistory = [...(store.history || [])];
-sortedHistory.sort((a, b) => { const da = new Date(String(a.date||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.date||'').replace(/-/g, '/')).getTime() || 0; return sortH === 'asc' ? da - db : db - da; });
-document.getElementById('hList').innerHTML = sortedHistory.map(h => `<div class="card" style="padding:15px;"><div style="display:flex; justify-content:space-between;"><b>${h.item}</b><span style="color:${h.amt>=0?'var(--green)':'var(--red)'}">${h.amt>=0?'+':''}${h.amt}</span></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><small style="opacity:0.5;">${h.date}</small><small style="opacity:0.6; font-weight:bold;">餘額: ${h.bal}</small></div>${h.note ? `<div class="note-box" style="font-size:0.75em; padding-top:3px; margin-top:5px;">備註：${escapeHTML(h.note)}</div>` : ''}</div>`).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
   const sortHEl = document.getElementById('sortH');
   const sortH = sortHEl ? sortHEl.value : 'desc';
   let sortedHistory = [...store.history];
@@ -1501,7 +1470,6 @@ document.getElementById('hList').innerHTML = sortedHistory.map(h => `<div class=
   const hList = document.getElementById('hList');
   if (hList) hList.innerHTML = sortedHistory.map(h => `<div class="card" style="padding:15px;"><div style="display:flex; justify-content:space-between;"><b>${escapeHTML(h.item || h.type || '')}</b><span style="color:${Number(h.amt) >= 0 ? 'var(--green)' : 'var(--red)'}">${Number(h.amt) >= 0 ? '+' : ''}${Number(h.amt) || 0}</span></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><small style="opacity:0.5;">${escapeHTML(h.date || h.time || '')}</small><small style="opacity:0.6; font-weight:bold;">餘額: ${Number(h.bal) || 0}</small></div>${h.note ? `<div class="note-box" style="font-size:0.75em; padding-top:3px; margin-top:5px;">備註：${escapeHTML(h.note)}</div>` : ''}</div>`).join('') || '<p style="text-align:center; opacity:0.3;">無紀錄</p>';
 
-renderLoans(); renderCoupons(); renderInvoices(); renderOrders(); 
   safeRender('loans', renderLoans);
   safeRender('coupons', renderCoupons);
   safeRender('invoices', renderInvoices);
@@ -1578,25 +1546,23 @@ let label = (ORDER_TABS.find(t => t.key === cat) || {}).label || o.status || '�
 let rawItem = String(o.desc || o.item || '無商品明細');
 let firstLine = escapeHTML(rawItem.split(/[;\n]/).map(s => s.trim()).filter(s => s)[0] || '無商品明細');
 return `
-              <div class="card" style="padding:12px; cursor:pointer;" onclick="openTab(2)">
-                  <div style="display:flex; justify-content:space-between; align-items:center;">
-                      <span style="font-size:0.8em; color:var(--pink);">單號: ${o.id}</span>
-                      <span style="background:${color}; color:#fff; font-size:0.7em; padding:2px 8px; border-radius:6px; font-weight:bold;">${label}</span>
-                  </div>
-                  <div style="font-size:0.85em; margin-top:6px; opacity:0.85;">${firstLine}</div>
-              </div>`;
+               <div class="card" style="padding:12px; cursor:pointer;" onclick="openTab(2)">
+                   <div style="display:flex; justify-content:space-between; align-items:center;">
+                       <span style="font-size:0.8em; color:var(--pink);">單號: ${o.id}</span>
+                       <span style="background:${color}; color:#fff; font-size:0.7em; padding:2px 8px; border-radius:6px; font-weight:bold;">${label}</span>
+                   </div>
+                   <div style="font-size:0.85em; margin-top:6px; opacity:0.85;">${firstLine}</div>
+               </div>`;
 }).join('') || '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin: 10px 0;">目前無訂單紀錄</p>';
 }
 
 // 輔助跳脫 HTML，防禦 XSS 攻擊
 function escapeHTML(str) {
-if (typeof str !== 'string') return str;
-return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  if (typeof str !== 'string') return str;
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
 function renderOrders() {
-const sortO = document.getElementById('sortO').value; 
-let allOrders = [...(store.orders || [])];
 const sortEl = document.getElementById('sortO');
 const sortO = sortEl ? sortEl.value : 'desc';
 let allOrders = Array.isArray(store && store.orders) ? [...store.orders] : [];
@@ -1626,33 +1592,33 @@ let isReturning = statusStr.includes("退貨") || statusStr.includes("退款");
 let actionBtnsHtml = "";
 
 if (store.userData && store.userData.isSuspended) {
-actionBtnsHtml = `<div style="text-align:center; padding:8px; background:#fee2e2; color:#b91c1c; border-radius:8px; margin-top:10px; font-size:0.8em; font-weight:bold;">🚫 停權期間無法執行訂單操作</div>`;
+    actionBtnsHtml = `<div style="text-align:center; padding:8px; background:#fee2e2; color:#b91c1c; border-radius:8px; margin-top:10px; font-size:0.8em; font-weight:bold;">🚫 停權期間無法執行訂單操作</div>`;
 } else {
-if (isDelivered && !isCompleted && !isReturning) {
-let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => String(n.status||'').includes(s)));
-if (deliveredNode && deliveredNode.time) {
-let dDate = new Date(String(deliveredNode.time).replace(/-/g, '/'));
-if (!isNaN(dDate.getTime())) {
-let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000);
-let nowTime = Date.now();
-if (nowTime <= limitTime) {
-canReturn = true; 
-let limitObj = new Date(limitTime);
-let yyyy = limitObj.getFullYear();
-let mm = String(limitObj.getMonth() + 1).padStart(2, '0'); 
-let dd = String(limitObj.getDate()).padStart(2, '0');
-deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${yyyy}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
-} else {
-deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
-}
-}
-}
-if (canReturn) { actionBtnsHtml += `<button class="btn" style="background:var(--green); margin-top:15px;" onclick="completeOrder('${o.id}')">✅ 完成訂單</button>`; actionBtnsHtml += deadlineHtml; actionBtnsHtml += `<button class="btn" style="background:transparent; color:var(--red); border:1px solid var(--red); margin-top:5px;" onclick="applyReturn('${o.id}')">🚨 申請退貨/退款</button>`; } 
-else { actionBtnsHtml += deadlineHtml; }
-}
+    if (isDelivered && !isCompleted && !isReturning) {
+        let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => String(n.status||'').includes(s)));
+        if (deliveredNode && deliveredNode.time) {
+            let dDate = new Date(String(deliveredNode.time).replace(/-/g, '/'));
+            if (!isNaN(dDate.getTime())) {
+                let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000);
+                let nowTime = Date.now();
+                if (nowTime <= limitTime) {
+                    canReturn = true; 
+                    let limitObj = new Date(limitTime);
+                    let yyyy = limitObj.getFullYear();
+                    let mm = String(limitObj.getMonth() + 1).padStart(2, '0'); 
+                    let dd = String(limitObj.getDate()).padStart(2, '0');
+                    deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${yyyy}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
+                } else {
+                    deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
+                }
+            }
+        }
+        if (canReturn) { actionBtnsHtml += `<button class="btn" style="background:var(--green); margin-top:15px;" onclick="completeOrder('${o.id}')">✅ 完成訂單</button>`; actionBtnsHtml += deadlineHtml; actionBtnsHtml += `<button class="btn" style="background:transparent; color:var(--red); border:1px solid var(--red); margin-top:5px;" onclick="applyReturn('${o.id}')">🚨 申請退貨/退款</button>`; } 
+        else { actionBtnsHtml += deadlineHtml; }
+    }
 
-if (statusStr === "申請取消中") actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:#64748b; width:100%; display:block;" onclick="withdrawCancelOrder('${o.id}')">↩️ 撤回取消申請</button>`;
-else if (isCancellable && !isDelivered) actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:transparent; color:var(--red); border:1px solid var(--red); width:100%; display:block;" onclick="applyCancelOrder('${o.id}')">❌ 申請取消訂單</button>`;
+    if (statusStr === "申請取消中") actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:#64748b; width:100%; display:block;" onclick="withdrawCancelOrder('${o.id}')">↩️ 撤回取消申請</button>`;
+    else if (isCancellable && !isDelivered) actionBtnsHtml += `<button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:5px; background:transparent; color:var(--red); border:1px solid var(--red); width:100%; display:block;" onclick="applyCancelOrder('${o.id}')">❌ 申請取消訂單</button>`;
 }
 
 return `<div class="card"><div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div><div style="margin:5px 0;"><b>狀態: ${statusStr}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${briefItemHtml}</div><div style="font-size:1.1em; color:var(--red); margin:5px 0;"><b>訂單總金額: $${o.total || o.totalAmount || 0}</b></div><div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">${escapeHTML(o.ship) || '未知物流'} | 單號: ${escapeHTML(o.track) || '無'}</div><button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup('${o.id}')">🔍 查看訂單詳細資訊</button>${actionBtnsHtml}</div>`;
@@ -1687,34 +1653,34 @@ let returnTrack = null;
 if (o.returnData) {
 returnTrack = o.returnData.track ? String(o.returnData.track).trim() : null;
 returnHtml = `
-              <div style="background: #fee2e2; border: 2px solid var(--red); padding: 12px; border-radius: 12px; margin-bottom: 15px;">
-                  <p style="margin: 0 0 8px 0; color: var(--red); font-weight: bold; font-size: 1.1em;">🚨 退貨/退款資訊</p>
-                  <p style="margin: 3px 0; font-size: 0.9em;"><b>申請時間：</b>${o.returnData.date}</p>
-                  <p style="margin: 3px 0; font-size: 0.9em;"><b>退回商品：</b>${escapeHTML(o.returnData.items)}</p>
-                  <p style="margin: 3px 0; font-size: 0.9em;"><b>退款原因：</b>${escapeHTML(o.returnData.reason)}</p>
-                  <p style="margin: 3px 0; font-size: 0.9em;"><b>詳細描述：</b>${escapeHTML(o.returnData.desc || '無')}</p>
-                  <p style="margin: 3px 0; font-size: 0.9em;"><b>退款金額：</b>$${o.returnData.amt || '審核/處理中'}</p>
-                  <p style="margin: 3px 0; font-size: 0.9em;"><b>退款方式：</b>${escapeHTML(o.returnData.method)}</p>
-                  ${!(o.returnData.items || '').includes('[僅退款]') ? `<p style="margin: 3px 0; font-size: 0.9em;"><b>退貨物流：</b>${escapeHTML(o.returnData.ship || '待賣家確認')} ${returnTrack ? '(單號: ' + escapeHTML(returnTrack) + ')' : ''}</p>` : ''}
-                  ${(Array.isArray(o.returnData.attachments) && o.returnData.attachments.length > 0) ? `
-                    <div style="margin-top:10px;">
-                      <div style="font-size:0.85em;font-weight:bold;color:var(--red);margin-bottom:6px;">📎 佐證資料</div>
-                      ${o.returnData.attachments.map(function(a, idx){
-                        a = a || {};
-                        const rawUrl = String(a.viewUrl || a.url || '').trim();
-                        const safeUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : '';
-                        const name = escapeHTML(String(a.name || ('附件 ' + (idx + 1))));
-                        const type = String(a.type || 'image');
-                        const icon = type === 'video' ? '🎥' : (type === 'document' ? '📄' : '🖼️');
-                        if (!safeUrl) return `<div style="padding:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;margin-top:6px;color:#9a3412;">${icon} ${name}：檔案連結無效</div>`;
-                        return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border:1px solid #fca5a5;border-radius:8px;margin-top:6px;">
-                          <span>${icon}</span>
-                          <a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--red);text-decoration:none;">${name}</a>
-                          <span style="font-size:12px;color:#64748b;white-space:nowrap;">開啟</span>
-                        </div>`;
-                      }).join('')}
-                    </div>` : ((typeof o.returnData.photo === 'string' && /^https?:\/\//i.test(o.returnData.photo.trim())) ? `<div style="margin-top: 10px;"><a href="${escapeHTML(o.returnData.photo.trim())}" target="_blank" rel="noopener noreferrer"><img src="${escapeHTML(o.returnData.photo.trim())}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #fca5a5;"></a><p style="font-size:0.7em; color:var(--red); margin:3px 0 0 0; text-align:center;">點擊圖片可放大查看</p></div>` : '')}
-              </div>`;
+               <div style="background: #fee2e2; border: 2px solid var(--red); padding: 12px; border-radius: 12px; margin-bottom: 15px;">
+                   <p style="margin: 0 0 8px 0; color: var(--red); font-weight: bold; font-size: 1.1em;">🚨 退貨/退款資訊</p>
+                   <p style="margin: 3px 0; font-size: 0.9em;"><b>申請時間：</b>${o.returnData.date}</p>
+                   <p style="margin: 3px 0; font-size: 0.9em;"><b>退回商品：</b>${escapeHTML(o.returnData.items)}</p>
+                   <p style="margin: 3px 0; font-size: 0.9em;"><b>退款原因：</b>${escapeHTML(o.returnData.reason)}</p>
+                   <p style="margin: 3px 0; font-size: 0.9em;"><b>詳細描述：</b>${escapeHTML(o.returnData.desc || '無')}</p>
+                   <p style="margin: 3px 0; font-size: 0.9em;"><b>退款金額：</b>$${o.returnData.amt || '審核/處理中'}</p>
+                   <p style="margin: 3px 0; font-size: 0.9em;"><b>退款方式：</b>${escapeHTML(o.returnData.method)}</p>
+                   ${!(o.returnData.items || '').includes('[僅退款]') ? `<p style="margin: 3px 0; font-size: 0.9em;"><b>退貨物流：</b>${escapeHTML(o.returnData.ship || '待賣家確認')} ${returnTrack ? '(單號: ' + escapeHTML(returnTrack) + ')' : ''}</p>` : ''}
+                   ${(Array.isArray(o.returnData.attachments) && o.returnData.attachments.length > 0) ? `
+                     <div style="margin-top:10px;">
+                       <div style="font-size:0.85em;font-weight:bold;color:var(--red);margin-bottom:6px;">📎 佐證資料</div>
+                       ${o.returnData.attachments.map(function(a, idx){
+                         a = a || {};
+                         const rawUrl = String(a.viewUrl || a.url || '').trim();
+                         const safeUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : '';
+                         const name = escapeHTML(String(a.name || ('附件 ' + (idx + 1))));
+                         const type = String(a.type || 'image');
+                         const icon = type === 'video' ? '🎥' : (type === 'document' ? '📄' : '🖼️');
+                         if (!safeUrl) return `<div style="padding:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;margin-top:6px;color:#9a3412;">${icon} ${name}：檔案連結無效</div>`;
+                         return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border:1px solid #fca5a5;border-radius:8px;margin-top:6px;">
+                           <span>${icon}</span>
+                           <a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--red);text-decoration:none;">${name}</a>
+                           <span style="font-size:12px;color:#64748b;white-space:nowrap;">開啟</span>
+                         </div>`;
+                       }).join('')}
+                     </div>` : ((typeof o.returnData.photo === 'string' && /^https?:\/\//i.test(o.returnData.photo.trim())) ? `<div style="margin-top: 10px;"><a href="${escapeHTML(o.returnData.photo.trim())}" target="_blank" rel="noopener noreferrer"><img src="${escapeHTML(o.returnData.photo.trim())}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #fca5a5;"></a><p style="font-size:0.7em; color:var(--red); margin:3px 0 0 0; text-align:center;">點擊圖片可放大查看</p></div>` : '')}
+               </div>`;
 }
 
 let outboundTracks = String(o.track || "").split(',').map(t => t.trim()).filter(t => t && t !== returnTrack);
@@ -1759,33 +1725,33 @@ invBtnHtml = `<p style="margin-top:10px;"><button class="btn" style="padding:6px
 }
 
 let htmlContent = `
-              <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
-                  ${returnHtml} 
-                  <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px;"><span style="color:var(--pink);">📦 訂單編號：</span>${o.id || '無'}</p>
-                  <p><span style="color:var(--pink);">🚦 主訂單狀態：</span><b>${escapeHTML(currentStatus)}</b></p>
-                  <p><span style="color:var(--pink);">💳 付款方式：</span>${escapeHTML(o.payment) || '未指定'}</p>
-                  ${invBtnHtml}
-                  <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${escapeHTML(o.code) || '尚未發佈'}</span></p>
-                  ${globalDeadlineHtml}
-                  <p style="margin-top: 15px;"><span style="color:var(--pink);">🛍️ 商品明細：</span><br><span style="opacity:0.8; display:block; margin-top:5px;">${detailItemHtml}</span></p>
-                  <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px; margin: 10px 0; border: 1px solid var(--border);">
-                      <p style="margin: 3px 0;">💰 商品小計：$${o.subtotal || 0}</p>
-                      <p style="margin: 3px 0;">🚚 運費金額：$${o.shipFee || 0}</p>
-                      <p style="margin: 3px 0; color: var(--green);">🎟️ 運費折扣：-$${o.discShip || 0}</p>
-                      <p style="margin: 3px 0; color: var(--green);">🎟️ 賣家折扣：-$${o.discSeller || 0}</p>
-                      <p style="margin: 3px 0; color: var(--green);">🪙 優惠金額折扣：-$${o.discCoin || 0}</p>
-                      <p style="margin: 5px 0 0 0; font-size: 1.1em; color: var(--red); border-top: 1px solid var(--border); padding-top: 5px;">🚨 應付總金額：$${o.total || o.totalAmount || 0}</p>
-                  </div>
-                  <p><span style="color:var(--pink);">🛣️ 出貨物流方式：</span>${escapeHTML(o.ship) || '無'}</p>
-                  <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${escapeHTML({address: o.address || '無'}.address)}</p>
-                  <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📦 出貨單號：</span>${escapeHTML(outboundTracks.join(', ')) || '無'}</p>
-                  <p style="margin: 15px 0 5px 0;"><span style="color:var(--pink);">📍 出貨物流進度：</span></p>
-                  <div style="background: rgba(0,0,0,0.02); padding: 5px; border-radius: 8px;">
-                      ${outboundHtml}
-                  </div>
-                  ${returnTimelineHtml}
-              </div>
-          `;
+               <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
+                   ${returnHtml} 
+                   <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px;"><span style="color:var(--pink);">📦 訂單編號：</span>${o.id || '無'}</p>
+                   <p><span style="color:var(--pink);">🚦 主訂單狀態：</span><b>${escapeHTML(currentStatus)}</b></p>
+                   <p><span style="color:var(--pink);">💳 付款方式：</span>${escapeHTML(o.payment) || '未指定'}</p>
+                   ${invBtnHtml}
+                   <p><span style="color:var(--pink);">🔑 取件驗證碼：</span><span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;">${escapeHTML(o.code) || '尚未發佈'}</span></p>
+                   ${globalDeadlineHtml}
+                   <p style="margin-top: 15px;"><span style="color:var(--pink);">🛍️ 商品明細：</span><br><span style="opacity:0.8; display:block; margin-top:5px;">${detailItemHtml}</span></p>
+                   <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px; margin: 10px 0; border: 1px solid var(--border);">
+                       <p style="margin: 3px 0;">💰 商品小計：$${o.subtotal || 0}</p>
+                       <p style="margin: 3px 0;">🚚 運費金額：$${o.shipFee || 0}</p>
+                       <p style="margin: 3px 0; color: var(--green);">🎟️ 運費折扣：-$${o.discShip || 0}</p>
+                       <p style="margin: 3px 0; color: var(--green);">🎟️ 賣家折扣：-$${o.discSeller || 0}</p>
+                       <p style="margin: 3px 0; color: var(--green);">🪙 優惠金額折扣：-$${o.discCoin || 0}</p>
+                       <p style="margin: 5px 0 0 0; font-size: 1.1em; color: var(--red); border-top: 1px solid var(--border); padding-top: 5px;">🚨 應付總金額：$${o.total || o.totalAmount || 0}</p>
+                   </div>
+                   <p><span style="color:var(--pink);">🛣️ 出貨物流方式：</span>${escapeHTML(o.ship) || '無'}</p>
+                   <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${escapeHTML({address: o.address || '無'}.address)}</p>
+                   <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📦 出貨單號：</span>${escapeHTML(outboundTracks.join(', ')) || '無'}</p>
+                   <p style="margin: 15px 0 5px 0;"><span style="color:var(--pink);">📍 出貨物流進度：</span></p>
+                   <div style="background: rgba(0,0,0,0.02); padding: 5px; border-radius: 8px;">
+                       ${outboundHtml}
+                   </div>
+                   ${returnTimelineHtml}
+               </div>
+           `;
 Swal.fire({ title: '📋 訂單詳細資訊', html: htmlContent, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉視窗' });
 }
 
@@ -1826,148 +1792,148 @@ function updateReturnAttachmentPreview() {
 const box = document.getElementById('swal-ret-attachments-preview');
 if (!box) return;
 if (!returnAttachments.length) {
-box.innerHTML = '<div style="opacity:.55;text-align:center;padding:8px;">尚未選擇附件</div>';
-return;
+  box.innerHTML = '<div style="opacity:.55;text-align:center;padding:8px;">尚未選擇附件</div>';
+  return;
 }
 box.innerHTML = returnAttachments.map((a,i)=>{
-const icon = a.type==='video' ? '🎥' : (a.type==='document' ? '📄' : '🖼️');
-return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-top:6px;">
-   <span style="font-size:18px;cursor:pointer;" onclick="previewLocalReturnAttachment(${i})">${icon}</span>
-   <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" onclick="previewLocalReturnAttachment(${i})">${escapeHTML(a.name)}</span>
-   <span style="font-size:12px;color:#64748b;white-space:nowrap;">${formatReturnFileSize(a.size)}</span>
-   <button type="button" onclick="previewLocalReturnAttachment(${i})" style="width:auto;padding:6px 10px;margin:0;background:var(--blue);">預覽</button>
-   <button type="button" onclick="removeReturnAttachment(${i})" style="width:auto;padding:6px 10px;margin:0;background:var(--red);">刪除</button>
- </div>`;
+  const icon = a.type==='video' ? '🎥' : (a.type==='document' ? '📄' : '🖼️');
+  return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-top:6px;">
+    <span style="font-size:18px;cursor:pointer;" onclick="previewLocalReturnAttachment(${i})">${icon}</span>
+    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" onclick="previewLocalReturnAttachment(${i})">${escapeHTML(a.name)}</span>
+    <span style="font-size:12px;color:#64748b;white-space:nowrap;">${formatReturnFileSize(a.size)}</span>
+    <button type="button" onclick="previewLocalReturnAttachment(${i})" style="width:auto;padding:6px 10px;margin:0;background:var(--blue);">預覽</button>
+    <button type="button" onclick="removeReturnAttachment(${i})" style="width:auto;padding:6px 10px;margin:0;background:var(--red);">刪除</button>
+  </div>`;
 }).join('');
 }
 function formatReturnFileSize(bytes) {
-bytes = Number(bytes)||0;
-if (bytes < 1024) return bytes + ' B';
-if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
-return (bytes/(1024*1024)).toFixed(2) + ' MB';
+  bytes = Number(bytes)||0;
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(2) + ' MB';
 }
 function removeReturnAttachment(index) { returnAttachments.splice(index,1); updateReturnAttachmentPreview(); }
 async function previewLocalReturnAttachment(index) {
-const a = returnAttachments[index];
-if (!a) return;
-const safeName = escapeHTML(a.name || '附件預覽');
+  const a = returnAttachments[index];
+  if (!a) return;
+  const safeName = escapeHTML(a.name || '附件預覽');
 
-if (a.type === 'image') {
-openAppOverlay({
-title: a.name || '圖片預覽',
-html: `<img src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" alt="${safeName}">`
-});
-} else if (a.type === 'video') {
-openAppOverlay({
-title: a.name || '影片預覽',
-html: `<video src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" controls playsinline preload="metadata"></video>`
-});
-} else if (a.mimeType === 'application/pdf') {
-openAppOverlay({
-title: a.name || 'PDF 預覽',
-html: `<iframe src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" title="${safeName}"></iframe>`
-});
-} else {
-openAppOverlay({
-title: a.name || '文件預覽',
-light: true,
-html: `<div class="app-overlay-message">此文件格式無法在瀏覽器本機直接預覽。<br><br>送出後可在後台透過 Google Drive 預覽。</div>`
-});
-}
+  if (a.type === 'image') {
+    openAppOverlay({
+      title: a.name || '圖片預覽',
+      html: `<img src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" alt="${safeName}">`
+    });
+  } else if (a.type === 'video') {
+    openAppOverlay({
+      title: a.name || '影片預覽',
+      html: `<video src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" controls playsinline preload="metadata"></video>`
+    });
+  } else if (a.mimeType === 'application/pdf') {
+    openAppOverlay({
+      title: a.name || 'PDF 預覽',
+      html: `<iframe src="${String(a.dataUrl || '').replace(/"/g, '&quot;')}" title="${safeName}"></iframe>`
+    });
+  } else {
+    openAppOverlay({
+      title: a.name || '文件預覽',
+      light: true,
+      html: `<div class="app-overlay-message">此文件格式無法在瀏覽器本機直接預覽。<br><br>送出後可在後台透過 Google Drive 預覽。</div>`
+    });
+  }
 }
 
 function handleReturnAttachments(event) {
-const files=Array.from(event.target.files||[]); if(!files.length) return;
-const MAX_TOTAL=100*1024*1024,MAX_FILES=8,MAX_IMAGES=6,MAX_VIDEOS=2,MAX_IMAGE=8*1024*1024,MAX_VIDEO=50*1024*1024,MAX_DOCUMENT=20*1024*1024;
-const docMimes = new Set([
-'application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-'application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','text/plain'
-]);
-let next=[...returnAttachments],total=next.reduce((s,a)=>s+(Number(a.size)||0),0),imageCount=next.filter(a=>a.type==='image').length,videoCount=next.filter(a=>a.type==='video').length;
-const readAsDataUrl=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(new Error('讀取檔案失敗'));r.readAsDataURL(file);});
-const compressImage=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height,max=1280;if(w>h&&w>max){h*=max/w;w=max;}else if(h>max){w*=max/h;h=max;}const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));const ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',0.75));};img.onerror=()=>reject(new Error('圖片讀取失敗'));img.src=String(e.target.result||'');};r.onerror=()=>reject(new Error('圖片讀取失敗'));r.readAsDataURL(file);});
-(async()=>{for(const file of files){
-if(next.length>=MAX_FILES)throw new Error(`最多只能上傳 ${MAX_FILES} 個附件`);
-let detectedMime=file.type; if(!detectedMime || detectedMime==='application/octet-stream'){const ext=(file.name.split('.').pop()||'').toLowerCase(); const mimeMap={'pdf':'application/pdf','doc':'application/msword','docx':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','xls':'application/vnd.ms-excel','xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','ppt':'application/vnd.ms-powerpoint','pptx':'application/vnd.openxmlformats-officedocument.presentationml.presentation','txt':'text/plain'}; detectedMime=mimeMap[ext]||detectedMime;} const isImage=file.type.startsWith('image/'),isVideo=file.type.startsWith('video/'),isDoc=docMimes.has(detectedMime);
-if(!isImage&&!isVideo&&!isDoc)throw new Error(`不支援的檔案格式：${file.name}`);
-if(isImage&&imageCount>=MAX_IMAGES)throw new Error(`最多 ${MAX_IMAGES} 張照片`);
-if(isVideo&&videoCount>=MAX_VIDEOS)throw new Error(`最多 ${MAX_VIDEOS} 部影片`);
-if(isImage&&file.size>MAX_IMAGE)throw new Error(`照片「${file.name}」超過 8 MB`);
-if(isVideo&&file.size>MAX_VIDEO)throw new Error(`影片「${file.name}」超過 50 MB`);
-if(isDoc&&file.size>MAX_DOCUMENT)throw new Error(`文件「${file.name}」超過 20 MB`);
-if(total+file.size>MAX_TOTAL)throw new Error('所有附件合計不得超過 100 MB');
-let dataUrl=isImage?await compressImage(file):await readAsDataUrl(file);
-const storedName = isImage ? file.name.replace(/\.[^.]+$/, '.jpg') : file.name; const storedMime = isImage ? 'image/jpeg' : detectedMime; next.push({type:isImage?'image':isVideo?'video':'document',name:storedName,mimeType:storedMime,size:file.size,dataUrl});
-total+=file.size;if(isImage)imageCount++;else if(isVideo)videoCount++;
-}returnAttachments=next;updateReturnAttachmentPreview();event.target.value='';})().catch(err=>{ const box=document.getElementById('swal-ret-attachments-preview'); if(box){ box.innerHTML='<div style="padding:10px;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;color:#be123c;text-align:center;">⚠️ '+escapeHTML(err.message||'附件處理失敗')+'</div>'; } event.target.value=''; });
+  const files=Array.from(event.target.files||[]); if(!files.length) return;
+  const MAX_TOTAL=100*1024*1024,MAX_FILES=8,MAX_IMAGES=6,MAX_VIDEOS=2,MAX_IMAGE=8*1024*1024,MAX_VIDEO=50*1024*1024,MAX_DOCUMENT=20*1024*1024;
+  const docMimes = new Set([
+    'application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','text/plain'
+  ]);
+  let next=[...returnAttachments],total=next.reduce((s,a)=>s+(Number(a.size)||0),0),imageCount=next.filter(a=>a.type==='image').length,videoCount=next.filter(a=>a.type==='video').length;
+  const readAsDataUrl=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(new Error('讀取檔案失敗'));r.readAsDataURL(file);});
+  const compressImage=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height,max=1280;if(w>h&&w>max){h*=max/w;w=max;}else if(h>max){w*=max/h;h=max;}const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));const ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',0.75));};img.onerror=()=>reject(new Error('圖片讀取失敗'));img.src=String(e.target.result||'');};r.onerror=()=>reject(new Error('圖片讀取失敗'));r.readAsDataURL(file);});
+  (async()=>{for(const file of files){
+    if(next.length>=MAX_FILES)throw new Error(`最多只能上傳 ${MAX_FILES} 個附件`);
+    let detectedMime=file.type; if(!detectedMime || detectedMime==='application/octet-stream'){const ext=(file.name.split('.').pop()||'').toLowerCase(); const mimeMap={'pdf':'application/pdf','doc':'application/msword','docx':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','xls':'application/vnd.ms-excel','xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','ppt':'application/vnd.ms-powerpoint','pptx':'application/vnd.openxmlformats-officedocument.presentationml.presentation','txt':'text/plain'}; detectedMime=mimeMap[ext]||detectedMime;} const isImage=file.type.startsWith('image/'),isVideo=file.type.startsWith('video/'),isDoc=docMimes.has(detectedMime);
+    if(!isImage&&!isVideo&&!isDoc)throw new Error(`不支援的檔案格式：${file.name}`);
+    if(isImage&&imageCount>=MAX_IMAGES)throw new Error(`最多 ${MAX_IMAGES} 張照片`);
+    if(isVideo&&videoCount>=MAX_VIDEOS)throw new Error(`最多 ${MAX_VIDEOS} 部影片`);
+    if(isImage&&file.size>MAX_IMAGE)throw new Error(`照片「${file.name}」超過 8 MB`);
+    if(isVideo&&file.size>MAX_VIDEO)throw new Error(`影片「${file.name}」超過 50 MB`);
+    if(isDoc&&file.size>MAX_DOCUMENT)throw new Error(`文件「${file.name}」超過 20 MB`);
+    if(total+file.size>MAX_TOTAL)throw new Error('所有附件合計不得超過 100 MB');
+    let dataUrl=isImage?await compressImage(file):await readAsDataUrl(file);
+    const storedName = isImage ? file.name.replace(/\.[^.]+$/, '.jpg') : file.name; const storedMime = isImage ? 'image/jpeg' : detectedMime; next.push({type:isImage?'image':isVideo?'video':'document',name:storedName,mimeType:storedMime,size:file.size,dataUrl});
+    total+=file.size;if(isImage)imageCount++;else if(isVideo)videoCount++;
+  }returnAttachments=next;updateReturnAttachmentPreview();event.target.value='';})().catch(err=>{ const box=document.getElementById('swal-ret-attachments-preview'); if(box){ box.innerHTML='<div style="padding:10px;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;color:#be123c;text-align:center;">⚠️ '+escapeHTML(err.message||'附件處理失敗')+'</div>'; } event.target.value=''; });
 }
 function base64ByteLength_(dataUrl) {
-const raw = String(dataUrl||'').replace(/^data:[^;]+;base64,/,'');
-const padding = raw.endsWith('==') ? 2 : raw.endsWith('=') ? 1 : 0;
-return Math.max(0, Math.floor(raw.length * 3 / 4) - padding);
+  const raw = String(dataUrl||'').replace(/^data:[^;]+;base64,/,'');
+  const padding = raw.endsWith('==') ? 2 : raw.endsWith('=') ? 1 : 0;
+  return Math.max(0, Math.floor(raw.length * 3 / 4) - padding);
 }
 function base64Chunk_(dataUrl, startByte, chunkBytes) {
-const raw = String(dataUrl||'').replace(/^data:[^;]+;base64,/,'');
-const charsPerByte = 4/3;
-const startChar = Math.floor(startByte * charsPerByte / 4) * 4;
-const chunkChars = Math.floor(chunkBytes * charsPerByte / 4) * 4;
-return raw.slice(startChar, startChar + chunkChars);
+  const raw = String(dataUrl||'').replace(/^data:[^;]+;base64,/,'');
+  const charsPerByte = 4/3;
+  const startChar = Math.floor(startByte * charsPerByte / 4) * 4;
+  const chunkChars = Math.floor(chunkBytes * charsPerByte / 4) * 4;
+  return raw.slice(startChar, startChar + chunkChars);
 }
 async function postSmallJson(payload) {
-const r = await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});
-const txt = await r.text();
-try { return JSON.parse(txt); } catch(e) { throw new Error('伺服器回傳非 JSON：' + txt.substring(0,160)); }
+  const r = await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});
+  const txt = await r.text();
+  try { return JSON.parse(txt); } catch(e) { throw new Error('伺服器回傳非 JSON：' + txt.substring(0,160)); }
 }
 async function uploadOneReturnAttachment(attachment, oid, fileIndex, totalFiles) {
-const totalBytes = base64ByteLength_(attachment.dataUrl);
-const init = await postSmallJson({action:'attachmentUploadInit',uid:store.userData.id,pw:savedPw,oid,type:attachment.type,name:attachment.name,mimeType:attachment.mimeType,size:totalBytes});
-if (!init.success) throw new Error(init.message || '建立附件上傳工作階段失敗');
-const chunkBytes = Number(init.chunkBytes)||786432;
-let offset=0;
-while (offset < totalBytes) {
-const raw = String(attachment.dataUrl).replace(/^data:[^;]+;base64,/,'');
-const startChar = Math.floor(offset/3)*4;
-const chunkCharLen = Math.min(raw.length-startChar, Math.floor(chunkBytes/3)*4);
-const chunkB64 = raw.slice(startChar,startChar+chunkCharLen);
-const actualDecodedBytes = Math.min(chunkBytes,totalBytes-offset);
-const endByte = offset + actualDecodedBytes - 1;
-Swal.update({title:`上傳佐證資料 ${fileIndex}/${totalFiles}`, html:`<div style="font-weight:bold;margin-bottom:8px;">${escapeHTML(attachment.name)}</div><div style="color:#64748b;">${formatReturnFileSize(offset)} / ${formatReturnFileSize(totalBytes)}</div><div style="margin-top:10px;">正在上傳...</div>`});
-const out = await postSmallJson({action:'attachmentUploadChunk',uploadId:init.uploadId,startByte:offset,endByte,totalBytes,chunkBase64:chunkB64});
-if (!out.success) throw new Error(out.message || '附件分段上傳失敗');
-offset = Number(out.nextOffset||0);
-if (offset <= endByte) throw new Error('附件上傳進度未前進');
-}
-const last = await postSmallJson({action:'attachmentUploadCommit',uploadId:init.uploadId,uid:store.userData.id,pw:savedPw});
-if (!last.success) throw new Error(last.message || '附件完成確認失敗');
-return { ...last.attachment, attachmentId: last.attachmentId };
+  const totalBytes = base64ByteLength_(attachment.dataUrl);
+  const init = await postSmallJson({action:'attachmentUploadInit',uid:store.userData.id,pw:savedPw,oid,type:attachment.type,name:attachment.name,mimeType:attachment.mimeType,size:totalBytes});
+  if (!init.success) throw new Error(init.message || '建立附件上傳工作階段失敗');
+  const chunkBytes = Number(init.chunkBytes)||786432;
+  let offset=0;
+  while (offset < totalBytes) {
+    const raw = String(attachment.dataUrl).replace(/^data:[^;]+;base64,/,'');
+    const startChar = Math.floor(offset/3)*4;
+    const chunkCharLen = Math.min(raw.length-startChar, Math.floor(chunkBytes/3)*4);
+    const chunkB64 = raw.slice(startChar,startChar+chunkCharLen);
+    const actualDecodedBytes = Math.min(chunkBytes,totalBytes-offset);
+    const endByte = offset + actualDecodedBytes - 1;
+    Swal.update({title:`上傳佐證資料 ${fileIndex}/${totalFiles}`, html:`<div style="font-weight:bold;margin-bottom:8px;">${escapeHTML(attachment.name)}</div><div style="color:#64748b;">${formatReturnFileSize(offset)} / ${formatReturnFileSize(totalBytes)}</div><div style="margin-top:10px;">正在上傳...</div>`});
+    const out = await postSmallJson({action:'attachmentUploadChunk',uploadId:init.uploadId,startByte:offset,endByte,totalBytes,chunkBase64:chunkB64});
+    if (!out.success) throw new Error(out.message || '附件分段上傳失敗');
+    offset = Number(out.nextOffset||0);
+    if (offset <= endByte) throw new Error('附件上傳進度未前進');
+  }
+  const last = await postSmallJson({action:'attachmentUploadCommit',uploadId:init.uploadId,uid:store.userData.id,pw:savedPw});
+  if (!last.success) throw new Error(last.message || '附件完成確認失敗');
+  return { ...last.attachment, attachmentId: last.attachmentId };
 }
 async function applyReturn(oid) {
-if (store.userData && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法執行訂單操作', 'warning');
-returnAttachments=[]; const o=(store.orders||[]).find(ord=>ord.id===String(oid)); if(!o)return;
-let rawItem=o.desc||o.item||'無商品明細'; let itemsArray=String(rawItem).includes(';')&&!String(rawItem).includes('\n')?String(rawItem).split(';'):String(rawItem).split('\n'); itemsArray=itemsArray.map(i=>i.trim().replace(/^- /,'')).filter(i=>i);
-let checkboxesHtml=itemsArray.map(item=>`<label style="display:flex;align-items:center;gap:8px;margin:5px 0;text-align:left;font-size:15px;cursor:pointer;"><input type="checkbox" class="return-item-checkbox" value="${escapeHTML(item)}" style="width:20px;height:20px;margin:0;flex-shrink:0;"><span style="flex:1;line-height:1.3;">${escapeHTML(item)}</span></label>`).join('');
-if(itemsArray.length===0)checkboxesHtml=`<input id="swal-ret-items-fallback" class="swal2-input" placeholder="請輸入退貨商品明細" style="width:100%;margin:0;box-sizing:border-box;">`;
-const {value:formValues}=await Swal.fire({title:'申請退貨/退款',html:`<div style="text-align:left;font-size:16px;"><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">🚨 選擇申請類型：</label><select id="swal-ret-type" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;"><option value="退貨退款">退貨退款 (需寄回商品)</option><option value="僅退款">僅退款 (未收到貨或與賣家協商免寄回)</option></select><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">🛍️ 請勾選欲退貨的商品：</label><div style="background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:10px;max-height:150px;overflow-y:auto;box-sizing:border-box;">${checkboxesHtml}</div><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">📝 選擇退貨原因：</label><select id="swal-ret-reason" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;"><option value="商品瑕疵">商品瑕疵</option><option value="尺寸/規格不合">尺寸/規格不合</option><option value="寄錯商品">寄錯商品</option><option value="商品缺件">商品缺件</option><option value="個人因素(鑑賞期內)">個人因素(鑑賞期內)</option><option value="其他原因">其他原因</option></select><textarea id="swal-ret-desc" class="swal2-textarea" placeholder="請詳細描述退貨原因或商品狀況..." style="width:100%;margin:0 0 10px 0;height:80px;box-sizing:border-box;"></textarea><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">💰 期望退款方式：</label><select id="swal-ret-method-sel" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;" onchange="if(this.value=='其他')document.getElementById('swal-ret-method-other').style.display='block';else document.getElementById('swal-ret-method-other').style.display='none';"><option value="退還至系統可用餘額">退還至系統可用餘額 (極速退款)</option><option value="信用卡刷退">信用卡刷退</option><option value="銀行轉帳">銀行轉帳</option><option value="街口/LINE Pay 等電子支付">街口/LINE Pay 等電子支付</option><option value="其他">其他...</option></select><input id="swal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%;margin:0 0 10px 0;box-sizing:border-box;display:none;"><label style="display:block;margin:10px 0 5px;font-size:0.9em;font-weight:bold;color:var(--dark);">📎 上傳佐證資料（至少 1 個）</label><div style="font-size:12px;color:#64748b;margin-bottom:8px;line-height:1.5;">最多 6 張照片＋2 部影片、最多 8 個附件；圖片≤8MB、影片≤50MB、文件≤20MB，全部附件合計≤100MB。</div><input type="file" id="swal-ret-attachments" accept="image/*,video/mp4,video/quicktime,video/webm,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" multiple onchange="handleReturnAttachments(event)" style="width:100%;margin-bottom:8px;box-sizing:border-box;"><div id="swal-ret-attachments-preview" style="max-height:260px;overflow-y:auto;">尚未選擇附件</div></div>`,focusConfirm:false,showCancelButton:true,confirmButtonColor:'var(--red)',cancelButtonColor:'#94a3b8',confirmButtonText:'送出申請',cancelButtonText:'取消',preConfirm:()=>{let items='';if(itemsArray.length>0){const checkedBoxes=document.querySelectorAll('.return-item-checkbox:checked');if(checkedBoxes.length===0){Swal.showValidationMessage('請至少勾選一項退貨商品！');return false;}items=Array.from(checkedBoxes).map(cb=>cb.value).join('; ');}else{items=document.getElementById('swal-ret-items-fallback').value.trim();if(!items){Swal.showValidationMessage('請輸入退貨商品明細！');return false;}}const returnType=document.getElementById('swal-ret-type').value,reason=document.getElementById('swal-ret-reason').value,desc=document.getElementById('swal-ret-desc').value.trim();let method=document.getElementById('swal-ret-method-sel').value;if(method==='其他')method=document.getElementById('swal-ret-method-other').value.trim();if(!desc||!method||!returnAttachments.length){Swal.showValidationMessage('請完整填寫所有欄位，並至少上傳 1 個佐證資料！');return false;}return{returnType,items,reason,desc,method};}});
-if(!formValues) return;
-let uploaded=[];
-try {
-Swal.fire({title:'上傳佐證資料',html:'正在準備附件...',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});
-for(let i=0;i<returnAttachments.length;i++) uploaded.push(await uploadOneReturnAttachment(returnAttachments[i],oid,i+1,returnAttachments.length));
-Swal.update({title:'提交售後申請',html:'附件已全部上傳，正在建立售後申請...',showConfirmButton:false});
-const res=await postSmallJson({action:'buyerApplyReturn',oid:oid,uid:store.userData.id,pw:savedPw,...formValues,attachments:uploaded.map(a=>({attachmentId:a.attachmentId}))});
-if(res&&res.success) Swal.fire('申請成功',res.message,'success').then(()=>silentSyncData());
-else Swal.fire('錯誤',res&&res.message?res.message:'伺服器拒絕了此次申請','error');
-} catch(e) {
-const cleanupIds = [];
-// 若前面已成功完成部分附件，嘗試刪除，避免留下孤兒檔案。
-try {
-// uploadOneReturnAttachment 的回傳資料會被保存在 uploaded，若送件 API 失敗則清理。
-if (typeof uploaded !== 'undefined') uploaded.forEach(a=>{ if(a && a.attachmentId) cleanupIds.push(a.attachmentId); });
-if (cleanupIds.length) await postSmallJson({action:'attachmentUploadCleanup',uid:store.userData.id,pw:savedPw,attachmentIds:cleanupIds});
-} catch(cleanErr) {}
-Swal.fire('錯誤',e.message||'佐證資料上傳或售後申請失敗','error');
-}
+  if (store.userData && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法執行訂單操作', 'warning');
+  returnAttachments=[]; const o=(store.orders||[]).find(ord=>ord.id===String(oid)); if(!o)return;
+  let rawItem=o.desc||o.item||'無商品明細'; let itemsArray=String(rawItem).includes(';')&&!String(rawItem).includes('\n')?String(rawItem).split(';'):String(rawItem).split('\n'); itemsArray=itemsArray.map(i=>i.trim().replace(/^- /,'')).filter(i=>i);
+  let checkboxesHtml=itemsArray.map(item=>`<label style="display:flex;align-items:center;gap:8px;margin:5px 0;text-align:left;font-size:15px;cursor:pointer;"><input type="checkbox" class="return-item-checkbox" value="${escapeHTML(item)}" style="width:20px;height:20px;margin:0;flex-shrink:0;"><span style="flex:1;line-height:1.3;">${escapeHTML(item)}</span></label>`).join('');
+  if(itemsArray.length===0)checkboxesHtml=`<input id="swal-ret-items-fallback" class="swal2-input" placeholder="請輸入退貨商品明細" style="width:100%;margin:0;box-sizing:border-box;">`;
+  const {value:formValues}=await Swal.fire({title:'申請退貨/退款',html:`<div style="text-align:left;font-size:16px;"><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">🚨 選擇申請類型：</label><select id="swal-ret-type" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;"><option value="退貨退款">退貨退款 (需寄回商品)</option><option value="僅退款">僅退款 (未收到貨或與賣家協商免寄回)</option></select><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">🛍️ 請勾選欲退貨的商品：</label><div style="background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:10px;max-height:150px;overflow-y:auto;box-sizing:border-box;">${checkboxesHtml}</div><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">📝 選擇退貨原因：</label><select id="swal-ret-reason" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;"><option value="商品瑕疵">商品瑕疵</option><option value="尺寸/規格不合">尺寸/規格不合</option><option value="寄錯商品">寄錯商品</option><option value="商品缺件">商品缺件</option><option value="個人因素(鑑賞期內)">個人因素(鑑賞期內)</option><option value="其他原因">其他原因</option></select><textarea id="swal-ret-desc" class="swal2-textarea" placeholder="請詳細描述退貨原因或商品狀況..." style="width:100%;margin:0 0 10px 0;height:80px;box-sizing:border-box;"></textarea><label style="display:block;font-weight:bold;color:var(--dark);margin-bottom:5px;">💰 期望退款方式：</label><select id="swal-ret-method-sel" class="swal2-select" style="width:100%;margin:0 0 10px 0;display:flex;box-sizing:border-box;" onchange="if(this.value=='其他')document.getElementById('swal-ret-method-other').style.display='block';else document.getElementById('swal-ret-method-other').style.display='none';"><option value="退還至系統可用餘額">退還至系統可用餘額 (極速退款)</option><option value="信用卡刷退">信用卡刷退</option><option value="銀行轉帳">銀行轉帳</option><option value="街口/LINE Pay 等電子支付">街口/LINE Pay 等電子支付</option><option value="其他">其他...</option></select><input id="swal-ret-method-other" class="swal2-input" placeholder="請輸入其他退款方式" style="width:100%;margin:0 0 10px 0;box-sizing:border-box;display:none;"><label style="display:block;margin:10px 0 5px;font-size:0.9em;font-weight:bold;color:var(--dark);">📎 上傳佐證資料（至少 1 個）</label><div style="font-size:12px;color:#64748b;margin-bottom:8px;line-height:1.5;">最多 6 張照片＋2 部影片、最多 8 個附件；圖片≤8MB、影片≤50MB、文件≤20MB，全部附件合計≤100MB。</div><input type="file" id="swal-ret-attachments" accept="image/*,video/mp4,video/quicktime,video/webm,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" multiple onchange="handleReturnAttachments(event)" style="width:100%;margin-bottom:8px;box-sizing:border-box;"><div id="swal-ret-attachments-preview" style="max-height:260px;overflow-y:auto;">尚未選擇附件</div></div>`,focusConfirm:false,showCancelButton:true,confirmButtonColor:'var(--red)',cancelButtonColor:'#94a3b8',confirmButtonText:'送出申請',cancelButtonText:'取消',preConfirm:()=>{let items='';if(itemsArray.length>0){const checkedBoxes=document.querySelectorAll('.return-item-checkbox:checked');if(checkedBoxes.length===0){Swal.showValidationMessage('請至少勾選一項退貨商品！');return false;}items=Array.from(checkedBoxes).map(cb=>cb.value).join('; ');}else{items=document.getElementById('swal-ret-items-fallback').value.trim();if(!items){Swal.showValidationMessage('請輸入退貨商品明細！');return false;}}const returnType=document.getElementById('swal-ret-type').value,reason=document.getElementById('swal-ret-reason').value,desc=document.getElementById('swal-ret-desc').value.trim();let method=document.getElementById('swal-ret-method-sel').value;if(method==='其他')method=document.getElementById('swal-ret-method-other').value.trim();if(!desc||!method||!returnAttachments.length){Swal.showValidationMessage('請完整填寫所有欄位，並至少上傳 1 個佐證資料！');return false;}return{returnType,items,reason,desc,method};}});
+  if(!formValues) return;
+  let uploaded=[];
+  try {
+    Swal.fire({title:'上傳佐證資料',html:'正在準備附件...',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});
+    for(let i=0;i<returnAttachments.length;i++) uploaded.push(await uploadOneReturnAttachment(returnAttachments[i],oid,i+1,returnAttachments.length));
+    Swal.update({title:'提交售後申請',html:'附件已全部上傳，正在建立售後申請...',showConfirmButton:false});
+    const res=await postSmallJson({action:'buyerApplyReturn',oid:oid,uid:store.userData.id,pw:savedPw,...formValues,attachments:uploaded.map(a=>({attachmentId:a.attachmentId}))});
+    if(res&&res.success) Swal.fire('申請成功',res.message,'success').then(()=>silentSyncData());
+    else Swal.fire('錯誤',res&&res.message?res.message:'伺服器拒絕了此次申請','error');
+  } catch(e) {
+    const cleanupIds = [];
+    // 若前面已成功完成部分附件，嘗試刪除，避免留下孤兒檔案。
+    try {
+      // uploadOneReturnAttachment 的回傳資料會被保存在 uploaded，若送件 API 失敗則清理。
+      if (typeof uploaded !== 'undefined') uploaded.forEach(a=>{ if(a && a.attachmentId) cleanupIds.push(a.attachmentId); });
+      if (cleanupIds.length) await postSmallJson({action:'attachmentUploadCleanup',uid:store.userData.id,pw:savedPw,attachmentIds:cleanupIds});
+    } catch(cleanErr) {}
+    Swal.fire('錯誤',e.message||'佐證資料上傳或售後申請失敗','error');
+  }
 }
 
 function renderInvoices() {
@@ -1983,8 +1949,6 @@ let parsed = JSON.parse(o.invoice); parsed.oid = o.id; parsed.source = 'order'; 
 }
 });
 }
-if (store.invoices) {
-store.invoices.forEach(inv => {
 if (invoices.length) {
 invoices.forEach(inv => {
 inv.source = 'invoice'; let itemsArr = []; try { itemsArr = JSON.parse(inv.items); } catch(e) { itemsArr = []; } inv.itemsParsed = itemsArr; combinedInvoices.push(inv);
@@ -2008,17 +1972,17 @@ let prizeAmt = inv.source === 'order' ? (inv.prizeAmt||0) : (pData.prizeAmt || 0
 let wonTag = inv.isWon ? `<span class="overdue-tag" style="background:var(--orange); top:auto; bottom:10px; right:10px; font-size:0.85em; padding:6px 10px;">🏆 中獎: $${prizeAmt}</span>` : '';
 
 return `
-                  <div class="card" style="border-left: 5px solid ${lotStat.color};">
-                      <div style="font-size:0.8em; color:#666; display:flex; justify-content:space-between;">
-                          <span>日期: ${displayDate || ''}</span>
-                          <span style="color:${lotStat.color}; font-weight:bold;">${lotStat.text}</span>
-                      </div>
-                      <div style="font-size:1.4em; font-weight:bold; margin:5px 0;">${escapeHTML(inv.num) || '無號碼'}</div>
-                      <div style="font-size:0.9em; opacity:0.8;">賣方: ${escapeHTML(inv.sellerName) || '未提供'}</div>
-                      <div style="font-size:1.1em; color:var(--red); margin-top:5px; font-weight:bold;">總計: $${inv.total || 0}</div>
-                      ${wonTag}
-                      <button class="btn" style="padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; background:var(--blue); width:100%; display:block; color:#fff;" onclick="showInvoiceDetailUnified('${inv.num}')">🔍 查看發票詳細資訊</button>
-                  </div>`;
+                   <div class="card" style="border-left: 5px solid ${lotStat.color};">
+                       <div style="font-size:0.8em; color:#666; display:flex; justify-content:space-between;">
+                           <span>日期: ${displayDate || ''}</span>
+                           <span style="color:${lotStat.color}; font-weight:bold;">${lotStat.text}</span>
+                       </div>
+                       <div style="font-size:1.4em; font-weight:bold; margin:5px 0;">${escapeHTML(inv.num) || '無號碼'}</div>
+                       <div style="font-size:0.9em; opacity:0.8;">賣方: ${escapeHTML(inv.sellerName) || '未提供'}</div>
+                       <div style="font-size:1.1em; color:var(--red); margin-top:5px; font-weight:bold;">總計: $${inv.total || 0}</div>
+                       ${wonTag}
+                       <button class="btn" style="padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; background:var(--blue); width:100%; display:block; color:#fff;" onclick="showInvoiceDetailUnified('${inv.num}')">🔍 查看發票詳細資訊</button>
+                   </div>`;
 }).join('');
 }
 document.getElementById('invList').innerHTML = invHtml;
@@ -2059,26 +2023,26 @@ if(targetInv.prizeData) { try { pData = JSON.parse(targetInv.prizeData); prizeNa
 let displayDate = formatDateString(targetInv.date);
 
 let htmlContent = `
-              <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: bold;">
-                  ${targetInv.isWon ? `<div style="background: #fffbeb; border: 1px solid #f59e0b; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align:center;"><p style="margin:0; color:#d97706; font-size:1.2em;">🏆 本發票幸運中獎！</p><p style="margin:5px 0 0 0; color:var(--red);">${escapeHTML(prizeName)} - <b>$${prizeAmt}</b></p></div>` : ''}
-                  <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px; font-size:1.1em; color:var(--primary);">🧾 發票號碼：${escapeHTML(targetInv.num) || '無'}</p>
-                  <p><b>發票日期：</b>${displayDate || '無'}</p>
-                  <p style="display:flex; align-items:center; gap:10px;">
-                      <b>發票隨機碼：</b>
-                      <span id="rand_code_display" style="background:#f1f5f9; padding:2px 8px; border-radius:4px; letter-spacing:2px; font-family:monospace;">****</span>
-                      <button id="rand_code_btn" onclick="revealRandCode('${escapeHTML(targetInv.rand) || '0000'}')" style="background:var(--red); color:white; border:none; border-radius:4px; padding:3px 8px; font-size:0.8em; cursor:pointer;">顯示</button>
-                  </p>
-                  <p><b>賣方名稱：</b>${escapeHTML(targetInv.sellerName) || '未提供'}</p>
-                  <p><b>賣方統編：</b>${escapeHTML(targetInv.sellerVat) || '未提供'}</p>
-                  <p><b>賣方地址：</b>${escapeHTML(targetInv.sellerAddr) || '未提供'}</p>
-                  ${targetInv.oid ? `<p style="margin-top:10px;"><button class="btn" style="padding:6px; font-size:0.8em; background:#3b82f6;" onclick="Swal.close(); setTimeout(()=>showOrderDetailPopup('${targetInv.oid}'), 300)">📦 查看關聯訂單 (${targetInv.oid})</button></p>` : ''}
-                  <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px; margin-top: 15px; border: 1px solid var(--border);">
-                      <p style="margin: 0 0 10px 0; color:var(--dark); border-bottom:1px solid #ccc; padding-bottom:5px;">🛍️ 消費明細</p>
-                      ${itemsHtml}
-                      <p style="margin: 10px 0 0 0; font-size: 1.2em; color: var(--red); border-top: 1px dashed #ccc; padding-top: 10px; text-align:right;">總計：$${targetInv.total || 0}</p>
-                  </div>
-              </div>
-          `;
+               <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: bold;">
+                   ${targetInv.isWon ? `<div style="background: #fffbeb; border: 1px solid #f59e0b; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align:center;"><p style="margin:0; color:#d97706; font-size:1.2em;">🏆 本發票幸運中獎！</p><p style="margin:5px 0 0 0; color:var(--red);">${escapeHTML(prizeName)} - <b>$${prizeAmt}</b></p></div>` : ''}
+                   <p style="border-bottom: 1px dashed var(--border); padding-bottom: 5px; font-size:1.1em; color:var(--primary);">🧾 發票號碼：${escapeHTML(targetInv.num) || '無'}</p>
+                   <p><b>發票日期：</b>${displayDate || '無'}</p>
+                   <p style="display:flex; align-items:center; gap:10px;">
+                       <b>發票隨機碼：</b>
+                       <span id="rand_code_display" style="background:#f1f5f9; padding:2px 8px; border-radius:4px; letter-spacing:2px; font-family:monospace;">****</span>
+                       <button id="rand_code_btn" onclick="revealRandCode('${escapeHTML(targetInv.rand) || '0000'}')" style="background:var(--red); color:white; border:none; border-radius:4px; padding:3px 8px; font-size:0.8em; cursor:pointer;">顯示</button>
+                   </p>
+                   <p><b>賣方名稱：</b>${escapeHTML(targetInv.sellerName) || '未提供'}</p>
+                   <p><b>賣方統編：</b>${escapeHTML(targetInv.sellerVat) || '未提供'}</p>
+                   <p><b>賣方地址：</b>${escapeHTML(targetInv.sellerAddr) || '未提供'}</p>
+                   ${targetInv.oid ? `<p style="margin-top:10px;"><button class="btn" style="padding:6px; font-size:0.8em; background:#3b82f6;" onclick="Swal.close(); setTimeout(()=>showOrderDetailPopup('${targetInv.oid}'), 300)">📦 查看關聯訂單 (${targetInv.oid})</button></p>` : ''}
+                   <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px; margin-top: 15px; border: 1px solid var(--border);">
+                       <p style="margin: 0 0 10px 0; color:var(--dark); border-bottom:1px solid #ccc; padding-bottom:5px;">🛍️ 消費明細</p>
+                       ${itemsHtml}
+                       <p style="margin: 10px 0 0 0; font-size: 1.2em; color: var(--red); border-top: 1px dashed #ccc; padding-top: 10px; text-align:right;">總計：$${targetInv.total || 0}</p>
+                   </div>
+               </div>
+           `;
 Swal.fire({ title: '發票詳細資訊', html: htmlContent, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' });
 }
 
@@ -2102,58 +2066,55 @@ Swal.fire({ title: '🎊 狂賀中獎！', html: `您的電子發票 <b>${inv.nu
 
 // ── 🚨 BNPL 2.0 修正：帳單 (Loans) 與 Installments (BNPL) 展開介面 ──
 function renderLoans() {
-if (!store || !store.loans) return;
-const filteredLoans = store.loans.filter(l => { const statusStr = String(l.status||''); const isCleared = (statusStr === 'PAID'); const isOverdue = (!isCleared && l.penalty > 0); if (currentLoanTab === 1) return isCleared; else if (currentLoanTab === 2) return isOverdue; else return !isCleared && !isOverdue; });
 if (!store) return;
 const loans = Array.isArray(store.loans) ? store.loans : [];
 const filteredLoans = loans.filter(l => { const statusStr = String(l.status||''); const isCleared = (statusStr === 'PAID'); const isOverdue = (!isCleared && l.penalty > 0); if (currentLoanTab === 1) return isCleared; else if (currentLoanTab === 2) return isOverdue; else return !isCleared && !isOverdue; });
 const sortL = document.getElementById('sortL').value; filteredLoans.sort((a, b) => { const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; const db = new Date(String(b.expiry||'').replace(/-/g, '/')).getTime() || 0; return sortL === 'asc' ? da - db : db - da; });
 
 document.getElementById('lList').innerHTML = filteredLoans.map(l => {
-let isCleared = (l.status === 'PAID');
-let loanIdVal = l.id; 
-
-if (l.loanType === 'INSTALLMENT') {
-let childHtml = '';
-        let installments = (store.installments || []).filter(inst => String(inst.loanId) === String(l.id));
+    let isCleared = (l.status === 'PAID');
+    let loanIdVal = l.id; 
+    
+    if (l.loanType === 'INSTALLMENT') {
+        let childHtml = '';
         let installments = (Array.isArray(store.installments) ? store.installments : []).filter(inst => String(inst.loanId) === String(l.id));
-installments.sort((a, b) => a.installmentNo - b.installmentNo);
+        installments.sort((a, b) => a.installmentNo - b.installmentNo);
+        
+        childHtml = installments.map(inst => {
+            let instStatus = tStatus(inst.status);
+            let remainingDue = Math.max(0, inst.amount + (inst.lateFee || 0) - (inst.paidAmount || 0)); 
+            
+            let payBtn = (inst.status !== 'PAID' && remainingDue > 0) ? `<button class="btn" style="background:#3b82f6; padding:6px 10px; font-size:0.75em; border-radius:6px; margin-top:5px; width:100%;" onclick="showPaymentQR('${inst.installmentId}', '${encodeURIComponent(l.item + ' - 第' + inst.installmentNo + '期')}', ${remainingDue}, true, false)">📲 繳納 $${remainingDue}</button>` : '';
+            let statusColor = inst.status === 'PAID' ? 'var(--green)' : (inst.status === 'OVERDUE' ? 'var(--red)' : 'var(--orange)');
+            return `
+            <div style="background:rgba(0,0,0,0.03); padding:10px; border-radius:8px; margin-top:8px; border:1px solid #eee;">
+                <div style="display:flex; justify-content:space-between; font-size:0.85em;">
+                    <b>第 ${inst.installmentNo}/${inst.totalInstallments} 期</b>
+                    <span style="color:${statusColor}; font-weight:bold;">${instStatus}</span>
+                </div>
+                <div style="font-size:0.8em; margin-top:4px;">單期總額: $${inst.amount + inst.lateFee} (含罰金 $${inst.lateFee})</div>
+                <div style="font-size:0.75em; color:#666; margin-top:2px;">到期日: ${formatDateString(inst.dueDate)}</div>
+                ${payBtn}
+            </div>`;
+        }).join('');
 
-childHtml = installments.map(inst => {
-let instStatus = tStatus(inst.status);
-let remainingDue = Math.max(0, inst.amount + (inst.lateFee || 0) - (inst.paidAmount || 0)); 
+        let payAllBtn = (!isCleared && l.totalDue > 0) ? `<button class="btn" style="background:var(--primary); padding:8px 12px; font-size:0.85em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item + ' (全部結清)')}',${l.totalDue}, false, true)">💰 產生全部結清條碼</button>` : '';
 
-let payBtn = (inst.status !== 'PAID' && remainingDue > 0) ? `<button class="btn" style="background:#3b82f6; padding:6px 10px; font-size:0.75em; border-radius:6px; margin-top:5px; width:100%;" onclick="showPaymentQR('${inst.installmentId}', '${encodeURIComponent(l.item + ' - 第' + inst.installmentNo + '期')}', ${remainingDue}, true, false)">📲 繳納 $${remainingDue}</button>` : '';
-let statusColor = inst.status === 'PAID' ? 'var(--green)' : (inst.status === 'OVERDUE' ? 'var(--red)' : 'var(--orange)');
-return `
-           <div style="background:rgba(0,0,0,0.03); padding:10px; border-radius:8px; margin-top:8px; border:1px solid #eee;">
-               <div style="display:flex; justify-content:space-between; font-size:0.85em;">
-                   <b>第 ${inst.installmentNo}/${inst.totalInstallments} 期</b>
-                   <span style="color:${statusColor}; font-weight:bold;">${instStatus}</span>
-               </div>
-               <div style="font-size:0.8em; margin-top:4px;">單期總額: $${inst.amount + inst.lateFee} (含罰金 $${inst.lateFee})</div>
-               <div style="font-size:0.75em; color:#666; margin-top:2px;">到期日: ${formatDateString(inst.dueDate)}</div>
-               ${payBtn}
-           </div>`;
-}).join('');
-
-let payAllBtn = (!isCleared && l.totalDue > 0) ? `<button class="btn" style="background:var(--primary); padding:8px 12px; font-size:0.85em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item + ' (全部結清)')}',${l.totalDue}, false, true)">💰 產生全部結清條碼</button>` : '';
-
-return `
-       <div class="card" style="border: 1px solid var(--blue);">
-           ${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '<span class="overdue-tag" style="background:var(--blue);">分期計畫</span>')}
-           <div style="font-size:1.1em; margin-bottom:5px; color:var(--blue);">${escapeHTML(l.item)}</div>
-           <div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">總分期: ${l.installmentCount} 期 (已繳 ${l.completedInstall} 期)</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '剩餘 $' + l.totalDue}</b></div>
-           ${payAllBtn}
-           <div style="margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;">
-               <button class="btn" style="background:transparent; color:var(--blue); border:1px solid var(--blue); padding:8px; font-size:0.85em;" onclick="document.getElementById('inst_list_${loanIdVal}').style.display = document.getElementById('inst_list_${loanIdVal}').style.display==='none'?'block':'none'">👀 展開/收合 分期明細</button>
-               <div id="inst_list_${loanIdVal}" style="display:none; margin-top:10px;">${childHtml}</div>
-           </div>
-       </div>`;
-} else {
-let payBtn = (!isCleared) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item)}',${l.totalDue}, false, false)">📲 顯示繳款條碼</button>` : '';
-return `<div class="card">${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${escapeHTML(l.item)}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '$' + l.totalDue}</b></div>${payBtn}</div>`;
-}
+        return `
+        <div class="card" style="border: 1px solid var(--blue);">
+            ${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '<span class="overdue-tag" style="background:var(--blue);">分期計畫</span>')}
+            <div style="font-size:1.1em; margin-bottom:5px; color:var(--blue);">${escapeHTML(l.item)}</div>
+            <div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">總分期: ${l.installmentCount} 期 (已繳 ${l.completedInstall} 期)</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '剩餘 $' + l.totalDue}</b></div>
+            ${payAllBtn}
+            <div style="margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 10px;">
+                <button class="btn" style="background:transparent; color:var(--blue); border:1px solid var(--blue); padding:8px; font-size:0.85em;" onclick="document.getElementById('inst_list_${loanIdVal}').style.display = document.getElementById('inst_list_${loanIdVal}').style.display==='none'?'block':'none'">👀 展開/收合 分期明細</button>
+                <div id="inst_list_${loanIdVal}" style="display:none; margin-top:10px;">${childHtml}</div>
+            </div>
+        </div>`;
+    } else {
+        let payBtn = (!isCleared) ? `<button class="btn" style="background:#3b82f6; padding:8px 12px; font-size:0.8em; border-radius:8px; margin-top:10px; width:100%;" onclick="showPaymentQR('${l.id}','${encodeURIComponent(l.item)}',${l.totalDue}, false, false)">📲 顯示繳款條碼</button>` : '';
+        return `<div class="card">${isCleared ? '<span class="overdue-tag" style="background:var(--green);">已結清</span>' : (l.penalty > 0 ? `<span class="overdue-tag">逾期罰金 $${l.penalty}</span>` : '')}<div style="font-size:1.1em; margin-bottom:5px;">${escapeHTML(l.item)}</div><div style="display:flex; justify-content:space-between;"><small style="opacity:0.6;">期限: ${formatDateString(l.expiry)}</small><b style="color:${isCleared ? 'var(--green)' : 'var(--red)'}; font-size:1.2em;">${isCleared ? '已結清' : '$' + l.totalDue}</b></div>${payBtn}</div>`;
+    }
 }).join('') || '<p style="text-align:center; opacity:0.3;">此分類下目前無帳單</p>';
 }
 
@@ -2165,13 +2126,13 @@ let itemName = decodeURIComponent(encodedItem);
 const { value: amt } = await Swal.fire({
 title: '📲 產生繳款條碼',
 html: `
-                  <div style="text-align:left; font-size:14px;">
-                      <div style="margin-bottom:8px; font-weight:bold; color:#555;">${escapeHTML(itemName)}</div>
-                      <div style="margin-bottom:10px;">應繳金額：<b style="color:var(--red); font-size:1.1em;">$${totalDue}</b></div>
-                      <input id="swal-pay-amt" class="swal2-input" type="number" placeholder="請輸入繳費金額" value="${totalDue}" min="1" style="width:100%; margin:0 0 10px 0; box-sizing:border-box;">
-                      <button type="button" onclick="document.getElementById('swal-pay-amt').value='${totalDue}';" style="width:100%; padding:10px; background:var(--pink); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer;">💯 全額繳款 $${totalDue}</button>
-                      <div style="font-size:11px; color:#aaa; margin-top:8px; text-align:center;">也可手動輸入部分還款金額</div>
-                  </div>`,
+                   <div style="text-align:left; font-size:14px;">
+                       <div style="margin-bottom:8px; font-weight:bold; color:#555;">${escapeHTML(itemName)}</div>
+                       <div style="margin-bottom:10px;">應繳金額：<b style="color:var(--red); font-size:1.1em;">$${totalDue}</b></div>
+                       <input id="swal-pay-amt" class="swal2-input" type="number" placeholder="請輸入繳費金額" value="${totalDue}" min="1" style="width:100%; margin:0 0 10px 0; box-sizing:border-box;">
+                       <button type="button" onclick="document.getElementById('swal-pay-amt').value='${totalDue}';" style="width:100%; padding:10px; background:var(--pink); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer;">💯 全額繳款 $${totalDue}</button>
+                       <div style="font-size:11px; color:#aaa; margin-top:8px; text-align:center;">也可手動輸入部分還款金額</div>
+                   </div>`,
 confirmButtonText: '產生條碼 ➔',
 showCancelButton: true,
 cancelButtonText: '取消',
@@ -2186,13 +2147,13 @@ return v;
 if (!amt) return;
 
 if (isPayAll) {
-Swal.fire({
-title: '請出示此畫面給管理員',
-html: `<div style="font-size:16px;">管理員請至後台 <b>[BNPL 總管]</b><br>選擇會員後點擊 <b>[💰 提前全部結清]</b>。<br><br>結清總額：<b style="color:var(--red); font-size:1.5em;">$${amt}</b></div>`,
-icon: 'info',
-confirmButtonColor: 'var(--pink)'
-});
-return;
+    Swal.fire({
+        title: '請出示此畫面給管理員',
+        html: `<div style="font-size:16px;">管理員請至後台 <b>[BNPL 總管]</b><br>選擇會員後點擊 <b>[💰 提前全部結清]</b>。<br><br>結清總額：<b style="color:var(--red); font-size:1.5em;">$${amt}</b></div>`,
+        icon: 'info',
+        confirmButtonColor: 'var(--pink)'
+    });
+    return;
 }
 
 let prefix = "PAY";
@@ -2209,17 +2170,15 @@ document.getElementById('paymentQrBox').style.display = 'flex';
 };
 
 function renderCoupons() {
-if (!store || !store.coupons) return; const todayStr = new Date().toISOString().split('T')[0];
-const filteredCoupons = store.coupons.filter(c => { const statusStr = String(c.status||''); const isUsed = (statusStr === '已使用' || statusStr === '已核銷' || statusStr === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; } if (currentCouponTab === 1) return isUsed; else if (currentCouponTab === 2) return !isUsed && isExpired; else return !isUsed && !isExpired; });
 if (!store) return;
 const coupons = Array.isArray(store.coupons) ? store.coupons : [];
 const todayStr = new Date().toISOString().split('T')[0];
 const filteredCoupons = coupons.filter(c => { const statusStr = String(c.status||''); const isUsed = (statusStr === '已使用' || statusStr === '已核銷' || statusStr === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; } if (currentCouponTab === 1) return isUsed; else if (currentCouponTab === 2) return !isUsed && isExpired; else return !isUsed && !isExpired; });
 const sortC = document.getElementById('sortC').value; 
 filteredCoupons.sort((a, b) => { 
-const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; 
-const db = new Date(String(b.expiry||'').replace(/-/g, '/')).getTime() || 0; 
-return sortC === 'asc' ? da - db : db - da; 
+    const da = new Date(String(a.expiry||'').replace(/-/g, '/')).getTime() || 0; 
+    const db = new Date(String(b.expiry||'').replace(/-/g, '/')).getTime() || 0; 
+    return sortC === 'asc' ? da - db : db - da; 
 });
 document.getElementById('cpList').innerHTML = filteredCoupons.map(c => {
 const statusStr = String(c.status||''); const isUsed = (statusStr === '已使用' || statusStr === '已核銷' || statusStr === 'Macro已使用'); let isExpired = false; if (c.expiry) { const match = String(c.expiry).match(/\d{4}-\d{2}-\d{2}/); if (match && match[0] < todayStr) isExpired = true; }
@@ -2232,41 +2191,41 @@ function switchCouponTab(tabIndex) { currentCouponTab = tabIndex; document.query
 
 function showCouponQR(couponId, couponName) {
 
-// 🚫 停權會員禁止使用優惠券
-if (
-store &&
-store.userData &&
-store.userData.isSuspended
-) {
-Swal.fire({
-icon: 'warning',
-title: '帳號目前已停權',
-text: '停權期間暫時無法使用或核銷優惠券。',
-confirmButtonText: '我知道了',
-confirmButtonColor: 'var(--red)'
-});
+    // 🚫 停權會員禁止使用優惠券
+    if (
+        store &&
+        store.userData &&
+        store.userData.isSuspended
+    ) {
+        Swal.fire({
+            icon: 'warning',
+            title: '帳號目前已停權',
+            text: '停權期間暫時無法使用或核銷優惠券。',
+            confirmButtonText: '我知道了',
+            confirmButtonColor: 'var(--red)'
+        });
 
-return;
-}
+        return;
+    }
 
-couponQr.clear();
-couponQr.makeCode(couponId);
+    couponQr.clear();
+    couponQr.makeCode(couponId);
 
-document.getElementById(
-'couponQrTitle'
-).innerText =
-`【${couponName}】核銷條碼`;
+    document.getElementById(
+        'couponQrTitle'
+    ).innerText =
+        `【${couponName}】核銷條碼`;
 
-document.getElementById(
-'couponQrBox'
-).style.display = 'flex';
+    document.getElementById(
+        'couponQrBox'
+    ).style.display = 'flex';
 
-if (
-typeof event !== 'undefined' &&
-event
-) {
-event.stopPropagation();
-}
+    if (
+        typeof event !== 'undefined' &&
+        event
+    ) {
+        event.stopPropagation();
+    }
 }
 function openTab(i) { 
 document.querySelectorAll('.page').forEach(p => p.style.display='none'); 
@@ -2331,61 +2290,61 @@ else if (res) showCustomerServiceAlert("密碼變更失敗", res.message || "請
 }
 
 async function triggerLogout() {
-const confirmResult = await Swal.fire({
-title: '確認要登出系統嗎？',
-text: '登出後需要重新輸入您的帳號與密碼才能存取行動會員。',
-icon: 'question', showCancelButton: true,
-confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '安全登出'
-});
-if (!confirmResult.isConfirmed) return;
+  const confirmResult = await Swal.fire({
+    title: '確認要登出系統嗎？',
+    text: '登出後需要重新輸入您的帳號與密碼才能存取行動會員。',
+    icon: 'question', showCancelButton: true,
+    confirmButtonColor: 'var(--red)', cancelButtonText: '取消', confirmButtonText: '安全登出'
+  });
+  if (!confirmResult.isConfirmed) return;
 
-if (_sessionHeartbeatTimer) { clearInterval(_sessionHeartbeatTimer); _sessionHeartbeatTimer = null; }
+  if (_sessionHeartbeatTimer) { clearInterval(_sessionHeartbeatTimer); _sessionHeartbeatTimer = null; }
 
-if (currentSessionId && store && store.userData) {
-let logoutOk = false;
-try {
-const raw = await fetch(SCRIPT_URL, {
-method: 'POST',
-body: JSON.stringify({ action: 'logout', uid: store.userData.id, sessionId: currentSessionId })
-});
-const logoutRes = await raw.json();
-logoutOk = logoutRes && logoutRes.success;
-} catch(e) {
-logoutOk = false;
-}
+  if (currentSessionId && store && store.userData) {
+    let logoutOk = false;
+    try {
+      const raw = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'logout', uid: store.userData.id, sessionId: currentSessionId })
+      });
+      const logoutRes = await raw.json();
+      logoutOk = logoutRes && logoutRes.success;
+    } catch(e) {
+      logoutOk = false;
+    }
 
-if (!logoutOk) {
-startSessionHeartbeat();
-Swal.fire({
-title: '⚠️ 登出失敗',
-text: '無法連線至伺服器完成登出，請確認網路連線後再試。',
-icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '確定'
-});
-return;
-}
-}
+    if (!logoutOk) {
+      startSessionHeartbeat();
+      Swal.fire({
+        title: '⚠️ 登出失敗',
+        text: '無法連線至伺服器完成登出，請確認網路連線後再試。',
+        icon: 'error', confirmButtonColor: 'var(--pink)', confirmButtonText: '確定'
+      });
+      return;
+    }
+  }
 
-await Swal.fire({
-title: '登出成功', text: '您已安全登出本系統，再見！',
-icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '回到登入頁'
-});
-location.reload();
+  await Swal.fire({
+    title: '登出成功', text: '您已安全登出本系統，再見！',
+    icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '回到登入頁'
+  });
+  location.reload();
 }
 
 window.openGuestTicketForm = function() {
 Swal.fire({
 title: '訪客 / 登入問題通報',
 html: `
-                  <div style="text-align:left; font-size:14px;">
-                      <p style="color:#666; font-size:13px; margin-bottom:10px;">無法登入或忘記密碼？請填寫下方表單，管理員將盡快與您聯繫。</p>
-                      <label style="color:var(--text);">您的稱呼 / 帳號：</label>
-                      <input type="text" id="g_tic_name" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請輸入您記得的帳號或姓名">
-                      <label style="color:var(--text);">聯絡方式：</label>
-                      <input type="text" id="g_tic_contact" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請填寫手機號碼或 Email">
-                      <label style="color:var(--text);">詳細問題描述：</label>
-                      <textarea id="g_tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:80px;" placeholder="請描述您遇到的問題..."></textarea>
-                  </div>
-              `,
+                   <div style="text-align:left; font-size:14px;">
+                       <p style="color:#666; font-size:13px; margin-bottom:10px;">無法登入或忘記密碼？請填寫下方表單，管理員將盡快與您聯繫。</p>
+                       <label style="color:var(--text);">您的稱呼 / 帳號：</label>
+                       <input type="text" id="g_tic_name" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請輸入您記得的帳號或姓名">
+                       <label style="color:var(--text);">聯絡方式：</label>
+                       <input type="text" id="g_tic_contact" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請填寫手機號碼或 Email">
+                       <label style="color:var(--text);">詳細問題描述：</label>
+                       <textarea id="g_tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:80px;" placeholder="請描述您遇到的問題..."></textarea>
+                   </div>
+               `,
 showCancelButton: true, confirmButtonText: '送出通報', confirmButtonColor: '#3b82f6', cancelButtonText: '取消',
 preConfirm: () => {
 let name = document.getElementById('g_tic_name').value.trim();
@@ -2398,16 +2357,16 @@ return { name, contact, desc };
 if (res.isConfirmed) {
 let fullDesc = "【訪客通報】\n聯絡方式: " + res.value.contact + "\n問題描述: " + res.value.desc;
 let fetchRes = await fetchWithQueue(
-SCRIPT_URL,
-{
-action: 'submitTicket',
-uid: '訪客_' + res.value.name,
-category: '系統問題',
-subCategory: '登入障礙/忘記密碼',
-subject: '訪客登入問題通報',
-message: fullDesc
-},
-"通報送出中..."
+    SCRIPT_URL,
+    {
+        action: 'submitTicket',
+        uid: '訪客_' + res.value.name,
+        category: '系統問題',
+        subCategory: '登入障礙/忘記密碼',
+        subject: '訪客登入問題通報',
+        message: fullDesc
+    },
+    "通報送出中..."
 );
 if (fetchRes && fetchRes.success) Swal.fire('通報成功', '您的問題已送出！管理員會盡快透過您留下的聯絡方式協助您。', 'success');
 else Swal.fire('錯誤', '通報失敗，請稍後再試。', 'error');
@@ -2418,19 +2377,19 @@ else Swal.fire('錯誤', '通報失敗，請稍後再試。', 'error');
 window.openCustomerServiceModal = function() {
 let tics = store.tickets || [];
 let listHtml = tics.map(t => `
-              <div style="background:#f8fafc; border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:8px; cursor:pointer;" onclick="openChatWindow('${t.tid}')">
-                  <div style="display:flex; justify-content:space-between; font-size:12px; color:#666;"><span>${t.tid}</span><span style="color:${t.status==='處理中'?'var(--orange)':'var(--green)'}; font-weight:bold;">${t.status}</span></div>
-                  <div style="font-weight:bold; font-size:14px; margin-top:4px; color:var(--text);">${escapeHTML(t.subject)}</div>
-              </div>`).join('');
+               <div style="background:#f8fafc; border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:8px; cursor:pointer;" onclick="openChatWindow('${t.tid}')">
+                   <div style="display:flex; justify-content:space-between; font-size:12px; color:#666;"><span>${t.tid}</span><span style="color:${t.status==='處理中'?'var(--orange)':'var(--green)'}; font-weight:bold;">${t.status}</span></div>
+                   <div style="font-weight:bold; font-size:14px; margin-top:4px; color:var(--text);">${escapeHTML(t.subject)}</div>
+               </div>`).join('');
 
 Swal.fire({
 title: '線上客服與問題通報',
 html: `
-              <div style="text-align:left; max-height:60vh; overflow-y:auto; padding-right:5px;">
-                  <button class="btn" style="background:var(--pink); margin-bottom:15px; font-size:15px;" onclick="showNewTicketForm()">＋ 建立新通報案件</button>
-                  <div style="font-weight:bold; border-bottom:2px solid #eee; padding-bottom:5px; margin-bottom:10px; color:var(--text);">我的歷史案件</div>
-                  ${listHtml || '<p style="font-size:13px; color:#999; text-align:center;">尚無通報紀錄</p>'}
-              </div>`,
+               <div style="text-align:left; max-height:60vh; overflow-y:auto; padding-right:5px;">
+                   <button class="btn" style="background:var(--pink); margin-bottom:15px; font-size:15px;" onclick="showNewTicketForm()">＋ 建立新通報案件</button>
+                   <div style="font-weight:bold; border-bottom:2px solid #eee; padding-bottom:5px; margin-bottom:10px; color:var(--text);">我的歷史案件</div>
+                   ${listHtml || '<p style="font-size:13px; color:#999; text-align:center;">尚無通報紀錄</p>'}
+               </div>`,
 showConfirmButton: false, showCloseButton: true
 });
 }
@@ -2440,37 +2399,37 @@ if (store && store.userData.isSuspended) return Swal.fire('提示', '停權期�
 Swal.fire({
 title: '建立新通報',
 html: `
-                  <div style="text-align:left; font-size:14px;">
-                      <label style="color:var(--text);">問題大分類：</label>
-                      <select id="tic_cat" class="swal2-select" style="width:100%; margin:5px 0 10px 0;">
-                          <option>訂單問題</option>
-                          <option>帳務問題</option>
-                          <option>系統問題</option>
-                          <option>我想問的問題分類不在這上面</option>
-                      </select>
-                      <label style="color:var(--text);">問題子分類：</label><input type="text" id="tic_subcat" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="例如: 忘記密碼、商品損壞">
-                      <label style="color:var(--text);">主旨：</label><input type="text" id="tic_subject" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="簡述您的問題">
-                      <label style="color:var(--text);">詳細問題描述：</label><textarea id="tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:80px;" placeholder="請詳細描述您遇到的狀況..."></textarea>
-                  </div>
-              `,
+                   <div style="text-align:left; font-size:14px;">
+                       <label style="color:var(--text);">問題大分類：</label>
+                       <select id="tic_cat" class="swal2-select" style="width:100%; margin:5px 0 10px 0;">
+                           <option>訂單問題</option>
+                           <option>帳務問題</option>
+                           <option>系統問題</option>
+                           <option>我想問的問題分類不在這上面</option>
+                       </select>
+                       <label style="color:var(--text);">問題子分類：</label><input type="text" id="tic_subcat" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="例如: 忘記密碼、商品損壞">
+                       <label style="color:var(--text);">主旨：</label><input type="text" id="tic_subject" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="簡述您的問題">
+                       <label style="color:var(--text);">詳細問題描述：</label><textarea id="tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:80px;" placeholder="請詳細描述您遇到的狀況..."></textarea>
+                   </div>
+               `,
 showCancelButton: true, confirmButtonText: '送出通報', confirmButtonColor: '#3b82f6', cancelButtonText: '取消',
 preConfirm: () => {
-const category = document.getElementById('tic_cat').value;
-const subCategory = document.getElementById('tic_subcat').value.trim();
-const subject = document.getElementById('tic_subject').value.trim();
-const message = document.getElementById('tic_desc').value.trim();
+    const category = document.getElementById('tic_cat').value;
+    const subCategory = document.getElementById('tic_subcat').value.trim();
+    const subject = document.getElementById('tic_subject').value.trim();
+    const message = document.getElementById('tic_desc').value.trim();
 
-if (!subCategory || !subject || !message) {
-Swal.showValidationMessage('請確實填寫所有欄位');
-return false;
-}
+    if (!subCategory || !subject || !message) {
+        Swal.showValidationMessage('請確實填寫所有欄位');
+        return false;
+    }
 
-return {
-category: category,
-subCategory: subCategory,
-subject: subject,
-message: message
-};
+    return {
+        category: category,
+        subCategory: subCategory,
+        subject: subject,
+        message: message
+    };
 }
 }).then(async (res) => {
 if (res.isConfirmed) {
@@ -2487,24 +2446,24 @@ let chatHtml = msgs.map(m => `<div class="msg-bubble ${m.sender==='Admin'?'msg-a
 
 let chatInputHtml = "";
 if (store && store.userData.isSuspended) {
-chatInputHtml = `<div style="padding:10px; text-align:center; color:var(--red); font-size:13px; font-weight:bold;">🚫 停權期間無法傳送新訊息</div>`;
+    chatInputHtml = `<div style="padding:10px; text-align:center; color:var(--red); font-size:13px; font-weight:bold;">🚫 停權期間無法傳送新訊息</div>`;
 } else {
-chatInputHtml = `
-      <div class="chat-input-area">
-          <input type="text" id="user_chat_input" placeholder="輸入訊息...">
-          <button onclick="sendUserChat('${tid}')" style="background:var(--pink); color:#fff; border:none;">傳送</button>
-      </div>
-   `;
+    chatInputHtml = `
+       <div class="chat-input-area">
+           <input type="text" id="user_chat_input" placeholder="輸入訊息...">
+           <button onclick="sendUserChat('${tid}')" style="background:var(--pink); color:#fff; border:none;">傳送</button>
+       </div>
+    `;
 }
 
 Swal.fire({
 title: `即時交談 (${tid})`,
 html: `
-                  <div class="chat-container">
-                      <div class="chat-box" id="user_chat_box">${chatHtml}</div>
-                      ${chatInputHtml}
-                  </div>
-              `,
+                   <div class="chat-container">
+                       <div class="chat-box" id="user_chat_box">${chatHtml}</div>
+                       ${chatInputHtml}
+                   </div>
+               `,
 showConfirmButton: false, showCloseButton: true, width: '90%', padding: '10px'
 }).then(() => openCustomerServiceModal());
 setTimeout(() => { let box = document.getElementById('user_chat_box'); if(box) box.scrollTop = box.scrollHeight; }, 100);
@@ -2518,14 +2477,14 @@ let box = document.getElementById('user_chat_box');
 box.innerHTML += `<div class="msg-bubble msg-user">${escapeHTML(msg)}<div class="msg-time">傳送中...</div></div>`; box.scrollTop = box.scrollHeight;
 
 let res = await fetchWithQueue(
-SCRIPT_URL,
-{
-action: 'sendChat',
-tid: tid,
-sender: store.userData.id,
-message: msg
-},
-"發送中..."
+    SCRIPT_URL,
+    {
+        action: 'sendChat',
+        tid: tid,
+        sender: store.userData.id,
+        message: msg
+    },
+    "發送中..."
 );
 if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 500); }
 }
@@ -2536,142 +2495,142 @@ if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 5
 let legalDocs = null; 
 
 async function fetchLegalDocsIfNeeded() {
-if (legalDocs !== null) return;
-try {
-let r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchLegalDocs' }) });
-let j = await r.json();
-legalDocs = (j.success && Array.isArray(j.docs)) ? j.docs : [];
-} catch(e) { legalDocs = []; }
+    if (legalDocs !== null) return;
+    try {
+        let r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchLegalDocs' }) });
+        let j = await r.json();
+        legalDocs = (j.success && Array.isArray(j.docs)) ? j.docs : [];
+    } catch(e) { legalDocs = []; }
 }
 
 window.openLegalCenter = async function() {
-document.getElementById('legalCenterBox').style.display = 'flex';
-if (legalDocs === null) {
-document.getElementById('legalDocListContainer').innerHTML = '<p style="text-align:center; opacity:0.4; font-size:0.9em; margin-top:40px;">資料載入中...</p>';
-await fetchLegalDocsIfNeeded();
-}
-renderLegalDocListFront();
+    document.getElementById('legalCenterBox').style.display = 'flex';
+    if (legalDocs === null) {
+        document.getElementById('legalDocListContainer').innerHTML = '<p style="text-align:center; opacity:0.4; font-size:0.9em; margin-top:40px;">資料載入中...</p>';
+        await fetchLegalDocsIfNeeded();
+    }
+    renderLegalDocListFront();
 }
 
 function renderLegalDocListFront() {
-const el = document.getElementById('legalDocListContainer'); if (!el) return;
-if (!legalDocs || legalDocs.length === 0) {
-el.innerHTML = '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin-top:40px;">目前尚無已發布的法律文件。</p>'; return;
-}
-el.innerHTML = legalDocs.map(doc => `
-      <div class="legal-doc-card" onclick="openLegalDoc('${doc.docId}')">
-          <div>
-              <div style="font-size:0.72em; color:var(--pink); margin-bottom:3px;">${doc.docId}</div>
-              <div style="font-weight:bold; font-size:0.95em;">${escapeHTML(doc.title)}</div>
-              <div style="font-size:0.72em; opacity:0.5; margin-top:3px;">版本：${doc.version} ｜ 生效：${doc.effectiveDate || '未設定'}</div>
-          </div>
-          <span style="font-size:1.2em; opacity:0.4; margin-left:8px;">›</span>
-      </div>`).join('');
+    const el = document.getElementById('legalDocListContainer'); if (!el) return;
+    if (!legalDocs || legalDocs.length === 0) {
+        el.innerHTML = '<p style="text-align:center; opacity:0.3; font-size:0.9em; margin-top:40px;">目前尚無已發布的法律文件。</p>'; return;
+    }
+    el.innerHTML = legalDocs.map(doc => `
+       <div class="legal-doc-card" onclick="openLegalDoc('${doc.docId}')">
+           <div>
+               <div style="font-size:0.72em; color:var(--pink); margin-bottom:3px;">${doc.docId}</div>
+               <div style="font-weight:bold; font-size:0.95em;">${escapeHTML(doc.title)}</div>
+               <div style="font-size:0.72em; opacity:0.5; margin-top:3px;">版本：${doc.version} ｜ 生效：${doc.effectiveDate || '未設定'}</div>
+           </div>
+           <span style="font-size:1.2em; opacity:0.4; margin-left:8px;">›</span>
+       </div>`).join('');
 }
 
 window.openLegalDoc = function(docId) {
-let doc = (legalDocs || []).find(d => d.docId === docId); if (!doc) return;
-document.getElementById('legalDocDetailTitle').innerText = doc.title;
-document.getElementById('legalDocDetailContent').innerHTML = `
-      <div class="legal-doc-meta">
-          <span class="lm-label">文件編號</span><b>${doc.docId}</b>
-          <span class="lm-label">版本</span><b>${doc.version || '—'}</b>
-          <span class="lm-label">生效日期</span><b>${doc.effectiveDate || '未設定'}</b>
-          <span class="lm-label">最後修訂</span><b>${doc.lastRevised || '未設定'}</b>
-          <span class="lm-label">制定單位</span><b>${escapeHTML(doc.department) || '—'}</b>
-      </div>
-      <div class="legal-doc-content">${(doc.content || '（本文件內容尚待管理員填寫）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-      ${doc.contactInfo ? `<div class="legal-contact-box"><b>📬 聯絡資訊</b><br><span style="font-weight:normal;">${escapeHTML(doc.contactInfo)}</span></div>` : ''}
-      <div style="height:30px;"></div>`;
-document.getElementById('legalCenterBox').style.display = 'none';
-document.getElementById('legalDocDetailBox').style.display = 'flex';
+    let doc = (legalDocs || []).find(d => d.docId === docId); if (!doc) return;
+    document.getElementById('legalDocDetailTitle').innerText = doc.title;
+    document.getElementById('legalDocDetailContent').innerHTML = `
+       <div class="legal-doc-meta">
+           <span class="lm-label">文件編號</span><b>${doc.docId}</b>
+           <span class="lm-label">版本</span><b>${doc.version || '—'}</b>
+           <span class="lm-label">生效日期</span><b>${doc.effectiveDate || '未設定'}</b>
+           <span class="lm-label">最後修訂</span><b>${doc.lastRevised || '未設定'}</b>
+           <span class="lm-label">制定單位</span><b>${escapeHTML(doc.department) || '—'}</b>
+       </div>
+       <div class="legal-doc-content">${(doc.content || '（本文件內容尚待管理員填寫）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+       ${doc.contactInfo ? `<div class="legal-contact-box"><b>📬 聯絡資訊</b><br><span style="font-weight:normal;">${escapeHTML(doc.contactInfo)}</span></div>` : ''}
+       <div style="height:30px;"></div>`;
+    document.getElementById('legalCenterBox').style.display = 'none';
+    document.getElementById('legalDocDetailBox').style.display = 'flex';
 }
 
 window.openLegalDocFromConsent = function(docId) {
-let doc = (legalDocs || []).find(d => d.docId === docId);
-let overlay = document.getElementById('legalReaderOverlay');
-let titleEl = document.getElementById('legalReaderTitle');
-let contentEl = document.getElementById('legalReaderContent');
-if (!doc) {
-titleEl.innerText = docId;
-contentEl.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:40px;">此文件尚未發布，請聯絡管理員。</p>';
-overlay.style.display = 'flex'; return;
-}
-titleEl.innerText = doc.title;
-contentEl.innerHTML = `
-      <div style="background:#f8fafc; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:0.85em; line-height:1.9; color:#64748b;">
-          <b style="color:#db2777;">${doc.docId}</b> ｜ 版本：${doc.version || '—'} ｜ 生效日期：${doc.effectiveDate || '未設定'} ｜ 制定單位：${escapeHTML(doc.department) || '—'}
-      </div>
-      <div style="white-space:pre-wrap; line-height:2; color:#1e293b;">${(doc.content || '（本文件內容尚待管理員填寫後發布）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-      ${doc.contactInfo ? `<div style="margin-top:24px; padding:12px 14px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; font-size:0.88em;"><b>📬 聯絡資訊</b><br><span style="font-weight:normal; color:#475569;">${escapeHTML(doc.contactInfo)}</span></div>` : ''}
-      <div style="height:40px;"></div>`;
-overlay.style.display = 'flex';
-contentEl.scrollTop = 0; 
+    let doc = (legalDocs || []).find(d => d.docId === docId);
+    let overlay = document.getElementById('legalReaderOverlay');
+    let titleEl = document.getElementById('legalReaderTitle');
+    let contentEl = document.getElementById('legalReaderContent');
+    if (!doc) {
+        titleEl.innerText = docId;
+        contentEl.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:40px;">此文件尚未發布，請聯絡管理員。</p>';
+        overlay.style.display = 'flex'; return;
+    }
+    titleEl.innerText = doc.title;
+    contentEl.innerHTML = `
+       <div style="background:#f8fafc; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:0.85em; line-height:1.9; color:#64748b;">
+           <b style="color:#db2777;">${doc.docId}</b> ｜ 版本：${doc.version || '—'} ｜ 生效日期：${doc.effectiveDate || '未設定'} ｜ 制定單位：${escapeHTML(doc.department) || '—'}
+       </div>
+       <div style="white-space:pre-wrap; line-height:2; color:#1e293b;">${(doc.content || '（本文件內容尚待管理員填寫後發布）').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+       ${doc.contactInfo ? `<div style="margin-top:24px; padding:12px 14px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; font-size:0.88em;"><b>📬 聯絡資訊</b><br><span style="font-weight:normal; color:#475569;">${escapeHTML(doc.contactInfo)}</span></div>` : ''}
+       <div style="height:40px;"></div>`;
+    overlay.style.display = 'flex';
+    contentEl.scrollTop = 0; 
 };
 </script>
 
 
 <div id="app-overlay-modal" class="app-overlay-modal" aria-hidden="true">
-<div class="app-overlay-dialog" role="dialog" aria-modal="true" aria-labelledby="app-overlay-title">
-<div class="app-overlay-header">
-<div id="app-overlay-title" class="app-overlay-title">預覽</div>
-<button type="button" id="app-overlay-close" class="app-overlay-close" aria-label="關閉預覽">×</button>
-</div>
-<div id="app-overlay-body" class="app-overlay-body"></div>
-</div>
+  <div class="app-overlay-dialog" role="dialog" aria-modal="true" aria-labelledby="app-overlay-title">
+    <div class="app-overlay-header">
+      <div id="app-overlay-title" class="app-overlay-title">預覽</div>
+      <button type="button" id="app-overlay-close" class="app-overlay-close" aria-label="關閉預覽">×</button>
+    </div>
+    <div id="app-overlay-body" class="app-overlay-body"></div>
+  </div>
 </div>
 
 <script>
 
 /* ============================================================
-  子視窗／預覽：不要用 Swal.fire 疊在既有 Swal 上
-  ============================================================ */
+   子視窗／預覽：不要用 Swal.fire 疊在既有 Swal 上
+   ============================================================ */
 let APP_OVERLAY_PREVIOUS_FOCUS = null;
 function openAppOverlay(options = {}) {
-const modal = document.getElementById('app-overlay-modal');
-const titleEl = document.getElementById('app-overlay-title');
-const bodyEl = document.getElementById('app-overlay-body');
-if (!modal || !titleEl || !bodyEl) return false;
+  const modal = document.getElementById('app-overlay-modal');
+  const titleEl = document.getElementById('app-overlay-title');
+  const bodyEl = document.getElementById('app-overlay-body');
+  if (!modal || !titleEl || !bodyEl) return false;
 
-APP_OVERLAY_PREVIOUS_FOCUS = document.activeElement;
-titleEl.textContent = String(options.title || '預覽');
-bodyEl.className = 'app-overlay-body' + (options.light ? ' light' : '');
-bodyEl.innerHTML = String(options.html || '');
-modal.classList.add('is-open');
-modal.setAttribute('aria-hidden', 'false');
-document.body.classList.add('app-overlay-open');
-document.getElementById('app-overlay-close')?.focus();
-return true;
+  APP_OVERLAY_PREVIOUS_FOCUS = document.activeElement;
+  titleEl.textContent = String(options.title || '預覽');
+  bodyEl.className = 'app-overlay-body' + (options.light ? ' light' : '');
+  bodyEl.innerHTML = String(options.html || '');
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('app-overlay-open');
+  document.getElementById('app-overlay-close')?.focus();
+  return true;
 }
 
 function closeAppOverlay() {
-const modal = document.getElementById('app-overlay-modal');
-const bodyEl = document.getElementById('app-overlay-body');
-if (!modal) return;
-modal.classList.remove('is-open');
-modal.setAttribute('aria-hidden', 'true');
-if (bodyEl) bodyEl.innerHTML = '';
-document.body.classList.remove('app-overlay-open');
-try { APP_OVERLAY_PREVIOUS_FOCUS?.focus?.(); } catch (e) {}
-APP_OVERLAY_PREVIOUS_FOCUS = null;
+  const modal = document.getElementById('app-overlay-modal');
+  const bodyEl = document.getElementById('app-overlay-body');
+  if (!modal) return;
+  modal.classList.remove('is-open');
+  modal.setAttribute('aria-hidden', 'true');
+  if (bodyEl) bodyEl.innerHTML = '';
+  document.body.classList.remove('app-overlay-open');
+  try { APP_OVERLAY_PREVIOUS_FOCUS?.focus?.(); } catch (e) {}
+  APP_OVERLAY_PREVIOUS_FOCUS = null;
 }
 
 (function initAppOverlay() {
-const closeBtn = document.getElementById('app-overlay-close');
-const modal = document.getElementById('app-overlay-modal');
-const dialog = modal?.querySelector('.app-overlay-dialog');
-closeBtn?.addEventListener('click', closeAppOverlay);
-modal?.addEventListener('click', e => {
-if (e.target === modal) closeAppOverlay();
-});
-dialog?.addEventListener('click', e => e.stopPropagation());
-document.addEventListener('keydown', e => {
-if (e.key === 'Escape' && modal?.classList.contains('is-open')) {
-e.preventDefault();
-e.stopPropagation();
-closeAppOverlay();
-}
-}, true);
+  const closeBtn = document.getElementById('app-overlay-close');
+  const modal = document.getElementById('app-overlay-modal');
+  const dialog = modal?.querySelector('.app-overlay-dialog');
+  closeBtn?.addEventListener('click', closeAppOverlay);
+  modal?.addEventListener('click', e => {
+    if (e.target === modal) closeAppOverlay();
+  });
+  dialog?.addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal?.classList.contains('is-open')) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAppOverlay();
+    }
+  }, true);
 })();
 
 </script>
