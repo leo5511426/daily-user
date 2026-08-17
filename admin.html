@@ -461,11 +461,9 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 </div>
 </div>
 <input type="datetime-local" id="t_log_time">
-<label style="font-size:0.85em;font-weight:bold;color:var(--dark);display:block;margin-top:6px;">🚦 物流節點狀態</label>
+<label style="font-size:0.85em;font-weight:bold;color:var(--dark);display:block;margin-top:6px;">🚦 訂單狀態</label>
 <select id="t_log_status"></select>
-<label style="font-size:0.85em;font-weight:bold;color:var(--dark);display:block;margin-top:6px;">📌 主訂單狀態（必須同步）</label>
-<select id="t_main_status"></select>
-<small style="display:block;color:#64748b;font-weight:normal;line-height:1.5;margin-top:2px;">發布物流時一定會同步更新 Orders.C 主訂單狀態；若主狀態沒有實際變化，請選擇目前相同狀態。</small>
+<small style="display:block;color:#64748b;font-weight:normal;line-height:1.5;margin-top:2px;">發布後會同時新增物流時間線，並同步更新 Orders.C（會員端主訂單狀態）。</small>
 <input type="text" id="t_log_note" placeholder="節點詳細註記">
 <select id="t_log_dl_type" style="width:40%; display:inline-block;"><option value="取件截止日">取件截止日</option><option value="寄件截止日">寄件截止日</option></select><input type="date" id="t_log_dl_date" style="width:58%; display:inline-block;"><input type="color" id="t_log_color" value="#db2777">
 <button onclick="updateOrderTimelineSubmit()" style="background:var(--dark)">🚀 發佈最新節點</button>
@@ -1298,11 +1296,9 @@ let order = O_DB.find(o => o.id === oid);
 if (!order) return Swal.fire("錯誤", "找不到訂單資料", "error");
 let packageId = document.getElementById('t_log_package').value.trim();
 let returnTrack = packageId === 'RETURN' ? (document.getElementById('t_log_return_track')?.value.trim() || '') : '';
-let mainStatus = document.getElementById('t_main_status')?.value.trim() || '';
-if (!mainStatus) return Swal.fire('提示', '請選擇主訂單狀態；發布物流時一定會同步更新 Orders.C。', 'warning');
-let notifyMode = await confirmActionWithPush(`發佈物流並更新主訂單狀態為「${mainStatus}」`);
+let notifyMode = await confirmActionWithPush(`發布物流並將主訂單狀態更新為「${status}」`);
 if (!notifyMode) return;
-let res = await fetchWithQueue(GAS, { action:'adminAction', type:'updateTimeline', oid:order.id, status:status, mainStatus:mainStatus, time:time.replace('T',' '), note:note, packageId:packageId, returnTrack:returnTrack, notifyMode:notifyMode }, "發布物流／主訂單狀態中...");
+let res = await fetchWithQueue(GAS, { action:'adminAction', type:'updateTimeline', oid:order.id, status:status, time:time.replace('T',' '), note:note, packageId:packageId, returnTrack:returnTrack, notifyMode:notifyMode }, "發布物流／主訂單狀態中...");
 if(!res.aborted) handlePostSuccess(res);
 }
 
