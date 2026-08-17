@@ -193,7 +193,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 
 <h2 style="text-align:center; letter-spacing:1px;">小佑管理後台</h2>
 
-
+<button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (會員/券/繳款條碼)</button>
 
 <div id="folderShell" class="folder-shell">
   <div id="folderBreadcrumb" class="folder-breadcrumb"></div>
@@ -637,7 +637,11 @@ function setOrderEditorMode(mode){
   ORDER_EDITOR_MODE = mode === 'edit' ? 'edit' : 'new';
   closeAllAdminSections();
   const el=document.getElementById('order_section'); if(!el) return;
+  // 訂單編輯器也是 folderContent 內的正式功能頁；切換進來時必須打開容器，否則會被 .folder-content 的 display:none 隱藏。
+  const content = document.getElementById('folderContent');
+  if (content) content.classList.add('is-open');
   el.classList.remove('folder-section-hidden'); el.classList.add('folder-section-visible');
+  el.style.display = 'block';
   document.getElementById('folderRoot')?.classList.remove('active');
   document.getElementById('folderChildren')?.classList.remove('active');
   document.getElementById('folderGrandchildren')?.classList.remove('active');
