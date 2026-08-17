@@ -986,6 +986,9 @@ async function processReturnAction(oid, mode) {
 
 async function createNewOrderSubmit() {
 let id = document.getElementById('o_new_id').value.trim(), uid = document.getElementById('o_new_uid').value, status = document.getElementById('o_new_status').value, payment = document.getElementById('o_new_payment').value;
+if (!id) return Swal.fire('提示', '請輸入訂單編號', 'warning');
+if (!uid) return Swal.fire('提示', '請選擇會員', 'warning');
+if (!payment) return Swal.fire('提示', '請選擇付款方式', 'warning');
 let itemRows = document.querySelectorAll('.item-row'); let itemSummaryText = ""; let itemsArray = [];
 for (let i = 0; i < itemRows.length; i++) {
 let name = itemRows[i].querySelector('.item-name').value.trim(), spec = itemRows[i].querySelector('.item-spec').value.trim(), qty = itemRows[i].querySelector('.item-qty').value, price = itemRows[i].querySelector('.item-price').value;
