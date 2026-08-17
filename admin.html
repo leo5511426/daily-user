@@ -346,7 +346,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 </div>
 <div>
 <h4 style="margin:0 0 5px 0; color:var(--dark);">➕ 手動開立獨立發票</h4>
-<select id="inv_new_uid"></select>
+<select id="inv_new_uid" onchange="refreshInvoiceLinkedOrders()"></select>
 <input type="date" id="inv_new_date">
 <input type="text" id="inv_new_num" placeholder="發票號碼（必填）">
 <input type="text" id="inv_new_rand" placeholder="隨機碼 4碼（必填）" maxlength="4">
@@ -962,8 +962,7 @@ document.getElementById('lift_suspension_uid').innerHTML = suspOpts;
 document.getElementById('t_order_id').innerHTML = O_DB.map(o => `<option value="${o.id}">單號:${o.id} (${o.status})</option>`).join('');
   populateEditOrderPicker();
 
-let linkOrderOpts = '<option value="">-- 請選擇關聯訂單 (選填) --</option>'; O_DB.forEach(o => { linkOrderOpts += `<option value="${o.id}">${o.id} - ${(o.item||'').substring(0, 15)}</option>`; });
-document.getElementById('inv_new_link_oid').innerHTML = linkOrderOpts;
+refreshInvoiceLinkedOrders();
 
 document.getElementById('cancel_request_select').innerHTML = O_DB.filter(o => o.status === '申請取消中').map(o => `<option value="${o.id}">${o.id}</option>`).join('') || '<option value="">目前無申請</option>';
 document.getElementById('force_cancel_select').innerHTML = O_DB.map(o => `<option value="${o.id}">${o.id}</option>`).join('');
@@ -1225,6 +1224,19 @@ let filtered = CP_DB.filter(c => c.uid === uid && c.status === '未使用');
 document.getElementById('o_new_use_coupon').innerHTML = '<option value="">--不套用--</option>' + filtered.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
 }
 
+function refreshInvoiceLinkedOrders() {
+let uidEl = document.getElementById('inv_new_uid');
+let oidEl = document.getElementById('inv_new_link_oid');
+if (!uidEl || !oidEl) return;
+let uid = String(uidEl.value || '').trim();
+let current = String(oidEl.value || '').trim();
+let eligible = uid ? O_DB.filter(o => String(o.uid || '').trim() === uid) : [];
+let html = '<option value="">-- 不關聯訂單 --</option>';
+html += eligible.map(o => `<option value="${o.id}">${o.id} - ${(o.item||'').substring(0, 15)}</option>`).join('');
+oidEl.innerHTML = html;
+if (current && eligible.some(o => String(o.id) === current)) oidEl.value = current;
+}
+
 function addInvItemRow() {
 const container = document.getElementById('inv_items_container'); const div = document.createElement('div'); div.className = 'inv-item-row';
 div.innerHTML = `<input type="text" class="inv-item-name" placeholder="商品名稱" style="flex: 2;"><input type="text" class="inv-item-spec" placeholder="規格/選項" style="flex: 1.5;"><input type="number" class="inv-item-qty" min="1" value="1" style="flex: 1;" oninput="calculateInvTotal()"><input type="number" class="inv-item-price" min="0" value="0" style="flex: 1.2;" oninput="calculateInvTotal()"><button type="button" class="btn-mini" style="background: var(--red);" onclick="removeInvItemRow(this)">刪</button>`;
@@ -1238,7 +1250,9 @@ document.getElementById('lbl_inv_total').innerText = total; document.getElementB
 
 async function createManualInvoice() {
 let invNum = document.getElementById('inv_new_num').value.trim(), invDate = document.getElementById('inv_new_date').value, uid = document.getElementById('inv_new_uid').value;
-if(!invNum || !invDate || !uid) return Swal.fire("提示", "發票欄位不完整", "warning");
+let invRand = document.getElementById('inv_new_rand').value.trim();
+if(!invNum || !invDate || !uid || !invRand) return Swal.fire("提示", "發票號碼、日期、所屬會員與隨機碼皆為必填", "warning");
+if(!/^\d{4}$/.test(invRand)) return Swal.fire("提示", "發票隨機碼必須為 4 碼數字", "warning");
 let itemsArr = [];
 document.querySelectorAll('.inv-item-row').forEach(row => {
 let name = row.querySelector('.inv-item-name').value.trim();
@@ -1374,7 +1388,12 @@ itemsArray.push({ name, spec, qty: Number(qty), price: Number(price) }); itemSum
 let calcData = calculateTotalOrderAmount();
 let invJsonStr = "";
 if(document.getElementById('o_new_has_invoice').checked) {
-invJsonStr = JSON.stringify({ num: document.getElementById('o_new_inv_num').value.trim(), date: document.getElementById('o_new_inv_date').value, rand: document.getElementById('o_new_inv_rand').value, sellerName: document.getElementById('o_new_inv_seller').value, sellerVat: document.getElementById('o_new_inv_vat').value, sellerAddr: document.getElementById('o_new_inv_addr').value, items: itemsArray, total: calcData.totalAmount });
+const orderInvNum = document.getElementById('o_new_inv_num').value.trim();
+const orderInvDate = document.getElementById('o_new_inv_date').value;
+const orderInvRand = document.getElementById('o_new_inv_rand').value.trim();
+if (!orderInvNum || !orderInvDate || !orderInvRand) return Swal.fire('提示', '附上電子發票時，發票號碼、日期與 4 碼隨機碼皆為必填', 'warning');
+if (!/^\d{4}$/.test(orderInvRand)) return Swal.fire('提示', '電子發票隨機碼必須為 4 碼數字', 'warning');
+invJsonStr = JSON.stringify({ num: orderInvNum, date: orderInvDate, rand: orderInvRand, sellerName: document.getElementById('o_new_inv_seller').value, sellerVat: document.getElementById('o_new_inv_vat').value, sellerAddr: document.getElementById('o_new_inv_addr').value, items: itemsArray, total: calcData.totalAmount });
 }
 let deadlineVal = (payment === "先享後付") ? document.getElementById('o_new_bnpl_due').value : document.getElementById('o_new_deadline').value;
 
