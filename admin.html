@@ -441,7 +441,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <div id="order_logistics_editor">
 <label class="section-label">🚚 物流方式：</label><select id="o_new_log_method"></select>
 <label class="section-label">🏪 配送門市/地址：</label><select id="o_new_address_select" onchange="syncAddressSelectToInput()"></select><input type="text" id="o_new_address">
-<label class="section-label">📦 初始物流單號：</label><input type="text" id="o_new_log_id"><input type="text" id="o_new_log_note" placeholder="初始物流備註">
+<label class="section-label">📦 初始出貨物流單號：</label><input type="text" id="o_new_log_id" placeholder="可輸入多個單號，以逗號分隔"><small style="display:block;color:#64748b;margin-top:3px;">同一訂單多個包裹請以逗號分隔；建立後可在「物流管理」分別查看與發布進度。</small><input type="text" id="o_new_log_note" placeholder="初始物流備註">
 <label class="section-label">📅 時間：</label><input type="datetime-local" id="o_new_time"><input type="date" id="o_new_deadline">
 </div>
 <div id="order_edit_logistics_hint" class="folder-hint" style="display:none;">既有訂單的物流與多包裹請至「物流管理」操作；可建立多個出貨包裹並分別發布物流節點。</div>
@@ -1647,7 +1647,7 @@ if (mainStatusEl) {
 }
 if (typeof toggleTimelineReturnTrack === 'function') toggleTimelineReturnTrack();
 
-if (tracks.length > 0) {
+if (tracks.length > 0 || hasReturn) {
 document.getElementById('package_selector_container').style.display = 'block';
 document.getElementById('package_filter_container').style.display = 'block';
 document.getElementById('t_log_filter_package').innerHTML = '<option value="ALL">顯示全部時間線</option>' + optionsHtml;
@@ -1718,8 +1718,8 @@ html: `
                    <label style="font-weight:bold; color:var(--dark);">📅 時間：</label>
                    <input type="datetime-local" id="swal_edit_time" class="swal2-input" value="${formattedTime}" style="width:100%; margin:5px 0 15px 0; box-sizing:border-box;">
                    
-                   <label style="font-weight:bold; color:var(--dark);">🚦 狀態：</label>
-                   <input type="text" id="swal_edit_status" class="swal2-input" value="${status}" style="width:100%; margin:5px 0 15px 0; box-sizing:border-box;">
+                   <label style="font-weight:bold; color:var(--dark);">🚦 訂單狀態：</label>
+                   <select id="swal_edit_status" class="swal2-select" style="width:100%; margin:5px 0 15px 0; display:flex; box-sizing:border-box;">${(SETTINGS["物流狀態"] || []).map(st => `<option value="${String(st).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" ${String(st)===status?'selected':''}>${String(st)}</option>`).join('')}</select>
                    
                    <label style="font-weight:bold; color:var(--dark);">📝 備註：</label>
                    <input type="text" id="swal_edit_note" class="swal2-input" value="${note.replace(/\[包裹:.*?\]/g, '').replace(/\[顏色:.*?\]/g, '').replace(/\[[寄取]件截止日:.*?\]/g, '').trim()}" style="width:100%; margin:5px 0 15px 0; box-sizing:border-box;">
