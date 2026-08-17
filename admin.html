@@ -598,128 +598,161 @@ const ADMIN_FOLDER_TREE = {
   }
 };
 
-function closeAllAdminSections(){
-  document.querySelectorAll('.card[id$="_section"], #order_section').forEach(el=>{
-    if (el && !el.id.includes('folder')) el.classList.add('folder-section-hidden');
-  });
-}
-function openAdminSection(id){
-  closeAllAdminSections();
-  document.getElementById('folderContent')?.classList.add('is-open');
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.classList.remove('folder-section-hidden');
-  el.classList.add('folder-section-visible');
-  document.getElementById('folderRoot')?.classList.remove('active');
-  document.getElementById('folderChildren')?.classList.remove('active');
-  document.getElementById('folderGrandchildren')?.classList.remove('active');
-  document.getElementById('folderContent')?.classList.remove('active');
-  const bc=document.getElementById('folderBreadcrumb');
-  if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(el.querySelector('h3')?.textContent || '功能')}</span>`;
-  el.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function openQuickAction(mode){
-  document.getElementById('folderContent')?.classList.remove('is-open');
-  document.querySelectorAll('.card[id$="_section"], #order_section').forEach(el=>el.classList.add('folder-section-hidden'));
-  if(typeof openWiz === 'function') { openWiz(mode); return; }
-  if(typeof quickGo === 'function') quickGo(mode);
-}
-function escapeFolderText(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function showAdminRoot(){
-  closeAllAdminSections();
-  document.getElementById('folderContent')?.classList.remove('is-open');
-  document.getElementById('folderChildren')?.classList.remove('active');
-  document.getElementById('folderGrandchildren')?.classList.remove('active');
-  document.getElementById('folderRoot')?.classList.add('active');
-  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML='';
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function openAdminSection(id){
-  closeAllAdminSections();
-  document.getElementById('folderContent')?.classList.add('is-open');
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.classList.remove('folder-section-hidden');
-  el.classList.add('folder-section-visible');
-  document.getElementById('folderRoot')?.classList.remove('active');
-  document.getElementById('folderChildren')?.classList.remove('active');
-  document.getElementById('folderGrandchildren')?.classList.remove('active');
-  document.getElementById('folderContent')?.classList.remove('active');
-  const bc=document.getElementById('folderBreadcrumb');
-  if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(el.querySelector('h3')?.textContent || '功能')}</span>`;
-  el.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function openQuickAction(mode){
-  document.getElementById('folderContent')?.classList.remove('is-open');
-  document.querySelectorAll('.card[id$="_section"], #order_section').forEach(el=>el.classList.add('folder-section-hidden'));
-  if(typeof openWiz === 'function') { openWiz(mode); return; }
-  if(typeof quickGo === 'function') quickGo(mode);
-}
-function escapeFolderText(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function getFolderNodeFromKey(key){
-  const parts=String(key||'').split('.');
-  let node=ADMIN_FOLDER_TREE;
-  for(const part of parts){ node=node?.[part]; }
-  return node || null;
-}
-function getFolderNodeFromPath(rootKey, indexes){
-  let node=ADMIN_FOLDER_TREE[rootKey];
-  for(const idx of (indexes||[])) node=node?.children?.[idx];
-  return node || null;
-}
-function renderFolderItems(target, rootKey, children, path){
-  target.innerHTML=`<div class="folder-grid">${children.map((c,i)=>{
-    const hasChildren=Array.isArray(c.children) && c.children.length>0;
-    const action=hasChildren
-      ? `openAdminFolderPath('${rootKey}', '${JSON.stringify([...(path||[]),i]).replace(/'/g,"&apos;")}')`
-      : `ADMIN_FOLDER_TREE['${rootKey}'].__action(${i}, ${JSON.stringify(path||[]).replace(/'/g,"&apos;")})`;
-    return `<div class="folder-card" onclick="${action}"><div class="folder-icon">${hasChildren?'📁':'▣'}</div><div class="folder-title">${escapeFolderText(c.title)}</div><div class="folder-desc">${escapeFolderText(c.desc||'')}</div></div>`;
-  }).join('')}</div>`;
-}
-function openAdminFolder(key){
-  const node=ADMIN_FOLDER_TREE[key]; if(!node) return;
-  document.getElementById('folderContent')?.classList.remove('is-open');
-  ADMIN_FOLDER_TREE[key].__action=(index,path)=>openFolderLeaf(key,index,path||[]);
-  closeAllAdminSections();
-  document.getElementById('folderRoot')?.classList.remove('active');
-  document.getElementById('folderGrandchildren')?.classList.remove('active');
-  const wrap=document.getElementById('folderChildren'); if(!wrap) return;
-  wrap.classList.add('active');
-  const back=`<button type="button" class="folder-back" onclick="showAdminRoot()">← 主功能</button>`;
-  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(node.title)}</span>`;
-  wrap.innerHTML=back;
-  renderFolderItems(wrap,key,node.children,[]);
-}
-function openAdminFolderPath(rootKey,path){
-  const node=getFolderNodeFromPath(rootKey,path); if(!node) return;
-  document.getElementById('folderContent')?.classList.remove('is-open');
-  const root=ADMIN_FOLDER_TREE[rootKey];
-  closeAllAdminSections();
-  document.getElementById('folderRoot')?.classList.remove('active');
-  const wrap=document.getElementById('folderChildren'); if(!wrap) return;
-  wrap.classList.add('active');
-  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(root.title)}</span>${path.length?`<span>›</span><span>${escapeFolderText(node.title)}</span>`:''}`;
-  wrap.innerHTML=`<button type="button" class="folder-back" onclick="${path.length?`openAdminFolderPath('${rootKey}', ${JSON.stringify(path.slice(0,-1))})`:`showAdminRoot()`}">← 返回</button>`;
-  renderFolderItems(wrap,rootKey,node.children||[],path);
-}
-function openFolderLeaf(rootKey,index,path){
-  const node=getFolderNodeFromPath(rootKey,path||[]); const child=node?.children?.[index];
-  if(!child) return;
-  if(Array.isArray(child.children) && child.children.length){ openAdminFolderPath(rootKey,[...(path||[]),index]); return; }
-  if(typeof child.action==='function') child.action();
-}
-function showAdminRoot(){
-  closeAllAdminSections();
-  document.getElementById('folderContent')?.classList.remove('is-open');
-  document.getElementById('folderChildren')?.classList.remove('active');
-  document.getElementById('folderGrandchildren')?.classList.remove('active');
-  document.getElementById('folderRoot')?.classList.add('active');
-  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML='';
-  window.scrollTo({top:0,behavior:'smooth'});
+let ADMIN_OPEN_SECTION_ID = null;
+
+function getAdminSectionElements() {
+  return Array.from(document.querySelectorAll('#folderContent > .card[id$="_section"], #folderContent > #order_section'));
 }
 
-window.addEventListener('DOMContentLoaded',()=>{
+function closeAllAdminSections() {
+  ADMIN_OPEN_SECTION_ID = null;
+  getAdminSectionElements().forEach(el => {
+    el.classList.remove('folder-section-visible');
+    el.classList.add('folder-section-hidden');
+    el.style.removeProperty('display');
+  });
+}
+
+function hideAdminContent() {
   closeAllAdminSections();
+  const content = document.getElementById('folderContent');
+  if (content) content.classList.remove('is-open');
+}
+
+function openAdminSection(id) {
+  const el = document.getElementById(id);
+  if (!el || !document.getElementById('folderContent')?.contains(el)) return;
+
+  // 每次進入功能頁，先徹底關閉上一個功能，避免上一頁殘留。
+  getAdminSectionElements().forEach(item => {
+    item.classList.remove('folder-section-visible');
+    item.classList.add('folder-section-hidden');
+    item.style.display = 'none';
+  });
+
+  ADMIN_OPEN_SECTION_ID = id;
+  const content = document.getElementById('folderContent');
+  if (content) content.classList.add('is-open');
+
+  el.classList.remove('folder-section-hidden');
+  el.classList.add('folder-section-visible');
+  el.style.display = 'block';
+
+  document.getElementById('folderRoot')?.classList.remove('active');
+  document.getElementById('folderChildren')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+
+  const bc = document.getElementById('folderBreadcrumb');
+  if (bc) {
+    bc.innerHTML = `<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(el.querySelector('h3')?.textContent || '功能')}</span>`;
+  }
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function openQuickAction(mode) {
+  hideAdminContent();
+  if (typeof openWiz === 'function') {
+    openWiz(mode);
+    return;
+  }
+  if (typeof quickGo === 'function') quickGo(mode);
+}
+
+function escapeFolderText(v) {
+  return String(v || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function showAdminRoot() {
+  hideAdminContent();
+  document.getElementById('folderChildren')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+  document.getElementById('folderRoot')?.classList.add('active');
+  const bc = document.getElementById('folderBreadcrumb');
+  if (bc) bc.innerHTML = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function getFolderNodeFromKey(key) {
+  const parts = String(key || '').split('.');
+  let node = ADMIN_FOLDER_TREE;
+  for (const part of parts) node = node?.[part];
+  return node || null;
+}
+
+function getFolderNodeFromPath(rootKey, indexes) {
+  let node = ADMIN_FOLDER_TREE[rootKey];
+  for (const idx of (indexes || [])) node = node?.children?.[idx];
+  return node || null;
+}
+
+function renderFolderItems(target, rootKey, children, path) {
+  target.innerHTML = `<div class="folder-grid">${children.map((c, i) => {
+    const hasChildren = Array.isArray(c.children) && c.children.length > 0;
+    const action = hasChildren
+      ? `openAdminFolderPath('${rootKey}', '${JSON.stringify([...(path || []), i]).replace(/'/g, '&apos;')}')`
+      : `openFolderLeaf('${rootKey}', ${i}, ${JSON.stringify(path || []).replace(/'/g, '&apos;')})`;
+    return `<div class="folder-card" onclick="${action}"><div class="folder-icon">${hasChildren ? '📁' : '▣'}</div><div class="folder-title">${escapeFolderText(c.title)}</div><div class="folder-desc">${escapeFolderText(c.desc || '')}</div></div>`;
+  }).join('')}</div>`;
+}
+
+function openAdminFolder(key) {
+  const node = ADMIN_FOLDER_TREE[key];
+  if (!node) return;
+
+  hideAdminContent();
+  document.getElementById('folderRoot')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+
+  const wrap = document.getElementById('folderChildren');
+  if (!wrap) return;
+  wrap.classList.add('active');
+
+  const bc = document.getElementById('folderBreadcrumb');
+  if (bc) bc.innerHTML = `<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(node.title)}</span>`;
+
+  wrap.innerHTML = `<button type="button" class="folder-back" onclick="showAdminRoot()">← 主功能</button>`;
+  renderFolderItems(wrap, key, node.children || [], []);
+}
+
+function openAdminFolderPath(rootKey, path) {
+  const node = getFolderNodeFromPath(rootKey, path);
+  if (!node) return;
+
+  hideAdminContent();
+  document.getElementById('folderRoot')?.classList.remove('active');
+
+  const wrap = document.getElementById('folderChildren');
+  if (!wrap) return;
+  wrap.classList.add('active');
+
+  const root = ADMIN_FOLDER_TREE[rootKey];
+  const bc = document.getElementById('folderBreadcrumb');
+  if (bc) {
+    bc.innerHTML = `<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(root.title)}</span>${path.length ? `<span>›</span><span>${escapeFolderText(node.title)}</span>` : ''}`;
+  }
+
+  wrap.innerHTML = `<button type="button" class="folder-back" onclick="${path.length ? `openAdminFolderPath('${rootKey}', ${JSON.stringify(path.slice(0, -1))})` : 'showAdminRoot()'}">← 返回</button>`;
+  renderFolderItems(wrap, rootKey, node.children || [], path);
+}
+
+function openFolderLeaf(rootKey, index, path) {
+  const node = getFolderNodeFromPath(rootKey, path || []);
+  const child = node?.children?.[index];
+  if (!child) return;
+
+  if (Array.isArray(child.children) && child.children.length) {
+    openAdminFolderPath(rootKey, [...(path || []), index]);
+    return;
+  }
+
+  if (typeof child.action === 'function') child.action();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  hideAdminContent();
   showAdminRoot();
 });
 
