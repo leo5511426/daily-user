@@ -397,16 +397,26 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 </div>
 
 <div class="card" id="order_section">
-<h3 style="margin:0 0 10px;">📦 手動新增/修改訂單</h3>
+<h3 style="margin:0 0 10px;">📦 訂單建立／修改</h3>
+<div style="display:flex;gap:8px;margin-bottom:12px;">
+<button type="button" id="order_mode_new_btn" onclick="setOrderEditorMode('new')" style="flex:1;background:var(--green);">➕ 建立新訂單</button>
+<button type="button" id="order_mode_edit_btn" onclick="setOrderEditorMode('edit')" style="flex:1;background:#64748b;">✏️ 修改既有訂單</button>
+</div>
+<div id="order_edit_picker" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin-bottom:12px;">
+<label class="section-label" style="margin-top:0;">選擇要修改的訂單：</label>
+<select id="o_edit_oid"></select>
+<button type="button" onclick="loadExistingOrderForEdit()" style="background:var(--blue);">載入訂單資料</button>
+</div>
+<div id="order_editor_hint" class="folder-hint" style="display:none;">修改既有訂單時，訂單金額、付款方式、先享後付帳期、主訂單狀態與包裹物流由系統保護；需要變更主訂單狀態或物流，請到「物流管理」。</div>
 <label class="section-label">訂單單號：</label><input type="text" id="o_new_id" placeholder="例: ORD2026060101">
 <label class="section-label">選擇購買對象：</label><select id="o_new_uid" onchange="loadUserCouponsForOrder()"></select>
 <label class="section-label">初始訂單狀態：</label><select id="o_new_status" onchange="toggleVerificationCodeField()"></select>
 <div id="v_code_container" style="display: none;"><label class="section-label" style="color: var(--accent);">🔑 取件驗證碼：</label><input type="text" id="o_new_vcode"></div>
 <label class="section-label">💳 付款方式：</label>
-<select id="o_new_payment">
+<select id="o_new_payment" data-edit-lock>
 <option value="帳戶可用餘額扣除">帳戶可用餘額扣除</option><option value="信用卡／金融卡">信用卡／金融卡</option><option value="銀行轉帳">銀行轉帳</option><option value="電子支付 (街口/LINE Pay等)">電子支付 (街口/LINE Pay等)</option><option value="貨到付款">貨到付款</option><option value="先享後付">先享後付 (檢查額度)</option>
 </select>
-<div id="bnpl_due_container" style="display:none; background:#fffbcb; padding:10px; border-radius:8px; margin-top:5px;"><label class="section-label" style="color:var(--red); margin:0;">📅 先享後付 繳費到期日 (必填)：</label><input type="date" id="o_new_bnpl_due"></div>
+<div id="bnpl_due_container" style="display:none; background:#fffbcb; padding:10px; border-radius:8px; margin-top:5px;"><label class="section-label" style="color:var(--red); margin:0;">📅 先享後付 繳費到期日 (必填)：</label><input type="date" id="o_new_bnpl_due" data-edit-lock></div>
 
 <label class="section-label">🛍️ 商品明細填寫：</label>
 <div id="order_items_container">
@@ -415,12 +425,12 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <button type="button" class="btn-mini" style="background: var(--dark); margin-bottom: 12px; width: 100%;" onclick="addOrderItemRow()">＋ 新增商品品項</button>
 <div class="calc-box">💰 商品小計：$ <span id="lbl_subtotal">0</span></div>
 <div style="display: flex; gap: 8px;">
-<div><label class="section-label">運費：</label><input type="number" id="o_new_shipping" value="0" oninput="calculateTotalOrderAmount()"></div>
-<div><label class="section-label">運費折扣：</label><input type="number" id="o_new_ship_discount" value="0" oninput="calculateTotalOrderAmount()"></div>
+<div><label class="section-label">運費：</label><input type="number" id="o_new_shipping" data-edit-lock value="0" oninput="calculateTotalOrderAmount()"></div>
+<div><label class="section-label">運費折扣：</label><input type="number" id="o_new_ship_discount" data-edit-lock value="0" oninput="calculateTotalOrderAmount()"></div>
 </div>
 <div style="display: flex; gap: 6px;">
-<div><label class="section-label">賣家折扣：</label><input type="number" id="o_new_seller_discount" value="0" oninput="calculateTotalOrderAmount()"></div>
-<div><label class="section-label">優惠折扣：</label><input type="number" id="o_new_coin_discount" value="0" oninput="calculateTotalOrderAmount()"></div>
+<div><label class="section-label">賣家折扣：</label><input type="number" id="o_new_seller_discount" data-edit-lock value="0" oninput="calculateTotalOrderAmount()"></div>
+<div><label class="section-label">優惠折扣：</label><input type="number" id="o_new_coin_discount" data-edit-lock value="0" oninput="calculateTotalOrderAmount()"></div>
 </div>
 <div style="background:#fffbeb; padding:10px; border-radius:8px; border:1px solid #fde68a; margin:10px 0;"><label class="section-label" style="color:#d97706;">🎟️ 核銷會員優惠券：</label><select id="o_new_use_coupon"></select></div>
 <div class="calc-box" style="background: #fee2e2; color: #b91c1c; font-size: 1.1em;">🚨 訂單總金額：$ <span id="lbl_total_amount">0</span></div>
@@ -428,10 +438,13 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <label style="display:flex; align-items:center; gap:8px; margin: 15px 0; cursor:pointer; background:#f1f5f9; padding:10px; border-radius:8px;"><input type="checkbox" id="o_new_has_invoice" onchange="document.getElementById('o_invoice_fields').style.display = this.checked ? 'block' : 'none';"><span style="font-weight:bold;">🧾 附上電子發票</span></label>
 <div id="o_invoice_fields" style="display:none; background:#f8fafc; padding:15px; border-radius:10px; border:1px dashed #cbd5e1; margin-bottom:15px;"><input type="date" id="o_new_inv_date"><input type="text" id="o_new_inv_num" placeholder="發票號碼"><input type="text" id="o_new_inv_rand" placeholder="隨機碼 (4碼)" maxlength="4"><input type="text" id="o_new_inv_seller" placeholder="賣方名稱"><input type="text" id="o_new_inv_vat" placeholder="賣方統編"><input type="text" id="o_new_inv_addr" placeholder="賣方地址"></div>
 
+<div id="order_logistics_editor">
 <label class="section-label">🚚 物流方式：</label><select id="o_new_log_method"></select>
 <label class="section-label">🏪 配送門市/地址：</label><select id="o_new_address_select" onchange="syncAddressSelectToInput()"></select><input type="text" id="o_new_address">
-<label class="section-label">📦 物流單號：</label><input type="text" id="o_new_log_id"><input type="text" id="o_new_log_note" placeholder="最新物流狀態備註">
+<label class="section-label">📦 初始物流單號：</label><input type="text" id="o_new_log_id"><input type="text" id="o_new_log_note" placeholder="初始物流備註">
 <label class="section-label">📅 時間：</label><input type="datetime-local" id="o_new_time"><input type="date" id="o_new_deadline">
+</div>
+<div id="order_edit_logistics_hint" class="folder-hint" style="display:none;">既有訂單的物流與多包裹請至「物流管理」操作；可建立多個出貨包裹並分別發布物流節點。</div>
 <button onclick="createNewOrderSubmit()" style="background:var(--green)">💾 儲存並發佈訂單</button>
 </div>
 
@@ -536,9 +549,9 @@ let html5QrCode, dragSrcEl = null;
 // ============================================================
 const ADMIN_FOLDER_TREE = {
   orders: {
-    title:'📦 訂單管理', desc:'建立、修改、狀態、取消', children:[
-      {title:'📝 訂單建立／修改', desc:'新增訂單或修改既有訂單', action:()=>openAdminSection('order_section')},
-      {title:'🔄 訂單狀態與物流', desc:'更新主訂單狀態與物流時間線', action:()=>openAdminSection('timeline_section')},
+    title:'📦 訂單管理', desc:'建立、修改、取消、不成立', children:[
+      {title:'➕ 建立新訂單', desc:'建立全新訂單並發布', action:()=>setOrderEditorMode('new')},
+      {title:'✏️ 修改既有訂單', desc:'選擇既有訂單並載入資料', action:()=>setOrderEditorMode('edit')},
       {title:'⚠️ 取消／不成立', desc:'同意取消、拒絕取消、強制不成立', action:()=>openAdminSection('cancel_section')}
     ]
   },
@@ -619,6 +632,59 @@ function hideAdminContent() {
   if (content) content.classList.remove('is-open');
 }
 
+let ORDER_EDITOR_MODE = 'new';
+function setOrderEditorMode(mode){
+  ORDER_EDITOR_MODE = mode === 'edit' ? 'edit' : 'new';
+  closeAllAdminSections();
+  const el=document.getElementById('order_section'); if(!el) return;
+  el.classList.remove('folder-section-hidden'); el.classList.add('folder-section-visible');
+  document.getElementById('folderRoot')?.classList.remove('active');
+  document.getElementById('folderChildren')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+  const picker=document.getElementById('order_edit_picker'); if(picker) picker.style.display=ORDER_EDITOR_MODE==='edit'?'block':'none';
+  const hint=document.getElementById('order_editor_hint'); if(hint) hint.style.display=ORDER_EDITOR_MODE==='edit'?'block':'none';
+  const editHint=document.getElementById('order_edit_logistics_hint'); if(editHint) editHint.style.display=ORDER_EDITOR_MODE==='edit'?'block':'none';
+  const logEditor=document.getElementById('order_logistics_editor'); if(logEditor) logEditor.style.display=ORDER_EDITOR_MODE==='edit'?'none':'block';
+  const nb=document.getElementById('order_mode_new_btn'); const eb=document.getElementById('order_mode_edit_btn');
+  if(nb) { nb.style.background=ORDER_EDITOR_MODE==='new'?'var(--green)':'#94a3b8'; }
+  if(eb) { eb.style.background=ORDER_EDITOR_MODE==='edit'?'var(--blue)':'#64748b'; }
+  const saveBtn=el.querySelector('button[onclick="createNewOrderSubmit()"]'); if(saveBtn) saveBtn.innerText=ORDER_EDITOR_MODE==='edit'?'💾 儲存訂單修改':'💾 儲存並發佈訂單';
+  if(ORDER_EDITOR_MODE==='new') resetOrderEditorForm(); else populateEditOrderPicker();
+  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>📦 訂單管理</span><span>›</span><span>${ORDER_EDITOR_MODE==='edit'?'修改既有訂單':'建立新訂單'}</span>`;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function populateEditOrderPicker(){
+  const sel=document.getElementById('o_edit_oid'); if(!sel) return;
+  sel.innerHTML='<option value="">-- 請選擇既有訂單 --</option>'+(O_DB||[]).map(o=>`<option value="${String(o.id).replace(/"/g,'&quot;')}">${String(o.id)}｜${String(o.status||'')}｜${String(o.uid||'')}</option>`).join('');
+}
+function resetOrderEditorForm(){
+  ['o_new_id','o_new_vcode','o_new_address','o_new_log_id','o_new_log_note','o_new_bnpl_due','o_new_deadline'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const uid=document.getElementById('o_new_uid');if(uid)uid.value='';
+  const pay=document.getElementById('o_new_payment');if(pay)pay.value='帳戶可用餘額扣除';
+  ['o_new_shipping','o_new_ship_discount','o_new_seller_discount','o_new_coin_discount'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=0;});
+  const items=document.getElementById('order_items_container');
+  if(items) items.innerHTML='<div class="item-row"><input type="text" class="item-name" placeholder="商品名稱" style="flex:2;"><input type="text" class="item-spec" placeholder="規格" style="flex:1.5;"><input type="number" class="item-qty" min="1" value="1" style="flex:1;" oninput="calculateTotalOrderAmount()"><input type="number" class="item-price" min="0" value="0" style="flex:1.2;" oninput="calculateTotalOrderAmount()"><button type="button" class="btn-mini" style="background:var(--red);" onclick="this.parentElement.remove();calculateTotalOrderAmount();">刪</button></div>';
+  calculateTotalOrderAmount();
+  applyExistingOrderEditLocks(null);
+}
+function loadExistingOrderForEdit(){
+  const oid=document.getElementById('o_edit_oid')?.value;if(!oid)return Swal.fire('提示','請先選擇要修改的訂單','warning');
+  const o=(O_DB||[]).find(x=>String(x.id)===String(oid));if(!o)return Swal.fire('錯誤','找不到該筆訂單資料','error');
+  document.getElementById('o_new_id').value=o.id||''; document.getElementById('o_new_uid').value=o.uid||''; document.getElementById('o_new_status').value=o.status||''; document.getElementById('o_new_vcode').value=o.code||''; document.getElementById('o_new_address').value=o.address||''; document.getElementById('o_new_payment').value=o.payment||'帳戶可用餘額扣除'; document.getElementById('o_new_log_note').value=o.note||'';
+  document.getElementById('o_new_time').value=String(o.time||'').replace(' ','T').slice(0,16); document.getElementById('o_new_deadline').value=String(o.deadline||'').slice(0,10);
+  ['o_new_shipping','o_new_ship_discount','o_new_seller_discount','o_new_coin_discount'].forEach((id,i)=>{const val=[o.shipFee,o.discShip,o.discSeller,o.discCoin][i];const e=document.getElementById(id);if(e)e.value=Number(val)||0;});
+  const c=document.getElementById('order_items_container');if(c){const lines=String(o.item||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);c.innerHTML='';(lines.length?lines:['']).forEach(line=>{const m=line.replace(/^[-•]\s*/,'').match(/^(.*?)\s*(?:\((.*?)\))?\s*x(\d+)\s*\(\$(\d+(?:\.\d+)?)\)$/i);const name=m?m[1].trim():line,spec=m?m[2]||'': '',qty=m?Number(m[3]):1,price=m?Number(m[4]):0;const row=document.createElement('div');row.className='item-row';row.innerHTML=`<input type="text" class="item-name" value="${escapeFolderText(name)}" style="flex:2;"><input type="text" class="item-spec" value="${escapeFolderText(spec)}" style="flex:1.5;"><input type="number" class="item-qty" min="1" value="${qty}" style="flex:1;"><input type="number" class="item-price" min="0" value="${price}" style="flex:1.2;"><button type="button" class="btn-mini" style="background:var(--red);" onclick="this.parentElement.remove();calculateTotalOrderAmount();">刪</button>`;c.appendChild(row);});}
+  calculateTotalOrderAmount(); applyExistingOrderEditLocks(o);
+}
+function applyExistingOrderEditLocks(order){
+  const existing=!!order;
+  document.querySelectorAll('#order_section [data-edit-lock]').forEach(el=>{el.disabled=existing;el.title=existing?'既有訂單的付款／金額欄位受保護':'';});
+  ['o_new_status','o_new_vcode'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=existing;});
+  document.querySelectorAll('#order_items_container input').forEach(e=>e.disabled=existing);
+  const addRowBtn=document.querySelector('#order_section button[onclick="addOrderItemRow()"]'); if(addRowBtn) addRowBtn.disabled=existing;
+  const total=document.getElementById('lbl_total_amount'),sub=document.getElementById('lbl_subtotal');
+  if(existing){if(total)total.innerHTML=`${Number(order.total)||0} <span style="font-size:11px;color:#64748b;">（既有訂單金額已鎖定）</span>`;if(sub)sub.innerHTML=`${Number(order.subtotal)||0}（鎖定）`;}
+}
 function openAdminSection(id) {
   const el = document.getElementById(id);
   if (!el || !document.getElementById('folderContent')?.contains(el)) return;
@@ -852,7 +918,7 @@ Swal.fire('成功', res.message, 'success').then(()=>refresh());
 } else { Swal.fire('錯誤', res.message, 'error'); }
 }
 
-window.onload = refresh;
+window.onload = async function(){ await refresh(); setOrderEditorMode('new'); };
 
 async function refresh() {
 let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
@@ -890,6 +956,7 @@ suspOpts += ACTIVE_SUSPENSIONS.map(s => `<option value="${s.uid}">${s.uid} (至:
 document.getElementById('lift_suspension_uid').innerHTML = suspOpts;
 
 document.getElementById('t_order_id').innerHTML = O_DB.map(o => `<option value="${o.id}">單號:${o.id} (${o.status})</option>`).join('');
+  populateEditOrderPicker();
 
 let linkOrderOpts = '<option value="">-- 請選擇關聯訂單 (選填) --</option>'; O_DB.forEach(o => { linkOrderOpts += `<option value="${o.id}">${o.id} - ${(o.item||'').substring(0, 15)}</option>`; });
 document.getElementById('inv_new_link_oid').innerHTML = linkOrderOpts;
@@ -1310,7 +1377,7 @@ let deadlineVal = (payment === "先享後付") ? document.getElementById('o_new_
 let notifyMode = await confirmActionWithPush('發佈訂單');
 if (!notifyMode) return;
 
-let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: document.getElementById('o_new_vcode').value, subtotal: calcData.subtotal, shipFee: Number(document.getElementById('o_new_shipping').value), discShip: Number(document.getElementById('o_new_ship_discount').value), discSeller: Number(document.getElementById('o_new_seller_discount').value), discCoin: Number(document.getElementById('o_new_coin_discount').value), total: calcData.totalAmount, ship: document.getElementById('o_new_log_method').value, address: document.getElementById('o_new_address').value, track: document.getElementById('o_new_log_id').value, note: document.getElementById('o_new_log_note').value, payment: payment, invoiceJson: invJsonStr, cpid: document.getElementById('o_new_use_coupon').value, time: document.getElementById('o_new_time').value.replace('T', ' '), deadline: deadlineVal, notifyMode: notifyMode }, "正在佈署全新交易...");
+let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'updateOrder', mode: ORDER_EDITOR_MODE, oid: id, uid: uid, status: status, item: itemSummaryText.trim(), code: document.getElementById('o_new_vcode').value, subtotal: calcData.subtotal, shipFee: Number(document.getElementById('o_new_shipping').value), discShip: Number(document.getElementById('o_new_ship_discount').value), discSeller: Number(document.getElementById('o_new_seller_discount').value), discCoin: Number(document.getElementById('o_new_coin_discount').value), total: calcData.totalAmount, ship: document.getElementById('o_new_log_method').value, address: document.getElementById('o_new_address').value, track: document.getElementById('o_new_log_id').value, note: document.getElementById('o_new_log_note').value, payment: payment, invoiceJson: invJsonStr, cpid: document.getElementById('o_new_use_coupon').value, time: document.getElementById('o_new_time').value.replace('T', ' '), deadline: deadlineVal, notifyMode: notifyMode }, "正在佈署全新交易...");
 if(!res.aborted) handlePostSuccess(res);
 }
 
