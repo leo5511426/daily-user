@@ -139,6 +139,33 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
   border-radius: 12px;
 }
 
+
+
+/* ============================================================
+   🗂️ 後台資料夾式介面（純 UI 層）
+   注意：不移除、不改寫既有功能，只控制顯示層與導覽。
+   ============================================================ */
+.folder-shell { margin: 0 auto 18px; }
+.folder-breadcrumb { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:0 0 10px; font-size:13px; color:#64748b; }
+.folder-breadcrumb button { width:auto; margin:0; padding:6px 10px; border:0; border-radius:8px; background:#e2e8f0; color:#334155; font-size:12px; cursor:pointer; }
+.folder-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.folder-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:16px 14px; min-height:88px; cursor:pointer; box-shadow:0 3px 10px rgba(15,23,42,.05); text-align:left; transition:.16s; }
+.folder-card:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(15,23,42,.08); }
+.folder-icon { font-size:28px; line-height:1; margin-bottom:8px; }
+.folder-title { font-size:15px; color:#0f172a; font-weight:800; }
+.folder-desc { margin-top:4px; font-size:12px; color:#64748b; font-weight:600; line-height:1.4; }
+.folder-view { display:none; }
+.folder-view.active { display:block; }
+.folder-back { margin:0 0 10px !important; width:auto !important; padding:8px 12px !important; background:#0f172a !important; color:#fff !important; border:0 !important; border-radius:10px !important; font-size:13px !important; }
+ .folder-content { margin-top: 12px; display:none; }
+.folder-content.is-open { display:block; }
+.folder-content .card.folder-section-hidden { display:none !important; }
+.folder-content .card.folder-section-visible { display:block !important; }
+.folder-section-hidden { display:none !important; }
+.folder-section-visible { display:block !important; }
+.folder-hint { margin:0 0 12px; padding:10px 12px; border-radius:12px; background:#f8fafc; border:1px dashed #cbd5e1; color:#475569; font-size:12px; line-height:1.55; font-weight:600; }
+@media (max-width: 520px){ .folder-grid{grid-template-columns:1fr 1fr;} .folder-card{min-height:82px;padding:14px 12px;} }
+
 </style>
 </head>
 <body>
@@ -166,21 +193,26 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 
 <h2 style="text-align:center; letter-spacing:1px;">小佑管理後台</h2>
 
-<div class="menu-grid">
-<button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (會員/券/繳款條碼)</button>
-<div class="m-btn" onclick="openWiz('add')">💰 手動加值</div>
-<div class="m-btn" onclick="openWiz('sub')">🛒 手動扣除</div>
-<div class="m-btn" onclick="openWiz('pay')">🤝 一般還款入帳</div>
-<div class="m-btn" onclick="openWiz('redeem')">🎟️ 優惠核銷</div>
-<button class="m-btn full-btn" style="background:var(--orange); font-size:16px;" onclick="scrollToSection('cancel_section')">⚠️ 處理訂單取消 / 不成立</button>
-<button class="m-btn full-btn" style="background:var(--red); font-size:16px;" onclick="scrollToSection('return_section')">🚨 退貨 / 退款 審核中心</button>
-<button class="m-btn full-btn" style="background:var(--blue); font-size:16px;" onclick="scrollToSection('invoice_section')">🧾 電子發票管理中心</button>
-<button class="m-btn full-btn" style="background:#8b5cf6; font-size:16px;" onclick="scrollToSection('cs_section')">🎧 線上客服與推播中心</button>
-<button class="m-btn full-btn" style="background:#111827; font-size:16px;" onclick="scrollToSection('suspend_section')">🚫 會員停權與限制管理</button>
-<button class="m-btn full-btn" style="background:#0f172a; font-size:16px;" onclick="scrollToSection('ldms_section')">📋 法律文件管理系統 (LDMS)</button>
-</div>
 
-<!-- ✨ BNPL 2.0 管理總管區塊 (新增) ✨ -->
+
+<div id="folderShell" class="folder-shell">
+  <div id="folderBreadcrumb" class="folder-breadcrumb"></div>
+  <div id="folderRoot" class="folder-view active">
+        <div class="folder-grid">
+      <div class="folder-card" onclick="openAdminFolder('orders')"><div class="folder-icon">📦</div><div class="folder-title">訂單管理</div><div class="folder-desc">新增、修改、取消、不成立</div></div>
+      <div class="folder-card" onclick="openAdminFolder('bnpl')"><div class="folder-icon">💳</div><div class="folder-title">先享後付 BNPL</div><div class="folder-desc">BNPL、分期、收款、逾期</div></div>
+      <div class="folder-card" onclick="openAdminFolder('loans')"><div class="folder-icon">🤝</div><div class="folder-title">借貸管理</div><div class="folder-desc">新增借款與一般還款</div></div>
+      <div class="folder-card" onclick="openAdminFolder('afterSales')"><div class="folder-icon">🚨</div><div class="folder-title">售後服務</div><div class="folder-desc">退貨、退款、驗收、附件</div></div>
+      <div class="folder-card" onclick="openAdminFolder('logistics')"><div class="folder-icon">🚚</div><div class="folder-title">物流管理</div><div class="folder-desc">多包裹、物流節點、退貨物流</div></div>
+      <div class="folder-card" onclick="openAdminFolder('finance')"><div class="folder-icon">💰</div><div class="folder-title">帳務管理</div><div class="folder-desc">加值、扣款、還款、優惠核銷</div></div>
+      <div class="folder-card" onclick="openAdminFolder('member')"><div class="folder-icon">👤</div><div class="folder-title">會員管理</div><div class="folder-desc">停權、解除停權與限制</div></div>
+      <div class="folder-card" onclick="openAdminFolder('system')"><div class="folder-icon">⚙️</div><div class="folder-title">系統管理</div><div class="folder-desc">發票、客服、優惠券、法律文件</div></div>
+    </div>
+  </div>
+  <div id="folderChildren" class="folder-view"></div>
+  <div id="folderGrandchildren" class="folder-view"></div>
+</div>
+<div id="folderContent" class="folder-content">
 <div class="card" id="bnpl_manage_section" style="border: 2px solid var(--blue);">
 <h3 style="margin:0 0 10px; color: var(--blue);">💼 先享後付 (BNPL) 總管</h3>
 <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
@@ -212,7 +244,6 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <button onclick="createLoanPlanSubmit()" style="background:var(--blue); margin-top:10px;">🚀 產生並發布分期計畫</button>
 </div>
 
-<!-- ✨ 會員停權與限制管理 區塊 ✨ -->
 <div class="card" id="suspend_section" style="border: 2px solid var(--red);">
 <h3 style="margin:0 0 10px; color: var(--red);">🚫 會員停權與限制管理</h3>
 <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
@@ -236,7 +267,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 </div>
 </div>
 
-<div class="card">
+<div class="card" id="bnpl_limit_section">
 <h3 style="margin:0 0 10px;">💳 調整先享後付額度</h3>
 <p style="font-size:0.85em; color:#666; margin-top:0;">強制調整會員的先享後付信用總額度 (最高 500，輸入 0 則代表停權)。</p>
 <select id="bnpl_uid"></select>
@@ -365,7 +396,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <button onclick="sendCouponSubmit()" style="background:var(--primary); margin-top:10px;">發送至會員載具</button>
 </div>
 
-<div class="card">
+<div class="card" id="order_section">
 <h3 style="margin:0 0 10px;">📦 手動新增/修改訂單</h3>
 <label class="section-label">訂單單號：</label><input type="text" id="o_new_id" placeholder="例: ORD2026060101">
 <label class="section-label">選擇購買對象：</label><select id="o_new_uid" onchange="loadUserCouponsForOrder()"></select>
@@ -422,6 +453,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <h4 style="margin: 0 0 10px 0; color: var(--primary);">➕ 發佈最新物流節點</h4>
 <div id="package_selector_container" style="display:none; margin-bottom:10px; background:#fff; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
 <label style="font-size:0.85em; font-weight:bold; color:var(--primary);">📦 選擇所屬包裹：</label>
+<div style="font-size:12px;color:#64748b;font-weight:normal;margin-top:4px;line-height:1.45;">同一訂單可有多個寄出包裹；退貨單號也在這裡直接補上／修改，不需手動進 Sheets。</div>
 <select id="t_log_package" style="margin-top:5px;" onchange="toggleTimelineReturnTrack()"></select>
 <div id="t_log_return_track_wrap" style="display:none;margin-top:8px;">
 <label style="font-size:0.85em;font-weight:bold;color:var(--primary);">↩️ 退貨物流單號：</label>
@@ -429,7 +461,11 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 </div>
 </div>
 <input type="datetime-local" id="t_log_time">
+<label style="font-size:0.85em;font-weight:bold;color:var(--dark);display:block;margin-top:6px;">🚦 物流節點狀態</label>
 <select id="t_log_status"></select>
+<label style="font-size:0.85em;font-weight:bold;color:var(--dark);display:block;margin-top:6px;">📌 主訂單狀態（必須同步）</label>
+<select id="t_main_status"></select>
+<small style="display:block;color:#64748b;font-weight:normal;line-height:1.5;margin-top:2px;">發布物流時一定會同步更新 Orders.C 主訂單狀態；若主狀態沒有實際變化，請選擇目前相同狀態。</small>
 <input type="text" id="t_log_note" placeholder="節點詳細註記">
 <select id="t_log_dl_type" style="width:40%; display:inline-block;"><option value="取件截止日">取件截止日</option><option value="寄件截止日">寄件截止日</option></select><input type="date" id="t_log_dl_date" style="width:58%; display:inline-block;"><input type="color" id="t_log_color" value="#db2777">
 <button onclick="updateOrderTimelineSubmit()" style="background:var(--dark)">🚀 發佈最新節點</button>
@@ -442,6 +478,48 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <button onclick="addLegalDocForm()" style="background:var(--dark); margin-bottom:12px;">＋ 新增法律文件</button>
 <div id="legal_doc_list"><p style="text-align:center; opacity:0.4; font-size:0.9em;">資料載入中...</p></div>
 </div>
+</div>
+<div class="menu-grid" id="legacyTopMenu" style="display:none;">
+<button class="m-btn full-btn" onclick="startScan()">📷 啟動掃描 (會員/券/繳款條碼)</button>
+<div class="m-btn" onclick="openWiz('add')">💰 手動加值</div>
+<div class="m-btn" onclick="openWiz('sub')">🛒 手動扣除</div>
+<div class="m-btn" onclick="openWiz('pay')">🤝 一般還款入帳</div>
+<div class="m-btn" onclick="openWiz('redeem')">🎟️ 優惠核銷</div>
+<button class="m-btn full-btn" style="background:var(--orange); font-size:16px;" onclick="scrollToSection('cancel_section')">⚠️ 處理訂單取消 / 不成立</button>
+<button class="m-btn full-btn" style="background:var(--red); font-size:16px;" onclick="scrollToSection('return_section')">🚨 退貨 / 退款 審核中心</button>
+<button class="m-btn full-btn" style="background:var(--blue); font-size:16px;" onclick="scrollToSection('invoice_section')">🧾 電子發票管理中心</button>
+<button class="m-btn full-btn" style="background:#8b5cf6; font-size:16px;" onclick="scrollToSection('cs_section')">🎧 線上客服與推播中心</button>
+<button class="m-btn full-btn" style="background:#111827; font-size:16px;" onclick="scrollToSection('suspend_section')">🚫 會員停權與限制管理</button>
+<button class="m-btn full-btn" style="background:#0f172a; font-size:16px;" onclick="scrollToSection('ldms_section')">📋 法律文件管理系統 (LDMS)</button>
+</div>
+
+<!-- ✨ BNPL 2.0 管理總管區塊 (新增) ✨ -->
+
+
+
+
+<!-- ✨ 會員停權與限制管理 區塊 ✨ -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <div id="wizModal" class="modal"><div class="modal-content"><div id="wizBody"></div><button onclick="wizNext()" id="nextBtn">下一步</button><p onclick="closeModal()" style="color:#999; cursor:pointer; margin-top:15px;">取消</p></div></div>
 
@@ -452,6 +530,200 @@ const ADMIN_TOKEN = 'ADMIN_SEC_2026';
 
 let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], INST_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
 let html5QrCode, dragSrcEl = null;
+
+
+// ============================================================
+// 🗂️ 後台資料夾導覽（純 UI 層）
+// 不移除既有功能；所有實際表單仍使用原本的 DOM / 函式。
+// ============================================================
+const ADMIN_FOLDER_TREE = {
+  orders: {
+    title:'📦 訂單管理', desc:'建立、修改、狀態、取消', children:[
+      {title:'📝 訂單建立／修改', desc:'新增訂單或修改既有訂單', action:()=>openAdminSection('order_section')},
+      {title:'🔄 訂單狀態與物流', desc:'更新主訂單狀態與物流時間線', action:()=>openAdminSection('timeline_section')},
+      {title:'⚠️ 取消／不成立', desc:'同意取消、拒絕取消、強制不成立', action:()=>openAdminSection('cancel_section')}
+    ]
+  },
+  logistics: {
+    title:'🚚 物流管理', desc:'多包裹、物流節點、退貨物流', children:[
+      {title:'📦 出貨包裹', desc:'管理同筆訂單的多個寄出包裹', action:()=>openAdminSection('timeline_section')},
+      {title:'↩️ 退貨包裹', desc:'補上或修改退貨物流單號', action:()=>openAdminSection('timeline_section')},
+      {title:'📝 物流時間線', desc:'發布、編輯、刪除物流節點', action:()=>openAdminSection('timeline_section')}
+    ]
+  },
+  bnpl: {
+    title:'💳 先享後付 BNPL', desc:'BNPL、分期、額度、逾期', children:[
+      {title:'💼 BNPL 總管', desc:'會員分期明細與批次逾期', action:()=>openAdminSection('bnpl_manage_section')},
+      {title:'📅 建立／轉換分期', desc:'將既有帳單轉為分期', action:()=>openAdminSection('bnpl_plan_section')},
+      {title:'💳 額度管理', desc:'調整會員先享後付額度', action:()=>openAdminSection('bnpl_limit_section')}
+    ]
+  },
+  loans: {
+    title:'🤝 借貸管理', desc:'新增借款、一般還款', children:[
+      {title:'➕ 新增借款', desc:'建立一般借款帳單', action:()=>openAdminSection('loan_section')},
+      {title:'💵 一般還款', desc:'登記借款還款入帳', action:()=>openQuickAction('pay')}
+    ]
+  },
+  afterSales: {
+    title:'🚨 售後服務', desc:'退貨、退款、驗收、附件', children:[
+      {title:'📥 售後審核', desc:'審核退貨／退款申請', action:()=>openAdminSection('return_section')},
+      {title:'📎 售後附件', desc:'預覽與開啟會員提供的佐證', action:()=>openAdminSection('return_section')}
+    ]
+  },
+  finance: {
+    title:'💰 帳務管理', desc:'餘額調整與還款入帳', children:[
+      {title:'💰 餘額調整', desc:'加值或扣除會員餘額', children:[
+        {title:'手動加值', desc:'增加會員可用餘額', action:()=>openQuickAction('add')},
+        {title:'手動扣除', desc:'扣除會員可用餘額', action:()=>openQuickAction('sub')}
+      ]},
+      {title:'🤝 一般還款', desc:'借貸還款入帳', action:()=>openQuickAction('pay')},
+      {title:'🎟️ 優惠核銷', desc:'核銷會員優惠券', action:()=>openQuickAction('redeem')}
+    ]
+  },
+  member: {
+    title:'👤 會員管理', desc:'停權、解除停權與限制', children:[
+      {title:'🚫 停權與限制', desc:'執行或解除會員停權', action:()=>openAdminSection('suspend_section')}
+    ]
+  },
+  system: {
+    title:'⚙️ 系統管理', desc:'發票、優惠券、客服、法律文件', children:[
+      {title:'🧾 電子發票', desc:'中獎登錄與手動開立', action:()=>openAdminSection('invoice_section')},
+      {title:'🎟️ 發送優惠券', desc:'發送實體優惠券給會員', action:()=>openAdminSection('coupon_section')},
+      {title:'🎧 客服／推播', desc:'客服工單與站內通知', action:()=>openAdminSection('cs_section')},
+      {title:'📋 法律文件', desc:'新增、修改、發布法律文件', action:()=>openAdminSection('ldms_section')}
+    ]
+  },
+  tools: {
+    title:'🧰 工具', desc:'掃描與快速操作', children:[
+      {title:'📷 條碼掃描', desc:'會員、優惠券、繳款條碼', action:()=>startScan()}
+    ]
+  }
+};
+
+function closeAllAdminSections(){
+  document.querySelectorAll('.card[id$="_section"], #order_section').forEach(el=>{
+    if (el && !el.id.includes('folder')) el.classList.add('folder-section-hidden');
+  });
+}
+function openAdminSection(id){
+  closeAllAdminSections();
+  document.getElementById('folderContent')?.classList.add('is-open');
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('folder-section-hidden');
+  el.classList.add('folder-section-visible');
+  document.getElementById('folderRoot')?.classList.remove('active');
+  document.getElementById('folderChildren')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+  document.getElementById('folderContent')?.classList.remove('active');
+  const bc=document.getElementById('folderBreadcrumb');
+  if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(el.querySelector('h3')?.textContent || '功能')}</span>`;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function openQuickAction(mode){
+  document.getElementById('folderContent')?.classList.remove('is-open');
+  document.querySelectorAll('.card[id$="_section"], #order_section').forEach(el=>el.classList.add('folder-section-hidden'));
+  if(typeof openWiz === 'function') { openWiz(mode); return; }
+  if(typeof quickGo === 'function') quickGo(mode);
+}
+function escapeFolderText(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showAdminRoot(){
+  closeAllAdminSections();
+  document.getElementById('folderContent')?.classList.remove('is-open');
+  document.getElementById('folderChildren')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+  document.getElementById('folderRoot')?.classList.add('active');
+  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function openAdminSection(id){
+  closeAllAdminSections();
+  document.getElementById('folderContent')?.classList.add('is-open');
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('folder-section-hidden');
+  el.classList.add('folder-section-visible');
+  document.getElementById('folderRoot')?.classList.remove('active');
+  document.getElementById('folderChildren')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+  document.getElementById('folderContent')?.classList.remove('active');
+  const bc=document.getElementById('folderBreadcrumb');
+  if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(el.querySelector('h3')?.textContent || '功能')}</span>`;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function openQuickAction(mode){
+  document.getElementById('folderContent')?.classList.remove('is-open');
+  document.querySelectorAll('.card[id$="_section"], #order_section').forEach(el=>el.classList.add('folder-section-hidden'));
+  if(typeof openWiz === 'function') { openWiz(mode); return; }
+  if(typeof quickGo === 'function') quickGo(mode);
+}
+function escapeFolderText(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function getFolderNodeFromKey(key){
+  const parts=String(key||'').split('.');
+  let node=ADMIN_FOLDER_TREE;
+  for(const part of parts){ node=node?.[part]; }
+  return node || null;
+}
+function getFolderNodeFromPath(rootKey, indexes){
+  let node=ADMIN_FOLDER_TREE[rootKey];
+  for(const idx of (indexes||[])) node=node?.children?.[idx];
+  return node || null;
+}
+function renderFolderItems(target, rootKey, children, path){
+  target.innerHTML=`<div class="folder-grid">${children.map((c,i)=>{
+    const hasChildren=Array.isArray(c.children) && c.children.length>0;
+    const action=hasChildren
+      ? `openAdminFolderPath('${rootKey}', '${JSON.stringify([...(path||[]),i]).replace(/'/g,"&apos;")}')`
+      : `ADMIN_FOLDER_TREE['${rootKey}'].__action(${i}, ${JSON.stringify(path||[]).replace(/'/g,"&apos;")})`;
+    return `<div class="folder-card" onclick="${action}"><div class="folder-icon">${hasChildren?'📁':'▣'}</div><div class="folder-title">${escapeFolderText(c.title)}</div><div class="folder-desc">${escapeFolderText(c.desc||'')}</div></div>`;
+  }).join('')}</div>`;
+}
+function openAdminFolder(key){
+  const node=ADMIN_FOLDER_TREE[key]; if(!node) return;
+  document.getElementById('folderContent')?.classList.remove('is-open');
+  ADMIN_FOLDER_TREE[key].__action=(index,path)=>openFolderLeaf(key,index,path||[]);
+  closeAllAdminSections();
+  document.getElementById('folderRoot')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+  const wrap=document.getElementById('folderChildren'); if(!wrap) return;
+  wrap.classList.add('active');
+  const back=`<button type="button" class="folder-back" onclick="showAdminRoot()">← 主功能</button>`;
+  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(node.title)}</span>`;
+  wrap.innerHTML=back;
+  renderFolderItems(wrap,key,node.children,[]);
+}
+function openAdminFolderPath(rootKey,path){
+  const node=getFolderNodeFromPath(rootKey,path); if(!node) return;
+  document.getElementById('folderContent')?.classList.remove('is-open');
+  const root=ADMIN_FOLDER_TREE[rootKey];
+  closeAllAdminSections();
+  document.getElementById('folderRoot')?.classList.remove('active');
+  const wrap=document.getElementById('folderChildren'); if(!wrap) return;
+  wrap.classList.add('active');
+  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML=`<button type="button" onclick="showAdminRoot()">主功能</button><span>›</span><span>${escapeFolderText(root.title)}</span>${path.length?`<span>›</span><span>${escapeFolderText(node.title)}</span>`:''}`;
+  wrap.innerHTML=`<button type="button" class="folder-back" onclick="${path.length?`openAdminFolderPath('${rootKey}', ${JSON.stringify(path.slice(0,-1))})`:`showAdminRoot()`}">← 返回</button>`;
+  renderFolderItems(wrap,rootKey,node.children||[],path);
+}
+function openFolderLeaf(rootKey,index,path){
+  const node=getFolderNodeFromPath(rootKey,path||[]); const child=node?.children?.[index];
+  if(!child) return;
+  if(Array.isArray(child.children) && child.children.length){ openAdminFolderPath(rootKey,[...(path||[]),index]); return; }
+  if(typeof child.action==='function') child.action();
+}
+function showAdminRoot(){
+  closeAllAdminSections();
+  document.getElementById('folderContent')?.classList.remove('is-open');
+  document.getElementById('folderChildren')?.classList.remove('active');
+  document.getElementById('folderGrandchildren')?.classList.remove('active');
+  document.getElementById('folderRoot')?.classList.add('active');
+  const bc=document.getElementById('folderBreadcrumb'); if(bc) bc.innerHTML='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  closeAllAdminSections();
+  showAdminRoot();
+});
 
 async function confirmActionWithPush(title) {
 const { value: notifyMode } = await Swal.fire({
@@ -597,8 +869,11 @@ document.getElementById('force_cancel_select').innerHTML = O_DB.map(o => `<optio
 document.getElementById('r_audit_select').innerHTML = '<option value="">--請選擇--</option>' + O_DB.filter(o => o.status === '申請退貨/退款中' || o.status === '賣家同意-待退貨' || o.status === '退貨驗收中').map(o => `<option value="${o.id}">${o.id} [${o.status}]</option>`).join('');
 document.getElementById('inv_won_oid').innerHTML = INV_DB.map(i => `<option value="${i.num}">${i.num} (所屬:${i.uid})</option>`).join('');
 
-let sts = (SETTINGS["物流狀態"] || []).map(s => `<option value="${s}">${s}</option>`).join('');
+let stsList = SETTINGS["物流狀態"] || [];
+let sts = stsList.map(s => `<option value="${String(s).replace(/"/g,'&quot;')}">${String(s)}</option>`).join('');
 document.getElementById('o_new_status').innerHTML = sts; document.getElementById('t_log_status').innerHTML = sts;
+let mainStatusEl = document.getElementById('t_main_status');
+if (mainStatusEl) mainStatusEl.innerHTML = sts;
 document.getElementById('o_new_log_method').innerHTML = (SETTINGS["物流方式"] || []).map(m => `<option value="${m}">${m}</option>`).join('');
 document.getElementById('o_new_address_select').innerHTML = '<option value="">--快速選--</option>' + (SETTINGS["門市清單"] || []).map(a => `<option value="${a}">${a}</option>`).join('');
 
@@ -1023,9 +1298,11 @@ let order = O_DB.find(o => o.id === oid);
 if (!order) return Swal.fire("錯誤", "找不到訂單資料", "error");
 let packageId = document.getElementById('t_log_package').value.trim();
 let returnTrack = packageId === 'RETURN' ? (document.getElementById('t_log_return_track')?.value.trim() || '') : '';
-let notifyMode = await confirmActionWithPush('發佈最新節點');
+let mainStatus = document.getElementById('t_main_status')?.value.trim() || '';
+if (!mainStatus) return Swal.fire('提示', '請選擇主訂單狀態；發布物流時一定會同步更新 Orders.C。', 'warning');
+let notifyMode = await confirmActionWithPush(`發佈物流並更新主訂單狀態為「${mainStatus}」`);
 if (!notifyMode) return;
-let res = await fetchWithQueue(GAS, { action:'adminAction', type:'updateTimeline', oid:order.id, status:status, time:time.replace('T',' '), note:note, packageId:packageId, returnTrack:returnTrack, notifyMode:notifyMode }, "發佈物流節點中...");
+let res = await fetchWithQueue(GAS, { action:'adminAction', type:'updateTimeline', oid:order.id, status:status, mainStatus:mainStatus, time:time.replace('T',' '), note:note, packageId:packageId, returnTrack:returnTrack, notifyMode:notifyMode }, "發布物流／主訂單狀態中...");
 if(!res.aborted) handlePostSuccess(res);
 }
 
@@ -1266,6 +1543,12 @@ let optionsHtml = '<option value="">🌐 共用 / 無指定包裹</option>' + tr
 if (hasReturn) optionsHtml += `<option value="RETURN">↩️ 退貨：${returnTrack || '待提供單號'}</option>`;
 document.getElementById('t_log_package').innerHTML = optionsHtml;
 if (document.getElementById('t_log_return_track')) document.getElementById('t_log_return_track').value = returnTrack;
+const mainStatusEl = document.getElementById('t_main_status');
+if (mainStatusEl) {
+  const currentMainStatus = String(order.status || '').trim();
+  mainStatusEl.value = currentMainStatus;
+  mainStatusEl.dataset.current = currentMainStatus;
+}
 if (typeof toggleTimelineReturnTrack === 'function') toggleTimelineReturnTrack();
 
 if (tracks.length > 0) {
