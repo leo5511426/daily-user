@@ -486,7 +486,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 
 <div class="card" id="tracktw_section" style="border:2px solid #0ea5e9;">
 <h3 style="margin:0 0 5px;color:#0369a1;">📡 Track.TW 即時物流</h3>
-<div class="folder-hint">首次啟用才會建立 Track.TW 包裹對應；之後查詢會自動同步最新一筆物流節點與可安全套用的 Orders.C 狀態。</div>
+<div class="folder-hint">Track.TW 主要提供即時物流貨態；系統會依 Orders.N 的物流編號建立必要對應，並自動同步最新物流節點與可安全套用的 Orders.C 狀態。</div>
 <div id="tt_connection_status" style="margin:8px 0 12px;padding:9px 11px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:0.82em;color:#64748b;">
   📡 Track.TW 連線狀態：檢查中…
 </div>
@@ -948,7 +948,7 @@ Swal.fire('成功', res.message, 'success').then(()=>refresh());
 } else { Swal.fire('錯誤', res.message, 'error'); }
 }
 
-window.onload = async function(){ await refresh(); setOrderEditorMode('new'); };
+window.onload = async function(){ await refresh(); setOrderEditorMode('new'); setTimeout(loadTrackTWAdminStatus,300); };
 
 async function refresh() {
 let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
@@ -1684,21 +1684,22 @@ let TRACKTW_REQUIREMENTS = [];
 
 
 async function loadTrackTWAdminStatus() {
-  const el = document.getElementById('tt_connection_status');
-  if (!el) return;
-  el.innerHTML = '📡 Track.TW 連線狀態：檢查中…';
-  const res = await fetchWithQueue(GAS, { action:'adminAction', type:'trackGetStatus' }, '確認 Track.TW 連線狀態中...');
-  if (!res || res.aborted) return;
-  if (res.success && res.online) {
-    el.style.background = '#ecfdf5';
-    el.style.borderColor = '#a7f3d0';
-    el.style.color = '#047857';
-    el.innerHTML = `🟢 Track.TW 連線正常　｜　最近確認：${escapeHTML(String(res.checkedAt || '剛剛'))}`;
-  } else {
-    el.style.background = '#fef2f2';
-    el.style.borderColor = '#fecaca';
-    el.style.color = '#b91c1c';
-    el.innerHTML = `🔴 Track.TW 目前無法確認連線　｜　${escapeHTML(String(res.message || '請稍後再試'))}`;
+  const el=document.getElementById('tt_connection_status'); if(!el) return;
+  el.innerHTML='<div>📡 <b>Track.TW API：檢查中…</b></div><div style="margin-top:3px;opacity:.65;">API 最後確認：尚未取得</div>';
+  try{
+    const ctl=new AbortController(); const timer=setTimeout(()=>ctl.abort(),12000);
+    const response=await fetch(GAS,{method:'POST',body:JSON.stringify({action:'adminAction',type:'trackGetStatus',adminToken:ADMIN_TOKEN}),signal:ctl.signal});
+    clearTimeout(timer); const res=await response.json();
+    if(res&&res.success&&res.online){
+      el.style.background='#ecfdf5';el.style.borderColor='#a7f3d0';el.style.color='#047857';
+      el.innerHTML=`<div>🟢 <b>Track.TW API：連線正常</b></div><div style="margin-top:3px;opacity:.7;">API 最後確認：${escapeHTML(String(res.checkedAt||'剛剛'))}</div>`;
+    }else{
+      el.style.background='#fef2f2';el.style.borderColor='#fecaca';el.style.color='#b91c1c';
+      el.innerHTML=`<div>🔴 <b>Track.TW API：目前無法連線</b></div><div style="margin-top:3px;opacity:.7;">${escapeHTML(String((res&&res.message)||'請稍後再試'))}</div>`;
+    }
+  }catch(e){
+    el.style.background='#fef2f2';el.style.borderColor='#fecaca';el.style.color='#b91c1c';
+    el.innerHTML='<div>🔴 <b>Track.TW API：目前無法連線</b></div><div style="margin-top:3px;opacity:.7;">連線逾時或無法取得回應</div>';
   }
 }
 
