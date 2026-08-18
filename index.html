@@ -583,6 +583,7 @@ body > .nav-bar { position: fixed !important; left: 50% !important; transform: t
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
 const SCRIPT_URL = '/api/gas';
+const TRACK_TW_GAS_URL = 'https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec';
 
 // 將主選單移出 app-container，避免父層 overflow:hidden 在部分瀏覽器／手機環境裁切 fixed 元素。
 document.addEventListener('DOMContentLoaded', function(){
@@ -1722,23 +1723,18 @@ function trackTWStatusDomId(oid) {
 }
 
 async function loadTrackTWStatus(oid, targetId) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-  el.innerHTML = '📡 Track.TW：檢查連線中…';
+  const el = document.getElementById(targetId); if (!el) return;
+  el.innerHTML = '<div data-track-api-line>📡 <b>Track.TW API：檢查中…</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">📦 包裹最後同步：尚未同步</div>';
   try {
-    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetStatus', uid:store.userData.id, pw:savedPw }) });
-    const data = await res.json();
-    if (data && data.success && data.online) {
-      el.innerHTML = `🟢 Track.TW 連線正常　｜　最近確認：${escapeHTML(String(data.checkedAt || '剛剛'))}`;
-      el.style.color = '#047857';
-    } else {
-      el.innerHTML = `🔴 Track.TW 目前無法確認連線　｜　${escapeHTML(String((data && data.message) || '請稍後再試'))}`;
-      el.style.color = '#b91c1c';
+    const ctl=new AbortController(); const timer=setTimeout(()=>ctl.abort(),12000);
+    const res=await fetch(TRACK_TW_GAS_URL,{method:'POST',body:JSON.stringify({action:'trackGetStatus',uid:store.userData.id,pw:savedPw}),signal:ctl.signal});
+    clearTimeout(timer); const data=await res.json();
+    if(data&&data.success&&data.online){
+      el.innerHTML=`<div data-track-api-line style="color:#047857;">🟢 <b>Track.TW API：連線正常</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">API 最後確認：${escapeHTML(String(data.checkedAt||'剛剛'))}</div>`;
+    }else{
+      el.innerHTML=`<div data-track-api-line style="color:#b91c1c;">🔴 <b>Track.TW API：目前無法連線</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">${escapeHTML(String((data&&data.message)||'請稍後再試'))}</div>`;
     }
-  } catch (e) {
-    el.innerHTML = '🔴 Track.TW 目前無法確認連線';
-    el.style.color = '#b91c1c';
-  }
+  }catch(e){ el.innerHTML='<div data-track-api-line style="color:#b91c1c;">🔴 <b>Track.TW API：目前無法連線</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">連線逾時或無法取得回應</div>'; }
 }
 
 function renderTrackTWResult(targetId, data) {
@@ -1777,7 +1773,7 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
   if (!el) return;
   el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;text-align:center;">⏳ 正在取得第三方即時物流資訊…</div>';
   try {
-    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetTracking', uid:store.userData.id, pw:savedPw, oid, packageType, trackingNumber }) });
+    const res = await fetch(TRACK_TW_GAS_URL, { method:'POST', body:JSON.stringify({ action:'trackGetTracking', uid:store.userData.id, pw:savedPw, oid, packageType, trackingNumber }) });
     const data = await res.json();
     if (data && data.success) {
       const localOrder = store && Array.isArray(store.orders) ? store.orders.find(x => String(x.id) === String(oid)) : null;
@@ -1793,6 +1789,11 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
         if (statusPill && localOrder.status) statusPill.textContent = '● ' + localOrder.status;
       }
       renderTrackTWResult(targetId, data);
+      const st=document.getElementById(trackTWStatusDomId(oid));
+      if(st && data.sync && data.sync.eventTime){
+        const syncLine=st.querySelector('[data-track-sync-line]');
+        if(syncLine) syncLine.innerHTML=`📦 包裹最後同步：${escapeHTML(String(data.sync.eventTime))}`;
+      }
     } else if (data && data.errorCode === 'TRACK_QUERY_RATE_LIMIT_LOCAL') {
       el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🕒 ${escapeHTML(data.message || '請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
     } else {
@@ -1894,7 +1895,7 @@ if (returnTrack && !trackPackagesByKey['RETURN|' + returnTrack]) trackPackages.p
 if (trackPackages.length) {
   const trackStatusId = trackTWStatusDomId(o.id);
   trackTWHtml += '<div style="margin:15px 0;">';
-  trackTWHtml += `<div style="font-weight:900;color:var(--pink);margin-bottom:8px;">📡 Track.TW 即時物流</div><div id="${trackStatusId}" style="font-size:.76em;color:#64748b;margin-bottom:8px;">📡 Track.TW：檢查連線中…</div>`;
+  trackTWHtml += `<div style="font-weight:900;color:var(--pink);margin-bottom:8px;">📡 Track.TW 即時物流</div><div id="${trackStatusId}" style="font-size:.76em;color:#64748b;margin-bottom:8px;"><div data-track-api-line>📡 <b>Track.TW API：檢查中…</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">📦 包裹最後同步：尚未同步</div></div>`;
   trackPackages.forEach((pkg, idx) => {
     const packageType = String(pkg.packageType || 'OUTBOUND').toUpperCase();
     const trackingNumber = String(pkg.trackingNumber || '');
@@ -1902,8 +1903,8 @@ if (trackPackages.length) {
     const label = packageType === 'RETURN' ? '↩️ 退貨包裹' : '📦 出貨包裹';
     const oidEnc = encodeURIComponent(String(o.id));
     const trackEnc = encodeURIComponent(trackingNumber);
-    const mappingText = pkg.pendingMapping ? '自動建立對應中…' : '已連線';
-    trackTWHtml += `<div class="track-glass-card"><div class="track-glass-head"><div class="track-glass-title">${label}</div><span class="track-status-pill">${mappingText}</span></div><div class="track-meta"><span class="track-meta-chip">📦 ${escapeHTML(trackingNumber)}</span></div><div id="${targetId}"><div class="track-glass-card" style="margin-top:8px;text-align:center;opacity:.72;">📡 正在連線 Track.TW…</div></div></div>`;
+    const mappingText = pkg.pendingMapping ? '即時物流' : '已連線';
+    trackTWHtml += `<div class="track-glass-card"><div class="track-glass-head"><div class="track-glass-title">${label}</div><span class="track-status-pill">${mappingText}</span></div><div class="track-meta"><span class="track-meta-chip">📦 ${escapeHTML(trackingNumber)}</span></div><div id="${targetId}"><div class="track-glass-card" style="margin-top:8px;text-align:center;opacity:.72;">📡 正在取得最新物流…</div></div></div>`;
   });
   trackTWHtml += '<div class="track-source">物流資料來源：Track.TW</div></div>';
 } else if (outboundTracks.length || (returnTrack && String(returnTrack).trim())) {
@@ -1950,11 +1951,11 @@ setTimeout(async () => {
       if (pkg.pendingMapping) {
         const targetEl = document.getElementById(target);
         try {
-          const ensureRes = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack }) }).then(r=>r.json());
+          const ensureRes = await fetch(TRACK_TW_GAS_URL, { method:'POST', body:JSON.stringify({ action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack }) }).then(r=>r.json());
           if (ensureRes && ensureRes.success) {
             await loadTrackTWTracking(o.id, pType, pTrack, target);
           } else if (targetEl) {
-            targetEl.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🟡 ${escapeHTML((ensureRes && ensureRes.message) || '目前無法自動建立 Track.TW 對應。')}</div>`;
+            targetEl.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🟡 ${escapeHTML((ensureRes && ensureRes.message) || '目前暫時無法取得即時物流，請稍後再試。')}</div>`;
           }
         } catch(e) {
           if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;">🔴 Track.TW 暫時無法連線。</div>';
@@ -2845,6 +2846,11 @@ function closeAppOverlay() {
   }, true);
 })();
 
+// 📱 將會員主選單移到 body 根層，避免任何父層 overflow 影響 fixed 定位
+(function ensureMemberNavFixed(){
+  function move(){ const nav=document.getElementById('memberNav'); if(nav && nav.parentElement!==document.body) document.body.appendChild(nav); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',move,{once:true}); else move();
+})();
 </script>
 </body>
 </html>
