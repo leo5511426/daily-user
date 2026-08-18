@@ -562,7 +562,8 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 
 <script>
 // ⚠️ 替換為您的最新 GAS 部署網址
-    const GAS = "https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec"; 
+    const GAS = "/api/gas";
+const GAS_DIRECT = "https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec";
 const ADMIN_TOKEN = 'ADMIN_SEC_2026';
 
 let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], INST_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
@@ -950,7 +951,7 @@ Swal.fire('成功', res.message, 'success').then(()=>refresh());
 } else { Swal.fire('錯誤', res.message, 'error'); }
 }
 
-window.onload = async function(){ await refresh(); setOrderEditorMode('new'); };
+window.onload = async function(){ await refresh(); showAdminRoot(); };
 
 async function refresh() {
 let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
@@ -1259,9 +1260,15 @@ let oidEl = document.getElementById('inv_new_link_oid');
 if (!uidEl || !oidEl) return;
 let uid = String(uidEl.value || '').trim();
 let current = String(oidEl.value || '').trim();
-let eligible = uid ? O_DB.filter(o => String(o.uid || '').trim() === uid) : [];
+let eligible = uid
+  ? O_DB.filter(o => String(o.uid || '').trim() === uid)
+  : O_DB.slice();
 let html = '<option value="">-- 不關聯訂單 --</option>';
-html += eligible.map(o => `<option value="${o.id}">${o.id} - ${(o.item||'').substring(0, 15)}</option>`).join('');
+html += eligible.map(o => {
+  const owner = String(o.uid || '').trim();
+  const ownerText = uid ? '' : `｜會員：${owner}`;
+  return `<option value="${escapeFolderText(String(o.id || ''))}">${escapeFolderText(String(o.id || ''))} - ${escapeFolderText(String(o.item || '').substring(0, 15))}${escapeFolderText(ownerText)}</option>`;
+}).join('');
 oidEl.innerHTML = html;
 if (current && eligible.some(o => String(o.id) === current)) oidEl.value = current;
 }
@@ -1772,7 +1779,13 @@ async function loadTrackTWAdminStatus() {
   if (!el) return;
   el.innerHTML = '📡 Track.TW 連線狀態：檢查中…';
   const res = await fetchWithQueue(GAS, { action:'adminAction', type:'trackGetStatus' }, '確認 Track.TW 連線狀態中...');
-  if (!res || res.aborted) return;
+  if (!res || res.aborted) {
+    el.style.background = '#fef2f2';
+    el.style.borderColor = '#fecaca';
+    el.style.color = '#b91c1c';
+    el.innerHTML = '🔴 Track.TW 連線檢查失敗　｜　請確認後端 API 連線。';
+    return;
+  }
   if (res.success && res.online) {
     el.style.background = '#ecfdf5';
     el.style.borderColor = '#a7f3d0';
@@ -1820,7 +1833,10 @@ async function loadTrackTWCarriers() {
   const status = document.getElementById('tt_status');
   if (status) status.innerText = '正在取得 Track.TW 物流商…';
   const res = await fetchWithQueue(GAS, { action:'adminAction', type:'trackGetCarriers' }, '取得物流商資料中...');
-  if (!res || res.aborted) return;
+  if (!res || res.aborted) {
+    if (status) status.innerText = 'Track.TW 物流商取得失敗：後端 API 無回應。';
+    return;
+  }
   if (!res.success) {
     if (status) status.innerText = res.message || '取得物流商失敗';
     return;
@@ -1961,8 +1977,11 @@ async function importSelectedTrackTWPackage() {
 function initTrackTWAdminPanel() {
   const sel = document.getElementById('tt_order_id');
   if (!sel) return;
-  sel.innerHTML = '<option value="">請選擇訂單</option>' + O_DB.map(o=>`<option value="${escapeHTML(String(o.id))}">${escapeHTML(String(o.id))}｜${escapeHTML(String(o.item || '').slice(0,30))}</option>`).join('');
-  if (sel.value) renderTrackTWAdminPanel();
+  const current = String(sel.value || '');
+  sel.innerHTML = '<option value="">請選擇訂單</option>' + (O_DB || []).map(o=>`<option value="${escapeHTML(String(o.id))}">${escapeHTML(String(o.id))}｜${escapeHTML(String(o.item || '').slice(0,30))}</option>`).join('');
+  if (current && (O_DB || []).some(o => String(o.id) === current)) sel.value = current;
+  if (!sel.value && O_DB && O_DB.length === 1) sel.value = String(O_DB[0].id);
+  renderTrackTWAdminPanel();
 }
 
 // --- 📦 渲染與過濾時間線節點 ---
