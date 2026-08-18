@@ -485,7 +485,10 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 
 <div class="card" id="tracktw_section" style="border:2px solid #0ea5e9;">
 <h3 style="margin:0 0 5px;color:#0369a1;">📡 Track.TW 即時物流</h3>
-<div class="folder-hint">首次啟用才會建立 Track.TW 包裹對應；會員查詢時不會自動匯入。</div>
+<div class="folder-hint">首次啟用才會建立 Track.TW 包裹對應；之後查詢會自動同步最新一筆物流節點與可安全套用的 Orders.C 狀態。</div>
+<div id="tt_connection_status" style="margin:8px 0 12px;padding:9px 11px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:0.82em;color:#64748b;">
+  📡 Track.TW 連線狀態：檢查中…
+</div>
 <label style="font-size:0.85em;opacity:0.7;">選擇目標訂單：</label>
 <select id="tt_order_id" onchange="renderTrackTWAdminPanel()"></select>
 <div id="tt_package_wrap" style="display:none;margin-top:10px;">
@@ -497,6 +500,7 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 <label style="font-size:0.85em;font-weight:bold;">物流商</label>
 <select id="tt_carrier_id" style="margin-top:5px;"></select>
 <div id="tt_requirements" style="margin-top:10px;"></div>
+<div id="tt_sync_actions" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
 <button type="button" onclick="importSelectedTrackTWPackage()" style="background:#0284c7;margin-top:10px;">📡 啟用 Track.TW 查詢</button>
 </div>
 <div id="tt_status" style="margin-top:10px;font-size:0.82em;color:#64748b;"></div>
@@ -1677,6 +1681,50 @@ function toggleTimelineReturnTrack() {
 let TRACKTW_CARRIERS = [];
 let TRACKTW_REQUIREMENTS = [];
 
+
+async function loadTrackTWAdminStatus() {
+  const el = document.getElementById('tt_connection_status');
+  if (!el) return;
+  el.innerHTML = '📡 Track.TW 連線狀態：檢查中…';
+  const res = await fetchWithQueue(GAS, { action:'adminAction', type:'trackGetStatus' }, '確認 Track.TW 連線狀態中...');
+  if (!res || res.aborted) return;
+  if (res.success && res.online) {
+    el.style.background = '#ecfdf5';
+    el.style.borderColor = '#a7f3d0';
+    el.style.color = '#047857';
+    el.innerHTML = `🟢 Track.TW 連線正常　｜　最近確認：${escapeHTML(String(res.checkedAt || '剛剛'))}`;
+  } else {
+    el.style.background = '#fef2f2';
+    el.style.borderColor = '#fecaca';
+    el.style.color = '#b91c1c';
+    el.innerHTML = `🔴 Track.TW 目前無法確認連線　｜　${escapeHTML(String(res.message || '請稍後再試'))}`;
+  }
+}
+
+async function syncSelectedTrackTWPackage() {
+  const selected = getTrackTWSelectedPackage();
+  if (!selected || !selected.existing || !selected.existing.userPackageId) {
+    return Swal.fire('提示','請先選擇已啟用 Track.TW 的包裹。','warning');
+  }
+  const res = await fetchWithQueue(GAS, {
+    action:'adminAction',
+    type:'trackSyncPackage',
+    oid:selected.order.id,
+    packageType:selected.packageType,
+    trackingNumber:selected.trackingNumber
+  }, '同步 Track.TW 最新物流中...');
+  if (!res || res.aborted) return;
+  if (res.success) {
+    const s = res.sync || {};
+    const statusText = s.orderStatusUpdated
+      ? `主訂單狀態已同步為「${s.orderStatus || ''}」`
+      : `主訂單狀態維持「${s.orderStatus || selected.order.status || ''}」`;
+    Swal.fire('同步完成', `${s.synced ? '已寫入最新物流節點。' : '最新物流節點已存在，未重複寫入。'}<br>${statusText}`, 'success').then(()=>refresh());
+  } else {
+    Swal.fire('同步失敗', res.message || '目前無法同步。', 'error');
+  }
+}
+
 function trackTWNormalizeCarriers(raw) {
   if (Array.isArray(raw)) return raw;
   if (raw && Array.isArray(raw.data)) return raw.data;
@@ -1749,6 +1797,7 @@ function renderTrackTWAdminPanel() {
   if (wrap) wrap.style.display='block';
   pkgSel.innerHTML = options.map(x=>`<option value="${escapeHTML(x.type+'|'+x.tracking)}">${escapeHTML(x.label)}</option>`).join('');
   renderTrackTWAdminPanelDetails();
+  loadTrackTWAdminStatus();
   if (!TRACKTW_CARRIERS.length) loadTrackTWCarriers();
 }
 
@@ -1764,7 +1813,15 @@ function renderTrackTWAdminPanelDetails() {
   if (form) form.style.display='block';
   const done = !!(selected.existing && selected.existing.userPackageId);
   if (summary) summary.innerHTML = `${selected.packageType === 'RETURN' ? '↩️' : '📦'} ${escapeHTML(selected.trackingNumber)} ${done ? '<span style="color:#059669;">✓ 已啟用</span>' : ''}`;
-  if (status && done) status.innerText = '此包裹已建立 Track.TW 對應，不會重複匯入。';
+  if (status && done) status.innerText = '此包裹已建立 Track.TW 對應；可手動同步最新物流，會員查詢時也會自動同步。';
+  const actions = document.getElementById('tt_sync_actions');
+  const importBtn = form ? form.querySelector('button[onclick^="importSelectedTrackTWPackage"]') : null;
+  if (actions) {
+    actions.innerHTML = done
+      ? '<button type="button" onclick="syncSelectedTrackTWPackage()" style="background:#0ea5e9;flex:1;">↻ 手動同步最新物流</button>'
+      : '';
+  }
+  if (importBtn) importBtn.style.display = done ? 'none' : 'block';
   renderTrackTWRequirements();
 }
 
