@@ -911,7 +911,7 @@ try {
   const readOnly = ['fetchData','trackGetStatus','trackGetCarriers'].includes(String(payload.action || ''));
   const request = async (targetUrl) => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 9000);
+    const timer = setTimeout(() => controller.abort(), 30000);
     try {
       return await fetch(targetUrl, { method:'POST', body:JSON.stringify(payload), signal:controller.signal });
     } finally {
@@ -1804,17 +1804,57 @@ function toggleTimelineReturnTrack() {
 let TRACKTW_CARRIERS = [];
 let TRACKTW_REQUIREMENTS = [];
 
+async function trackTWBackgroundRequest(payload, timeoutMs = 30000) {
+  payload = Object.assign({}, payload, { adminToken: ADMIN_TOKEN });
+  const targets = [];
+  if (GAS) targets.push(GAS);
+  if (GAS_DIRECT && GAS_DIRECT !== GAS) targets.push(GAS_DIRECT);
+  let lastErr = null;
+  for (const targetUrl of targets) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(targetUrl, {
+        method:'POST',
+        body:JSON.stringify(payload),
+        signal:controller.signal
+      });
+      const text = await response.text();
+      try { return JSON.parse(text); }
+      catch(e) { return {success:false,aborted:false,errorCode:'TRACK_ADMIN_INVALID_JSON',message:`HTTP ${response.status}：API 回應不是有效 JSON。`}; }
+    } catch(e) {
+      lastErr = e;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return {
+    success:false,
+    aborted:true,
+    errorCode:'TRACK_ADMIN_NETWORK_TIMEOUT',
+    message:lastErr && lastErr.name === 'AbortError' ? 'Track.TW 後端連線逾時。' : (lastErr?.message || '無法連線到後端。')
+  };
+}
+
 
 async function loadTrackTWAdminStatus() {
   const el = document.getElementById('tt_connection_status');
   if (!el) return;
+  el.style.background = '#f8fafc';
+  el.style.borderColor = '#e2e8f0';
+  el.style.color = '#64748b';
   el.innerHTML = '📡 Track.TW 連線狀態：檢查中…';
-  const res = await fetchWithQueue(GAS, { action:'adminAction', type:'trackGetStatus' }, '確認 Track.TW 連線狀態中...');
+
+  const res = await trackTWBackgroundRequest(
+    { action:'adminAction', type:'trackGetStatus' },
+    30000
+  );
+
   if (!res || res.aborted) {
-    el.style.background = '#fef2f2';
-    el.style.borderColor = '#fecaca';
-    el.style.color = '#b91c1c';
-    el.innerHTML = '🔴 Track.TW 連線檢查失敗　｜　請確認後端 API 連線。';
+    el.style.background = '#fff7ed';
+    el.style.borderColor = '#fed7aa';
+    el.style.color = '#c2410c';
+    el.innerHTML = `🟠 Track.TW 連線檢查逾時　｜　${escapeHTML(String(res?.message || '請稍後再試'))}`;
     return;
   }
   if (res.success && res.online) {
@@ -1863,9 +1903,12 @@ function trackTWNormalizeCarriers(raw) {
 async function loadTrackTWCarriers() {
   const status = document.getElementById('tt_status');
   if (status) status.innerText = '正在取得 Track.TW 物流商…';
-  const res = await fetchWithQueue(GAS, { action:'adminAction', type:'trackGetCarriers' }, '取得物流商資料中...');
+  const res = await trackTWBackgroundRequest(
+    { action:'adminAction', type:'trackGetCarriers' },
+    30000
+  );
   if (!res || res.aborted) {
-    if (status) status.innerText = 'Track.TW 物流商取得失敗：後端 API 無回應。';
+    if (status) status.innerText = `Track.TW 物流商取得逾時：${res?.message || '請稍後再試。'}`;
     return;
   }
   if (!res.success) {
@@ -1914,12 +1957,22 @@ function renderTrackTWAdminPanel() {
     if (form) form.style.display='none';
     return;
   }
-  const tracks = String(order.track || '').split(/[,，\n]+/).map(x=>x.trim()).filter(Boolean);
+  const rawTracks = String(order.track || order.trackingNumber || '').split(/[,，\n]+/).map(x=>x.trim()).filter(Boolean);
+  const mappedPackages = Array.isArray(order.trackTWPackages) ? order.trackTWPackages : [];
+  const tracks = [...new Set([
+    ...rawTracks,
+    ...mappedPackages.filter(x=>String(x.packageType||'').toUpperCase()==='OUTBOUND')
+      .map(x=>String(x.trackingNumber||'').trim()).filter(Boolean)
+  ])];
   const hasReturn = !!(order.returnData && !(String(order.returnData.items || '').includes('[僅退款]')));
   const returnTrack = hasReturn ? String(order.returnData.track || '').trim() : '';
+  const mappedReturnTracks = mappedPackages
+    .filter(x=>String(x.packageType||'').toUpperCase()==='RETURN')
+    .map(x=>String(x.trackingNumber||'').trim()).filter(Boolean);
   const options = [];
   tracks.forEach(t => options.push({type:'OUTBOUND',tracking:t,label:'📦 寄出：'+t}));
-  if (hasReturn && returnTrack) options.push({type:'RETURN',tracking:returnTrack,label:'↩️ 退貨：'+returnTrack});
+  [...new Set([returnTrack, ...mappedReturnTracks].filter(Boolean))]
+    .forEach(t => options.push({type:'RETURN',tracking:t,label:'↩️ 退貨：'+t}));
   if (!options.length) {
     if (wrap) wrap.style.display='none';
     if (form) form.style.display='none';
@@ -1929,8 +1982,6 @@ function renderTrackTWAdminPanel() {
   if (wrap) wrap.style.display='block';
   pkgSel.innerHTML = options.map(x=>`<option value="${escapeHTML(x.type+'|'+x.tracking)}">${escapeHTML(x.label)}</option>`).join('');
   renderTrackTWAdminPanelDetails();
-  loadTrackTWAdminStatus();
-  if (!TRACKTW_CARRIERS.length) loadTrackTWCarriers();
 }
 
 function renderTrackTWAdminPanelDetails() {
@@ -2009,9 +2060,13 @@ function initTrackTWAdminPanel() {
   const sel = document.getElementById('tt_order_id');
   if (!sel) return;
   const current = String(sel.value || '');
-  sel.innerHTML = '<option value="">請選擇訂單</option>' + (O_DB || []).map(o=>`<option value="${escapeHTML(String(o.id))}">${escapeHTML(String(o.id))}｜${escapeHTML(String(o.item || '').slice(0,30))}</option>`).join('');
+  sel.innerHTML = '<option value="">請選擇訂單</option>' +
+    (O_DB || []).map(o=>`<option value="${escapeHTML(String(o.id))}">${escapeHTML(String(o.id))}｜${escapeHTML(String(o.item || '').slice(0,30))}</option>`).join('');
   if (current && (O_DB || []).some(o => String(o.id) === current)) sel.value = current;
   if (!sel.value && O_DB && O_DB.length === 1) sel.value = String(O_DB[0].id);
+
+  loadTrackTWAdminStatus();
+  if (!TRACKTW_CARRIERS.length) loadTrackTWCarriers();
   renderTrackTWAdminPanel();
 }
 
