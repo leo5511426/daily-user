@@ -750,6 +750,8 @@ if(id === 'tracktw_section') setTimeout(initTrackTWAdminPanel, 0);
 
 function openQuickAction(mode) {
   hideAdminContent();
+  const content = document.getElementById('folderContent');
+  if (content) content.classList.add('is-open');
   if (typeof openWiz === 'function') {
     openWiz(mode);
     return;
@@ -905,31 +907,47 @@ async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
 Swal.fire({ title: loadingTitle, text: '正在處理中，請稍候...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
 
 try {
+  payload = Object.assign({}, payload, { adminToken: ADMIN_TOKEN });
+  const readOnly = ['fetchData','trackGetStatus','trackGetCarriers'].includes(String(payload.action || ''));
+  const request = async (targetUrl) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 9000);
+    try {
+      return await fetch(targetUrl, { method:'POST', body:JSON.stringify(payload), signal:controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
-// 🔐 所有管理端 API 請求自動附帶管理員驗證 Token
-payload.adminToken = ADMIN_TOKEN;
+  let response;
+  try {
+    response = await request(url);
+  } catch (firstErr) {
+    if (!readOnly || !GAS_DIRECT || url === GAS_DIRECT) throw firstErr;
+    console.warn('[API] read-only request fallback to GAS_DIRECT:', firstErr);
+    response = await request(GAS_DIRECT);
+  }
 
-let response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
-let textData = await response.text(); 
-
-try {
-let data = JSON.parse(textData); 
-Swal.close(); 
-return data;
-} catch (jsonErr) {
-Swal.close();
-console.error("🔴 後端崩潰，回傳內容：", textData);
-Swal.fire({
-title: "後端程式錯誤 (GAS)", 
-html: `Google Apps Script 發生異常，未能正確回傳資料。<br><br>請按鍵盤 <b>F12</b> 打開開發者工具的 Console 標籤頁查看完整錯誤，或至 GAS 後台查看「執行記錄」。<br><br><div style="font-size:12px; color:red; text-align:left; background:#fee2e2; padding:5px; max-height:100px; overflow:auto;">${textData.substring(0, 200)}...</div>`, 
-icon: "error"
-});
-return { success: false, aborted: true };
-}
-} catch(e) { 
-Swal.close(); 
-Swal.fire("網路連線錯誤", e.message, "error"); 
-return { success: false, aborted: true }; 
+  const textData = await response.text();
+  try {
+    const data = JSON.parse(textData);
+    Swal.close();
+    return data;
+  } catch (jsonErr) {
+    Swal.close();
+    console.error("🔴 後端崩潰，回傳內容：", textData);
+    Swal.fire({
+      title: "後端程式錯誤 (GAS)",
+      html: `HTTP：${response.status}<br>Content-Type：${response.headers.get('content-type') || '未提供'}<br><br>
+      <div style="font-size:12px;color:red;text-align:left;background:#fee2e2;padding:5px;max-height:120px;overflow:auto;">${String(textData || '').substring(0,500)}</div>`,
+      icon: "error"
+    });
+    return { success:false, aborted:true };
+  }
+} catch(e) {
+  Swal.close();
+  Swal.fire("網路連線錯誤", e.name === 'AbortError' ? 'API 連線逾時，請稍後再試。' : (e.message || '無法連線到管理 API。'), "error");
+  return { success:false, aborted:true };
 }
 }
 
@@ -951,12 +969,18 @@ Swal.fire('成功', res.message, 'success').then(()=>refresh());
 } else { Swal.fire('錯誤', res.message, 'error'); }
 }
 
-window.onload = async function(){ await refresh(); showAdminRoot(); };
+history.scrollRestoration = 'manual';
+window.onload = async function(){
+  try { window.scrollTo(0,0); } catch(e) {}
+  showAdminRoot();
+  await refresh();
+  try { window.scrollTo(0,0); } catch(e) {}
+};
 
 async function refresh() {
 let res = await fetchWithQueue(GAS, {action:'fetchData', uid:'ALL_ADMIN'}, "正在載入系統資料...");
 if (res.success) {
-U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{}; LEGAL_DB = res.legalDocs||[]; ACTIVE_SUSPENSIONS = res.activeSuspensions||[]; 
+U_DB = res.list||[]; L_DB = res.loans||[]; CP_DB = res.coupons||[]; O_DB = res.orders||[]; INV_DB = res.invoices||[]; TIC_DB = res.tickets||[]; MSG_DB = res.chatMessages||[]; SETTINGS = res.settings||{}; LEGAL_DB = res.legalDocs||[]; ACTIVE_SUSPENSIONS = res.activeSuspensions || res.suspensions || []; 
 INST_DB = res.installments||[];
 
 updateSelects(); renderAdminTimeline(); renderLegalDocList_Admin();
@@ -989,6 +1013,14 @@ suspOpts += ACTIVE_SUSPENSIONS.map(s => `<option value="${s.uid}">${s.uid} (至:
 document.getElementById('lift_suspension_uid').innerHTML = suspOpts;
 
 document.getElementById('t_order_id').innerHTML = O_DB.map(o => `<option value="${o.id}">單號:${o.id} (${o.status})</option>`).join('');
+  const ttOrderSel = document.getElementById('tt_order_id');
+  if (ttOrderSel) {
+    const prevTTOrder = ttOrderSel.value;
+    const trackOrders = O_DB.filter(o => String(o.track || '').trim() || (o.returnData && String(o.returnData.track || '').trim()));
+    ttOrderSel.innerHTML = '<option value="">-- 請選擇目標訂單 --</option>' +
+      trackOrders.map(o => `<option value="${escapeFolderText(String(o.id))}">${escapeFolderText(String(o.id))}｜${escapeFolderText(String(o.status || ''))}｜物流：${escapeFolderText(String(o.track || o.returnData?.track || ''))}</option>`).join('');
+    if (prevTTOrder && trackOrders.some(o => String(o.id) === String(prevTTOrder))) ttOrderSel.value = prevTTOrder;
+  }
   populateEditOrderPicker();
 
 refreshInvoiceLinkedOrders();
@@ -1643,6 +1675,12 @@ window.renderReturnAuditQueue = function() {
 };
 
 function renderReturnAuditPanel() {
+const esc = (v) => String(v || '')
+.replace(/&/g,'&amp;')
+.replace(/</g,'&lt;')
+.replace(/>/g,'&gt;')
+.replace(/"/g,'&quot;')
+.replace(/'/g,'&#39;');
 let oid = document.getElementById('r_audit_select').value;
 if (!oid) return;
 
@@ -1692,13 +1730,6 @@ attachments = [{type:'image',name:'佐證照片',url:legacy,viewUrl:legacy}];
 }
 }
 }
-
-const esc = (v) => String(v || '')
-.replace(/&/g,'&amp;')
-.replace(/</g,'&lt;')
-.replace(/>/g,'&gt;')
-.replace(/"/g,'&quot;')
-.replace(/'/g,'&#39;');
 
 let attachmentHtml = '';
 if (!attachments.length) {
