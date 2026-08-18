@@ -483,6 +483,25 @@ button { background: var(--primary); color: white; border: none; cursor: pointer
 </div>
 </div>
 
+<div class="card" id="tracktw_section" style="border:2px solid #0ea5e9;">
+<h3 style="margin:0 0 5px;color:#0369a1;">📡 Track.TW 即時物流</h3>
+<div class="folder-hint">首次啟用才會建立 Track.TW 包裹對應；會員查詢時不會自動匯入。</div>
+<label style="font-size:0.85em;opacity:0.7;">選擇目標訂單：</label>
+<select id="tt_order_id" onchange="renderTrackTWAdminPanel()"></select>
+<div id="tt_package_wrap" style="display:none;margin-top:10px;">
+<label style="font-size:0.85em;font-weight:bold;">📦 包裹：</label>
+<select id="tt_package_key" onchange="renderTrackTWAdminPanelDetails()" style="margin-top:5px;"></select>
+</div>
+<div id="tt_import_form" style="display:none;margin-top:12px;padding:12px;background:#f8fafc;border:1px solid #bae6fd;border-radius:12px;">
+<div id="tt_package_summary" style="font-size:0.9em;font-weight:bold;color:#0f172a;margin-bottom:10px;"></div>
+<label style="font-size:0.85em;font-weight:bold;">物流商</label>
+<select id="tt_carrier_id" style="margin-top:5px;"></select>
+<div id="tt_requirements" style="margin-top:10px;"></div>
+<button type="button" onclick="importSelectedTrackTWPackage()" style="background:#0284c7;margin-top:10px;">📡 啟用 Track.TW 查詢</button>
+</div>
+<div id="tt_status" style="margin-top:10px;font-size:0.82em;color:#64748b;"></div>
+</div>
+
 <div class="card" id="ldms_section" style="border: 2px solid #0f172a;">
 <h3 style="margin:0 0 5px; color:var(--dark);">📋 法律文件管理系統 (LDMS)</h3>
 <p style="font-size:0.8em; color:#666; margin:0 0 12px 0;">管理前台「法律資訊中心」所有已發布的法律文件。新增文件後狀態為「草稿」，填寫完整後點擊「發布」才會顯示於前台。</p>
@@ -559,7 +578,8 @@ const ADMIN_FOLDER_TREE = {
     title:'🚚 物流管理', desc:'多包裹、物流節點、退貨物流', children:[
       {title:'📦 出貨包裹', desc:'管理同筆訂單的多個寄出包裹', action:()=>openAdminSection('timeline_section')},
       {title:'↩️ 退貨包裹', desc:'補上或修改退貨物流單號', action:()=>openAdminSection('timeline_section')},
-      {title:'📝 物流時間線', desc:'發布、編輯、刪除物流節點', action:()=>openAdminSection('timeline_section')}
+      {title:'📝 物流時間線', desc:'發布、編輯、刪除物流節點', action:()=>openAdminSection('timeline_section')},
+      {title:'📡 Track.TW 即時物流', desc:'啟用第三方貨態查詢', action:()=>openAdminSection('tracktw_section')}
     ]
   },
   bnpl: {
@@ -690,6 +710,7 @@ function applyExistingOrderEditLocks(order){
   if(existing){if(total)total.innerHTML=`${Number(order.total)||0} <span style="font-size:11px;color:#64748b;">（既有訂單金額已鎖定）</span>`;if(sub)sub.innerHTML=`${Number(order.subtotal)||0}（鎖定）`;}
 }
 function openAdminSection(id) {
+if(id === 'tracktw_section') setTimeout(initTrackTWAdminPanel, 0);
   const el = document.getElementById(id);
   if (!el || !document.getElementById('folderContent')?.contains(el)) return;
 
@@ -1648,6 +1669,158 @@ function toggleTimelineReturnTrack() {
   const wrap = document.getElementById('t_log_return_track_wrap');
   if (!sel || !wrap) return;
   wrap.style.display = sel.value === 'RETURN' ? 'block' : 'none';
+}
+
+// ============================================================
+// 📡 Track.TW 管理端
+// ============================================================
+let TRACKTW_CARRIERS = [];
+let TRACKTW_REQUIREMENTS = [];
+
+function trackTWNormalizeCarriers(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (raw && Array.isArray(raw.data)) return raw.data;
+  return [];
+}
+
+async function loadTrackTWCarriers() {
+  const status = document.getElementById('tt_status');
+  if (status) status.innerText = '正在取得 Track.TW 物流商…';
+  const res = await fetchWithQueue(GAS, { action:'adminAction', type:'trackGetCarriers' }, '取得物流商資料中...');
+  if (!res || res.aborted) return;
+  if (!res.success) {
+    if (status) status.innerText = res.message || '取得物流商失敗';
+    return;
+  }
+  TRACKTW_CARRIERS = trackTWNormalizeCarriers(res.carriers);
+  renderTrackTWCarrierSelect();
+  if (status) status.innerText = `已取得 ${TRACKTW_CARRIERS.length} 家物流商。`;
+}
+
+function renderTrackTWCarrierSelect() {
+  const sel = document.getElementById('tt_carrier_id');
+  if (!sel) return;
+  if (!TRACKTW_CARRIERS.length) {
+    sel.innerHTML = '<option value="">請先取得物流商</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">請選擇物流商</option>' + TRACKTW_CARRIERS.map(c => `<option value="${escapeHTML(String(c.id || ''))}">${escapeHTML(String(c.name || c.id || '未命名物流商'))}</option>`).join('');
+  sel.onchange = renderTrackTWRequirements;
+}
+
+function getTrackTWSelectedPackage() {
+  const orderId = document.getElementById('tt_order_id')?.value || '';
+  const key = document.getElementById('tt_package_key')?.value || '';
+  const order = O_DB.find(o => String(o.id) === String(orderId));
+  if (!order || !key) return null;
+  const parts = key.split('|');
+  const packageType = parts.shift();
+  const trackingNumber = parts.join('|');
+  const mappings = Array.isArray(order.trackTWPackages) ? order.trackTWPackages : [];
+  const existing = mappings.find(x => String(x.packageType || '').toUpperCase() === packageType && String(x.trackingNumber || '') === trackingNumber);
+  return { order, packageType, trackingNumber, existing };
+}
+
+function renderTrackTWAdminPanel() {
+  const orderSel = document.getElementById('tt_order_id');
+  if (!orderSel) return;
+  const oid = orderSel.value;
+  const order = O_DB.find(o => String(o.id) === String(oid));
+  const wrap = document.getElementById('tt_package_wrap');
+  const pkgSel = document.getElementById('tt_package_key');
+  const form = document.getElementById('tt_import_form');
+  if (!order) {
+    if (wrap) wrap.style.display='none';
+    if (form) form.style.display='none';
+    return;
+  }
+  const tracks = String(order.track || '').split(/[,，\n]+/).map(x=>x.trim()).filter(Boolean);
+  const hasReturn = !!(order.returnData && !(String(order.returnData.items || '').includes('[僅退款]')));
+  const returnTrack = hasReturn ? String(order.returnData.track || '').trim() : '';
+  const options = [];
+  tracks.forEach(t => options.push({type:'OUTBOUND',tracking:t,label:'📦 寄出：'+t}));
+  if (hasReturn && returnTrack) options.push({type:'RETURN',tracking:returnTrack,label:'↩️ 退貨：'+returnTrack});
+  if (!options.length) {
+    if (wrap) wrap.style.display='none';
+    if (form) form.style.display='none';
+    document.getElementById('tt_status').innerText = '此訂單目前沒有可啟用 Track.TW 的物流單號。';
+    return;
+  }
+  if (wrap) wrap.style.display='block';
+  pkgSel.innerHTML = options.map(x=>`<option value="${escapeHTML(x.type+'|'+x.tracking)}">${escapeHTML(x.label)}</option>`).join('');
+  renderTrackTWAdminPanelDetails();
+  if (!TRACKTW_CARRIERS.length) loadTrackTWCarriers();
+}
+
+function renderTrackTWAdminPanelDetails() {
+  const selected = getTrackTWSelectedPackage();
+  const form = document.getElementById('tt_import_form');
+  const summary = document.getElementById('tt_package_summary');
+  const status = document.getElementById('tt_status');
+  if (!selected) {
+    if (form) form.style.display='none';
+    return;
+  }
+  if (form) form.style.display='block';
+  const done = !!(selected.existing && selected.existing.userPackageId);
+  if (summary) summary.innerHTML = `${selected.packageType === 'RETURN' ? '↩️' : '📦'} ${escapeHTML(selected.trackingNumber)} ${done ? '<span style="color:#059669;">✓ 已啟用</span>' : ''}`;
+  if (status && done) status.innerText = '此包裹已建立 Track.TW 對應，不會重複匯入。';
+  renderTrackTWRequirements();
+}
+
+function renderTrackTWRequirements() {
+  const wrap = document.getElementById('tt_requirements');
+  const carrierId = document.getElementById('tt_carrier_id')?.value || '';
+  if (!wrap) return;
+  const carrier = TRACKTW_CARRIERS.find(c => String(c.id) === String(carrierId));
+  TRACKTW_REQUIREMENTS = carrier && Array.isArray(carrier.requirements) ? carrier.requirements : [];
+  if (!TRACKTW_REQUIREMENTS.length) {
+    wrap.innerHTML = '<div style="font-size:12px;color:#64748b;">此物流商沒有額外欄位。</div>';
+    return;
+  }
+  wrap.innerHTML = TRACKTW_REQUIREMENTS.map((r, i) => {
+    const key = String(r.key || '').trim();
+    const label = String(r.desc || r.key || '額外欄位');
+    const ph = String(r.placeholder || '');
+    const type = String(r.keyboardType || '').toLowerCase() === 'number' ? 'number' : 'text';
+    return `<div style="margin-top:8px;"><label style="font-size:12px;font-weight:bold;">${escapeHTML(label)}${r.required === false ? '（選填）' : '（必填）'}</label><input type="${type}" id="tt_req_${i}" data-tt-key="${escapeHTML(key)}" placeholder="${escapeHTML(ph)}" style="width:100%;box-sizing:border-box;margin-top:4px;"></div>`;
+  }).join('');
+}
+
+async function importSelectedTrackTWPackage() {
+  const selected = getTrackTWSelectedPackage();
+  if (!selected) return Swal.fire('提示','請先選擇包裹。','warning');
+  if (selected.existing && selected.existing.userPackageId) return Swal.fire('提示','此包裹已經啟用 Track.TW。','info');
+  const carrierId = document.getElementById('tt_carrier_id')?.value || '';
+  if (!carrierId) return Swal.fire('提示','請先選擇物流商。','warning');
+  const extraFields = {};
+  let invalid = false;
+  TRACKTW_REQUIREMENTS.forEach((r,i)=>{
+    const key = String(r.key || '').trim();
+    const el = document.getElementById('tt_req_'+i);
+    const value = String(el?.value || '').trim();
+    if (r.required !== false && !value) invalid = true;
+    if (key && value) extraFields[key] = value;
+  });
+  if (invalid) return Swal.fire('提示','請完成物流商要求的必填欄位。','warning');
+  const res = await fetchWithQueue(GAS, {
+    action:'adminAction', type:'trackImportPackage',
+    oid:selected.order.id, packageType:selected.packageType,
+    trackingNumber:selected.trackingNumber, carrierId, extraFields
+  }, '啟用 Track.TW 中...');
+  if (!res || res.aborted) return;
+  if (res.success) {
+    Swal.fire('完成', res.message || 'Track.TW 已啟用。', 'success').then(()=>refresh());
+  } else {
+    Swal.fire('無法啟用', res.message || 'Track.TW 匯入失敗。', 'error');
+  }
+}
+
+function initTrackTWAdminPanel() {
+  const sel = document.getElementById('tt_order_id');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">請選擇訂單</option>' + O_DB.map(o=>`<option value="${escapeHTML(String(o.id))}">${escapeHTML(String(o.id))}｜${escapeHTML(String(o.item || '').slice(0,30))}</option>`).join('');
+  if (sel.value) renderTrackTWAdminPanel();
 }
 
 // --- 📦 渲染與過濾時間線節點 ---
