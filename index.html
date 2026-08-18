@@ -151,61 +151,6 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 [data-theme='dark'] #suspendedView { background: #1a0505; }
 
 /* ============================================================
-   MEMBER MODAL — 統一右上角關閉按鈕
-   所有 SweetAlert 會員視窗統一提供 X；載入/排隊中的不可關閉視窗除外。
-   ============================================================ */
-.swal2-popup .member-universal-close {
-  position:absolute !important;
-  top:10px !important;
-  right:10px !important;
-  z-index:20 !important;
-  width:38px !important;
-  height:38px !important;
-  min-width:38px !important;
-  margin:0 !important;
-  padding:0 !important;
-  border:0 !important;
-  border-radius:999px !important;
-  background:rgba(148,163,184,.14) !important;
-  color:#475569 !important;
-  font-size:24px !important;
-  font-weight:500 !important;
-  line-height:38px !important;
-  cursor:pointer !important;
-  box-shadow:none !important;
-}
-.swal2-popup .member-universal-close:hover { background:rgba(148,163,184,.24) !important; }
-.swal2-popup .member-universal-close:active { transform:scale(.94); }
-.swal2-popup .swal2-title { padding-right:46px !important; }
-
-function installMemberModalCloseButton(popup) {
-  if (!popup || popup.querySelector('.member-universal-close')) return;
-  // 載入中/排隊中的阻塞視窗不能被使用者意外關閉。
-  if (popup.querySelector('.swal2-loader') || popup.classList.contains('member-loading-modal')) return;
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'member-universal-close';
-  btn.setAttribute('aria-label', '關閉視窗');
-  btn.title = '關閉視窗';
-  btn.textContent = '×';
-  btn.addEventListener('click', () => Swal.close());
-  popup.appendChild(btn);
-}
-
-function initMemberUniversalModalClose() {
-  if (window.__memberUniversalModalCloseReady) return;
-  window.__memberUniversalModalCloseReady = true;
-  const observer = new MutationObserver(() => {
-    const popup = document.querySelector('.swal2-container.swal2-backdrop-show .swal2-popup');
-    if (popup) installMemberModalCloseButton(popup);
-  });
-  observer.observe(document.body, {childList:true, subtree:true});
-}
-
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMemberUniversalModalClose);
-else initMemberUniversalModalClose();
-
-/* ============================================================
    APP OVERLAY MODAL
    用於「彈窗中的預覽／子視窗」，避免再次呼叫 Swal.fire
    把原本的 Swal 彈窗關閉。
@@ -221,7 +166,7 @@ else initMemberUniversalModalClose();
   box-sizing: border-box;
   background: rgba(0,0,0,.78);
 }
-.app-overlay-modal.is-open { display: flex !important; }
+.app-overlay-modal.is-open { display: flex; }
 .app-overlay-dialog {
   position: relative;
   width: min(96vw, 1100px);
@@ -331,6 +276,85 @@ body > .nav-bar { position: fixed !important; left: 50% !important; transform: t
 @media(prefers-reduced-motion:reduce){.btn,.nav-item,.nav-icon{transition:none!important}}
 
 </style>
+<style id="global-swal-close-style">
+/* 全站 SweetAlert2 彈出視窗：統一右上角 X 關閉按鈕 */
+.swal2-popup .swal2-close.global-swal-close {
+  position: absolute !important;
+  top: 10px !important;
+  right: 12px !important;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(241,245,249,.92) !important;
+  color: #334155 !important;
+  font-size: 27px !important;
+  line-height: 40px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  z-index: 20 !important;
+  cursor: pointer !important;
+  transition: .15s ease !important;
+}
+.swal2-popup .swal2-close.global-swal-close:hover {
+  background: #e2e8f0 !important;
+  transform: scale(1.05);
+}
+.swal2-popup .swal2-close.global-swal-close:focus {
+  box-shadow: 0 0 0 3px rgba(236,72,153,.18) !important;
+}
+.swal2-popup .swal2-title { padding-right: 52px !important; }
+</style>
+<script id="global-swal-close-script">
+/* ============================================================
+ * 全站彈出式視窗統一右上角 X
+ * 任何 Swal.fire(...) 都自動套用，不需要逐一修改數十個視窗。
+ * ============================================================ */
+(function installGlobalSwalCloseButton() {
+  function install() {
+    if (!window.Swal || typeof window.Swal.fire !== 'function' || window.__globalSwalCloseInstalled) return;
+    window.__globalSwalCloseInstalled = true;
+
+    const originalFire = window.Swal.fire.bind(window.Swal);
+    window.Swal.fire = function () {
+      const args = Array.prototype.slice.call(arguments);
+      let config;
+
+      // 支援 Swal.fire(title, text, icon) 與 Swal.fire(config)
+      if (args.length === 1 && args[0] && typeof args[0] === 'object' && !Array.isArray(args[0])) {
+        config = Object.assign({}, args[0]);
+      } else {
+        config = {};
+        if (args.length > 0) config.title = args[0];
+        if (args.length > 1) config.text = args[1];
+        if (args.length > 2) config.icon = args[2];
+      }
+
+      // 所有一般彈窗都提供右上角 X；X 的行為等同取消/關閉。
+      config.showCloseButton = true;
+      config.closeButtonHtml = '×';
+      config.customClass = Object.assign({}, config.customClass || {});
+      config.customClass.closeButton = ((config.customClass.closeButton || '') + ' global-swal-close').trim();
+      config.allowEscapeKey = config.allowEscapeKey !== false;
+
+      // 重新以單一設定物件呼叫原始 Swal.fire，避免遞迴。
+      return originalFire(config);
+    };
+  }
+
+  // SweetAlert2 若稍後才載入，稍微等待後再安裝。
+  install();
+  if (!window.__globalSwalCloseInstalled) {
+    const timer = setInterval(function () {
+      install();
+      if (window.__globalSwalCloseInstalled) clearInterval(timer);
+    }, 50);
+    setTimeout(function () { clearInterval(timer); }, 10000);
+  }
+})();
+</script>
 </head>
 <body data-theme="light">
 
@@ -638,7 +662,6 @@ body > .nav-bar { position: fixed !important; left: 50% !important; transform: t
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
 const SCRIPT_URL = '/api/gas';
-const TRACK_TW_GAS_URL = 'https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec';
 
 // 將主選單移出 app-container，避免父層 overflow:hidden 在部分瀏覽器／手機環境裁切 fixed 元素。
 document.addEventListener('DOMContentLoaded', function(){
@@ -1778,18 +1801,23 @@ function trackTWStatusDomId(oid) {
 }
 
 async function loadTrackTWStatus(oid, targetId) {
-  const el = document.getElementById(targetId); if (!el) return;
-  el.innerHTML = '<div data-track-api-line>📡 <b>Track.TW API：檢查中…</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">📦 包裹最後同步：尚未同步</div>';
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  el.innerHTML = '📡 Track.TW：檢查連線中…';
   try {
-    const ctl=new AbortController(); const timer=setTimeout(()=>ctl.abort(),12000);
-    const res=await fetch(TRACK_TW_GAS_URL,{method:'POST',body:JSON.stringify({action:'trackGetStatus',uid:store.userData.id,pw:savedPw}),signal:ctl.signal});
-    clearTimeout(timer); const data=await res.json();
-    if(data&&data.success&&data.online){
-      el.innerHTML=`<div data-track-api-line style="color:#047857;">🟢 <b>Track.TW API：連線正常</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">📦 包裹最後同步：尚未同步</div>`;
-    }else{
-      el.innerHTML=`<div data-track-api-line style="color:#b91c1c;">🔴 <b>Track.TW API：目前無法連線</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">${escapeHTML(String((data&&data.message)||'請稍後再試'))}</div>`;
+    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetStatus', uid:store.userData.id, pw:savedPw }) });
+    const data = await res.json();
+    if (data && data.success && data.online) {
+      el.innerHTML = `🟢 Track.TW 連線正常　｜　最近確認：${escapeHTML(String(data.checkedAt || '剛剛'))}`;
+      el.style.color = '#047857';
+    } else {
+      el.innerHTML = `🔴 Track.TW 目前無法確認連線　｜　${escapeHTML(String((data && data.message) || '請稍後再試'))}`;
+      el.style.color = '#b91c1c';
     }
-  }catch(e){ el.innerHTML='<div data-track-api-line style="color:#b91c1c;">🔴 <b>Track.TW API：目前無法連線</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">連線逾時或無法取得回應</div>'; }
+  } catch (e) {
+    el.innerHTML = '🔴 Track.TW 目前無法確認連線';
+    el.style.color = '#b91c1c';
+  }
 }
 
 function renderTrackTWResult(targetId, data) {
@@ -1828,7 +1856,7 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
   if (!el) return;
   el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;text-align:center;">⏳ 正在取得第三方即時物流資訊…</div>';
   try {
-    const res = await fetch(TRACK_TW_GAS_URL, { method:'POST', body:JSON.stringify({ action:'trackGetTracking', uid:store.userData.id, pw:savedPw, oid, packageType, trackingNumber }) });
+    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetTracking', uid:store.userData.id, pw:savedPw, oid, packageType, trackingNumber }) });
     const data = await res.json();
     if (data && data.success) {
       const localOrder = store && Array.isArray(store.orders) ? store.orders.find(x => String(x.id) === String(oid)) : null;
@@ -1844,11 +1872,6 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
         if (statusPill && localOrder.status) statusPill.textContent = '● ' + localOrder.status;
       }
       renderTrackTWResult(targetId, data);
-      const st=document.getElementById(trackTWStatusDomId(oid));
-      if(st && data.sync && data.sync.eventTime){
-        const syncLine=st.querySelector('[data-track-sync-line]');
-        if(syncLine) syncLine.innerHTML=`📦 包裹最後同步：${escapeHTML(String(data.sync.eventTime))}`;
-      }
     } else if (data && data.errorCode === 'TRACK_QUERY_RATE_LIMIT_LOCAL') {
       el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🕒 ${escapeHTML(data.message || '請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
     } else {
@@ -1950,7 +1973,7 @@ if (returnTrack && !trackPackagesByKey['RETURN|' + returnTrack]) trackPackages.p
 if (trackPackages.length) {
   const trackStatusId = trackTWStatusDomId(o.id);
   trackTWHtml += '<div style="margin:15px 0;">';
-  trackTWHtml += `<div style="font-weight:900;color:var(--pink);margin-bottom:8px;">📡 Track.TW 即時物流</div><div id="${trackStatusId}" style="font-size:.76em;color:#64748b;margin-bottom:8px;"><div data-track-api-line>📡 <b>Track.TW API：檢查中…</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">📦 包裹最後同步：尚未同步</div></div>`;
+  trackTWHtml += `<div style="font-weight:900;color:var(--pink);margin-bottom:8px;">📡 Track.TW 即時物流</div><div id="${trackStatusId}" style="font-size:.76em;color:#64748b;margin-bottom:8px;">📡 Track.TW：檢查連線中…</div>`;
   trackPackages.forEach((pkg, idx) => {
     const packageType = String(pkg.packageType || 'OUTBOUND').toUpperCase();
     const trackingNumber = String(pkg.trackingNumber || '');
@@ -1958,8 +1981,8 @@ if (trackPackages.length) {
     const label = packageType === 'RETURN' ? '↩️ 退貨包裹' : '📦 出貨包裹';
     const oidEnc = encodeURIComponent(String(o.id));
     const trackEnc = encodeURIComponent(trackingNumber);
-    const mappingText = pkg.pendingMapping ? '即時物流' : '已連線';
-    trackTWHtml += `<div class="track-glass-card"><div class="track-glass-head"><div class="track-glass-title">${label}</div><span class="track-status-pill">${mappingText}</span></div><div class="track-meta"><span class="track-meta-chip">📦 ${escapeHTML(trackingNumber)}</span></div><div id="${targetId}"><div class="track-glass-card" style="margin-top:8px;text-align:center;opacity:.72;">📡 正在取得最新物流…</div></div></div>`;
+    const mappingText = pkg.pendingMapping ? '對應檢查中…' : '已連線';
+    trackTWHtml += `<div class="track-glass-card"><div class="track-glass-head"><div class="track-glass-title">${label}</div><span class="track-status-pill">${mappingText}</span></div><div class="track-meta"><span class="track-meta-chip">📦 ${escapeHTML(trackingNumber)}</span></div><div id="${targetId}"><div class="track-glass-card" style="margin-top:8px;text-align:center;opacity:.72;">📡 正在確認 Track.TW 包裹對應…</div></div></div>`;
   });
   trackTWHtml += '<div class="track-source">物流資料來源：Track.TW</div></div>';
 } else if (outboundTracks.length || (returnTrack && String(returnTrack).trim())) {
@@ -2006,14 +2029,19 @@ setTimeout(async () => {
       if (pkg.pendingMapping) {
         const targetEl = document.getElementById(target);
         try {
-          const ensureRes = await fetch(TRACK_TW_GAS_URL, { method:'POST', body:JSON.stringify({ action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack }) }).then(r=>r.json());
+          const ensureRes = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack }) }).then(r=>r.json());
           if (ensureRes && ensureRes.success) {
             await loadTrackTWTracking(o.id, pType, pTrack, target);
           } else if (targetEl) {
-            targetEl.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🟡 目前暫時無法取得此包裹的即時物流，請稍後再試。</div>`;
+            const msg = escapeHTML((ensureRes && ensureRes.message) || '目前無法自動建立 Track.TW 對應。');
+            const code = ensureRes && ensureRes.errorCode ? `<div style="font-size:.68em;opacity:.55;margin-top:5px;">診斷碼：${escapeHTML(String(ensureRes.errorCode))}</div>` : '';
+            const detail = ensureRes && Array.isArray(ensureRes.candidates) && ensureRes.candidates.length
+              ? `<div style="margin-top:7px;font-size:.72em;opacity:.78;">候選物流商：${ensureRes.candidates.map(c => escapeHTML(String(c.name || c.id || '未命名'))).join('、')}</div>`
+              : '';
+            targetEl.innerHTML = `<div class="track-glass-card" style="margin-top:8px;border:1px solid #fde68a;background:#fffbeb;">🟡 ${msg}${detail}${code}</div>`;
           }
         } catch(e) {
-          if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;">🔴 Track.TW 暫時無法連線。</div>';
+          if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;border:1px solid #fecaca;background:#fef2f2;">🔴 無法取得 Track.TW 對應診斷結果，請稍後再試。</div>';
         }
       } else {
         loadTrackTWTracking(o.id, pType, pTrack, target);
@@ -2838,7 +2866,7 @@ window.openLegalDocFromConsent = function(docId) {
 </script>
 
 
-<div id="app-overlay-modal" class="app-overlay-modal" aria-hidden="true" style="display:none;">
+<div id="app-overlay-modal" class="app-overlay-modal" aria-hidden="true">
   <div class="app-overlay-dialog" role="dialog" aria-modal="true" aria-labelledby="app-overlay-title">
     <div class="app-overlay-header">
       <div id="app-overlay-title" class="app-overlay-title">預覽</div>
@@ -2866,7 +2894,6 @@ function openAppOverlay(options = {}) {
   bodyEl.innerHTML = String(options.html || '');
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden', 'false');
-  modal.style.display = 'flex';
   document.body.classList.add('app-overlay-open');
   document.getElementById('app-overlay-close')?.focus();
   return true;
@@ -2878,7 +2905,6 @@ function closeAppOverlay() {
   if (!modal) return;
   modal.classList.remove('is-open');
   modal.setAttribute('aria-hidden', 'true');
-  modal.style.display = 'none';
   if (bodyEl) bodyEl.innerHTML = '';
   document.body.classList.remove('app-overlay-open');
   try { APP_OVERLAY_PREVIOUS_FOCUS?.focus?.(); } catch (e) {}
@@ -2889,12 +2915,6 @@ function closeAppOverlay() {
   const closeBtn = document.getElementById('app-overlay-close');
   const modal = document.getElementById('app-overlay-modal');
   const dialog = modal?.querySelector('.app-overlay-dialog');
-  // 保證登入頁初始狀態不會誤開預覽子視窗。
-  if (modal) {
-    modal.classList.remove('is-open');
-    modal.setAttribute('aria-hidden', 'true');
-    modal.style.display = 'none';
-  }
   closeBtn?.addEventListener('click', closeAppOverlay);
   modal?.addEventListener('click', e => {
     if (e.target === modal) closeAppOverlay();
@@ -2909,11 +2929,6 @@ function closeAppOverlay() {
   }, true);
 })();
 
-// 📱 將會員主選單移到 body 根層，避免任何父層 overflow 影響 fixed 定位
-(function ensureMemberNavFixed(){
-  function move(){ const nav=document.getElementById('memberNav'); if(nav && nav.parentElement!==document.body) document.body.appendChild(nav); }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',move,{once:true}); else move();
-})();
 </script>
 </body>
 </html>
