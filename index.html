@@ -1588,7 +1588,7 @@ function render() {
       console.error('[render/' + name + '] 初始化失敗：', e);
       const map = { loans:'lList', coupons:'cpList', invoices:'invList', orders:'oList', history:'hList', notifications:'ntListPreview' };
       const el = document.getElementById(map[name]);
-      if (el) el.innerHTML = '<p style="text-align:center;opacity:.45;padding:20px;">此區資料暫時無法載入，其他功能仍可正常使用。</p>';
+      if (el) el.innerHTML = '<p style="text-align:center;opacity:.45;padding:20px;">此區資料暫時無法載入，若問題持續發生請聯絡客服中心。</p>';
     }
   };
 
