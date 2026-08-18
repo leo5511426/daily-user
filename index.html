@@ -6,6 +6,66 @@
 <title>小佑的日常生活行動會員</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+(function(){
+  try {
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var cores = Number(navigator.hardwareConcurrency || 0);
+    var saved = localStorage.getItem('memberPerformanceMode');
+    var lite = saved === 'lite' || (!saved && (reduced || (cores > 0 && cores <= 4)));
+    if (lite) document.documentElement.classList.add('performance-lite');
+    document.addEventListener('DOMContentLoaded', function(){
+      if (document.documentElement.classList.contains('performance-lite')) {
+        document.body.classList.add('performance-lite');
+      }
+    }, {once:true});
+    window.setMemberPerformanceMode = function(mode){
+      var isLite = mode === 'lite';
+      try { localStorage.setItem('memberPerformanceMode', isLite ? 'lite' : 'standard'); } catch(e) {}
+      if (document.documentElement) document.documentElement.classList.toggle('performance-lite', isLite);
+      if (document.body) document.body.classList.toggle('performance-lite', isLite);
+    };
+    window.getMemberPerformanceMode = function(){
+      return document.body && document.body.classList.contains('performance-lite') ? 'lite' : 'standard';
+    };
+  } catch(e) {
+    console.warn('performance mode init failed', e);
+  }
+})();
+</script>
+
+
+<script>
+(function(){
+  try {
+    if (!window.Swal || Swal.__memberGlobalClosePatched) return;
+    var originalFire = Swal.fire.bind(Swal);
+    Swal.fire = function(){
+      var args = Array.prototype.slice.call(arguments);
+      if (args.length === 1 && args[0] && typeof args[0] === 'object' && !Array.isArray(args[0])) {
+        args[0] = Object.assign({}, args[0], {
+          showCloseButton: true,
+          closeButtonAriaLabel: '關閉視窗'
+        });
+      } else {
+        args = [{
+          title: args[0],
+          text: args.length > 1 ? args[1] : undefined,
+          icon: args.length > 2 ? args[2] : undefined,
+          showCloseButton: true,
+          closeButtonAriaLabel: '關閉視窗'
+        }];
+      }
+      return originalFire.apply(Swal, args);
+    };
+    Swal.__memberGlobalClosePatched = true;
+  } catch(e) {
+    console.warn('global Swal close patch failed', e);
+  }
+})();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
@@ -274,6 +334,29 @@ body > .nav-bar { position: fixed !important; left: 50% !important; transform: t
 .page { padding-bottom: 120px; }
 @media(max-width:520px){ .nav-bar{ bottom:8px !important; width:calc(100% - 16px) !important; } .page{ padding-bottom:128px; } }
 @media(prefers-reduced-motion:reduce){.btn,.nav-item,.nav-icon{transition:none!important}}
+
+
+/* ⚡ 低效能相容模式：保留功能與版面，降低 Liquid Glass 的 GPU / repaint 成本 */
+body.performance-lite *,
+body.performance-lite *::before,
+body.performance-lite *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+body.performance-lite .track-glass-card,
+body.performance-lite .app-container,
+body.performance-lite .card,
+body.performance-lite .nav-bar,
+body.performance-lite .swal2-popup {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+body.performance-lite .track-glass-card {
+  background: var(--card) !important;
+}
 
 </style>
 </head>
@@ -1803,6 +1886,15 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
   }
 }
 
+
+window.toggleSystemTimeline = function(domId, buttonEl) {
+  var el = document.getElementById(domId);
+  if (!el) return;
+  var isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  if (buttonEl) buttonEl.textContent = isHidden ? '隱藏系統時間線' : '顯示系統時間線';
+};
+
 window.showOrderDetailPopup = function(orderId) {
 if(!store || !store.orders) return; const o = store.orders.find(ord => ord.id === String(orderId)); if(!o) return;
 const currentStatus = String(o.status || "訂單處理中"), currentNote = String(o.note || "尚無備註描述"), updateTime = String(o.time || '暫無時間紀錄');
@@ -1932,11 +2024,16 @@ let htmlContent = `
                    <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${escapeHTML({address: o.address || '無'}.address)}</p>
                    <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📦 出貨單號：</span>${escapeHTML(outboundTracks.join(', ')) || '無'}</p>
                    ${trackTWHtml}
-                   <p style="margin: 15px 0 5px 0;"><span style="color:var(--pink);">📍 系統物流時間線：</span></p>
-                   <div style="background: rgba(0,0,0,0.02); padding: 5px; border-radius: 8px;">
-                       ${outboundHtml}
+                   <div style="margin:15px 0 8px 0;">
+                       <button type="button" class="btn" style="padding:9px 12px; font-size:.82em; background:var(--card); color:var(--text); border:1px solid var(--border);" onclick="toggleSystemTimeline('${trackTWDomId(o.id,'SYSTEM','timeline')}', this)">顯示系統時間線</button>
                    </div>
-                   ${returnTimelineHtml}
+                   <div id="${trackTWDomId(o.id,'SYSTEM','timeline')}" style="display:none;">
+                       <p style="margin: 5px 0;"><span style="color:var(--pink);">📍 系統物流時間線：</span></p>
+                       <div style="background: rgba(0,0,0,0.02); padding: 5px; border-radius: 8px;">
+                           ${outboundHtml}
+                       </div>
+                       ${returnTimelineHtml}
+                   </div>
                </div>
            `;
 Swal.fire({title:'📦 訂單詳細資訊',html:`<div style="text-align:left;"><div class="track-glass-card" style="margin-top:0;"><div class="track-glass-head"><div class="track-glass-title">🫧 智慧物流</div><span class="track-status-pill" data-track-order-status="${escapeHTML(String(o.id))}">● ${escapeHTML(currentStatus)}</span></div><div class="track-meta"><span class="track-meta-chip">🚚 ${escapeHTML(o.ship)||'物流方式未提供'}</span><span class="track-meta-chip">📦 ${escapeHTML(outboundTracks.join(', '))||'尚無出貨單號'}</span></div><div class="track-source">Track.TW 為主要即時物流來源；系統時間線保留管理／訂單操作紀錄。</div></div>${htmlContent}</div>`,confirmButtonColor:'var(--pink)',confirmButtonText:'完成'});
@@ -2169,8 +2266,8 @@ let parsed = JSON.parse(o.invoice); parsed.oid = o.id; parsed.source = 'order'; 
 }
 });
 }
-if (invoices.length) {
-invoices.forEach(inv => {
+if (Array.isArray(store.invoices) && store.invoices.length) {
+store.invoices.forEach(inv => {
 inv.source = 'invoice'; let itemsArr = []; try { itemsArr = JSON.parse(inv.items); } catch(e) { itemsArr = []; } inv.itemsParsed = itemsArr; combinedInvoices.push(inv);
 });
 }
@@ -2853,6 +2950,16 @@ function closeAppOverlay() {
   }, true);
 })();
 
+</script>
+
+<script>
+(function(){
+  try {
+    if (document.documentElement.classList.contains('performance-lite') && document.body) {
+      document.body.classList.add('performance-lite');
+    }
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>
