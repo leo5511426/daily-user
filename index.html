@@ -268,7 +268,9 @@ input,select,textarea{background:rgba(255,255,255,.54);backdrop-filter:blur(12px
 @media(max-width:520px){.nav-bar{bottom:8px;width:calc(100% - 16px)}.page{padding-left:16px;padding-right:16px}}
 
 /* 📌 會員端底部主選單固定：小螢幕滑動頁面時始終可見 */
-.nav-bar { position: fixed !important; z-index: 3000 !important; }
+.nav-bar { position: fixed !important; z-index: 2147483000 !important; }
+body > .nav-bar { position: fixed !important; left: 50% !important; transform: translateX(-50%) !important; bottom: max(8px, env(safe-area-inset-bottom)) !important; }
+@media(max-width:520px){ body > .nav-bar{ width:calc(100% - 16px) !important; } }
 .page { padding-bottom: 120px; }
 @media(max-width:520px){ .nav-bar{ bottom:8px !important; width:calc(100% - 16px) !important; } .page{ padding-bottom:128px; } }
 @media(prefers-reduced-motion:reduce){.btn,.nav-item,.nav-icon{transition:none!important}}
@@ -505,7 +507,7 @@ input,select,textarea{background:rgba(255,255,255,.54);backdrop-filter:blur(12px
 <div id="ntList"></div>
 </div>
 
-<div class="nav-bar">
+<div class="nav-bar" id="memberNav" style="display:none;">
 <div class="nav-item active" onclick="openTab(0)" title="首頁"><div class="nav-icon">🏠</div>首頁</div>
 <div class="nav-item" onclick="openTab(7)"><div class="nav-icon">🔔</div>通知</div>
 <div class="nav-item" onclick="openTab(1)"><div class="nav-icon">📊</div>紀錄</div>
@@ -581,6 +583,18 @@ input,select,textarea{background:rgba(255,255,255,.54);backdrop-filter:blur(12px
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
 const SCRIPT_URL = '/api/gas';
+
+// 將主選單移出 app-container，避免父層 overflow:hidden 在部分瀏覽器／手機環境裁切 fixed 元素。
+document.addEventListener('DOMContentLoaded', function(){
+  const nav = document.getElementById('memberNav');
+  if (nav && nav.parentElement !== document.body) document.body.appendChild(nav);
+});
+
+function setMemberNavVisible(visible){
+  const nav = document.getElementById('memberNav');
+  if (nav) nav.style.display = visible ? 'flex' : 'none';
+}
+
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnAttachments = [], currentSessionId = "";
 
@@ -1141,6 +1155,7 @@ render();
   hideLoginOverlay();
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('appView').style.display = 'block';
+  setMemberNavVisible(true);
 
   startSessionHeartbeat();
   checkWinningInvoices();
@@ -1870,19 +1885,25 @@ invBtnHtml = `<p style="margin-top:10px;"><button class="btn" style="padding:6px
 }
 
 let trackTWHtml = '';
-const trackMappings = Array.isArray(o.trackTWPackages) ? o.trackTWPackages : [];
-if (trackMappings.length) {
+const existingTrackMappings = Array.isArray(o.trackTWPackages) ? o.trackTWPackages : [];
+const outboundTrackNumbers = String(o.track || '').split(/[,，\n]+/).map(t => t.trim()).filter(Boolean);
+const trackPackagesByKey = {};
+existingTrackMappings.forEach(pkg => { const k = String(pkg.packageType || 'OUTBOUND').toUpperCase() + '|' + String(pkg.trackingNumber || ''); trackPackagesByKey[k] = pkg; });
+const trackPackages = outboundTrackNumbers.map(t => trackPackagesByKey['OUTBOUND|' + t] || { packageType:'OUTBOUND', trackingNumber:t, pendingMapping:true });
+if (returnTrack && !trackPackagesByKey['RETURN|' + returnTrack]) trackPackages.push({ packageType:'RETURN', trackingNumber:returnTrack, pendingMapping:true });
+if (trackPackages.length) {
   const trackStatusId = trackTWStatusDomId(o.id);
   trackTWHtml += '<div style="margin:15px 0;">';
   trackTWHtml += `<div style="font-weight:900;color:var(--pink);margin-bottom:8px;">📡 Track.TW 即時物流</div><div id="${trackStatusId}" style="font-size:.76em;color:#64748b;margin-bottom:8px;">📡 Track.TW：檢查連線中…</div>`;
-  trackMappings.forEach((pkg, idx) => {
+  trackPackages.forEach((pkg, idx) => {
     const packageType = String(pkg.packageType || 'OUTBOUND').toUpperCase();
     const trackingNumber = String(pkg.trackingNumber || '');
     const targetId = trackTWDomId(o.id, packageType, trackingNumber);
     const label = packageType === 'RETURN' ? '↩️ 退貨包裹' : '📦 出貨包裹';
     const oidEnc = encodeURIComponent(String(o.id));
     const trackEnc = encodeURIComponent(trackingNumber);
-    trackTWHtml += `<div class="track-glass-card"><div class="track-glass-head"><div class="track-glass-title">${label}</div><span class="track-status-pill">已啟用</span></div><div class="track-meta"><span class="track-meta-chip">📦 ${escapeHTML(trackingNumber)}</span></div><button type="button" class="btn" style="width:100%;margin-top:10px;background:rgba(59,130,246,.88);" onclick="loadTrackTWTracking(decodeURIComponent('${oidEnc}'),'${packageType}',decodeURIComponent('${trackEnc}'),'${targetId}')">↻ 更新物流</button><div id="${targetId}"></div></div>`;
+    const mappingText = pkg.pendingMapping ? '自動建立對應中…' : '已連線';
+    trackTWHtml += `<div class="track-glass-card"><div class="track-glass-head"><div class="track-glass-title">${label}</div><span class="track-status-pill">${mappingText}</span></div><div class="track-meta"><span class="track-meta-chip">📦 ${escapeHTML(trackingNumber)}</span></div><div id="${targetId}"><div class="track-glass-card" style="margin-top:8px;text-align:center;opacity:.72;">📡 正在連線 Track.TW…</div></div></div>`;
   });
   trackTWHtml += '<div class="track-source">物流資料來源：Track.TW</div></div>';
 } else if (outboundTracks.length || (returnTrack && String(returnTrack).trim())) {
@@ -1919,14 +1940,29 @@ let htmlContent = `
                </div>
            `;
 Swal.fire({title:'📦 訂單詳細資訊',html:`<div style="text-align:left;"><div class="track-glass-card" style="margin-top:0;"><div class="track-glass-head"><div class="track-glass-title">🫧 智慧物流</div><span class="track-status-pill" data-track-order-status="${escapeHTML(String(o.id))}">● ${escapeHTML(currentStatus)}</span></div><div class="track-meta"><span class="track-meta-chip">🚚 ${escapeHTML(o.ship)||'物流方式未提供'}</span><span class="track-meta-chip">📦 ${escapeHTML(outboundTracks.join(', '))||'尚無出貨單號'}</span></div><div class="track-source">Track.TW 為主要即時物流來源；系統時間線保留管理／訂單操作紀錄。</div></div>${htmlContent}</div>`,confirmButtonColor:'var(--pink)',confirmButtonText:'完成'});
-setTimeout(() => {
-  if (trackMappings.length) {
+setTimeout(async () => {
+  if (trackPackages.length) {
     loadTrackTWStatus(o.id, trackTWStatusDomId(o.id));
-    trackMappings.forEach((pkg) => {
+    for (const pkg of trackPackages) {
       const pType = String(pkg.packageType || 'OUTBOUND').toUpperCase();
       const pTrack = String(pkg.trackingNumber || '');
-      loadTrackTWTracking(o.id, pType, pTrack, trackTWDomId(o.id, pType, pTrack));
-    });
+      const target = trackTWDomId(o.id, pType, pTrack);
+      if (pkg.pendingMapping) {
+        const targetEl = document.getElementById(target);
+        try {
+          const ensureRes = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack }) }).then(r=>r.json());
+          if (ensureRes && ensureRes.success) {
+            await loadTrackTWTracking(o.id, pType, pTrack, target);
+          } else if (targetEl) {
+            targetEl.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🟡 ${escapeHTML((ensureRes && ensureRes.message) || '目前無法自動建立 Track.TW 對應。')}</div>`;
+          }
+        } catch(e) {
+          if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;">🔴 Track.TW 暫時無法連線。</div>';
+        }
+      } else {
+        loadTrackTWTracking(o.id, pType, pTrack, target);
+      }
+    }
   }
 }, 80);
 }
