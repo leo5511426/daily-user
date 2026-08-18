@@ -151,6 +151,61 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 [data-theme='dark'] #suspendedView { background: #1a0505; }
 
 /* ============================================================
+   MEMBER MODAL — 統一右上角關閉按鈕
+   所有 SweetAlert 會員視窗統一提供 X；載入/排隊中的不可關閉視窗除外。
+   ============================================================ */
+.swal2-popup .member-universal-close {
+  position:absolute !important;
+  top:10px !important;
+  right:10px !important;
+  z-index:20 !important;
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:999px !important;
+  background:rgba(148,163,184,.14) !important;
+  color:#475569 !important;
+  font-size:24px !important;
+  font-weight:500 !important;
+  line-height:38px !important;
+  cursor:pointer !important;
+  box-shadow:none !important;
+}
+.swal2-popup .member-universal-close:hover { background:rgba(148,163,184,.24) !important; }
+.swal2-popup .member-universal-close:active { transform:scale(.94); }
+.swal2-popup .swal2-title { padding-right:46px !important; }
+
+function installMemberModalCloseButton(popup) {
+  if (!popup || popup.querySelector('.member-universal-close')) return;
+  // 載入中/排隊中的阻塞視窗不能被使用者意外關閉。
+  if (popup.querySelector('.swal2-loader') || popup.classList.contains('member-loading-modal')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'member-universal-close';
+  btn.setAttribute('aria-label', '關閉視窗');
+  btn.title = '關閉視窗';
+  btn.textContent = '×';
+  btn.addEventListener('click', () => Swal.close());
+  popup.appendChild(btn);
+}
+
+function initMemberUniversalModalClose() {
+  if (window.__memberUniversalModalCloseReady) return;
+  window.__memberUniversalModalCloseReady = true;
+  const observer = new MutationObserver(() => {
+    const popup = document.querySelector('.swal2-container.swal2-backdrop-show .swal2-popup');
+    if (popup) installMemberModalCloseButton(popup);
+  });
+  observer.observe(document.body, {childList:true, subtree:true});
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMemberUniversalModalClose);
+else initMemberUniversalModalClose();
+
+/* ============================================================
    APP OVERLAY MODAL
    用於「彈窗中的預覽／子視窗」，避免再次呼叫 Swal.fire
    把原本的 Swal 彈窗關閉。
@@ -166,7 +221,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
   box-sizing: border-box;
   background: rgba(0,0,0,.78);
 }
-.app-overlay-modal.is-open { display: flex; }
+.app-overlay-modal.is-open { display: flex !important; }
 .app-overlay-dialog {
   position: relative;
   width: min(96vw, 1100px);
@@ -1730,7 +1785,7 @@ async function loadTrackTWStatus(oid, targetId) {
     const res=await fetch(TRACK_TW_GAS_URL,{method:'POST',body:JSON.stringify({action:'trackGetStatus',uid:store.userData.id,pw:savedPw}),signal:ctl.signal});
     clearTimeout(timer); const data=await res.json();
     if(data&&data.success&&data.online){
-      el.innerHTML=`<div data-track-api-line style="color:#047857;">🟢 <b>Track.TW API：連線正常</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">API 最後確認：${escapeHTML(String(data.checkedAt||'剛剛'))}</div>`;
+      el.innerHTML=`<div data-track-api-line style="color:#047857;">🟢 <b>Track.TW API：連線正常</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">📦 包裹最後同步：尚未同步</div>`;
     }else{
       el.innerHTML=`<div data-track-api-line style="color:#b91c1c;">🔴 <b>Track.TW API：目前無法連線</b></div><div data-track-sync-line style="margin-top:3px;opacity:.65;">${escapeHTML(String((data&&data.message)||'請稍後再試'))}</div>`;
     }
@@ -1955,7 +2010,7 @@ setTimeout(async () => {
           if (ensureRes && ensureRes.success) {
             await loadTrackTWTracking(o.id, pType, pTrack, target);
           } else if (targetEl) {
-            targetEl.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🟡 ${escapeHTML((ensureRes && ensureRes.message) || '目前暫時無法取得即時物流，請稍後再試。')}</div>`;
+            targetEl.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🟡 目前暫時無法取得此包裹的即時物流，請稍後再試。</div>`;
           }
         } catch(e) {
           if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;">🔴 Track.TW 暫時無法連線。</div>';
@@ -2783,7 +2838,7 @@ window.openLegalDocFromConsent = function(docId) {
 </script>
 
 
-<div id="app-overlay-modal" class="app-overlay-modal" aria-hidden="true">
+<div id="app-overlay-modal" class="app-overlay-modal" aria-hidden="true" style="display:none;">
   <div class="app-overlay-dialog" role="dialog" aria-modal="true" aria-labelledby="app-overlay-title">
     <div class="app-overlay-header">
       <div id="app-overlay-title" class="app-overlay-title">預覽</div>
@@ -2811,6 +2866,7 @@ function openAppOverlay(options = {}) {
   bodyEl.innerHTML = String(options.html || '');
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden', 'false');
+  modal.style.display = 'flex';
   document.body.classList.add('app-overlay-open');
   document.getElementById('app-overlay-close')?.focus();
   return true;
@@ -2822,6 +2878,7 @@ function closeAppOverlay() {
   if (!modal) return;
   modal.classList.remove('is-open');
   modal.setAttribute('aria-hidden', 'true');
+  modal.style.display = 'none';
   if (bodyEl) bodyEl.innerHTML = '';
   document.body.classList.remove('app-overlay-open');
   try { APP_OVERLAY_PREVIOUS_FOCUS?.focus?.(); } catch (e) {}
@@ -2832,6 +2889,12 @@ function closeAppOverlay() {
   const closeBtn = document.getElementById('app-overlay-close');
   const modal = document.getElementById('app-overlay-modal');
   const dialog = modal?.querySelector('.app-overlay-dialog');
+  // 保證登入頁初始狀態不會誤開預覽子視窗。
+  if (modal) {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.style.display = 'none';
+  }
   closeBtn?.addEventListener('click', closeAppOverlay);
   modal?.addEventListener('click', e => {
     if (e.target === modal) closeAppOverlay();
