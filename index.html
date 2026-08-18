@@ -236,6 +236,38 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
   border-radius: 12px;
 }
 
+
+/* iOS 26 / Liquid Glass — Member UI V1 */
+:root{--glass-bg:rgba(255,255,255,.68);--glass-bg-strong:rgba(255,255,255,.82);--glass-border:rgba(255,255,255,.62);--glass-shadow:0 18px 45px rgba(31,38,135,.12),0 4px 16px rgba(15,23,42,.06)}
+[data-theme='dark']{--glass-bg:rgba(24,24,27,.62);--glass-bg-strong:rgba(24,24,27,.80);--glass-border:rgba(255,255,255,.10);--glass-shadow:0 18px 45px rgba(0,0,0,.34)}
+html{background:radial-gradient(circle at 12% 8%,rgba(255,143,163,.20),transparent 32%),radial-gradient(circle at 88% 18%,rgba(96,165,250,.18),transparent 30%),linear-gradient(145deg,#eef2ff 0%,#fdf2f8 48%,#eff6ff 100%);min-height:100%}
+[data-theme='dark'] html{background:radial-gradient(circle at 12% 8%,rgba(244,114,182,.16),transparent 32%),radial-gradient(circle at 88% 18%,rgba(96,165,250,.12),transparent 30%),#09090b}
+body{background:transparent;min-height:100vh}
+.app-container{background:rgba(255,255,255,.38);backdrop-filter:blur(28px) saturate(145%);-webkit-backdrop-filter:blur(28px) saturate(145%);border-left:1px solid rgba(255,255,255,.38);border-right:1px solid rgba(255,255,255,.38)}
+[data-theme='dark'] .app-container{background:rgba(9,9,11,.45);border-color:rgba(255,255,255,.07)}
+.page{padding-top:28px;scroll-behavior:smooth}
+.page>h2,.header-container h2{letter-spacing:-.035em;font-weight:800}
+.card,.shortcut-item,.coupon-tabs,.loan-tabs,.pill-tab,input,select,textarea{border-color:var(--glass-border)}
+.card{background:var(--glass-bg);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%);box-shadow:var(--glass-shadow);border-radius:24px;border-width:1px}
+.shortcut-item{background:var(--glass-bg);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 8px 22px rgba(15,23,42,.07);border-radius:20px}
+.btn{border-radius:18px;box-shadow:0 10px 24px rgba(255,143,163,.20);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}.btn:active{transform:scale(.975);filter:brightness(.98)}
+.nav-bar{bottom:10px;height:68px;width:calc(100% - 20px);border:1px solid var(--glass-border);border-radius:25px;background:rgba(255,255,255,.66);backdrop-filter:blur(26px) saturate(165%);-webkit-backdrop-filter:blur(26px) saturate(165%);box-shadow:0 16px 40px rgba(15,23,42,.15);overflow:hidden}
+[data-theme='dark'] .nav-bar{background:rgba(24,24,27,.72);box-shadow:0 16px 40px rgba(0,0,0,.38)}
+.nav-item{color:#64748b;font-weight:700;transition:transform .18s ease,color .18s ease}.nav-item.active{color:var(--pink)}.nav-item.active .nav-icon{transform:translateY(-1px) scale(1.06)}.nav-icon{transition:transform .18s ease}
+.pill-tab.active,.coupon-tab.active,.loan-tab.active{box-shadow:0 7px 18px rgba(255,143,163,.20)}
+.pill-tab{background:rgba(255,255,255,.48);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+input,select,textarea{background:rgba(255,255,255,.54);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:16px;outline:none}
+[data-theme='dark'] input,[data-theme='dark'] select,[data-theme='dark'] textarea{background:rgba(24,24,27,.55)}
+.swal2-container{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.swal2-popup{background:var(--glass-bg-strong)!important;border:1px solid var(--glass-border)!important;box-shadow:0 28px 80px rgba(15,23,42,.22)!important;backdrop-filter:blur(30px) saturate(155%)!important;-webkit-backdrop-filter:blur(30px) saturate(155%)!important}
+.glass-hero{position:relative;overflow:hidden;padding:22px;border-radius:28px;margin-bottom:18px;background:linear-gradient(135deg,rgba(255,255,255,.70),rgba(255,255,255,.38)),radial-gradient(circle at 92% 8%,rgba(96,165,250,.20),transparent 30%);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%)}
+.glass-hero:after{content:'';position:absolute;width:150px;height:150px;right:-65px;top:-75px;border-radius:50%;background:rgba(255,143,163,.18);filter:blur(5px)}
+.glass-kicker{position:relative;z-index:1;font-size:.72em;opacity:.62;letter-spacing:.04em}.glass-hero-title{position:relative;z-index:1;margin:5px 0 3px;font-size:1.55em;letter-spacing:-.045em}.glass-hero-subtitle{position:relative;z-index:1;margin:0;font-size:.82em;opacity:.65;font-weight:700}
+.track-glass-card{margin-top:14px;padding:16px;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.38));border:1px solid var(--glass-border);box-shadow:0 12px 30px rgba(15,23,42,.08);backdrop-filter:blur(20px) saturate(145%);-webkit-backdrop-filter:blur(20px) saturate(145%)}
+.track-glass-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.track-glass-title{font-weight:900;letter-spacing:-.025em}.track-status-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:rgba(34,197,94,.12);color:#15803d;font-size:.72em;white-space:nowrap}.track-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}.track-meta-chip{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.50);border:1px solid rgba(255,255,255,.48);font-size:.72em;opacity:.82}.track-source{margin-top:10px;font-size:.68em;opacity:.48}
+@media(max-width:520px){.nav-bar{bottom:8px;width:calc(100% - 16px)}.page{padding-left:16px;padding-right:16px}}
+@media(prefers-reduced-motion:reduce){.btn,.nav-item,.nav-icon{transition:none!important}}
+
 </style>
 </head>
 <body data-theme="light">
@@ -330,6 +362,7 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
 
 <div id="p0" class="page" style="display:block;">
+<div class="glass-hero"><div class="glass-kicker">小佑的日常生活行動會員</div><div class="glass-hero-title">生活，一眼就能掌握。</div><p class="glass-hero-subtitle">訂單、帳務、發票與物流，都在這裡。</p></div>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 最新通知</div>
 <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(7)">查看全部 ➔</span>
@@ -449,8 +482,8 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：V90.1 (登入穩定性與長密碼修正)</div>
-<div>更新日期：2026-08-15</div>
+<div>版本：iOS 26 Liquid Glass V1（功能邏輯維持原版）</div>
+<div>更新日期：2026-08-17</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
 <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
 <span style="margin: 0 6px; opacity:0.4;">｜</span>
@@ -795,7 +828,7 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V90.1 (登入穩定性與長密碼修正)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：iOS 26 Liquid Glass V1 + Track.TW<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -1643,6 +1676,71 @@ html += `<div class="timeline-node latest-node" style="--node-color: var(--pink)
 return { html: `<div class="order-timeline">${html}</div>`, deadline: deadlineDisplay };
 }
 
+function trackTWDomId(oid, packageType, trackingNumber) {
+  return 'tracktw_live_' + btoa(unescape(encodeURIComponent(String(oid)+'|'+String(packageType)+'|'+String(trackingNumber)))).replace(/[^a-zA-Z0-9]/g,'').slice(0,24);
+}
+
+function trackTWFormatTime(value) {
+  if (value === null || value === undefined || value === '') return '';
+  let d = null;
+  const n = Number(value);
+  if (Number.isFinite(n) && n > 0) d = new Date(n * 1000);
+  else d = new Date(String(value));
+  if (isNaN(d.getTime())) return String(value);
+  return d.toLocaleString('zh-TW', { timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function trackTWStageLabel(stage) {
+  const map = {
+    in_transit:['🟡','運輸中'], delivered:['🟢','已送達'], arrived:['🔵','已抵達'], picked_up:['🟢','已取件'], exception:['🔴','異常'], return_requested:['🟠','已申請退回'], out_for_delivery:['🟠','配送中'], customs:['🟣','海關處理中'], returned:['↩️','已退回'], cancel:['⚪','已取消'], pending:['⚪','待處理'], scheduled:['🕒','已排程'], lost:['🔴','遺失']
+  };
+  return map[String(stage || '').trim()] || ['📦', String(stage || '物流更新')];
+}
+
+function renderTrackTWResult(targetId, data) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  const payload = data && data.data ? data.data : data;
+  const history = payload && Array.isArray(payload.package_history) ? payload.package_history : (payload && Array.isArray(payload.history) ? payload.history : []);
+  if (!history.length) {
+    el.innerHTML = '<div style="padding:10px;border-radius:14px;background:rgba(255,255,255,.45);font-size:.82em;opacity:.7;">Track.TW 尚未提供物流歷程。</div><div class="track-source">物流資料來源：Track.TW</div>';
+    return;
+  }
+  const sorted = history.slice().sort((a,b)=>{
+    const ta = Number(a && a.time) || new Date(String(a && a.created_at || '')).getTime()/1000 || 0;
+    const tb = Number(b && b.time) || new Date(String(b && b.created_at || '')).getTime()/1000 || 0;
+    return tb-ta;
+  });
+  const latest = sorted[0] || {};
+  const [icon,label] = trackTWStageLabel(latest.delivery_stage);
+  const timeline = sorted.map((h,i)=>{
+    const [hi,hl] = trackTWStageLabel(h.delivery_stage);
+    const text = escapeHTML(String(h.status || hl || '物流更新'));
+    const time = trackTWFormatTime(Number(h.time) > 0 ? Number(h.time) : h.created_at);
+    return `<div style="display:flex;gap:10px;position:relative;padding-bottom:${i===sorted.length-1?'0':'12px'};"><div style="width:10px;flex:0 0 10px;position:relative;"><span style="display:block;width:10px;height:10px;border-radius:50%;background:${i===0?'#22c55e':'#94a3b8'};margin-top:5px;"></span>${i===sorted.length-1?'':'<span style="position:absolute;left:4px;top:15px;width:2px;height:calc(100% + 2px);background:rgba(148,163,184,.35);"></span>'}</div><div style="flex:1;"><div style="font-weight:800;font-size:.82em;">${hi} ${text}</div><div style="font-size:.7em;opacity:.55;margin-top:2px;">${escapeHTML(time)}</div></div></div>`;
+  }).join('');
+  el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;"><div class="track-glass-head"><div class="track-glass-title">${icon} ${escapeHTML(label)}</div><span class="track-status-pill">Track.TW</span></div><div style="margin-top:10px;">${timeline}</div><div class="track-source">物流資料來源：Track.TW</div></div>`;
+}
+
+async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;text-align:center;">⏳ 正在取得第三方即時物流資訊…</div>';
+  try {
+    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetTracking', uid:store.userData.id, pw:savedPw, oid, packageType, trackingNumber }) });
+    const data = await res.json();
+    if (data && data.success) {
+      renderTrackTWResult(targetId, data);
+    } else if (data && data.errorCode === 'TRACK_QUERY_RATE_LIMIT_LOCAL') {
+      el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🕒 ${escapeHTML(data.message || '請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
+    } else {
+      el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">⚠️ ${escapeHTML((data && data.message) || '目前無法取得第三方即時物流資訊，請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
+    }
+  } catch (e) {
+    el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;">⚠️ 目前無法取得第三方即時物流資訊，請稍後再試。</div><div class="track-source">物流資料來源：Track.TW</div>';
+  }
+}
+
 window.showOrderDetailPopup = function(orderId) {
 if(!store || !store.orders) return; const o = store.orders.find(ord => ord.id === String(orderId)); if(!o) return;
 const currentStatus = String(o.status || "訂單處理中"), currentNote = String(o.note || "尚無備註描述"), updateTime = String(o.time || '暫無時間紀錄');
@@ -1724,6 +1822,25 @@ if (inv) {
 invBtnHtml = `<p style="margin-top:10px;"><button class="btn" style="padding:6px; font-size:0.8em; background:#3b82f6;" onclick="Swal.close(); setTimeout(()=>showInvoiceDetailUnified('${inv}'), 300)">🧾 查看關聯發票 (${inv})</button></p>`;
 }
 
+let trackTWHtml = '';
+const trackMappings = Array.isArray(o.trackTWPackages) ? o.trackTWPackages : [];
+if (trackMappings.length) {
+  trackTWHtml += '<div style="margin:15px 0;">';
+  trackTWHtml += '<div style="font-weight:900;color:var(--pink);margin-bottom:8px;">📡 Track.TW 即時物流</div>';
+  trackMappings.forEach((pkg, idx) => {
+    const packageType = String(pkg.packageType || 'OUTBOUND').toUpperCase();
+    const trackingNumber = String(pkg.trackingNumber || '');
+    const targetId = trackTWDomId(o.id, packageType, trackingNumber);
+    const label = packageType === 'RETURN' ? '↩️ 退貨包裹' : '📦 出貨包裹';
+    const oidEnc = encodeURIComponent(String(o.id));
+    const trackEnc = encodeURIComponent(trackingNumber);
+    trackTWHtml += `<div class="track-glass-card"><div class="track-glass-head"><div class="track-glass-title">${label}</div><span class="track-status-pill">已啟用</span></div><div class="track-meta"><span class="track-meta-chip">📦 ${escapeHTML(trackingNumber)}</span></div><button type="button" class="btn" style="width:100%;margin-top:10px;background:rgba(59,130,246,.88);" onclick="loadTrackTWTracking(decodeURIComponent('${oidEnc}'),'${packageType}',decodeURIComponent('${trackEnc}'),'${targetId}')">↻ 查詢即時物流</button><div id="${targetId}"></div></div>`;
+  });
+  trackTWHtml += '<div class="track-source">物流資料來源：Track.TW</div></div>';
+} else if (outboundTracks.length || (returnTrack && String(returnTrack).trim())) {
+  trackTWHtml = '<div class="track-glass-card" style="margin:15px 0;"><div class="track-glass-title">📡 Track.TW 即時物流</div><div style="font-size:.78em;opacity:.65;margin-top:6px;">目前尚未啟用第三方即時查詢；請由管理端在「物流管理 → Track.TW 即時物流」啟用。</div></div>';
+}
+
 let htmlContent = `
                <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
                    ${returnHtml} 
@@ -1750,9 +1867,10 @@ let htmlContent = `
                        ${outboundHtml}
                    </div>
                    ${returnTimelineHtml}
+                   ${trackTWHtml}
                </div>
            `;
-Swal.fire({ title: '📋 訂單詳細資訊', html: htmlContent, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉視窗' });
+Swal.fire({title:'📦 訂單詳細資訊',html:`<div style="text-align:left;"><div class="track-glass-card" style="margin-top:0;"><div class="track-glass-head"><div class="track-glass-title">🫧 智慧物流</div><span class="track-status-pill">● ${escapeHTML(currentStatus)}</span></div><div class="track-meta"><span class="track-meta-chip">🚚 ${escapeHTML(o.ship)||'物流方式未提供'}</span><span class="track-meta-chip">📦 ${escapeHTML(outboundTracks.join(', '))||'尚無出貨單號'}</span></div><div class="track-source">目前以系統物流時間線為基礎；Track API 即時貨態介面已預留於此。</div></div>${htmlContent}</div>`,confirmButtonColor:'var(--pink)',confirmButtonText:'完成'});
 }
 
 async function applyCancelOrder(oid) {
