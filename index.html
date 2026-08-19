@@ -7,6 +7,177 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
+<script id="interface-preference-runtime">
+(function(){
+  const KEY = 'memberInterfacePreferences';
+  const DEFAULTS = { fontSizePx: 18, theme: 'system', motion: 'full' };
+  window.__interfacePreferenceDraft = null;
+
+  function readStored(){
+    try {
+      const raw = localStorage.getItem(KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      const px = Number(obj.fontSizePx);
+      return {
+        fontSizePx: Number.isFinite(px) ? Math.min(28, Math.max(14, Math.round(px))) : DEFAULTS.fontSizePx,
+        theme: ['light','dark','system'].includes(obj.theme) ? obj.theme : DEFAULTS.theme,
+        motion: ['full','reduced','off'].includes(obj.motion) ? obj.motion : DEFAULTS.motion
+      };
+    } catch(e) {
+      return {...DEFAULTS};
+    }
+  }
+
+  function apply(pref){
+    const fontPx = Number(pref.fontSizePx) || DEFAULTS.fontSizePx;
+    document.documentElement.style.setProperty('--fs', fontPx + 'px');
+    document.documentElement.style.setProperty('--ui-font-size', fontPx + 'px');
+
+    const theme = pref.theme === 'system'
+      ? ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light')
+      : pref.theme;
+    document.body.setAttribute('data-theme', theme);
+
+    document.body.classList.remove('ui-dynamic-reduced','ui-dynamic-off');
+    if (pref.motion === 'reduced') document.body.classList.add('ui-dynamic-reduced');
+    if (pref.motion === 'off') document.body.classList.add('ui-dynamic-off');
+
+    const range = document.getElementById('uiFontSizeRange');
+    const readout = document.getElementById('uiFontSizeReadout');
+    if (range) range.value = String(fontPx);
+    if (readout) readout.textContent = '目前：' + fontPx + ' px';
+    const th = document.getElementById('uiThemeSelect'); if (th) th.value = pref.theme;
+    const mo = document.getElementById('uiMotionSelect'); if (mo) mo.value = pref.motion;
+  }
+
+  window.getInterfacePreferences = function(){
+    return {...readStored()};
+  };
+
+  window.setInterfacePreference = function(key, value, preview){
+    const pref = window.__interfacePreferenceDraft || readStored();
+    if (key === 'fontSizePx') {
+      const px = Number(value);
+      if (Number.isFinite(px)) pref.fontSizePx = Math.min(28, Math.max(14, Math.round(px)));
+    }
+    if (key === 'theme' && ['light','dark','system'].includes(value)) pref.theme = value;
+    if (key === 'motion' && ['full','reduced','off'].includes(value)) pref.motion = value;
+    window.__interfacePreferenceDraft = {...pref};
+    apply(pref);
+    if (preview && window.Swal && Swal.mixin) {
+      // Deliberately no toast for slider events; only a tiny live readout is shown.
+    }
+  };
+
+  window.saveInterfacePreferencesExplicit = function(){
+    const pref = window.__interfacePreferenceDraft || readStored();
+    try {
+      localStorage.setItem(KEY, JSON.stringify(pref));
+      window.__interfacePreferenceDraft = null;
+      apply(pref);
+      if (window.Swal) Swal.fire({toast:true,position:'top',timer:1000,showConfirmButton:false,title:'介面設定已儲存',icon:'success'});
+    } catch(e) {
+      if (window.Swal) Swal.fire('無法儲存','此瀏覽器目前無法使用本機儲存空間；設定會暫時套用到本次頁面。','warning');
+      else console.warn('介面設定無法儲存：',e);
+    }
+  };
+
+  window.resetInterfacePreferences = function(){
+    const pref = {...DEFAULTS};
+    window.__interfacePreferenceDraft = {...pref};
+    apply(pref);
+    try {
+      localStorage.setItem(KEY, JSON.stringify(pref));
+      window.__interfacePreferenceDraft = null;
+    } catch(e) {}
+  };
+
+  window.applyInterfacePreferences = function(){
+    apply(window.__interfacePreferenceDraft || readStored());
+  };
+
+  window.openInterfaceSettings = async function(isLoggedIn){
+    const pref = window.__interfacePreferenceDraft || readStored();
+    const rangeId='guestFontSizeRange';
+    const html = `
+      <div style="text-align:left;display:grid;gap:14px;">
+        <div class="ui-pref-card">
+          <div class="ui-pref-title">🔤 字型大小</div>
+          <div class="ui-pref-help">和登入後設定使用完全相同的 14～28 px 滑桿。你可以直接調整，畫面會立即預覽。</div>
+          <input id="${rangeId}" class="ui-pref-range" type="range" min="14" max="28" step="1" value="${pref.fontSizePx}">
+          <div id="guestFontSizeReadout" class="ui-font-readout">目前：${pref.fontSizePx} px</div>
+        </div>
+        <div class="ui-pref-card">
+          <div class="ui-pref-title">🌓 顯示模式</div>
+          <div class="ui-pref-help">淺色適合一般日間瀏覽；深色較適合低光環境；跟隨系統會使用裝置目前的外觀。</div>
+          <select id="guestTheme" class="swal2-select" style="width:100%;">
+            <option value="light">☀️ 淺色</option><option value="dark">🌙 深色</option><option value="system">🌓 跟隨系統</option>
+          </select>
+        </div>
+        <div class="ui-pref-card">
+          <div class="ui-pref-title">✨ 動態效果</div>
+          <div class="ui-pref-help">完整動態保留 Liquid Glass 的互動感；簡化動態降低轉場與動畫；關閉動態則停用非必要動畫。</div>
+          <select id="guestMotion" class="swal2-select" style="width:100%;">
+            <option value="full">✨ 完整動態</option><option value="reduced">🌿 簡化動態</option><option value="off">🚫 關閉動態</option>
+          </select>
+        </div>
+      </div>`;
+    const res = await Swal.fire({
+      title:'⚙️ 介面設定',
+      html,
+      showCancelButton:true,
+      confirmButtonText:'💾 儲存設定',
+      cancelButtonText:'取消',
+      showCloseButton:true,
+      confirmButtonColor:'var(--pink)',
+      didOpen:()=>{
+        const r=document.getElementById(rangeId);
+        const rd=document.getElementById('guestFontSizeReadout');
+        const th=document.getElementById('guestTheme');
+        const mo=document.getElementById('guestMotion');
+        if (th) th.value=pref.theme;
+        if (mo) mo.value=pref.motion;
+        if (r) r.oninput=function(){
+          const v=Number(r.value);
+          if(rd) rd.textContent='目前：'+v+' px';
+          setInterfacePreference('fontSizePx',v,true);
+        };
+        if (th) th.onchange=function(){ setInterfacePreference('theme',th.value,true); };
+        if (mo) mo.onchange=function(){ setInterfacePreference('motion',mo.value,true); };
+      }
+    });
+    if (res.isConfirmed) {
+      try {
+        const current = window.__interfacePreferenceDraft || readStored();
+        localStorage.setItem(KEY, JSON.stringify(current));
+        window.__interfacePreferenceDraft = null;
+        apply(current);
+      } catch(e) {
+        if (window.Swal) Swal.fire('無法儲存','設定已暫時套用，但瀏覽器拒絕本機儲存。','warning');
+      }
+    } else {
+      window.__interfacePreferenceDraft = null;
+      apply(readStored());
+    }
+  };
+
+  try {
+    const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    const onSystemThemeChange = function(){
+      const p = readStored();
+      if (p.theme === 'system') apply(p);
+    };
+    if (mq) {
+      if (mq.addEventListener) mq.addEventListener('change', onSystemThemeChange);
+      else if (mq.addListener) mq.addListener(onSystemThemeChange);
+    }
+  } catch(e) {}
+
+  // Apply early so the login page reflects saved preferences immediately.
+  try { apply(readStored()); } catch(e) {}
+})();
+</script>
 <script>
 (function(){
   try {
@@ -380,6 +551,71 @@ body.performance-lite .track-glass-card {
 }
 
 </style>
+
+<style id="ui-preference-layer">
+html.ui-font-size-adjust {
+  --ui-font-size: 18px;
+}
+body.ui-dynamic-reduced *,
+body.ui-dynamic-reduced *::before,
+body.ui-dynamic-reduced *::after {
+  animation-duration: .18s !important;
+  transition-duration: .18s !important;
+}
+body.ui-dynamic-off *,
+body.ui-dynamic-off *::before,
+body.ui-dynamic-off *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+.ui-pref-gear {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 2147483002;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.62);
+  background: rgba(255,255,255,.72);
+  color: #334155;
+  box-shadow: 0 8px 24px rgba(15,23,42,.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor: pointer;
+  font-size: 20px;
+}
+.ui-pref-card {
+  text-align: left;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.6);
+  border: 1px solid rgba(148,163,184,.2);
+}
+.ui-pref-title { font-weight: 800; margin-bottom: 4px; }
+.ui-pref-help {
+  font-size: .78em;
+  color: #64748b;
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+.ui-font-readout {
+  font-size: .8em;
+  color: #64748b;
+  text-align: right;
+  margin-top: 4px;
+}
+.ui-pref-range {
+  width: 100%;
+  accent-color: var(--pink);
+}
+@media (prefers-color-scheme: dark) {
+  body[data-theme="dark"] .ui-pref-card { background: rgba(30,41,59,.68); }
+  body[data-theme="dark"] .ui-pref-help,
+  body[data-theme="dark"] .ui-font-readout { color: #cbd5e1; }
+}
+</style>
 </head>
 <body data-theme="light">
 
@@ -389,6 +625,7 @@ body.performance-lite .track-glass-card {
 
 <!-- 🔐 登入畫面 -->
 <div id="loginView" style="display:flex; height:100vh; flex-direction:column; justify-content:center; padding:40px; box-sizing: border-box; overflow-y: auto;">
+<button type="button" class="ui-pref-gear" aria-label="介面設定" onclick="openInterfaceSettings(false)">⚙️</button>
 <h1 style="color:var(--pink); text-align:center;">小佑的日常生活行動會員</h1>
 <input type="text" id="acc" placeholder="帳號 / ID">
 <input type="password" id="pw" placeholder="密碼">
@@ -585,11 +822,41 @@ body.performance-lite .track-glass-card {
 </div>
 
 <div class="settings-section-title">🎨 介面與顯示設定</div>
-<div class="card">
-<label style="display:block; margin-bottom:10px;">字體大小調整</label>
-<input type="range" min="14" max="28" value="18" oninput="document.documentElement.style.setProperty('--fs', this.value + 'px')">
+<div class="card" style="padding:15px;">
+  <div class="ui-pref-title">🔤 字型大小</div>
+  <div class="ui-pref-help">調整網站主要文字大小。範圍與原本登入後設定滑桿一致，14～28 px；改變後會立即預覽。</div>
+  <input id="uiFontSizeRange" class="ui-pref-range" type="range" min="14" max="28" step="1" value="18"
+    oninput="setInterfacePreference('fontSizePx', this.value, true)">
+  <div id="uiFontSizeReadout" class="ui-font-readout">目前：18 px</div>
+
+  <div class="ui-pref-title" style="margin-top:16px;">🌓 顯示模式</div>
+  <div class="ui-pref-help">控制整個會員網站的明暗外觀；「跟隨系統」會依裝置的深色／淺色設定自動切換。</div>
+  <select id="uiThemeSelect" class="sort-select" style="width:100%;"
+    onchange="setInterfacePreference('theme', this.value, true)">
+    <option value="light">☀️ 淺色</option>
+    <option value="dark">🌙 深色</option>
+    <option value="system">🌓 跟隨系統</option>
+  </select>
+
+  <div class="ui-pref-title" style="margin-top:16px;">✨ 動態效果</div>
+  <div class="ui-pref-help">控制卡片轉場、微動畫與互動效果。完整動態最華麗，簡化動態較省效能，關閉動態則停用非必要動畫。</div>
+  <select id="uiMotionSelect" class="sort-select" style="width:100%;"
+    onchange="setInterfacePreference('motion', this.value, true)">
+    <option value="full">✨ 完整動態</option>
+    <option value="reduced">🌿 簡化動態</option>
+    <option value="off">🚫 關閉動態</option>
+  </select>
+
+  <div class="ui-pref-title" style="margin-top:16px;">🖥️ 版面寬度</div>
+  <div class="ui-pref-help">切換較適合手機或桌面瀏覽器的內容寬度；不會修改訂單或其他功能。</div>
+  <button class="btn" onclick="toggleLayoutMode()">🖥️ 電腦版 / 📱 手機版 寬度切換</button>
+
+  <div style="display:flex;gap:8px;margin-top:10px;">
+    <button class="btn" style="background:#64748b;flex:1;" onclick="resetInterfacePreferences()">↩️ 恢復預設</button>
+    <button class="btn" style="background:#0f766e;flex:1;" onclick="saveInterfacePreferencesExplicit()">💾 儲存設定</button>
+  </div>
+  <div class="ui-pref-help" style="margin-top:8px;">設定會保存在目前裝置的瀏覽器；登入前後共用同一套介面偏好。</div>
 </div>
-<button class="btn" onclick="toggleLayoutMode()" style="background:#4f46e5; margin-bottom:10px;">🖥️ 電腦版 / 📱 手機版 寬度切換</button>
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
