@@ -6,66 +6,6 @@
 <title>小佑的日常生活行動會員</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-(function(){
-  try {
-    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var cores = Number(navigator.hardwareConcurrency || 0);
-    var saved = localStorage.getItem('memberPerformanceMode');
-    var lite = saved === 'lite' || (!saved && (reduced || (cores > 0 && cores <= 4)));
-    if (lite) document.documentElement.classList.add('performance-lite');
-    document.addEventListener('DOMContentLoaded', function(){
-      if (document.documentElement.classList.contains('performance-lite')) {
-        document.body.classList.add('performance-lite');
-      }
-    }, {once:true});
-    window.setMemberPerformanceMode = function(mode){
-      var isLite = mode === 'lite';
-      try { localStorage.setItem('memberPerformanceMode', isLite ? 'lite' : 'standard'); } catch(e) {}
-      if (document.documentElement) document.documentElement.classList.toggle('performance-lite', isLite);
-      if (document.body) document.body.classList.toggle('performance-lite', isLite);
-    };
-    window.getMemberPerformanceMode = function(){
-      return document.body && document.body.classList.contains('performance-lite') ? 'lite' : 'standard';
-    };
-  } catch(e) {
-    console.warn('performance mode init failed', e);
-  }
-})();
-</script>
-
-
-<script>
-(function(){
-  try {
-    if (!window.Swal || Swal.__memberGlobalClosePatched) return;
-    var originalFire = Swal.fire.bind(Swal);
-    Swal.fire = function(){
-      var args = Array.prototype.slice.call(arguments);
-      if (args.length === 1 && args[0] && typeof args[0] === 'object' && !Array.isArray(args[0])) {
-        args[0] = Object.assign({}, args[0], {
-          showCloseButton: true,
-          closeButtonAriaLabel: '關閉視窗'
-        });
-      } else {
-        args = [{
-          title: args[0],
-          text: args.length > 1 ? args[1] : undefined,
-          icon: args.length > 2 ? args[2] : undefined,
-          showCloseButton: true,
-          closeButtonAriaLabel: '關閉視窗'
-        }];
-      }
-      return originalFire.apply(Swal, args);
-    };
-    Swal.__memberGlobalClosePatched = true;
-  } catch(e) {
-    console.warn('global Swal close patch failed', e);
-  }
-})();
-</script>
-
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
@@ -87,7 +27,7 @@ body { font-family: -apple-system, sans-serif; background: #e2e8f0; color: var(-
 .btn { width: 100%; padding: 18px; border-radius: 15px; background: var(--accent); color: #fff; border: none; font-size: 1.1em; font-weight: 900; cursor: pointer; }
 
 /* 📱 導航列排版微調 */
-.nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; height: 75px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; transition: max-width 0.3s ease; }
+.nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; height: 75px; background: var(--nav); display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; transition: max-width 0.3s ease; }
 .app-container.full-desktop ~ .nav-bar, .full-desktop .nav-bar { max-width: 100% !important; }
 .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.65em; cursor: pointer; text-align: center; white-space: nowrap; }
 .nav-item.active { color: var(--pink); font-weight: bold; }
@@ -296,68 +236,6 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
   border-radius: 12px;
 }
 
-
-/* iOS 26 / Liquid Glass — Member UI V1 */
-:root{--glass-bg:rgba(255,255,255,.68);--glass-bg-strong:rgba(255,255,255,.82);--glass-border:rgba(255,255,255,.62);--glass-shadow:0 18px 45px rgba(31,38,135,.12),0 4px 16px rgba(15,23,42,.06)}
-[data-theme='dark']{--glass-bg:rgba(24,24,27,.62);--glass-bg-strong:rgba(24,24,27,.80);--glass-border:rgba(255,255,255,.10);--glass-shadow:0 18px 45px rgba(0,0,0,.34)}
-html{background:radial-gradient(circle at 12% 8%,rgba(255,143,163,.20),transparent 32%),radial-gradient(circle at 88% 18%,rgba(96,165,250,.18),transparent 30%),linear-gradient(145deg,#eef2ff 0%,#fdf2f8 48%,#eff6ff 100%);min-height:100%}
-[data-theme='dark'] html{background:radial-gradient(circle at 12% 8%,rgba(244,114,182,.16),transparent 32%),radial-gradient(circle at 88% 18%,rgba(96,165,250,.12),transparent 30%),#09090b}
-body{background:transparent;min-height:100vh}
-.app-container{background:rgba(255,255,255,.38);backdrop-filter:blur(28px) saturate(145%);-webkit-backdrop-filter:blur(28px) saturate(145%);border-left:1px solid rgba(255,255,255,.38);border-right:1px solid rgba(255,255,255,.38)}
-[data-theme='dark'] .app-container{background:rgba(9,9,11,.45);border-color:rgba(255,255,255,.07)}
-.page{padding-top:28px;scroll-behavior:smooth}
-.page>h2,.header-container h2{letter-spacing:-.035em;font-weight:800}
-.card,.shortcut-item,.coupon-tabs,.loan-tabs,.pill-tab,input,select,textarea{border-color:var(--glass-border)}
-.card{background:var(--glass-bg);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%);box-shadow:var(--glass-shadow);border-radius:24px;border-width:1px}
-.shortcut-item{background:var(--glass-bg);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 8px 22px rgba(15,23,42,.07);border-radius:20px}
-.btn{border-radius:18px;box-shadow:0 10px 24px rgba(255,143,163,.20);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}.btn:active{transform:scale(.975);filter:brightness(.98)}
-.nav-bar{bottom:10px;height:68px;width:calc(100% - 20px);border:1px solid var(--glass-border);border-radius:25px;background:rgba(255,255,255,.66);backdrop-filter:blur(26px) saturate(165%);-webkit-backdrop-filter:blur(26px) saturate(165%);box-shadow:0 16px 40px rgba(15,23,42,.15);overflow:hidden;z-index:3000}
-[data-theme='dark'] .nav-bar{background:rgba(24,24,27,.72);box-shadow:0 16px 40px rgba(0,0,0,.38)}
-.nav-item{color:#64748b;font-weight:700;transition:transform .18s ease,color .18s ease}.nav-item.active{color:var(--pink)}.nav-item.active .nav-icon{transform:translateY(-1px) scale(1.06)}.nav-icon{transition:transform .18s ease}
-.pill-tab.active,.coupon-tab.active,.loan-tab.active{box-shadow:0 7px 18px rgba(255,143,163,.20)}
-.pill-tab{background:rgba(255,255,255,.48);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-input,select,textarea{background:rgba(255,255,255,.54);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:16px;outline:none}
-[data-theme='dark'] input,[data-theme='dark'] select,[data-theme='dark'] textarea{background:rgba(24,24,27,.55)}
-.swal2-container{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.swal2-popup{background:var(--glass-bg-strong)!important;border:1px solid var(--glass-border)!important;box-shadow:0 28px 80px rgba(15,23,42,.22)!important;backdrop-filter:blur(30px) saturate(155%)!important;-webkit-backdrop-filter:blur(30px) saturate(155%)!important}
-.glass-hero{position:relative;overflow:hidden;padding:22px;border-radius:28px;margin-bottom:18px;background:linear-gradient(135deg,rgba(255,255,255,.70),rgba(255,255,255,.38)),radial-gradient(circle at 92% 8%,rgba(96,165,250,.20),transparent 30%);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%)}
-.glass-hero:after{content:'';position:absolute;width:150px;height:150px;right:-65px;top:-75px;border-radius:50%;background:rgba(255,143,163,.18);filter:blur(5px)}
-.glass-kicker{position:relative;z-index:1;font-size:.72em;opacity:.62;letter-spacing:.04em}.glass-hero-title{position:relative;z-index:1;margin:5px 0 3px;font-size:1.55em;letter-spacing:-.045em}.glass-hero-subtitle{position:relative;z-index:1;margin:0;font-size:.82em;opacity:.65;font-weight:700}
-.track-glass-card{margin-top:14px;padding:16px;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.38));border:1px solid var(--glass-border);box-shadow:0 12px 30px rgba(15,23,42,.08);backdrop-filter:blur(20px) saturate(145%);-webkit-backdrop-filter:blur(20px) saturate(145%)}
-.track-glass-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.track-glass-title{font-weight:900;letter-spacing:-.025em}.track-status-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:rgba(34,197,94,.12);color:#15803d;font-size:.72em;white-space:nowrap}.track-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}.track-meta-chip{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.50);border:1px solid rgba(255,255,255,.48);font-size:.72em;opacity:.82}.track-source{margin-top:10px;font-size:.68em;opacity:.48}
-@media(max-width:520px){.nav-bar{bottom:8px;width:calc(100% - 16px)}.page{padding-left:16px;padding-right:16px}}
-
-/* 📌 會員端底部主選單固定：小螢幕滑動頁面時始終可見 */
-.nav-bar { position: fixed !important; z-index: 2147483000 !important; }
-body > .nav-bar { position: fixed !important; left: 50% !important; transform: translateX(-50%) !important; bottom: max(8px, env(safe-area-inset-bottom)) !important; }
-@media(max-width:520px){ body > .nav-bar{ width:calc(100% - 16px) !important; } }
-.page { padding-bottom: 120px; }
-@media(max-width:520px){ .nav-bar{ bottom:8px !important; width:calc(100% - 16px) !important; } .page{ padding-bottom:128px; } }
-@media(prefers-reduced-motion:reduce){.btn,.nav-item,.nav-icon{transition:none!important}}
-
-
-/* ⚡ 低效能相容模式：保留功能與版面，降低 Liquid Glass 的 GPU / repaint 成本 */
-body.performance-lite *,
-body.performance-lite *::before,
-body.performance-lite *::after {
-  animation-duration: 0.001ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.001ms !important;
-  scroll-behavior: auto !important;
-}
-body.performance-lite .track-glass-card,
-body.performance-lite .app-container,
-body.performance-lite .card,
-body.performance-lite .nav-bar,
-body.performance-lite .swal2-popup {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-}
-body.performance-lite .track-glass-card {
-  background: var(--card) !important;
-}
-
 </style>
 </head>
 <body data-theme="light">
@@ -452,7 +330,6 @@ body.performance-lite .track-glass-card {
 <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
 
 <div id="p0" class="page" style="display:block;">
-<div class="glass-hero"><div class="glass-kicker">小佑的日常生活行動會員</div><div class="glass-hero-title">生活，一眼就能掌握。</div><p class="glass-hero-subtitle">訂單、帳務、發票與物流，都在這裡。</p></div>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 最新通知</div>
 <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(7)">查看全部 ➔</span>
@@ -572,8 +449,8 @@ body.performance-lite .track-glass-card {
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：iOS 26 Liquid Glass V1（功能邏輯維持原版）</div>
-<div>更新日期：2026-08-17</div>
+<div>版本：V90.1 (登入穩定性與長密碼修正)</div>
+<div>更新日期：2026-08-15</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
 <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
 <span style="margin: 0 6px; opacity:0.4;">｜</span>
@@ -590,8 +467,8 @@ body.performance-lite .track-glass-card {
 <div id="ntList"></div>
 </div>
 
-<div class="nav-bar" id="memberNav" style="display:none;">
-<div class="nav-item active" onclick="openTab(0)" title="首頁"><div class="nav-icon">🏠</div>首頁</div>
+<div class="nav-bar">
+<div class="nav-item active" onclick="openTab(0)"><div class="nav-icon">🏠</div>首頁</div>
 <div class="nav-item" onclick="openTab(7)"><div class="nav-icon">🔔</div>通知</div>
 <div class="nav-item" onclick="openTab(1)"><div class="nav-icon">📊</div>紀錄</div>
 <div class="nav-item" onclick="openTab(2)"><div class="nav-icon">📦</div>訂單</div>
@@ -666,18 +543,6 @@ body.performance-lite .track-glass-card {
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
 const SCRIPT_URL = '/api/gas';
-
-// 將主選單移出 app-container，避免父層 overflow:hidden 在部分瀏覽器／手機環境裁切 fixed 元素。
-document.addEventListener('DOMContentLoaded', function(){
-  const nav = document.getElementById('memberNav');
-  if (nav && nav.parentElement !== document.body) document.body.appendChild(nav);
-});
-
-function setMemberNavVisible(visible){
-  const nav = document.getElementById('memberNav');
-  if (nav) nav.style.display = visible ? 'flex' : 'none';
-}
-
 
 let store = null, currentCouponTab = 0, currentLoanTab = 0, savedPw = "", returnAttachments = [], currentSessionId = "";
 
@@ -930,7 +795,7 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：iOS 26 Liquid Glass V1 + Track.TW<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V90.1 (登入穩定性與長密碼修正)<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -1238,7 +1103,6 @@ render();
   hideLoginOverlay();
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('appView').style.display = 'block';
-  setMemberNavVisible(true);
 
   startSessionHeartbeat();
   checkWinningInvoices();
@@ -1348,38 +1212,60 @@ function blockIfSuspended(actionName = '此功能') {
         );
     }
 }
-async function silentSyncData() {
-    if (
-        !store ||
-        !store.userData ||
-        !store.userData.id ||
-        !currentSessionId
-    ) return;
-    const indicator = document.getElementById('syncIndicator'); 
+let _memberSyncPromise = null;
+let _memberSyncSeq = 0;
+let _lastMemberSyncAt = 0;
+const MEMBER_SYNC_MIN_INTERVAL = 3000;
+
+async function silentSyncData(options) {
+    options = options || {};
+    const force = !!options.force;
+    if (!store || !store.userData || !store.userData.id || !currentSessionId) return null;
+
+    const now = Date.now();
+    if (!force && _memberSyncPromise) return _memberSyncPromise;
+    if (!force && now - _lastMemberSyncAt < MEMBER_SYNC_MIN_INTERVAL) return null;
+
+    const requestSeq = ++_memberSyncSeq;
+    const requestSessionId = currentSessionId;
+    const requestUid = String(store.userData.id);
+    _lastMemberSyncAt = now;
+
+    const indicator = document.getElementById('syncIndicator');
     if (indicator) indicator.style.display = 'flex';
-    
-    try {
-        const res = await fetch(SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify({
-        action: 'syncMemberData',
-        uid: store.userData.id,
-        sessionId: currentSessionId
-    })
-}).then(r => r.json());
-        
-        if (res.success) { 
-            res.sessionId = currentSessionId;
-            store = res; 
-            
-           updateSuspensionUI();
-            render(); 
+
+    const promise = (async function() {
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'syncMemberData',
+                    uid: requestUid,
+                    sessionId: requestSessionId
+                })
+            }).then(r => r.json());
+
+            if (res && res.success &&
+                requestSeq === _memberSyncSeq &&
+                requestSessionId === currentSessionId &&
+                String(res.userData && res.userData.id || requestUid) === requestUid) {
+                res.sessionId = currentSessionId;
+                store = res;
+                updateSuspensionUI();
+                render();
+            }
+            return res || null;
+        } catch (e) {
+            console.log("Sync Error:", e);
+            return null;
+        } finally {
+            if (_memberSyncPromise === promise) _memberSyncPromise = null;
+            if (indicator && !_memberSyncPromise) indicator.style.display = 'none';
         }
-    } catch (e) { 
-        console.log("Sync Error:", e); 
-    } finally { 
-        if (indicator) indicator.style.display = 'none'; 
-    }
+    })();
+
+    _memberSyncPromise = promise;
+    return promise;
 }
 
 async function submitSuspensionAppeal() {
@@ -1588,7 +1474,7 @@ function render() {
       console.error('[render/' + name + '] 初始化失敗：', e);
       const map = { loans:'lList', coupons:'cpList', invoices:'invList', orders:'oList', history:'hList', notifications:'ntListPreview' };
       const el = document.getElementById(map[name]);
-      if (el) el.innerHTML = '<p style="text-align:center;opacity:.45;padding:20px;">此區資料暫時無法載入，若問題持續發生請聯絡客服中心。</p>';
+      if (el) el.innerHTML = '<p style="text-align:center;opacity:.45;padding:20px;">此區資料暫時無法載入，其他功能仍可正常使用。</p>';
     }
   };
 
@@ -1698,7 +1584,22 @@ function escapeHTML(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
+function normalizeOrderClientData() {
+    if (!store || !Array.isArray(store.orders)) return;
+    store.orders = store.orders.filter(Boolean).map(function(o) {
+        o = (o && typeof o === 'object') ? o : {};
+        if (!Array.isArray(o.timeline)) o.timeline = [];
+        if (!o.returnData || typeof o.returnData !== 'object' || Array.isArray(o.returnData)) o.returnData = null;
+        if (o.returnData && !Array.isArray(o.returnData.attachments)) o.returnData.attachments = [];
+        o.id = String(o.id || '');
+        o.status = String(o.status || '');
+        o.track = String(o.track || '');
+        return o;
+    });
+}
+
 function renderOrders() {
+normalizeOrderClientData();
 const sortEl = document.getElementById('sortO');
 const sortO = sortEl ? sortEl.value : 'desc';
 let allOrders = Array.isArray(store && store.orders) ? [...store.orders] : [];
@@ -1726,6 +1627,8 @@ let isCompleted = statusStr === "訂單已完成";
 let isReturning = statusStr.includes("退貨") || statusStr.includes("退款");
 
 let actionBtnsHtml = "";
+let canReturn = false;
+let deadlineHtml = "";
 
 if (store.userData && store.userData.isSuspended) {
     actionBtnsHtml = `<div style="text-align:center; padding:8px; background:#fee2e2; color:#b91c1c; border-radius:8px; margin-top:10px; font-size:0.8em; font-weight:bold;">🚫 停權期間無法執行訂單操作</div>`;
@@ -1779,124 +1682,11 @@ html += `<div class="timeline-node latest-node" style="--node-color: var(--pink)
 return { html: `<div class="order-timeline">${html}</div>`, deadline: deadlineDisplay };
 }
 
-function trackTWDomId(oid, packageType, trackingNumber) {
-  return 'tracktw_live_' + btoa(unescape(encodeURIComponent(String(oid)+'|'+String(packageType)+'|'+String(trackingNumber)))).replace(/[^a-zA-Z0-9]/g,'').slice(0,24);
-}
-
-function trackTWFormatTime(value) {
-  if (value === null || value === undefined || value === '') return '';
-  let d = null;
-  const n = Number(value);
-  if (Number.isFinite(n) && n > 0) d = new Date(n * 1000);
-  else d = new Date(String(value));
-  if (isNaN(d.getTime())) return String(value);
-  return d.toLocaleString('zh-TW', { timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-}
-
-function trackTWStageLabel(stage) {
-  const map = {
-    in_transit:['🟡','運輸中'], delivered:['🟢','已送達'], arrived:['🔵','已抵達'], picked_up:['🟢','已取件'], exception:['🔴','異常'], return_requested:['🟠','已申請退回'], out_for_delivery:['🟠','配送中'], customs:['🟣','海關處理中'], returned:['↩️','已退回'], cancel:['⚪','已取消'], pending:['⚪','待處理'], scheduled:['🕒','已排程'], lost:['🔴','遺失']
-  };
-  return map[String(stage || '').trim()] || ['📦', String(stage || '物流更新')];
-}
-
-function trackTWStatusDomId(oid) {
-  return 'tracktw_status_' + btoa(unescape(encodeURIComponent(String(oid)))).replace(/[^a-zA-Z0-9]/g,'').slice(0,20);
-}
-
-async function loadTrackTWStatus(oid, targetId) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-  el.innerHTML = '📡 Track.TW：檢查連線中…';
-  try {
-    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetStatus', uid:store.userData.id, pw:savedPw }) });
-    const data = await res.json();
-    if (data && data.success && data.online) {
-      el.innerHTML = `🟢 Track.TW 連線正常　｜　最近確認：${escapeHTML(String(data.checkedAt || '剛剛'))}`;
-      el.style.color = '#047857';
-    } else {
-      el.innerHTML = `🔴 Track.TW 目前無法確認連線　｜　${escapeHTML(String((data && data.message) || '請稍後再試'))}`;
-      el.style.color = '#b91c1c';
-    }
-  } catch (e) {
-    el.innerHTML = '🔴 Track.TW 目前無法確認連線';
-    el.style.color = '#b91c1c';
-  }
-}
-
-function renderTrackTWResult(targetId, data) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-  const payload = data && data.data ? data.data : data;
-  const history = payload && Array.isArray(payload.package_history) ? payload.package_history : (payload && Array.isArray(payload.history) ? payload.history : []);
-  if (!history.length) {
-    el.innerHTML = '<div style="padding:10px;border-radius:14px;background:rgba(255,255,255,.45);font-size:.82em;opacity:.7;">Track.TW 尚未提供物流歷程。</div><div class="track-source">物流資料來源：Track.TW</div>';
-    return;
-  }
-  const sorted = history.slice().sort((a,b)=>{
-    const ta = Number(a && a.time) || new Date(String(a && a.created_at || '')).getTime()/1000 || 0;
-    const tb = Number(b && b.time) || new Date(String(b && b.created_at || '')).getTime()/1000 || 0;
-    return tb-ta;
-  });
-  const latest = sorted[0] || {};
-  const [icon,label] = trackTWStageLabel(latest.delivery_stage);
-  const sync = data && data.sync ? data.sync : null;
-  const syncText = sync
-    ? (sync.orderStatusUpdated
-        ? `系統已同步最新物流，主訂單狀態更新為「${escapeHTML(String(sync.orderStatus || ''))}」。`
-        : (sync.synced ? '系統已同步最新物流節點。' : '最新物流節點已存在，未重複寫入。'))
-    : '';
-  const timeline = sorted.map((h,i)=>{
-    const [hi,hl] = trackTWStageLabel(h.delivery_stage);
-    const text = escapeHTML(String(h.status || hl || '物流更新'));
-    const time = trackTWFormatTime(Number(h.time) > 0 ? Number(h.time) : h.created_at);
-    return `<div style="display:flex;gap:10px;position:relative;padding-bottom:${i===sorted.length-1?'0':'12px'};"><div style="width:10px;flex:0 0 10px;position:relative;"><span style="display:block;width:10px;height:10px;border-radius:50%;background:${i===0?'#22c55e':'#94a3b8'};margin-top:5px;"></span>${i===sorted.length-1?'':'<span style="position:absolute;left:4px;top:15px;width:2px;height:calc(100% + 2px);background:rgba(148,163,184,.35);"></span>'}</div><div style="flex:1;"><div style="font-weight:800;font-size:.82em;">${hi} ${text}</div><div style="font-size:.7em;opacity:.55;margin-top:2px;">${escapeHTML(time)}</div></div></div>`;
-  }).join('');
-  el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;"><div class="track-glass-head"><div class="track-glass-title">${icon} ${escapeHTML(label)}</div><span class="track-status-pill">Track.TW</span></div>${syncText ? `<div style="margin-top:8px;font-size:.76em;color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:7px 9px;">${syncText}</div>` : ''}<div style="margin-top:10px;">${timeline}</div><div class="track-source">物流資料來源：Track.TW</div></div>`;
-}
-
-async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-  el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;text-align:center;">⏳ 正在取得第三方即時物流資訊…</div>';
-  try {
-    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetTracking', uid:store.userData.id, pw:savedPw, oid, packageType, trackingNumber }) });
-    const data = await res.json();
-    if (data && data.success) {
-      const localOrder = store && Array.isArray(store.orders) ? store.orders.find(x => String(x.id) === String(oid)) : null;
-      if (localOrder && data.sync) {
-        if (data.sync.orderStatusUpdated && data.sync.orderStatus) localOrder.status = data.sync.orderStatus;
-        if (data.sync.synced && data.sync.eventTime) {
-          localOrder.timeline = Array.isArray(localOrder.timeline) ? localOrder.timeline : [];
-          const rawMsg = `[來源:Track.TW][包裹:${trackingNumber}] ${String(data.sync.latestStatus || '物流更新')}${data.sync.deliveryStage ? ' | delivery_stage:' + data.sync.deliveryStage : ''}`;
-          const exists = localOrder.timeline.some(n => String(n.rawMsg || '') === rawMsg && String(n.time || '') === String(data.sync.eventTime || ''));
-          if (!exists) localOrder.timeline.unshift({ time:String(data.sync.eventTime || ''), rawMsg:rawMsg, status:String(data.sync.latestStatus || '物流更新'), note:String(data.sync.latestStatus || '物流更新'), packageId:String(trackingNumber) });
-        }
-        const statusPill = document.querySelector('[data-track-order-status="' + String(oid).replace(/"/g, '&quot;') + '"]');
-        if (statusPill && localOrder.status) statusPill.textContent = '● ' + localOrder.status;
-      }
-      renderTrackTWResult(targetId, data);
-    } else if (data && data.errorCode === 'TRACK_QUERY_RATE_LIMIT_LOCAL') {
-      el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🕒 ${escapeHTML(data.message || '請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
-    } else {
-      el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">⚠️ ${escapeHTML((data && data.message) || '目前無法取得第三方即時物流資訊，請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
-    }
-  } catch (e) {
-    el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;">⚠️ 目前無法取得第三方即時物流資訊，請稍後再試。</div><div class="track-source">物流資料來源：Track.TW</div>';
-  }
-}
-
-
-window.toggleSystemTimeline = function(domId, buttonEl) {
-  var el = document.getElementById(domId);
-  if (!el) return;
-  var isHidden = el.style.display === 'none';
-  el.style.display = isHidden ? 'block' : 'none';
-  if (buttonEl) buttonEl.textContent = isHidden ? '隱藏系統時間線' : '顯示系統時間線';
-};
-
 window.showOrderDetailPopup = function(orderId) {
-if(!store || !store.orders) return; const o = store.orders.find(ord => ord.id === String(orderId)); if(!o) return;
+if(!store || !store.orders) return;
+normalizeOrderClientData();
+const o = store.orders.find(ord => ord.id === String(orderId));
+if(!o) return;
 const currentStatus = String(o.status || "訂單處理中"), currentNote = String(o.note || "尚無備註描述"), updateTime = String(o.time || '暫無時間紀錄');
 
 let outboundHtml = "", returnTimelineHtml = "", globalDeadlineHtml = "", returnHtml = "";
@@ -1951,7 +1741,7 @@ if (gen.deadline) globalDeadlineHtml = `<p><span style="color:var(--red);">📅 
 }
 
 if (o.returnData && !(o.returnData.items || '').includes('[僅退款]')) {
-let retLogs = (o.timeline || []).filter(n => n.packageId === 'RETURN' || n.packageId === '退貨包裹(未編號)' || (returnTrack && String(n.packageId) === returnTrack));
+let retLogs = (o.timeline || []).filter(n => n.packageId === '退貨包裹(未編號)' || (returnTrack && String(n.packageId) === returnTrack));
 if (retLogs.length > 0) {
 let gen = generateTimelineHtml(retLogs, "退貨運送中", "退貨包裹處理中", updateTime);
 let deadHtml = gen.deadline ? `<p style="margin:5px 0 0 0;"><span style="color:var(--red); font-size:0.9em;">📅 寄件/取件截止日：</span><b style="color:var(--red); font-size: 0.95em; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${gen.deadline}</b></p>` : '';
@@ -1976,32 +1766,6 @@ if (inv) {
 invBtnHtml = `<p style="margin-top:10px;"><button class="btn" style="padding:6px; font-size:0.8em; background:#3b82f6;" onclick="Swal.close(); setTimeout(()=>showInvoiceDetailUnified('${inv}'), 300)">🧾 查看關聯發票 (${inv})</button></p>`;
 }
 
-let trackTWHtml = '';
-const existingTrackMappings = Array.isArray(o.trackTWPackages) ? o.trackTWPackages : [];
-const outboundTrackNumbers = String(o.track || '').split(/[,，\n]+/).map(t => t.trim()).filter(Boolean);
-const trackPackagesByKey = {};
-existingTrackMappings.forEach(pkg => { const k = String(pkg.packageType || 'OUTBOUND').toUpperCase() + '|' + String(pkg.trackingNumber || ''); trackPackagesByKey[k] = pkg; });
-const trackPackages = outboundTrackNumbers.map(t => trackPackagesByKey['OUTBOUND|' + t] || { packageType:'OUTBOUND', trackingNumber:t, pendingMapping:true });
-if (returnTrack && !trackPackagesByKey['RETURN|' + returnTrack]) trackPackages.push({ packageType:'RETURN', trackingNumber:returnTrack, pendingMapping:true });
-if (trackPackages.length) {
-  const trackStatusId = trackTWStatusDomId(o.id);
-  trackTWHtml += '<div style="margin:15px 0;">';
-  trackTWHtml += `<div style="font-weight:900;color:var(--pink);margin-bottom:8px;">📡 Track.TW 即時物流</div><div id="${trackStatusId}" style="font-size:.76em;color:#64748b;margin-bottom:8px;">📡 Track.TW：檢查連線中…</div>`;
-  trackPackages.forEach((pkg, idx) => {
-    const packageType = String(pkg.packageType || 'OUTBOUND').toUpperCase();
-    const trackingNumber = String(pkg.trackingNumber || '');
-    const targetId = trackTWDomId(o.id, packageType, trackingNumber);
-    const label = packageType === 'RETURN' ? '↩️ 退貨包裹' : '📦 出貨包裹';
-    const oidEnc = encodeURIComponent(String(o.id));
-    const trackEnc = encodeURIComponent(trackingNumber);
-    const mappingText = pkg.pendingMapping ? '對應檢查中…' : '已連線';
-    trackTWHtml += `<div class="track-glass-card"><div class="track-glass-head"><div class="track-glass-title">${label}</div><span class="track-status-pill">${mappingText}</span></div><div class="track-meta"><span class="track-meta-chip">📦 ${escapeHTML(trackingNumber)}</span></div><div id="${targetId}"><div class="track-glass-card" style="margin-top:8px;text-align:center;opacity:.72;">📡 正在確認 Track.TW 包裹對應…</div></div></div>`;
-  });
-  trackTWHtml += '<div class="track-source">物流資料來源：Track.TW</div></div>';
-} else if (outboundTracks.length || (returnTrack && String(returnTrack).trim())) {
-  trackTWHtml = '<div class="track-glass-card" style="margin:15px 0;"><div class="track-glass-title">📡 Track.TW 即時物流</div><div style="font-size:.78em;opacity:.65;margin-top:6px;">目前尚無可用的 Track.TW 即時貨態對應；系統仍會保留原有物流時間線。</div><div class="track-source" style="margin-top:8px;">物流資料來源：Track.TW</div></div>';
-}
-
 let htmlContent = `
                <div style="text-align: left; font-size: 0.9em; line-height: 1.6; font-weight: 900; max-height: 65vh; overflow-y: auto; padding-right: 5px;">
                    ${returnHtml} 
@@ -2023,53 +1787,14 @@ let htmlContent = `
                    <p><span style="color:var(--pink);">🛣️ 出貨物流方式：</span>${escapeHTML(o.ship) || '無'}</p>
                    <p><span style="color:var(--pink);">🏪 收件門市/地址：</span>${escapeHTML({address: o.address || '無'}.address)}</p>
                    <p style="margin-bottom: 5px;"><span style="color:var(--pink);">📦 出貨單號：</span>${escapeHTML(outboundTracks.join(', ')) || '無'}</p>
-                   ${trackTWHtml}
-                   <div style="margin:15px 0 8px 0;">
-                       <button type="button" class="btn" style="padding:9px 12px; font-size:.82em; background:var(--card); color:var(--text); border:1px solid var(--border);" onclick="toggleSystemTimeline('${trackTWDomId(o.id,'SYSTEM','timeline')}', this)">顯示系統時間線</button>
+                   <p style="margin: 15px 0 5px 0;"><span style="color:var(--pink);">📍 出貨物流進度：</span></p>
+                   <div style="background: rgba(0,0,0,0.02); padding: 5px; border-radius: 8px;">
+                       ${outboundHtml}
                    </div>
-                   <div id="${trackTWDomId(o.id,'SYSTEM','timeline')}" style="display:none;">
-                       <p style="margin: 5px 0;"><span style="color:var(--pink);">📍 系統物流時間線：</span></p>
-                       <div style="background: rgba(0,0,0,0.02); padding: 5px; border-radius: 8px;">
-                           ${outboundHtml}
-                       </div>
-                       ${returnTimelineHtml}
-                   </div>
+                   ${returnTimelineHtml}
                </div>
            `;
-Swal.fire({title:'📦 訂單詳細資訊',html:`<div style="text-align:left;"><div class="track-glass-card" style="margin-top:0;"><div class="track-glass-head"><div class="track-glass-title">🫧 智慧物流</div><span class="track-status-pill" data-track-order-status="${escapeHTML(String(o.id))}">● ${escapeHTML(currentStatus)}</span></div><div class="track-meta"><span class="track-meta-chip">🚚 ${escapeHTML(o.ship)||'物流方式未提供'}</span><span class="track-meta-chip">📦 ${escapeHTML(outboundTracks.join(', '))||'尚無出貨單號'}</span></div><div class="track-source">Track.TW 為主要即時物流來源；系統時間線保留管理／訂單操作紀錄。</div></div>${htmlContent}</div>`,confirmButtonColor:'var(--pink)',confirmButtonText:'完成'});
-setTimeout(async () => {
-  if (trackPackages.length) {
-    loadTrackTWStatus(o.id, trackTWStatusDomId(o.id));
-    for (const pkg of trackPackages) {
-      const pType = String(pkg.packageType || 'OUTBOUND').toUpperCase();
-      const pTrack = String(pkg.trackingNumber || '');
-      const target = trackTWDomId(o.id, pType, pTrack);
-      if (pkg.pendingMapping) {
-        const targetEl = document.getElementById(target);
-        try {
-          const ensureRes = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack }) }).then(r=>r.json());
-          if (ensureRes && ensureRes.success) {
-            await loadTrackTWTracking(o.id, pType, pTrack, target);
-          } else if (targetEl) {
-            const msg = escapeHTML((ensureRes && ensureRes.message) || '目前無法自動建立 Track.TW 對應。');
-            const code = ensureRes && ensureRes.errorCode ? `<div style="font-size:.68em;opacity:.55;margin-top:5px;">診斷碼：${escapeHTML(String(ensureRes.errorCode))}</div>` : '';
-            const detail = ensureRes && Array.isArray(ensureRes.candidates) && ensureRes.candidates.length
-              ? `<div style="margin-top:7px;font-size:.72em;opacity:.78;">候選物流商：${ensureRes.candidates.map(c => escapeHTML(String(c.name || c.id || '未命名'))).join('、')}</div>`
-              : '';
-            const rawDiag = ensureRes && ensureRes.errorCode === 'TRACK_ENSURE_USER_PACKAGE_ID_MISSING'
-              ? `<details style="margin-top:9px;font-size:.68em;opacity:.78;"><summary style="cursor:pointer;">查看 API 回應診斷</summary><div style="margin-top:6px;white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto;background:rgba(0,0,0,.04);padding:7px;border-radius:8px;">HTTP：${escapeHTML(String(ensureRes.httpStatus || ''))}\nContent-Type：${escapeHTML(String(ensureRes.contentType || ''))}\nResponse Keys：${escapeHTML(JSON.stringify(ensureRes.responseKeys || []))}\nHeaders：${escapeHTML(JSON.stringify(ensureRes.responseHeadersKeys || []))}\nLocation：${escapeHTML(String(ensureRes.location || ''))}\nResponse：${escapeHTML(String(ensureRes.responseTextPreview || ensureRes.rawResponse || ensureRes.responsePreview || '（空白）'))}</div></details>`
-              : '';
-            targetEl.innerHTML = `<div class="track-glass-card" style="margin-top:8px;border:1px solid #fde68a;background:#fffbeb;">🟡 ${msg}${detail}${code}${rawDiag}</div>`;
-          }
-        } catch(e) {
-          if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;border:1px solid #fecaca;background:#fef2f2;">🔴 無法取得 Track.TW 對應診斷結果，請稍後再試。</div>';
-        }
-      } else {
-        loadTrackTWTracking(o.id, pType, pTrack, target);
-      }
-    }
-  }
-}, 80);
+Swal.fire({ title: '📋 訂單詳細資訊', html: htmlContent, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉視窗' });
 }
 
 async function applyCancelOrder(oid) {
@@ -2078,7 +1803,7 @@ const { value: reason } = await Swal.fire({ title: '申請取消訂單', input: 
 if (reason) {
 try {
 let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCancelOrder', type: 'apply', oid: oid, uid: store.userData.id, reason: reason, pw: savedPw }, "送出申請中...");
-if (res && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData()); else if (res) Swal.fire('無法申請', res.message, 'error');
+if (res && res.success) Swal.fire('申請成功', res.message, 'success').then(() => silentSyncData({force:true})); else if (res) Swal.fire('無法申請', res.message, 'error');
 } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
 }
 }
@@ -2089,7 +1814,7 @@ const { isConfirmed } = await Swal.fire({ title: '撤回取消申請', html: '<d
 if (isConfirmed) {
 try {
 let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCancelOrder', type: 'withdraw', oid: oid, uid: store.userData.id, pw: savedPw }, "撤回申請中...");
-if (res && res.success) Swal.fire('撤回成功', res.message, 'success').then(() => silentSyncData()); else if (res) Swal.fire('錯誤', res.message, 'error');
+if (res && res.success) Swal.fire('撤回成功', res.message, 'success').then(() => silentSyncData({force:true})); else if (res) Swal.fire('錯誤', res.message, 'error');
 } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
 }
 }
@@ -2100,7 +1825,7 @@ const { isConfirmed } = await Swal.fire({ title: '確認完成訂單？', html: 
 if (isConfirmed) {
 try {
 let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCompleteOrder', oid: oid, uid: store.userData.id, pw: savedPw }, "更新訂單狀態中...");
-if (res && res.success) Swal.fire('訂單已完成', res.message, 'success').then(() => silentSyncData()); else if (res) Swal.fire('錯誤', res.message, 'error');
+if (res && res.success) Swal.fire('訂單已完成', res.message, 'success').then(() => silentSyncData({force:true})); else if (res) Swal.fire('錯誤', res.message, 'error');
 } catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
 }
 }
@@ -2239,7 +1964,7 @@ async function applyReturn(oid) {
     for(let i=0;i<returnAttachments.length;i++) uploaded.push(await uploadOneReturnAttachment(returnAttachments[i],oid,i+1,returnAttachments.length));
     Swal.update({title:'提交售後申請',html:'附件已全部上傳，正在建立售後申請...',showConfirmButton:false});
     const res=await postSmallJson({action:'buyerApplyReturn',oid:oid,uid:store.userData.id,pw:savedPw,...formValues,attachments:uploaded.map(a=>({attachmentId:a.attachmentId}))});
-    if(res&&res.success) Swal.fire('申請成功',res.message,'success').then(()=>silentSyncData());
+    if(res&&res.success) Swal.fire('申請成功',res.message,'success').then(()=>silentSyncData({force:true}));
     else Swal.fire('錯誤',res&&res.message?res.message:'伺服器拒絕了此次申請','error');
   } catch(e) {
     const cleanupIds = [];
@@ -2266,8 +1991,8 @@ let parsed = JSON.parse(o.invoice); parsed.oid = o.id; parsed.source = 'order'; 
 }
 });
 }
-if (Array.isArray(store.invoices) && store.invoices.length) {
-store.invoices.forEach(inv => {
+if (invoices.length) {
+invoices.forEach(inv => {
 inv.source = 'invoice'; let itemsArr = []; try { itemsArr = JSON.parse(inv.items); } catch(e) { itemsArr = []; } inv.itemsParsed = itemsArr; combinedInvoices.push(inv);
 });
 }
@@ -2549,7 +2274,7 @@ document.querySelectorAll('.page').forEach(p => p.style.display='none');
 document.getElementById('p'+i).style.display='block'; 
 document.querySelectorAll('.nav-item').forEach((n,idx) => idx===i?n.classList.add('active'):n.classList.remove('active')); 
 if (i === 3 && store && store.userData && !store.userData.isSuspended) checkBnplConsentAndShow();
-silentSyncData(); 
+silentSyncData();
 }
 function showQR() { qr.clear(); qr.makeCode(store.userData.id); document.getElementById('qrBox').style.display='flex'; }
 function changeTheme() { const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark'); }
@@ -2751,7 +2476,7 @@ preConfirm: () => {
 }).then(async (res) => {
 if (res.isConfirmed) {
 let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: store.userData.id, pw: savedPw, ...res.value }, "通報建檔中...");
-if(fetchRes && fetchRes.success) { Swal.fire('通報成功', fetchRes.message, 'success').then(()=>silentSyncData()); }
+if(fetchRes && fetchRes.success) { Swal.fire('通報成功', fetchRes.message, 'success').then(()=>silentSyncData({force:true})); }
 else if (fetchRes) { Swal.fire('錯誤', fetchRes.message || '發生異常', 'error'); }
 } else { setTimeout(()=>openCustomerServiceModal(), 300); }
 });
@@ -2803,7 +2528,7 @@ let res = await fetchWithQueue(
     },
     "發送中..."
 );
-if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 500); }
+if(res && res.success) { silentSyncData({force:true}); setTimeout(()=>openChatWindow(tid), 500); }
 }
 
 // ==========================================
@@ -2950,16 +2675,6 @@ function closeAppOverlay() {
   }, true);
 })();
 
-</script>
-
-<script>
-(function(){
-  try {
-    if (document.documentElement.classList.contains('performance-lite') && document.body) {
-      document.body.classList.add('performance-lite');
-    }
-  } catch(e) {}
-})();
 </script>
 </body>
 </html>
