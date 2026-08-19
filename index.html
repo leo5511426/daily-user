@@ -666,6 +666,7 @@ body.performance-lite .track-glass-card {
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
 const SCRIPT_URL = '/api/gas';
+const TRACK_TW_GAS_URL = 'https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec';
 
 // 將主選單移出 app-container，避免父層 overflow:hidden 在部分瀏覽器／手機環境裁切 fixed 元素。
 document.addEventListener('DOMContentLoaded', function(){
@@ -1715,8 +1716,31 @@ function escapeHTML(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
+
+function normalizeOrderClientData() {
+  if (!store || !Array.isArray(store.orders)) return;
+  store.orders = store.orders.map(function(o){
+    const x = o && typeof o === 'object' ? o : {};
+    if (!Array.isArray(x.timeline)) {
+      if (Array.isArray(x.timelineNodes)) x.timeline = x.timelineNodes;
+      else if (Array.isArray(x.history)) x.timeline = x.history;
+      else if (x.timeline && typeof x.timeline === 'object') x.timeline = Object.values(x.timeline);
+      else x.timeline = [];
+    }
+    if (!x.returnData || typeof x.returnData !== 'object' || Array.isArray(x.returnData)) x.returnData = x.returnData ? {desc:String(x.returnData)} : null;
+    if (x.returnData) {
+      if (!Array.isArray(x.returnData.attachments)) {
+        x.returnData.attachments = x.returnData.attachments ? [x.returnData.attachments] : [];
+      }
+    }
+    if (!Array.isArray(x.attachments)) x.attachments = x.attachments ? [x.attachments] : [];
+    if (x.track == null) x.track = '';
+    if (!Array.isArray(x.trackTWPackages)) x.trackTWPackages = x.trackTWPackages ? [] : [];
+    return x;
+  });
+}
+
 function renderOrders() {
-normalizeOrderClientData();
 const sortEl = document.getElementById('sortO');
 const sortO = sortEl ? sortEl.value : 'desc';
 let allOrders = Array.isArray(store && store.orders) ? [...store.orders] : [];
@@ -1744,8 +1768,6 @@ let isCompleted = statusStr === "訂單已完成";
 let isReturning = statusStr.includes("退貨") || statusStr.includes("退款");
 
 let actionBtnsHtml = "";
-let canReturn = false;
-let deadlineHtml = "";
 
 if (store.userData && store.userData.isSuspended) {
     actionBtnsHtml = `<div style="text-align:center; padding:8px; background:#fee2e2; color:#b91c1c; border-radius:8px; margin-top:10px; font-size:0.8em; font-weight:bold;">🚫 停權期間無法執行訂單操作</div>`;
@@ -1829,16 +1851,40 @@ async function loadTrackTWStatus(oid, targetId) {
   if (!el) return;
   el.innerHTML = '📡 Track.TW：檢查連線中…';
   try {
-    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetStatus', uid:store.userData.id, pw:savedPw }) });
-    const data = await res.json();
-    if (data && data.success && data.online) {
-      el.innerHTML = `🟢 Track.TW 連線正常　｜　最近確認：${escapeHTML(String(data.checkedAt || '剛剛'))}`;
-      el.style.color = '#047857';
-    } else {
-      el.innerHTML = `🔴 Track.TW 目前無法確認連線　｜　${escapeHTML(String((data && data.message) || '請稍後再試'))}`;
-      el.style.color = '#b91c1c';
+    const endpoints = [TRACK_TW_GAS_URL, SCRIPT_URL];
+    let lastDetail = '';
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint, {
+          method:'POST',
+          body:JSON.stringify({
+            action:'trackGetStatus',
+            uid:store?.userData?.id || '',
+            pw:savedPw
+          })
+        });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) {
+          lastDetail = `HTTP ${res.status}｜Content-Type ${res.headers.get('content-type') || '未提供'}`;
+          continue;
+        }
+        if (data && data.success && data.online) {
+          el.innerHTML = `🟢 Track.TW 連線正常　｜　最近確認：${escapeHTML(String(data.checkedAt || '剛剛'))}`;
+          el.style.color = '#047857';
+          return;
+        }
+        el.innerHTML = `🔴 Track.TW 目前無法確認連線　｜　${escapeHTML(String((data && data.message) || '請稍後再試'))}`;
+        el.style.color = '#b91c1c';
+        return;
+      } catch(e) {
+        lastDetail = e && e.message ? e.message : '請求失敗';
+      }
     }
-  } catch (e) {
+    el.innerHTML = `🔴 Track.TW 目前無法確認連線　｜　${escapeHTML(lastDetail || 'Google Apps Script 回傳格式異常')}`;
+    el.style.color = '#b91c1c';
+  } catch(e) {
     el.innerHTML = '🔴 Track.TW 目前無法確認連線';
     el.style.color = '#b91c1c';
   }
@@ -1880,27 +1926,55 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
   if (!el) return;
   el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;text-align:center;">⏳ 正在取得第三方即時物流資訊…</div>';
   try {
-    const res = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackGetTracking', uid:store.userData.id, pw:savedPw, oid, packageType, trackingNumber }) });
-    const data = await res.json();
-    if (data && data.success) {
-      const localOrder = store && Array.isArray(store.orders) ? store.orders.find(x => String(x.id) === String(oid)) : null;
-      if (localOrder && data.sync) {
-        if (data.sync.orderStatusUpdated && data.sync.orderStatus) localOrder.status = data.sync.orderStatus;
-        if (data.sync.synced && data.sync.eventTime) {
-          localOrder.timeline = Array.isArray(localOrder.timeline) ? localOrder.timeline : [];
-          const rawMsg = `[來源:Track.TW][包裹:${trackingNumber}] ${String(data.sync.latestStatus || '物流更新')}${data.sync.deliveryStage ? ' | delivery_stage:' + data.sync.deliveryStage : ''}`;
-          const exists = localOrder.timeline.some(n => String(n.rawMsg || '') === rawMsg && String(n.time || '') === String(data.sync.eventTime || ''));
-          if (!exists) localOrder.timeline.unshift({ time:String(data.sync.eventTime || ''), rawMsg:rawMsg, status:String(data.sync.latestStatus || '物流更新'), note:String(data.sync.latestStatus || '物流更新'), packageId:String(trackingNumber) });
+    const endpoints = [TRACK_TW_GAS_URL, SCRIPT_URL];
+    let lastError = '';
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint, {
+          method:'POST',
+          body:JSON.stringify({
+            action:'trackGetTracking',
+            uid:store?.userData?.id || '',
+            pw:savedPw,
+            oid,
+            packageType,
+            trackingNumber
+          })
+        });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) {
+          lastError = `HTTP ${res.status}：Google Apps Script 回傳非 JSON`;
+          continue;
         }
-        const statusPill = document.querySelector('[data-track-order-status="' + String(oid).replace(/"/g, '&quot;') + '"]');
-        if (statusPill && localOrder.status) statusPill.textContent = '● ' + localOrder.status;
+        if (data && data.success) {
+          const localOrder = store && Array.isArray(store.orders) ? store.orders.find(x => String(x.id) === String(oid)) : null;
+          if (localOrder && data.sync) {
+            if (data.sync.orderStatusUpdated && data.sync.orderStatus) localOrder.status = data.sync.orderStatus;
+            if (data.sync.synced && data.sync.eventTime) {
+              localOrder.timeline = Array.isArray(localOrder.timeline) ? localOrder.timeline : [];
+              const rawMsg = `[來源:Track.TW][包裹:${trackingNumber}] ${String(data.sync.latestStatus || '物流更新')}${data.sync.deliveryStage ? ' | delivery_stage:' + data.sync.deliveryStage : ''}`;
+              const exists = localOrder.timeline.some(n => String(n.rawMsg || '') === rawMsg && String(n.time || '') === String(data.sync.eventTime || ''));
+              if (!exists) localOrder.timeline.unshift({ time:String(data.sync.eventTime || ''), rawMsg, status:String(data.sync.latestStatus || '物流更新'), note:String(data.sync.latestStatus || '物流更新'), packageId:String(trackingNumber) });
+            }
+            const statusPill = document.querySelector('[data-track-order-status="' + String(oid).replace(/"/g, '&quot;') + '"]');
+            if (statusPill && localOrder.status) statusPill.textContent = '● ' + localOrder.status;
+            try { renderOrders(); } catch (e) {}
+          }
+          renderTrackTWResult(targetId, data);
+          return;
+        }
+        if (data && data.errorCode === 'TRACK_QUERY_RATE_LIMIT_LOCAL') {
+          el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🕒 ${escapeHTML(data.message || '請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
+          return;
+        }
+        lastError = data && data.message ? String(data.message) : '目前無法取得第三方即時物流資訊';
+      } catch(e) {
+        lastError = e && e.message ? e.message : '請求失敗';
       }
-      renderTrackTWResult(targetId, data);
-    } else if (data && data.errorCode === 'TRACK_QUERY_RATE_LIMIT_LOCAL') {
-      el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">🕒 ${escapeHTML(data.message || '請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
-    } else {
-      el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">⚠️ ${escapeHTML((data && data.message) || '目前無法取得第三方即時物流資訊，請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
     }
+    el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;">⚠️ ${escapeHTML(lastError || '目前無法取得第三方即時物流資訊，請稍後再試。')}</div><div class="track-source">物流資料來源：Track.TW</div>`;
   } catch (e) {
     el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;">⚠️ 目前無法取得第三方即時物流資訊，請稍後再試。</div><div class="track-source">物流資料來源：Track.TW</div>';
   }
@@ -2067,7 +2141,19 @@ setTimeout(async () => {
       if (pkg.pendingMapping) {
         const targetEl = document.getElementById(target);
         try {
-          const ensureRes = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack }) }).then(r=>r.json());
+          const ensurePayload = { action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack };
+const ensureEndpoints = [TRACK_TW_GAS_URL, SCRIPT_URL];
+let ensureRes = null;
+let ensureLastError = '';
+for (const endpoint of ensureEndpoints) {
+  try {
+    const r = await fetch(endpoint, { method:'POST', body:JSON.stringify(ensurePayload) });
+    const t = await r.text();
+    try { ensureRes = JSON.parse(t); break; }
+    catch (e) { ensureLastError = `HTTP ${r.status}：Google Apps Script 回傳非 JSON`; }
+  } catch (e) { ensureLastError = e.message || '請求失敗'; }
+}
+if (!ensureRes) ensureRes = {success:false,message:ensureLastError || '目前無法自動建立 Track.TW 對應。',errorCode:'TRACK_ENSURE_API_FORMAT_ERROR'};
           if (ensureRes && ensureRes.success) {
             await loadTrackTWTracking(o.id, pType, pTrack, target);
           } else if (targetEl) {
@@ -2569,7 +2655,7 @@ document.querySelectorAll('.page').forEach(p => p.style.display='none');
 document.getElementById('p'+i).style.display='block'; 
 document.querySelectorAll('.nav-item').forEach((n,idx) => idx===i?n.classList.add('active'):n.classList.remove('active')); 
 if (i === 3 && store && store.userData && !store.userData.isSuspended) checkBnplConsentAndShow();
-silentSyncData();
+silentSyncData(); 
 }
 function showQR() { qr.clear(); qr.makeCode(store.userData.id); document.getElementById('qrBox').style.display='flex'; }
 function changeTheme() { const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark'); }
@@ -2979,27 +3065,6 @@ function closeAppOverlay() {
       document.body.classList.add('performance-lite');
     }
   } catch(e) {}
-})();
-</script>
-
-<script id="global-swal-close-script">
-(function(){
-  function install(){
-    if(!window.Swal || typeof window.Swal.fire!=='function' || window.__globalSwalCloseInstalled) return;
-    window.__globalSwalCloseInstalled=true;
-    const originalFire=window.Swal.fire.bind(window.Swal);
-    window.Swal.fire=function(){
-      const args=Array.prototype.slice.call(arguments);
-      if(args.length===1 && args[0] && typeof args[0]==='object' && !Array.isArray(args[0])){
-        args[0]=Object.assign({},args[0],{showCloseButton:true});
-      } else {
-        args[0]={title:args[0],text:args[1],icon:args[2],showCloseButton:true};
-      }
-      return originalFire.apply(window.Swal,args);
-    };
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true});
-  else install();
 })();
 </script>
 </body>
