@@ -1310,6 +1310,9 @@ let eligible = uid
   ? O_DB.filter(o => String(o.uid || '').trim() === uid)
   : O_DB.slice();
 let html = '<option value="">-- 不關聯訂單 --</option>';
+if (uid && eligible.length === 0) {
+  html += '<option value="" disabled>（此會員目前沒有可關聯訂單）</option>';
+}
 html += eligible.map(o => {
   const owner = String(o.uid || '').trim();
   const ownerText = uid ? '' : `｜會員：${owner}`;
@@ -1458,7 +1461,14 @@ async function processReturnAction(oid, mode) {
   }
   if ((mode === 'execute_refund' || mode === 'approve_refund_only') && (!Number.isFinite(amount) || amount < 0)) {
     if (amtEl) amtEl.focus();
-    return;
+    return Swal.fire('提示','退款金額必須為 0 或以上的有效數字。','warning');
+  }
+  if (mode === 'execute_refund' || mode === 'approve_refund_only') {
+    const orderTotal = Number(order.total || 0);
+    if (Number.isFinite(orderTotal) && orderTotal >= 0 && amount > orderTotal) {
+      if (amtEl) amtEl.focus();
+      return Swal.fire('提示', `退款金額不可高於訂單應付總額 $${orderTotal}。`, 'warning');
+    }
   }
 
   let confirmText = '執行售後審核';
@@ -1867,7 +1877,10 @@ function toggleTimelineReturnTrack() {
 let TRACKTW_CARRIERS = [];
 let TRACKTW_REQUIREMENTS = [];
 
-async function trackTWBackgroundRequest(payload, timeoutMs = 30000) {
+const TRACKTW_STATUS_TIMEOUT_MS = 15000;
+const TRACKTW_OPERATION_TIMEOUT_MS = 30000;
+
+async function trackTWBackgroundRequest(payload, timeoutMs = TRACKTW_OPERATION_TIMEOUT_MS) {
   payload = Object.assign({}, payload, { adminToken: ADMIN_TOKEN });
   const targets = [];
   if (GAS) targets.push(GAS);
@@ -1883,8 +1896,15 @@ async function trackTWBackgroundRequest(payload, timeoutMs = 30000) {
         signal:controller.signal
       });
       const text = await response.text();
-      try { return JSON.parse(text); }
-      catch(e) { return {success:false,aborted:false,errorCode:'TRACK_ADMIN_INVALID_JSON',message:`HTTP ${response.status}：API 回應不是有效 JSON。`}; }
+      let parsed;
+      try { parsed = JSON.parse(text); }
+      catch(e) {
+        return {success:false,aborted:false,errorCode:'TRACK_ADMIN_INVALID_JSON',httpStatus:response.status,message:`HTTP ${response.status}：API 回應不是有效 JSON。`};
+      }
+      if (!response.ok) {
+        return Object.assign({}, parsed, {success:false,aborted:false,httpStatus:response.status,errorCode:parsed.errorCode || 'TRACK_ADMIN_HTTP_ERROR',message:parsed.message || `Track.TW 後端 HTTP ${response.status}。`});
+      }
+      return parsed;
     } catch(e) {
       lastErr = e;
     } finally {
@@ -1910,7 +1930,7 @@ async function loadTrackTWAdminStatus() {
 
   const res = await trackTWBackgroundRequest(
     { action:'adminAction', type:'trackGetStatus' },
-    30000
+    TRACKTW_STATUS_TIMEOUT_MS
   );
 
   if (!res || res.aborted) {
@@ -1968,7 +1988,7 @@ async function loadTrackTWCarriers() {
   if (status) status.innerText = '正在取得 Track.TW 物流商…';
   const res = await trackTWBackgroundRequest(
     { action:'adminAction', type:'trackGetCarriers' },
-    30000
+    TRACKTW_STATUS_TIMEOUT_MS
   );
   if (!res || res.aborted) {
     if (status) status.innerText = `Track.TW 物流商取得逾時：${res?.message || '請稍後再試。'}`;
