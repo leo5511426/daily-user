@@ -106,6 +106,27 @@ input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:
 [data-theme='dark'] .swal2-popup { background-color: #121212 !important; color: #fff !important; }
 [data-theme='dark'] .swal2-title, [data-theme='dark'] .swal2-html-container { color: #fff !important; }
 
+body .sync-indicator {
+  position: fixed !important;
+  top: max(10px, env(safe-area-inset-top)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  z-index: 2147483001 !important;
+  background: rgba(255,255,255,.86) !important;
+  color: #334155 !important;
+  border: 1px solid rgba(255,255,255,.72) !important;
+  box-shadow: 0 8px 24px rgba(15,23,42,.12) !important;
+  padding: 7px 12px !important;
+  border-radius: 999px !important;
+  pointer-events: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+body .sync-indicator[data-sync-state="success"] { color:#047857 !important; }
+body .sync-indicator[data-sync-state="error"] { color:#b91c1c !important; }
 .sync-indicator { position: absolute; top: 12px; left: 15px; display: none; align-items: center; gap: 6px; z-index: 110; background: rgba(0, 0, 0, 0.05); padding: 4px 8px; border-radius: 20px; pointer-events: none; }
 [data-theme='dark'] .sync-indicator { background: rgba(255, 255, 255, 0.1); }
 .sync-spinner { width: 12px; height: 12px; border: 2px solid var(--border); border-top: 2px solid var(--pink); border-radius: 50%; animation: sync-spin 0.8s linear infinite; }
@@ -1364,18 +1385,37 @@ async function silentSyncData(options) {
     _lastMemberSyncAt = now;
 
     const indicator = document.getElementById('syncIndicator');
-    if (indicator) indicator.style.display = 'flex';
+    const indicatorText = indicator ? indicator.querySelector('.sync-text') : null;
+    if (indicator) {
+        indicator.style.display = 'flex';
+        indicator.setAttribute('data-sync-state','running');
+        if (indicatorText) indicatorText.textContent = '同步中...';
+    }
 
     const promise = (async function() {
         try {
-            const res = await fetch(SCRIPT_URL, {
+            const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify({
                     action: 'syncMemberData',
                     uid: requestUid,
                     sessionId: requestSessionId
                 })
-            }).then(r => r.json());
+            });
+
+            const rawText = await response.text();
+            let res = null;
+            try {
+                res = JSON.parse(rawText);
+            } catch (parseErr) {
+                console.error('syncMemberData 非 JSON 回應：', rawText);
+                if (indicatorText) indicatorText.textContent = '同步失敗';
+                if (indicator) indicator.setAttribute('data-sync-state','error');
+                setTimeout(() => {
+                    if (indicator && !_memberSyncPromise) indicator.style.display = 'none';
+                }, 1800);
+                return { success:false, aborted:true, errorCode:'SYNC_INVALID_JSON' };
+            }
 
             if (res && res.success &&
                 requestSeq === _memberSyncSeq &&
@@ -1383,16 +1423,28 @@ async function silentSyncData(options) {
                 String(res.userData && res.userData.id || requestUid) === requestUid) {
                 res.sessionId = currentSessionId;
                 store = res;
+                try { normalizeOrderClientData(); } catch(e) {}
                 updateSuspensionUI();
                 render();
+                if (indicatorText) indicatorText.textContent = '同步完成';
+                if (indicator) indicator.setAttribute('data-sync-state','success');
+            } else if (indicatorText) {
+                indicatorText.textContent = (res && res.message) ? '同步失敗' : '同步未完成';
+                if (indicator) indicator.setAttribute('data-sync-state','error');
             }
             return res || null;
         } catch (e) {
             console.log("Sync Error:", e);
+            if (indicatorText) indicatorText.textContent = '同步失敗';
+            if (indicator) indicator.setAttribute('data-sync-state','error');
             return null;
         } finally {
             if (_memberSyncPromise === promise) _memberSyncPromise = null;
-            if (indicator && !_memberSyncPromise) indicator.style.display = 'none';
+            if (indicator) {
+                setTimeout(() => {
+                    if (!_memberSyncPromise) indicator.style.display = 'none';
+                }, 900);
+            }
         }
     })();
 
@@ -1573,6 +1625,7 @@ o.status = "訂單已完成";
 
 function render() {
   if (!store) return;
+  try { normalizeOrderClientData(); } catch (e) { console.warn('Order normalization skipped:', e); }
 
   // 登入資料是後端回傳的 API payload；先做型別正規化，避免單一會員資料異常讓整個登入流程卡在 85%。
   store.userData = (store.userData && typeof store.userData === 'object') ? store.userData : {};
@@ -1741,6 +1794,7 @@ function normalizeOrderClientData() {
 }
 
 function renderOrders() {
+normalizeOrderClientData();
 const sortEl = document.getElementById('sortO');
 const sortO = sortEl ? sortEl.value : 'desc';
 let allOrders = Array.isArray(store && store.orders) ? [...store.orders] : [];
@@ -1752,6 +1806,8 @@ renderOrderPreview();
 let sortedOrders = currentOrderTab === 'ALL' ? allOrders : allOrders.filter(o => getOrderCategory(o.status) === currentOrderTab);
 
 document.getElementById('oList').innerHTML = sortedOrders.map((o) => {
+try { 
+
 let rawItem = String(o.desc || o.item || '無商品明細'); let briefItemHtml = '';
 if (rawItem.includes(';') && !rawItem.includes('\n')) briefItemHtml = rawItem.split(';').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">- ${escapeHTML(line.trim())}</div>`).join('');
 else briefItemHtml = rawItem.split('\n').filter(l => l.trim()).map(line => `<div style="margin-top:2px;">${escapeHTML(line)}</div>`).join('');
@@ -1768,6 +1824,8 @@ let isCompleted = statusStr === "訂單已完成";
 let isReturning = statusStr.includes("退貨") || statusStr.includes("退款");
 
 let actionBtnsHtml = "";
+let canReturn = false;
+let deadlineHtml = "";
 
 if (store.userData && store.userData.isSuspended) {
     actionBtnsHtml = `<div style="text-align:center; padding:8px; background:#fee2e2; color:#b91c1c; border-radius:8px; margin-top:10px; font-size:0.8em; font-weight:bold;">🚫 停權期間無法執行訂單操作</div>`;
@@ -1800,6 +1858,10 @@ if (store.userData && store.userData.isSuspended) {
 }
 
 return `<div class="card"><div style="color:var(--pink); font-size:0.8em;">單號: ${o.id}</div><div style="margin:5px 0;"><b>狀態: ${statusStr}</b></div><div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${briefItemHtml}</div><div style="font-size:1.1em; color:var(--red); margin:5px 0;"><b>訂單總金額: $${o.total || o.totalAmount || 0}</b></div><div style="font-size:0.7em; margin-top:8px; border-top:1px solid var(--border); padding-top:8px; opacity:0.5;">${escapeHTML(o.ship) || '未知物流'} | 單號: ${escapeHTML(o.track) || '無'}</div><button class="btn" style="padding:8px 12px; font-size:0.75em; border-radius:8px; margin-top:10px; background:var(--accent); width:100%; display:block;" onclick="showOrderDetailPopup('${o.id}')">🔍 查看訂單詳細資訊</button>${actionBtnsHtml}</div>`;
+} catch (rowErr) {
+  console.warn('訂單列渲染失敗，已略過該筆訂單：', rowErr, o);
+  return '';
+}
 }).join('') || `<p style="text-align:center; opacity:0.3;">${currentOrderTab === 'ALL' ? '無訂單紀錄' : '此分類目前無訂單'}</p>`;
 
 checkAutoCompleteOrders();
@@ -2655,7 +2717,8 @@ document.querySelectorAll('.page').forEach(p => p.style.display='none');
 document.getElementById('p'+i).style.display='block'; 
 document.querySelectorAll('.nav-item').forEach((n,idx) => idx===i?n.classList.add('active'):n.classList.remove('active')); 
 if (i === 3 && store && store.userData && !store.userData.isSuspended) checkBnplConsentAndShow();
-silentSyncData(); 
+if (i === 2) silentSyncData({force:true});
+else silentSyncData();
 }
 function showQR() { qr.clear(); qr.makeCode(store.userData.id); document.getElementById('qrBox').style.display='flex'; }
 function changeTheme() { const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark'); }
