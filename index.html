@@ -264,6 +264,23 @@ body { font-family: -apple-system, sans-serif; background: #e2e8f0; color: var(-
 .nav-item.active { color: var(--pink); font-weight: bold; }
 .nav-icon { font-size: 1.5em; margin-bottom: 3px; }
 
+/* 📐 自適應螢幕：手機維持行動版，平板／桌機自動展開 */
+:root { --layout-breakpoint: 768px; }
+html, body { width: 100%; min-width: 0; }
+.app-container,
+.nav-bar { transition: max-width .3s ease, width .3s ease, box-shadow .3s ease; }
+@media (max-width: 767px) {
+  body { justify-content: center; }
+  .app-container { width: 100%; max-width: 500px; }
+  .nav-bar { max-width: 500px; }
+}
+@media (min-width: 768px) {
+  body { justify-content: stretch; }
+  .app-container { width: 100%; max-width: 100%; }
+  .nav-bar { max-width: 100%; }
+}
+
+
 .mask { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
 input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 0.9em; font-family:inherit; }
 .overdue-tag { position: absolute; top: 10px; right: 10px; background: var(--red); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 0.7em; }
@@ -3054,24 +3071,38 @@ else silentSyncData();
 }
 function showQR() { qr.clear(); qr.makeCode(store.userData.id); document.getElementById('qrBox').style.display='flex'; }
 function changeTheme() { const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark'); }
-function toggleLayoutMode() { const container = document.getElementById('appContainer'); container.classList.toggle('full-desktop'); }
-
-const AUTO_LAYOUT_BREAKPOINT = 768; 
-function applyAutoLayoutMode() {
-const container = document.getElementById('appContainer');
-if (!container) return;
-if (window.innerWidth >= AUTO_LAYOUT_BREAKPOINT) {
-container.classList.add('full-desktop');
-} else {
-container.classList.remove('full-desktop');
+function toggleLayoutMode() {
+  const container = document.getElementById('appContainer');
+  if (!container) return;
+  const next = !container.classList.contains('full-desktop');
+  container.classList.toggle('full-desktop', next);
+  const nav = document.getElementById('memberNav');
+  if (nav) nav.classList.toggle('full-desktop', next);
 }
+
+const AUTO_LAYOUT_BREAKPOINT = 768;
+function applyAutoLayoutMode() {
+  const container = document.getElementById('appContainer');
+  const nav = document.getElementById('memberNav');
+  if (!container) return;
+  const isDesktopLayout = window.innerWidth >= AUTO_LAYOUT_BREAKPOINT;
+  container.classList.toggle('full-desktop', isDesktopLayout);
+  if (nav) nav.classList.toggle('full-desktop', isDesktopLayout);
+  document.documentElement.dataset.layout = isDesktopLayout ? 'desktop' : 'mobile';
 }
 let autoLayoutResizeTimer = null;
-window.addEventListener('resize', function() {
-clearTimeout(autoLayoutResizeTimer);
-autoLayoutResizeTimer = setTimeout(applyAutoLayoutMode, 150); 
-});
-applyAutoLayoutMode(); 
+function scheduleAutoLayoutMode() {
+  clearTimeout(autoLayoutResizeTimer);
+  autoLayoutResizeTimer = setTimeout(applyAutoLayoutMode, 120);
+}
+window.addEventListener('resize', scheduleAutoLayoutMode, { passive: true });
+window.addEventListener('orientationchange', scheduleAutoLayoutMode, { passive: true });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleAutoLayoutMode, { passive: true });
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', applyAutoLayoutMode, { once: true });
+} else {
+  applyAutoLayoutMode();
+} 
 
 async function updateProfileName() {
 if (store && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法修改個人資料', 'warning');
