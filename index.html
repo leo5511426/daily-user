@@ -1277,6 +1277,7 @@ let loginProgressLastPct = 0;
 let loginStepStartedAt = {};
 let loginStepDurations = {};
 let loginTimingHistory = {};
+let loginProgressTicker = null;
 
 function loadLoginTimingHistory(){
   try {
@@ -1293,9 +1294,18 @@ function saveLoginTimingHistory(){
 function getExpectedStepMs(stepId){
   const history = loginTimingHistory[stepId];
   if (history && Number.isFinite(Number(history.avgMs)) && Number(history.samples) > 0) {
-    return Math.max(200, Math.min(5000, Number(history.avgMs)));
+    return Math.max(250, Math.min(6000, Number(history.avgMs)));
   }
   return LOGIN_DEFAULT_STEP_MS[stepId] || 600;
+}
+
+function getAdaptiveExpectedStepMs(stepId, elapsedMs){
+  const base = getExpectedStepMs(stepId);
+  const elapsed = Math.max(0, Number(elapsedMs) || 0);
+  if (elapsed <= base) return base;
+  // 實際耗時已超過原估算：把預估時間向後延，避免剩餘秒數卡死在 1 秒。
+  const extended = Math.max(base, elapsed * 1.35 + 300);
+  return Math.min(12000, extended);
 }
 
 function recordLoginStepDuration(stepId, ms){
@@ -1314,17 +1324,21 @@ function getWeightedProgress(stepId, state){
   for (const step of LOGIN_STEPS) {
     const w = LOGIN_PROGRESS_WEIGHTS[step.id] || (100 / LOGIN_STEPS.length);
     if (step.id === stepId) {
-      if (state === 'done') pct += w;
-      else if (state === 'running') {
+      if (state === 'done') {
+        pct += w;
+      } else if (state === 'running') {
         const started = loginStepStartedAt[stepId] || performance.now();
         const elapsed = Math.max(0, performance.now() - started);
-        const expected = getExpectedStepMs(stepId);
-        const fraction = Math.min(0.82, 1 - Math.exp(-elapsed / Math.max(250, expected * 0.9)));
+        const expected = getAdaptiveExpectedStepMs(stepId, elapsed);
+        const ratio = elapsed / Math.max(250, expected);
+        // 正常時平滑前進；逾時後仍會繼續前進，但不會突然跳滿。
+        const fraction = Math.min(0.97, 1 - Math.exp(-ratio * 1.15));
         pct += w * fraction;
       }
       break;
     }
-    if (loginStepDurations[step.id] || document.getElementById(step.id)?.classList.contains('done')) pct += w;
+    const done = document.getElementById(step.id)?.classList.contains('done');
+    if (done) pct += w;
   }
   return Math.max(0, Math.min(100, Math.round((pct / totalWeight) * 100)));
 }
@@ -1332,10 +1346,9 @@ function getWeightedProgress(stepId, state){
 function updateLoginProgressEstimate(pct){
   const estimateEl = document.getElementById('lp-estimate');
   if (!estimateEl) return;
-  const completedPct = Math.max(0, Math.min(100, pct));
-  const remainingWeight = Math.max(0, 100 - completedPct);
+  const remainingWeight = Math.max(0, 100 - Math.max(0, Math.min(100, pct)));
 
-  // 初始階段不顯示秒數；等至少一個實際步驟完成後再開始估算。
+  // 尚未完成任何實際步驟時，不顯示虛假的秒數。
   if (!loginProgressStartedAt || Object.keys(loginStepDurations).length < 1 || remainingWeight <= 0) {
     if (remainingWeight <= 0) {
       estimateEl.textContent = '即將完成';
@@ -1349,19 +1362,22 @@ function updateLoginProgressEstimate(pct){
 
   let remainingMs = 0;
   for (const step of LOGIN_STEPS) {
-    const done = document.getElementById(step.id)?.classList.contains('done');
+    const stepEl = document.getElementById(step.id);
+    const done = stepEl?.classList.contains('done');
     if (done) continue;
-    remainingMs += getExpectedStepMs(step.id);
+
+    const running = stepEl?.classList.contains('running');
+    if (running) {
+      const started = loginStepStartedAt[step.id] || performance.now();
+      const elapsed = Math.max(0, performance.now() - started);
+      const adaptiveExpected = getAdaptiveExpectedStepMs(step.id, elapsed);
+      remainingMs += Math.max(150, adaptiveExpected - elapsed);
+    } else {
+      remainingMs += getExpectedStepMs(step.id);
+    }
   }
 
-  const currentRunning = LOGIN_STEPS.find(step => document.getElementById(step.id)?.classList.contains('running'));
-  if (currentRunning) {
-    const started = loginStepStartedAt[currentRunning.id] || performance.now();
-    const elapsed = Math.max(0, performance.now() - started);
-    remainingMs = Math.max(0, remainingMs - Math.min(elapsed, getExpectedStepMs(currentRunning.id) * 0.75));
-  }
-
-  const sec = Math.ceil(remainingMs / 1000);
+  const sec = Math.max(1, Math.ceil(remainingMs / 1000));
   estimateEl.textContent = sec <= 1 ? '即將完成' : '預估還需約 ' + sec + ' 秒';
   estimateEl.style.visibility = 'visible';
 }
@@ -1375,6 +1391,20 @@ function updateLoginProgress(stepId, state){
   pctEl.textContent = pct + '%';
   bar.style.width = pct + '%';
   updateLoginProgressEstimate(pct);
+}
+
+function startLoginProgressTicker(){
+  if (loginProgressTicker) clearInterval(loginProgressTicker);
+  loginProgressTicker = setInterval(() => {
+    const running = LOGIN_STEPS.find(step => document.getElementById(step.id)?.classList.contains('running'));
+    if (!running) return;
+    updateLoginProgress(running.id, 'running');
+  }, 150);
+}
+
+function stopLoginProgressTicker(){
+  if (loginProgressTicker) clearInterval(loginProgressTicker);
+  loginProgressTicker = null;
 }
 
 function setLoginStep(stepId, state, extraLabel) {
@@ -1484,12 +1514,14 @@ function showLoginOverlay() {
   if (retryEl) retryEl.style.display = 'none';
 
   LOGIN_STEPS.forEach(s => setLoginStep(s.id, 'waiting'));
+  startLoginProgressTicker();
   overlay.style.display = 'flex';
 }
 
 function hideLoginOverlay() {
   const overlay = document.getElementById('loginProgressOverlay');
   if (overlay) overlay.style.display = 'none';
+  stopLoginProgressTicker();
   _loginInProgress = false; 
 }
 
@@ -1500,6 +1532,7 @@ function showLoginError(msg) {
   
   const estimateEl = document.getElementById('lp-estimate');
   if (estimateEl) { estimateEl.textContent = ''; estimateEl.style.visibility = 'hidden'; }
+  stopLoginProgressTicker();
   if(titleEl) {
       titleEl.innerText = '❌ 登入失敗';
       titleEl.style.color = '#ff5252';
