@@ -1246,7 +1246,8 @@ function updateLoginProgressEstimate(pct) {
   if (!estimateEl) return;
 
   // 尚未取得足夠的實際耗時時，不顯示預估秒數，避免一開始就給出沒有依據的數字。
-  if (!loginProgressStartedAt || pct < 10) {
+  // 只有第一個實際步驟完成後，才有可靠的基準可估算剩餘時間。
+  if (!loginProgressStartedAt || loginProgressLastPct < Math.floor(100 / (LOGIN_STEPS.length || 1))) {
     estimateEl.textContent = '';
     estimateEl.style.visibility = 'hidden';
     return;
@@ -1321,7 +1322,10 @@ function setLoginStep(stepId, state, extraLabel) {
      stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  updateLoginProgress(stepId, state);
+  // waiting 狀態只是重設內部步驟 UI，不參與進度計算，避免初始化時累加成高百分比。
+  if (state !== 'waiting') {
+    updateLoginProgress(stepId, state);
+  }
 }
 
 function showLoginOverlay() {
