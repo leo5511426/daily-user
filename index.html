@@ -264,23 +264,6 @@ body { font-family: -apple-system, sans-serif; background: #e2e8f0; color: var(-
 .nav-item.active { color: var(--pink); font-weight: bold; }
 .nav-icon { font-size: 1.5em; margin-bottom: 3px; }
 
-/* 📐 自適應螢幕：手機維持行動版，平板／桌機自動展開 */
-:root { --layout-breakpoint: 768px; }
-html, body { width: 100%; min-width: 0; }
-.app-container,
-.nav-bar { transition: max-width .3s ease, width .3s ease, box-shadow .3s ease; }
-@media (max-width: 767px) {
-  body { justify-content: center; }
-  .app-container { width: 100%; max-width: 500px; }
-  .nav-bar { max-width: 500px; }
-}
-@media (min-width: 768px) {
-  body { justify-content: stretch; }
-  .app-container { width: 100%; max-width: 100%; }
-  .nav-bar { max-width: 100%; }
-}
-
-
 .mask { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999; flex-direction:column; justify-content:center; align-items:center; }
 input, select, textarea { width:100%; padding:14px; margin:8px 0; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing: border-box; font-size: 0.9em; font-family:inherit; }
 .overdue-tag { position: absolute; top: 10px; right: 10px; background: var(--red); color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 0.7em; }
@@ -567,12 +550,6 @@ body.performance-lite .track-glass-card {
   background: var(--card) !important;
 }
 
-
-<style id="login-simple-ux">
-#loginProgressOverlay #loginStepsList { display:none !important; }
-#loginProgressOverlay #lp-pct { display:none !important; }
-#loginProgressOverlay { transition:opacity .2s ease; }
-</style>
 </style>
 
 <style id="ui-preference-layer">
@@ -1247,6 +1224,8 @@ function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div s
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
 let _loginInProgress = false;
+let _loginStartTime = 0;
+let _loginEstimatedTotalMs = 4500;
 
 const LOGIN_STEPS = [
   { id: 'ls_auth',    running: '驗證帳號密碼...',       done: '驗證完成' },
@@ -1260,136 +1239,174 @@ const LOGIN_STEPS = [
 
 const uiDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
+function updateLoginEstimate(progressPct) {
+  const estimateEl = document.getElementById('lp-estimate');
+  if (!estimateEl) return;
+  estimateEl.style.display = 'none';
+
+  if (progressPct >= 100) {
+    estimateEl.textContent = '已完成';
+    return;
+  }
+
+  const elapsed = _loginStartTime ? (Date.now() - _loginStartTime) : 0;
+  let remainingMs;
+
+  if (progressPct > 0 && elapsed > 500) {
+    remainingMs = Math.max(700, Math.round(elapsed * ((100 - progressPct) / progressPct)));
+  } else {
+    remainingMs = _loginEstimatedTotalMs;
+  }
+
+  remainingMs = Math.min(15000, Math.max(700, remainingMs));
+  const seconds = Math.max(1, Math.ceil(remainingMs / 1000));
+  estimateEl.textContent = `預估還需約 ${seconds} 秒`;
+}
+
+function updateLoginProgress() {
+  const doneSteps = document.querySelectorAll('.lp-step.done').length;
+  const runningStep = document.querySelector('.lp-step.running');
+  const pct = Math.min(100, Math.max(0, Math.floor((doneSteps / LOGIN_STEPS.length) * 100)));
+  const visualPct = runningStep && pct < 100 ? Math.min(96, pct + Math.max(8, Math.floor(92 / LOGIN_STEPS.length))) : pct;
+
+  const pctEl = document.getElementById('lp-pct');
+  const barEl = document.getElementById('lp-bar');
+  if (pctEl) pctEl.innerText = pct + '%';
+  if (barEl) barEl.style.width = visualPct + '%';
+
+  updateLoginEstimate(pct);
+}
+
 function setLoginStep(stepId, state, extraLabel) {
   const stepEl = document.getElementById(stepId);
   const icon = document.getElementById(stepId + '_icon');
   const label = document.getElementById(stepId + '_label');
-  const stepDef = LOGIN_STEPS.find(s => s.id === stepId);
-
+  if (!icon || !label || !stepEl) return;
+  
   const stateConfig = {
-    waiting: { icon: '⬜', animClass: '', className: 'lp-step waiting' },
+    waiting: { icon: '○', animClass: '', className: 'lp-step waiting' },
     running: { icon: '⏳', animClass: 'lp-spin', className: 'lp-step running' },
-    done:    { icon: '✅', animClass: 'lp-pop', className: 'lp-step done' },
-    failed:  { icon: '❌', animClass: 'lp-shake', className: 'lp-step failed' },
-    warn:    { icon: '⚠️', animClass: 'lp-shake', className: 'lp-step failed' }
+    done:    { icon: '✓', animClass: 'lp-pop', className: 'lp-step done' },
+    failed:  { icon: '✕', animClass: 'lp-shake', className: 'lp-step failed' },
+    warn:    { icon: '!', animClass: 'lp-shake', className: 'lp-step failed' }
   };
 
   const cfg = stateConfig[state] || stateConfig.waiting;
+  stepEl.className = cfg.className;
+  icon.style.opacity = '0';
+  icon.style.transform = 'scale(0.5)';
+  
+  setTimeout(() => {
+    icon.innerHTML = cfg.icon;
+    icon.className = `lp-icon ${cfg.animClass}`;
+    icon.style.opacity = '1';
+    icon.style.transform = 'scale(1)';
+  }, 100);
 
-  // 舊版有完整步驟清單，新版登入畫面已簡化為單一進度列。
-  // 有步驟 DOM 就更新；沒有也不能中斷登入流程。
-  if (stepEl && icon && label) {
-    stepEl.className = cfg.className;
-    icon.style.opacity = '0';
-    icon.style.transform = 'scale(0.5)';
-
-    setTimeout(() => {
-      icon.innerHTML = cfg.icon;
-      icon.className = `lp-icon ${cfg.animClass}`;
-      icon.style.opacity = '1';
-      icon.style.transform = 'scale(1)';
-    }, 150);
-
-    if (state === 'running') label.textContent = extraLabel || (stepDef ? stepDef.running : '處理中…');
-    if (state === 'done') label.textContent = extraLabel || (stepDef ? stepDef.done : '已完成');
-    if (state === 'failed' || state === 'warn') label.textContent = extraLabel || (stepDef ? stepDef.running : '處理失敗');
-    if (state === 'waiting') label.textContent = stepDef ? stepDef.running : '等待中…';
-
-    if (state === 'running' || state === 'failed') {
-      stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+  const stepDef = LOGIN_STEPS.find(s => s.id === stepId);
+  if (stepDef) {
+    if (state === 'running') label.textContent = extraLabel || stepDef.running;
+    if (state === 'done') label.textContent = extraLabel || stepDef.done;
+    if (state === 'failed' || state === 'warn') label.textContent = extraLabel || '處理失敗';
+    if (state === 'waiting') label.textContent = stepDef.running;
   }
 
-  const stepIndex = Math.max(0, LOGIN_STEPS.findIndex(s => s.id === stepId));
-  const basePct = ((stepIndex + 1) / LOGIN_STEPS.length) * 100;
-  const visualPct = state === 'running'
-    ? Math.max(8, Math.min(95, basePct - (50 / LOGIN_STEPS.length)))
-    : state === 'failed' || state === 'warn'
-      ? Math.max(8, Math.min(95, basePct - (25 / LOGIN_STEPS.length)))
-      : basePct;
+  const sub = document.getElementById('lp-sub-title');
+  if (sub && state === 'failed') sub.textContent = '這次登入沒有完成';
+  if (sub && state === 'warn') sub.textContent = '需要您確認後才能繼續';
 
-  const pctEl = document.getElementById('lp-pct');
-  const barEl = document.getElementById('lp-bar');
-  const subTitleEl = document.getElementById('lp-sub-title');
-
-  if (pctEl) pctEl.innerText = Math.floor(basePct) + '%';
-  if (barEl) barEl.style.width = Math.floor(visualPct) + '%';
-
-  if (subTitleEl && stepDef) {
-    if (state === 'running') subTitleEl.innerText = extraLabel || stepDef.running;
-    else if (state === 'done') subTitleEl.innerText = extraLabel || stepDef.done;
-    else if (state === 'failed' || state === 'warn') subTitleEl.innerText = extraLabel || stepDef.running;
+  if (state === 'running' || state === 'failed') {
+    stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+
+  updateLoginProgress();
 }
 
 function showLoginOverlay() {
+  _loginStartTime = Date.now();
+  _loginEstimatedTotalMs = 4500;
+
+  // 保留既有登入步驟 DOM，僅隱藏技術細節，避免改動原本登入流程。
+  const stepsHtml = LOGIN_STEPS.map(s =>
+    `<div id="${s.id}" class="lp-step waiting" style="display:none;">
+      <span id="${s.id}_icon" class="lp-icon">○</span>
+      <span id="${s.id}_label">${s.running}</span>
+    </div>`
+  ).join('');
+
   let overlay = document.getElementById('loginProgressOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = 'loginProgressOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,18,.78);z-index:9999;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:-apple-system,sans-serif;font-weight:900;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);';
+    overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,10,20,0.93);z-index:9999;flex-direction:column;justify-content:center;align-items:center;font-family:-apple-system,sans-serif;font-weight:900;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);';
     overlay.innerHTML = `
-      <div style="width:min(88%,360px);text-align:center;padding:28px 24px;border-radius:24px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);box-shadow:0 20px 60px rgba(0,0,0,.28);">
-        <div id="lp-main-title" style="color:var(--pink);font-size:1.18em;margin-bottom:8px;">安全登入中</div>
-        <div id="lp-sub-title" style="color:rgba(255,255,255,.78);font-size:.9em;margin-bottom:16px;font-weight:700;">正在驗證登入資訊…</div>
-        <div class="lp-progress-bg" style="height:5px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden;">
-          <div id="lp-bar" class="lp-progress-fill" style="height:100%;width:18%;transition:width .35s ease;"></div>
+      <div style="width:min(88%,360px);text-align:center;">
+        <div style="font-size:2em;margin-bottom:12px;">🔐</div>
+        <div id="lp-main-title" style="color:var(--pink);font-size:1.22em;margin-bottom:8px;transition:color .3s ease;">登入中…</div>
+        <div id="lp-sub-title" style="color:rgba(255,255,255,.72);font-size:.88em;margin-bottom:18px;">即將進入會員中心</div>
+
+        <div style="display:flex;justify-content:flex-end;align-items:center;font-size:.78em;color:rgba(255,255,255,.68);margin-bottom:7px;">
+          <span id="lp-pct">0%</span>
         </div>
-        <div id="loginErrorMsg" style="display:none;margin-top:16px;background:#fee2e2;border-radius:12px;padding:12px 14px;color:#b91c1c;font-size:.88em;line-height:1.5;"></div>
+        <div class="lp-progress-bg" style="margin:0;height:7px;">
+          <div id="lp-bar" class="lp-progress-fill" style="width:0%;"></div>
+        </div>
+
+        <div id="lp-estimate" style="display:none;">預估處理中</div>
+        <div id="loginStepsList" style="display:none;">${stepsHtml}</div>
+        <div id="loginErrorMsg" style="display:none;margin-top:16px;background:#fee2e2;border-radius:12px;padding:14px 16px;color:#b91c1c;font-size:.9em;line-height:1.5;"></div>
         <div id="loginRetryBtn" style="display:none;margin-top:12px;">
-          <button onclick="hideLoginOverlay()" style="width:100%;padding:12px 14px;border-radius:12px;background:var(--pink);color:#fff;border:none;font-size:.95em;font-weight:900;cursor:pointer;">返回重試</button>
+          <button onclick="hideLoginOverlay()" style="width:100%;padding:13px;border-radius:12px;background:var(--pink);color:#fff;border:none;font-size:1em;font-weight:900;cursor:pointer;">返回重試</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
+  } else {
+    const pctEl = document.getElementById('lp-pct');
+    const barEl = document.getElementById('lp-bar');
+    const titleEl = document.getElementById('lp-main-title');
+    const subEl = document.getElementById('lp-sub-title');
+    const estimateEl = document.getElementById('lp-estimate');
+    const stepsListEl = document.getElementById('loginStepsList');
+    if (pctEl) pctEl.innerText = '0%';
+    if (barEl) barEl.style.width = '0%';
+    if (titleEl) { titleEl.innerText = '登入中…'; titleEl.style.color = 'var(--pink)'; titleEl.style.animation = ''; }
+    if (subEl) subEl.innerText = '即將進入會員中心';
+    if (estimateEl) estimateEl.style.display = 'none';
+    if (stepsListEl) stepsListEl.style.display = 'none';
+
+    LOGIN_STEPS.forEach(s => setLoginStep(s.id, 'waiting'));
+
+    const errEl = document.getElementById('loginErrorMsg');
+    const retryEl = document.getElementById('loginRetryBtn');
+    if (errEl) errEl.style.display = 'none';
+    if (retryEl) retryEl.style.display = 'none';
   }
-
-  const pct = document.getElementById('lp-pct');
-  if (pct) pct.innerText = '';
-  const bar = document.getElementById('lp-bar');
-  if (bar) bar.style.width = '8%';
-
-  const title = document.getElementById('lp-main-title');
-  const sub = document.getElementById('lp-sub-title');
-  if (title) {
-    title.innerText = '安全登入中';
-    title.style.color = 'var(--pink)';
-  }
-  if (sub) sub.innerText = '正在驗證登入資訊…';
-
-  const errEl = document.getElementById('loginErrorMsg');
-  const retryEl = document.getElementById('loginRetryBtn');
-  if (errEl) errEl.style.display = 'none';
-  if (retryEl) retryEl.style.display = 'none';
-
   overlay.style.display = 'flex';
 }
+
 function hideLoginOverlay() {
   const overlay = document.getElementById('loginProgressOverlay');
   if (overlay) overlay.style.display = 'none';
-
-  // 允許重新登入：清除本次流程鎖定，但保留會員輸入內容方便修改。
   _loginInProgress = false;
+  _loginStartTime = 0;
 }
 
 function showLoginError(msg) {
   const errEl = document.getElementById('loginErrorMsg');
   const retryEl = document.getElementById('loginRetryBtn');
   const titleEl = document.getElementById('lp-main-title');
+  const subEl = document.getElementById('lp-sub-title');
+  const estimateEl = document.getElementById('lp-estimate');
   
   if(titleEl) {
-      titleEl.innerText = '❌ 登入失敗';
-      titleEl.style.color = '#ff5252';
-      titleEl.style.animation = 'lp-shake 0.4s ease';
+    titleEl.innerText = '❌ 登入失敗';
+    titleEl.style.color = '#ff5252';
+    titleEl.style.animation = 'lp-shake 0.4s ease';
   }
-  
-  if (errEl) {
-    errEl.style.display = 'block';
-    errEl.innerHTML = '<b>登入失敗原因</b><br>' + msg;
-  }
+  if (subEl) subEl.innerText = '這次登入沒有完成';
+  if (estimateEl) estimateEl.innerText = '請檢查後重新嘗試';
+  if (errEl) { errEl.style.display = 'block'; errEl.innerHTML = '<b>登入失敗原因</b><br>' + msg; }
   if (retryEl) retryEl.style.display = 'block';
-
-  const subTitleEl = document.getElementById('lp-sub-title');
-  if (subTitleEl) subTitleEl.innerText = '請檢查資料後重新嘗試';
 }
 
 async function doLogin() {
@@ -1410,18 +1427,7 @@ async function doLogin() {
   
   let res;
   try {
-    const raw = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'login',
-        uid: uid,
-        pw: upw,
-        userAgent: navigator.userAgent || '',
-        deviceName: (navigator.platform || '未知裝置'),
-        platform: navigator.platform || '',
-        browser: navigator.userAgent || ''
-      })
-    });
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: uid, pw: upw }) });
     res = await raw.json();
   } catch(e) {
     setLoginStep('ls_auth', 'failed');
@@ -1552,10 +1558,8 @@ updateSuspensionUI();
 render();
   setLoginStep('ls_load', 'done');
   
-  const finalPctEl = document.getElementById('lp-pct');
-  const finalBarEl = document.getElementById('lp-bar');
-  if (finalPctEl) finalPctEl.innerText = '100%';
-  if (finalBarEl) finalBarEl.style.width = '100%';
+  document.getElementById('lp-pct').innerText = '100%';
+  document.getElementById('lp-bar').style.width = '100%';
   
   const titleEl = document.getElementById('lp-main-title');
   const subTitleEl = document.getElementById('lp-sub-title');
@@ -1682,17 +1686,7 @@ function blockIfSuspended(actionName = '此功能') {
         );
     }
 }
-async 
-function showBackgroundSyncIndicator(text) {
-  const indicator = document.getElementById('syncIndicator');
-  if (!indicator) return;
-  const t = indicator.querySelector('.sync-text');
-  indicator.style.display = 'flex';
-  indicator.setAttribute('data-sync-state','running');
-  if (t) t.textContent = text || '同步中…';
-}
-
-function silentSyncData(options) {
+async function silentSyncData(options) {
     options = options || {};
     const force = !!options.force;
     if (!store || !store.userData || !store.userData.id || !currentSessionId) return null;
@@ -1711,7 +1705,7 @@ function silentSyncData(options) {
     if (indicator) {
         indicator.style.display = 'flex';
         indicator.setAttribute('data-sync-state','running');
-        if (indicatorText) indicatorText.textContent = '同步中…';
+        if (indicatorText) indicatorText.textContent = '同步中...';
     }
 
     const promise = (async function() {
@@ -2292,11 +2286,9 @@ function renderTrackTWResult(targetId, data) {
   const [icon,label] = trackTWStageLabel(latest.delivery_stage);
   const sync = data && data.sync ? data.sync : null;
   const syncText = sync
-    ? (sync.orderStatusBlockedByNewerSystemState
-        ? '已取得最新 Track.TW 物流，但現有系統狀態較新，因此未讓主訂單狀態倒退。'
-        : (sync.orderStatusUpdated
-            ? `系統已同步最新物流，主訂單狀態更新為「${escapeHTML(String(sync.orderStatus || ''))}」。`
-            : (sync.synced ? '系統已同步最新物流節點。' : '最新物流節點已存在，未重複寫入。')))
+    ? (sync.orderStatusUpdated
+        ? `系統已同步最新物流，主訂單狀態更新為「${escapeHTML(String(sync.orderStatus || ''))}」。`
+        : (sync.synced ? '系統已同步最新物流節點。' : '最新物流節點已存在，未重複寫入。'))
     : '';
   const timeline = sorted.map((h,i)=>{
     const [hi,hl] = trackTWStageLabel(h.delivery_stage);
@@ -2337,40 +2329,15 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
         if (data && data.success) {
           const localOrder = store && Array.isArray(store.orders) ? store.orders.find(x => String(x.id) === String(oid)) : null;
           if (localOrder && data.sync) {
-            // 只有後端確認「這次 API 狀態比既有系統狀態更新」時，
-            // 才允許會員端主訂單狀態跟著 Track.TW 變更。
-            if (data.sync.orderStatusUpdated && data.sync.orderStatusAccepted && data.sync.orderStatus) {
-              localOrder.status = data.sync.orderStatus;
-            }
-
-            // Track.TW 物流事件本地也做冪等，避免重複查詢造成重複節點。
+            if (data.sync.orderStatusUpdated && data.sync.orderStatus) localOrder.status = data.sync.orderStatus;
             if (data.sync.synced && data.sync.eventTime) {
               localOrder.timeline = Array.isArray(localOrder.timeline) ? localOrder.timeline : [];
               const rawMsg = `[來源:Track.TW][包裹:${trackingNumber}] ${String(data.sync.latestStatus || '物流更新')}${data.sync.deliveryStage ? ' | delivery_stage:' + data.sync.deliveryStage : ''}`;
-              const exists = localOrder.timeline.some(n =>
-                String(n.rawMsg || '') === rawMsg &&
-                String(n.time || '') === String(data.sync.eventTime || '')
-              );
-              if (!exists) {
-                localOrder.timeline.unshift({
-                  time:String(data.sync.eventTime || ''),
-                  rawMsg,
-                  status:String(data.sync.latestStatus || '物流更新'),
-                  note:String(data.sync.latestStatus || '物流更新'),
-                  packageId:String(trackingNumber)
-                });
-              }
+              const exists = localOrder.timeline.some(n => String(n.rawMsg || '') === rawMsg && String(n.time || '') === String(data.sync.eventTime || ''));
+              if (!exists) localOrder.timeline.unshift({ time:String(data.sync.eventTime || ''), rawMsg, status:String(data.sync.latestStatus || '物流更新'), note:String(data.sync.latestStatus || '物流更新'), packageId:String(trackingNumber) });
             }
-
-            const statusPill = document.querySelector(
-              '[data-track-order-status="' +
-              String(oid).replace(/"/g, '&quot;') +
-              '"]'
-            );
-            if (statusPill && localOrder.status) {
-              statusPill.textContent = '● ' + localOrder.status;
-            }
-
+            const statusPill = document.querySelector('[data-track-order-status="' + String(oid).replace(/"/g, '&quot;') + '"]');
+            if (statusPill && localOrder.status) statusPill.textContent = '● ' + localOrder.status;
             try { renderOrders(); } catch (e) {}
           }
           renderTrackTWResult(targetId, data);
@@ -3071,38 +3038,24 @@ else silentSyncData();
 }
 function showQR() { qr.clear(); qr.makeCode(store.userData.id); document.getElementById('qrBox').style.display='flex'; }
 function changeTheme() { const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark' ? 'light' : 'dark'); }
-function toggleLayoutMode() {
-  const container = document.getElementById('appContainer');
-  if (!container) return;
-  const next = !container.classList.contains('full-desktop');
-  container.classList.toggle('full-desktop', next);
-  const nav = document.getElementById('memberNav');
-  if (nav) nav.classList.toggle('full-desktop', next);
-}
+function toggleLayoutMode() { const container = document.getElementById('appContainer'); container.classList.toggle('full-desktop'); }
 
-const AUTO_LAYOUT_BREAKPOINT = 768;
+const AUTO_LAYOUT_BREAKPOINT = 768; 
 function applyAutoLayoutMode() {
-  const container = document.getElementById('appContainer');
-  const nav = document.getElementById('memberNav');
-  if (!container) return;
-  const isDesktopLayout = window.innerWidth >= AUTO_LAYOUT_BREAKPOINT;
-  container.classList.toggle('full-desktop', isDesktopLayout);
-  if (nav) nav.classList.toggle('full-desktop', isDesktopLayout);
-  document.documentElement.dataset.layout = isDesktopLayout ? 'desktop' : 'mobile';
+const container = document.getElementById('appContainer');
+if (!container) return;
+if (window.innerWidth >= AUTO_LAYOUT_BREAKPOINT) {
+container.classList.add('full-desktop');
+} else {
+container.classList.remove('full-desktop');
+}
 }
 let autoLayoutResizeTimer = null;
-function scheduleAutoLayoutMode() {
-  clearTimeout(autoLayoutResizeTimer);
-  autoLayoutResizeTimer = setTimeout(applyAutoLayoutMode, 120);
-}
-window.addEventListener('resize', scheduleAutoLayoutMode, { passive: true });
-window.addEventListener('orientationchange', scheduleAutoLayoutMode, { passive: true });
-if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleAutoLayoutMode, { passive: true });
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', applyAutoLayoutMode, { once: true });
-} else {
-  applyAutoLayoutMode();
-} 
+window.addEventListener('resize', function() {
+clearTimeout(autoLayoutResizeTimer);
+autoLayoutResizeTimer = setTimeout(applyAutoLayoutMode, 150); 
+});
+applyAutoLayoutMode(); 
 
 async function updateProfileName() {
 if (store && store.userData.isSuspended) return Swal.fire('提示', '停權期間無法修改個人資料', 'warning');
