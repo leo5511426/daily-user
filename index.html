@@ -39,7 +39,8 @@
       : pref.theme;
     document.body.setAttribute('data-theme', theme);
 
-    document.body.classList.remove('ui-dynamic-reduced','ui-dynamic-off');
+    document.body.classList.remove('ui-dynamic-full','ui-dynamic-reduced','ui-dynamic-off');
+    if (pref.motion === 'full') document.body.classList.add('ui-dynamic-full');
     if (pref.motion === 'reduced') document.body.classList.add('ui-dynamic-reduced');
     if (pref.motion === 'off') document.body.classList.add('ui-dynamic-off');
 
@@ -529,13 +530,9 @@ body > .nav-bar { position: fixed !important; left: 50% !important; transform: t
 
 
 /* ⚡ 低效能相容模式：保留功能與版面，降低 Liquid Glass 的 GPU / repaint 成本 */
-body.performance-lite *,
-body.performance-lite *::before,
-body.performance-lite *::after {
-  animation-duration: 0.001ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.001ms !important;
-  scroll-behavior: auto !important;
+/* performance-lite 僅降低玻璃模糊/陰影負擔，不覆寫使用者的動態效果偏好 */
+body.performance-lite {
+  --performance-lite: 1;
 }
 body.performance-lite .track-glass-card,
 body.performance-lite .app-container,
@@ -569,6 +566,24 @@ body.ui-dynamic-off *::after {
   transition: none !important;
   scroll-behavior: auto !important;
 }
+
+/* 動態效果設定的實際行為：完整／簡化／關閉 */
+body.ui-dynamic-full *::before,
+body.ui-dynamic-full *::after {
+  animation-duration: initial;
+  transition-duration: initial;
+}
+body.ui-dynamic-reduced *::before,
+body.ui-dynamic-reduced *::after {
+  animation-duration: .18s !important;
+  transition-duration: .18s !important;
+}
+/* 使用者明確選擇「完整動態」時，優先於系統 prefers-reduced-motion 對登入動畫的限制 */
+body.ui-dynamic-full .lp-spin { animation: lp-spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important; }
+body.ui-dynamic-full .lp-pop { animation: lp-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important; }
+body.ui-dynamic-full .lp-shake { animation: lp-shake 0.4s ease-in-out forwards !important; }
+body.ui-dynamic-full .lp-step.running { animation: lp-pulse 2s infinite !important; }
+body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,1,.36,1) !important; }
 .ui-pref-gear {
   position: fixed;
   top: max(12px, env(safe-area-inset-top));
