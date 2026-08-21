@@ -550,6 +550,12 @@ body.performance-lite .track-glass-card {
   background: var(--card) !important;
 }
 
+
+<style id="login-simple-ux">
+#loginProgressOverlay #loginStepsList { display:none !important; }
+#loginProgressOverlay #lp-pct { display:none !important; }
+#loginProgressOverlay { transition:opacity .2s ease; }
+</style>
 </style>
 
 <style id="ui-preference-layer">
@@ -1283,62 +1289,46 @@ function setLoginStep(stepId, state, extraLabel) {
 }
 
 function showLoginOverlay() {
-  const stepsHtml = LOGIN_STEPS.map(s =>
-    `<div id="${s.id}" class="lp-step waiting">
-      <span id="${s.id}_icon" class="lp-icon">⬜</span>
-      <span id="${s.id}_label" style="transition:color 0.3s ease;">${s.running}</span>
-    </div>`
-  ).join('');
-
   let overlay = document.getElementById('loginProgressOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = 'loginProgressOverlay';
-    overlay.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,20,0.97);z-index:9999;flex-direction:column;justify-content:center;align-items:center;font-family:-apple-system,sans-serif;font-weight:900;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,18,.78);z-index:9999;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:-apple-system,sans-serif;font-weight:900;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);';
     overlay.innerHTML = `
-      <div style="width:90%;max-width:420px;display:flex;flex-direction:column;max-height:90vh;">
-        <div style="text-align:center;margin-bottom:20px;flex-shrink:0;">
-          <div style="font-size:2.5em;margin-bottom:8px;animation:lp-pop 0.5s ease;">🔐</div>
-          <div id="lp-main-title" style="color:var(--pink);font-size:1.25em;margin-bottom:6px;transition:color 0.4s ease;">安全登入中</div>
-          <div id="lp-sub-title" style="color:rgba(255,255,255,0.8);font-size:0.9em;margin-bottom:4px;transition:color 0.4s ease;">正在建立安全連線...</div>
-          <div style="color:rgba(255,255,255,0.45);font-size:0.75em;font-weight:normal;">請稍候，系統正在驗證您的登入資訊。</div>
+      <div style="width:min(88%,360px);text-align:center;padding:28px 24px;border-radius:24px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);box-shadow:0 20px 60px rgba(0,0,0,.28);">
+        <div id="lp-main-title" style="color:var(--pink);font-size:1.18em;margin-bottom:8px;">安全登入中</div>
+        <div id="lp-sub-title" style="color:rgba(255,255,255,.78);font-size:.9em;margin-bottom:16px;font-weight:700;">正在驗證登入資訊…</div>
+        <div class="lp-progress-bg" style="height:5px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden;">
+          <div id="lp-bar" class="lp-progress-fill" style="height:100%;width:18%;transition:width .35s ease;"></div>
         </div>
-        
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.85em;color:var(--pink);flex-shrink:0;">
-          <span>登入進度</span>
-          <span id="lp-pct" style="transition:all 0.3s ease;">0%</span>
-        </div>
-        <div class="lp-progress-bg">
-          <div id="lp-bar" class="lp-progress-fill"></div>
-        </div>
-
-        <div id="loginStepsList" style="background:rgba(255,255,255,0.05);border-radius:16px;padding:12px;color:#fff;overflow-y:auto;flex:1;scroll-behavior:smooth;">
-            ${stepsHtml}
-        </div>
-        
-        <div id="loginErrorMsg" style="display:none;margin-top:20px;background:#fee2e2;border-radius:12px;padding:14px 18px;color:#b91c1c;font-size:0.9em;line-height:1.5;box-shadow:0 4px 12px rgba(220,38,38,0.2);flex-shrink:0;"></div>
-        <div id="loginRetryBtn" style="display:none;margin-top:14px;flex-shrink:0;">
-          <button onclick="hideLoginOverlay()" style="width:100%;padding:14px;border-radius:12px;background:var(--pink);color:#fff;border:none;font-size:1em;font-weight:900;cursor:pointer;transition:transform 0.2s ease;">返回重試</button>
+        <div id="loginErrorMsg" style="display:none;margin-top:16px;background:#fee2e2;border-radius:12px;padding:12px 14px;color:#b91c1c;font-size:.88em;line-height:1.5;"></div>
+        <div id="loginRetryBtn" style="display:none;margin-top:12px;">
+          <button onclick="hideLoginOverlay()" style="width:100%;padding:12px 14px;border-radius:12px;background:var(--pink);color:#fff;border:none;font-size:.95em;font-weight:900;cursor:pointer;">返回重試</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
-  } else {
-     document.getElementById('lp-pct').innerText = '0%';
-     document.getElementById('lp-bar').style.width = '0%';
-     document.getElementById('lp-main-title').innerText = '安全登入中';
-     document.getElementById('lp-sub-title').innerText = '正在建立安全連線...';
-     document.getElementById('lp-main-title').style.color = 'var(--pink)';
-     
-     LOGIN_STEPS.forEach(s => setLoginStep(s.id, 'waiting'));
-     
-     const errEl = document.getElementById('loginErrorMsg');
-     const retryEl = document.getElementById('loginRetryBtn');
-     if (errEl) errEl.style.display = 'none';
-     if (retryEl) retryEl.style.display = 'none';
   }
+
+  const pct = document.getElementById('lp-pct');
+  if (pct) pct.innerText = '';
+  const bar = document.getElementById('lp-bar');
+  if (bar) bar.style.width = '18%';
+
+  const title = document.getElementById('lp-main-title');
+  const sub = document.getElementById('lp-sub-title');
+  if (title) {
+    title.innerText = '安全登入中';
+    title.style.color = 'var(--pink)';
+  }
+  if (sub) sub.innerText = '正在驗證登入資訊…';
+
+  const errEl = document.getElementById('loginErrorMsg');
+  const retryEl = document.getElementById('loginRetryBtn');
+  if (errEl) errEl.style.display = 'none';
+  if (retryEl) retryEl.style.display = 'none';
+
   overlay.style.display = 'flex';
 }
-
 function hideLoginOverlay() {
   const overlay = document.getElementById('loginProgressOverlay');
   if (overlay) overlay.style.display = 'none';
@@ -1637,7 +1627,17 @@ function blockIfSuspended(actionName = '此功能') {
         );
     }
 }
-async function silentSyncData(options) {
+async 
+function showBackgroundSyncIndicator(text) {
+  const indicator = document.getElementById('syncIndicator');
+  if (!indicator) return;
+  const t = indicator.querySelector('.sync-text');
+  indicator.style.display = 'flex';
+  indicator.setAttribute('data-sync-state','running');
+  if (t) t.textContent = text || '同步中…';
+}
+
+function silentSyncData(options) {
     options = options || {};
     const force = !!options.force;
     if (!store || !store.userData || !store.userData.id || !currentSessionId) return null;
@@ -1656,7 +1656,7 @@ async function silentSyncData(options) {
     if (indicator) {
         indicator.style.display = 'flex';
         indicator.setAttribute('data-sync-state','running');
-        if (indicatorText) indicatorText.textContent = '同步中...';
+        if (indicatorText) indicatorText.textContent = '同步中…';
     }
 
     const promise = (async function() {
@@ -2237,9 +2237,11 @@ function renderTrackTWResult(targetId, data) {
   const [icon,label] = trackTWStageLabel(latest.delivery_stage);
   const sync = data && data.sync ? data.sync : null;
   const syncText = sync
-    ? (sync.orderStatusUpdated
-        ? `系統已同步最新物流，主訂單狀態更新為「${escapeHTML(String(sync.orderStatus || ''))}」。`
-        : (sync.synced ? '系統已同步最新物流節點。' : '最新物流節點已存在，未重複寫入。'))
+    ? (sync.orderStatusBlockedByNewerSystemState
+        ? '已取得最新 Track.TW 物流，但現有系統狀態較新，因此未讓主訂單狀態倒退。'
+        : (sync.orderStatusUpdated
+            ? `系統已同步最新物流，主訂單狀態更新為「${escapeHTML(String(sync.orderStatus || ''))}」。`
+            : (sync.synced ? '系統已同步最新物流節點。' : '最新物流節點已存在，未重複寫入。')))
     : '';
   const timeline = sorted.map((h,i)=>{
     const [hi,hl] = trackTWStageLabel(h.delivery_stage);
@@ -2280,15 +2282,40 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
         if (data && data.success) {
           const localOrder = store && Array.isArray(store.orders) ? store.orders.find(x => String(x.id) === String(oid)) : null;
           if (localOrder && data.sync) {
-            if (data.sync.orderStatusUpdated && data.sync.orderStatus) localOrder.status = data.sync.orderStatus;
+            // 只有後端確認「這次 API 狀態比既有系統狀態更新」時，
+            // 才允許會員端主訂單狀態跟著 Track.TW 變更。
+            if (data.sync.orderStatusUpdated && data.sync.orderStatusAccepted && data.sync.orderStatus) {
+              localOrder.status = data.sync.orderStatus;
+            }
+
+            // Track.TW 物流事件本地也做冪等，避免重複查詢造成重複節點。
             if (data.sync.synced && data.sync.eventTime) {
               localOrder.timeline = Array.isArray(localOrder.timeline) ? localOrder.timeline : [];
               const rawMsg = `[來源:Track.TW][包裹:${trackingNumber}] ${String(data.sync.latestStatus || '物流更新')}${data.sync.deliveryStage ? ' | delivery_stage:' + data.sync.deliveryStage : ''}`;
-              const exists = localOrder.timeline.some(n => String(n.rawMsg || '') === rawMsg && String(n.time || '') === String(data.sync.eventTime || ''));
-              if (!exists) localOrder.timeline.unshift({ time:String(data.sync.eventTime || ''), rawMsg, status:String(data.sync.latestStatus || '物流更新'), note:String(data.sync.latestStatus || '物流更新'), packageId:String(trackingNumber) });
+              const exists = localOrder.timeline.some(n =>
+                String(n.rawMsg || '') === rawMsg &&
+                String(n.time || '') === String(data.sync.eventTime || '')
+              );
+              if (!exists) {
+                localOrder.timeline.unshift({
+                  time:String(data.sync.eventTime || ''),
+                  rawMsg,
+                  status:String(data.sync.latestStatus || '物流更新'),
+                  note:String(data.sync.latestStatus || '物流更新'),
+                  packageId:String(trackingNumber)
+                });
+              }
             }
-            const statusPill = document.querySelector('[data-track-order-status="' + String(oid).replace(/"/g, '&quot;') + '"]');
-            if (statusPill && localOrder.status) statusPill.textContent = '● ' + localOrder.status;
+
+            const statusPill = document.querySelector(
+              '[data-track-order-status="' +
+              String(oid).replace(/"/g, '&quot;') +
+              '"]'
+            );
+            if (statusPill && localOrder.status) {
+              statusPill.textContent = '● ' + localOrder.status;
+            }
+
             try { renderOrders(); } catch (e) {}
           }
           renderTrackTWResult(targetId, data);
