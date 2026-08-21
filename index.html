@@ -1238,46 +1238,125 @@ const LOGIN_STEPS = [
 const uiDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
 // 登入進度 UI 狀態：只負責顯示，不改變既有登入流程。
+const LOGIN_PROGRESS_WEIGHTS = {
+  ls_auth: 24,
+  ls_session: 14,
+  ls_log: 8,
+  ls_perm: 18,
+  ls_legal: 16,
+  ls_notify: 6,
+  ls_load: 14
+};
+const LOGIN_TIMING_KEY = 'memberLoginTimingV1';
+const LOGIN_DEFAULT_STEP_MS = {
+  ls_auth: 900,
+  ls_session: 500,
+  ls_log: 350,
+  ls_perm: 900,
+  ls_legal: 500,
+  ls_notify: 350,
+  ls_load: 700
+};
 let loginProgressStartedAt = 0;
 let loginProgressLastPct = 0;
+let loginStepStartedAt = {};
+let loginStepDurations = {};
+let loginTimingHistory = {};
 
-function updateLoginProgressEstimate(pct) {
+function loadLoginTimingHistory(){
+  try {
+    const raw = localStorage.getItem(LOGIN_TIMING_KEY);
+    loginTimingHistory = raw ? JSON.parse(raw) : {};
+    if (!loginTimingHistory || typeof loginTimingHistory !== 'object') loginTimingHistory = {};
+  } catch(e) { loginTimingHistory = {}; }
+}
+
+function saveLoginTimingHistory(){
+  try { localStorage.setItem(LOGIN_TIMING_KEY, JSON.stringify(loginTimingHistory)); } catch(e) {}
+}
+
+function getExpectedStepMs(stepId){
+  const history = loginTimingHistory[stepId];
+  if (history && Number.isFinite(Number(history.avgMs)) && Number(history.samples) > 0) {
+    return Math.max(200, Math.min(5000, Number(history.avgMs)));
+  }
+  return LOGIN_DEFAULT_STEP_MS[stepId] || 600;
+}
+
+function recordLoginStepDuration(stepId, ms){
+  if (!Number.isFinite(ms) || ms < 20) return;
+  loginStepDurations[stepId] = ms;
+  const prev = loginTimingHistory[stepId] || { avgMs: ms, samples: 0 };
+  const samples = Math.min(8, Number(prev.samples) || 0) + 1;
+  const avgMs = samples === 1 ? ms : (Number(prev.avgMs) * 0.65 + ms * 0.35);
+  loginTimingHistory[stepId] = { avgMs, samples };
+  saveLoginTimingHistory();
+}
+
+function getWeightedProgress(stepId, state){
+  const totalWeight = Object.values(LOGIN_PROGRESS_WEIGHTS).reduce((a,b)=>a+b,0) || 100;
+  let pct = 0;
+  for (const step of LOGIN_STEPS) {
+    const w = LOGIN_PROGRESS_WEIGHTS[step.id] || (100 / LOGIN_STEPS.length);
+    if (step.id === stepId) {
+      if (state === 'done') pct += w;
+      else if (state === 'running') {
+        const started = loginStepStartedAt[stepId] || performance.now();
+        const elapsed = Math.max(0, performance.now() - started);
+        const expected = getExpectedStepMs(stepId);
+        const fraction = Math.min(0.82, 1 - Math.exp(-elapsed / Math.max(250, expected * 0.9)));
+        pct += w * fraction;
+      }
+      break;
+    }
+    if (loginStepDurations[step.id] || document.getElementById(step.id)?.classList.contains('done')) pct += w;
+  }
+  return Math.max(0, Math.min(100, Math.round((pct / totalWeight) * 100)));
+}
+
+function updateLoginProgressEstimate(pct){
   const estimateEl = document.getElementById('lp-estimate');
   if (!estimateEl) return;
+  const completedPct = Math.max(0, Math.min(100, pct));
+  const remainingWeight = Math.max(0, 100 - completedPct);
 
-  // 尚未取得足夠的實際耗時時，不顯示預估秒數，避免一開始就給出沒有依據的數字。
-  // 只有第一個實際步驟完成後，才有可靠的基準可估算剩餘時間。
-  if (!loginProgressStartedAt || loginProgressLastPct < Math.floor(100 / (LOGIN_STEPS.length || 1))) {
-    estimateEl.textContent = '';
-    estimateEl.style.visibility = 'hidden';
+  // 初始階段不顯示秒數；等至少一個實際步驟完成後再開始估算。
+  if (!loginProgressStartedAt || Object.keys(loginStepDurations).length < 1 || remainingWeight <= 0) {
+    if (remainingWeight <= 0) {
+      estimateEl.textContent = '即將完成';
+      estimateEl.style.visibility = 'visible';
+    } else {
+      estimateEl.textContent = '';
+      estimateEl.style.visibility = 'hidden';
+    }
     return;
   }
 
-  const elapsed = Math.max(250, performance.now() - loginProgressStartedAt);
-  const ratio = Math.max(0.1, Math.min(0.95, pct / 100));
-  let remaining = Math.round((elapsed / ratio) * (1 - ratio) / 1000);
-  remaining = Math.max(1, Math.min(8, remaining));
+  let remainingMs = 0;
+  for (const step of LOGIN_STEPS) {
+    const done = document.getElementById(step.id)?.classList.contains('done');
+    if (done) continue;
+    remainingMs += getExpectedStepMs(step.id);
+  }
 
-  estimateEl.textContent = pct >= 90 ? '即將完成' : '預估還需約 ' + remaining + ' 秒';
+  const currentRunning = LOGIN_STEPS.find(step => document.getElementById(step.id)?.classList.contains('running'));
+  if (currentRunning) {
+    const started = loginStepStartedAt[currentRunning.id] || performance.now();
+    const elapsed = Math.max(0, performance.now() - started);
+    remainingMs = Math.max(0, remainingMs - Math.min(elapsed, getExpectedStepMs(currentRunning.id) * 0.75));
+  }
+
+  const sec = Math.ceil(remainingMs / 1000);
+  estimateEl.textContent = sec <= 1 ? '即將完成' : '預估還需約 ' + sec + ' 秒';
   estimateEl.style.visibility = 'visible';
 }
 
-function updateLoginProgress(stepId, state) {
+function updateLoginProgress(stepId, state){
   const bar = document.getElementById('lp-bar');
   const pctEl = document.getElementById('lp-pct');
   if (!bar || !pctEl) return;
-
-  const stepIndex = Math.max(0, LOGIN_STEPS.findIndex(s => s.id === stepId));
-  const total = LOGIN_STEPS.length || 1;
-  const completed = state === 'done' ? stepIndex + 1 : stepIndex;
-
-  // running 只顯示該步驟的一小段進度，done 才正式跨過該步驟。
-  let pct = Math.floor((completed / total) * 100);
-  if (state === 'running') pct = Math.floor(((stepIndex + 0.35) / total) * 100);
-  if (state === 'failed' || state === 'warn') pct = Math.max(3, Math.floor((stepIndex / total) * 100));
-  pct = Math.max(loginProgressLastPct, Math.min(100, pct));
+  const pct = Math.max(loginProgressLastPct, getWeightedProgress(stepId, state));
   loginProgressLastPct = pct;
-
   pctEl.textContent = pct + '%';
   bar.style.width = pct + '%';
   updateLoginProgressEstimate(pct);
@@ -1322,8 +1401,16 @@ function setLoginStep(stepId, state, extraLabel) {
      stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  // waiting 狀態只是重設內部步驟 UI，不參與進度計算，避免初始化時累加成高百分比。
-  if (state !== 'waiting') {
+  if (state === 'waiting') {
+    delete loginStepStartedAt[stepId];
+  } else if (state === 'running') {
+    if (!loginStepStartedAt[stepId]) loginStepStartedAt[stepId] = performance.now();
+    updateLoginProgress(stepId, state);
+  } else {
+    if (loginStepStartedAt[stepId]) {
+      recordLoginStepDuration(stepId, performance.now() - loginStepStartedAt[stepId]);
+      delete loginStepStartedAt[stepId];
+    }
     updateLoginProgress(stepId, state);
   }
 }
@@ -1359,8 +1446,11 @@ function showLoginOverlay() {
     document.body.appendChild(overlay);
   }
 
+  loadLoginTimingHistory();
   loginProgressStartedAt = performance.now();
   loginProgressLastPct = 0;
+  loginStepStartedAt = {};
+  loginStepDurations = {};
 
   const pctEl = document.getElementById('lp-pct');
   const barEl = document.getElementById('lp-bar');
