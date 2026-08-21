@@ -1247,8 +1247,8 @@ function setLoginStep(stepId, state, extraLabel) {
   const stepEl = document.getElementById(stepId);
   const icon = document.getElementById(stepId + '_icon');
   const label = document.getElementById(stepId + '_label');
-  if (!icon || !label || !stepEl) return;
-  
+  const stepDef = LOGIN_STEPS.find(s => s.id === stepId);
+
   const stateConfig = {
     waiting: { icon: '⬜', animClass: '', className: 'lp-step waiting' },
     running: { icon: '⏳', animClass: 'lp-spin', className: 'lp-step running' },
@@ -1258,34 +1258,51 @@ function setLoginStep(stepId, state, extraLabel) {
   };
 
   const cfg = stateConfig[state] || stateConfig.waiting;
-  
-  stepEl.className = cfg.className;
-  icon.style.opacity = '0';
-  icon.style.transform = 'scale(0.5)';
-  
-  setTimeout(() => {
-    icon.innerHTML = cfg.icon;
-    icon.className = `lp-icon ${cfg.animClass}`;
-    icon.style.opacity = '1';
-    icon.style.transform = 'scale(1)';
-  }, 150);
 
-  let stepDef = LOGIN_STEPS.find(s => s.id === stepId);
-  if (stepDef) {
-     if (state === 'running') label.textContent = extraLabel || stepDef.running;
-     if (state === 'done') label.textContent = extraLabel || stepDef.done;
-     if (state === 'failed' || state === 'warn') label.textContent = extraLabel || stepDef.running;
-     if (state === 'waiting') label.textContent = stepDef.running;
+  // 舊版有完整步驟清單，新版登入畫面已簡化為單一進度列。
+  // 有步驟 DOM 就更新；沒有也不能中斷登入流程。
+  if (stepEl && icon && label) {
+    stepEl.className = cfg.className;
+    icon.style.opacity = '0';
+    icon.style.transform = 'scale(0.5)';
+
+    setTimeout(() => {
+      icon.innerHTML = cfg.icon;
+      icon.className = `lp-icon ${cfg.animClass}`;
+      icon.style.opacity = '1';
+      icon.style.transform = 'scale(1)';
+    }, 150);
+
+    if (state === 'running') label.textContent = extraLabel || (stepDef ? stepDef.running : '處理中…');
+    if (state === 'done') label.textContent = extraLabel || (stepDef ? stepDef.done : '已完成');
+    if (state === 'failed' || state === 'warn') label.textContent = extraLabel || (stepDef ? stepDef.running : '處理失敗');
+    if (state === 'waiting') label.textContent = stepDef ? stepDef.running : '等待中…';
+
+    if (state === 'running' || state === 'failed') {
+      stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
-  if (state === 'running' || state === 'failed') {
-     stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+  const stepIndex = Math.max(0, LOGIN_STEPS.findIndex(s => s.id === stepId));
+  const basePct = ((stepIndex + 1) / LOGIN_STEPS.length) * 100;
+  const visualPct = state === 'running'
+    ? Math.max(8, Math.min(95, basePct - (50 / LOGIN_STEPS.length)))
+    : state === 'failed' || state === 'warn'
+      ? Math.max(8, Math.min(95, basePct - (25 / LOGIN_STEPS.length)))
+      : basePct;
 
-  const doneSteps = document.querySelectorAll('.lp-step.done').length;
-  const pct = Math.floor((doneSteps / LOGIN_STEPS.length) * 100);
-  document.getElementById('lp-pct').innerText = pct + '%';
-  document.getElementById('lp-bar').style.width = pct + '%';
+  const pctEl = document.getElementById('lp-pct');
+  const barEl = document.getElementById('lp-bar');
+  const subTitleEl = document.getElementById('lp-sub-title');
+
+  if (pctEl) pctEl.innerText = Math.floor(basePct) + '%';
+  if (barEl) barEl.style.width = Math.floor(visualPct) + '%';
+
+  if (subTitleEl && stepDef) {
+    if (state === 'running') subTitleEl.innerText = extraLabel || stepDef.running;
+    else if (state === 'done') subTitleEl.innerText = extraLabel || stepDef.done;
+    else if (state === 'failed' || state === 'warn') subTitleEl.innerText = extraLabel || stepDef.running;
+  }
 }
 
 function showLoginOverlay() {
@@ -1312,7 +1329,7 @@ function showLoginOverlay() {
   const pct = document.getElementById('lp-pct');
   if (pct) pct.innerText = '';
   const bar = document.getElementById('lp-bar');
-  if (bar) bar.style.width = '18%';
+  if (bar) bar.style.width = '8%';
 
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
@@ -1332,7 +1349,9 @@ function showLoginOverlay() {
 function hideLoginOverlay() {
   const overlay = document.getElementById('loginProgressOverlay');
   if (overlay) overlay.style.display = 'none';
-  _loginInProgress = false; 
+
+  // 允許重新登入：清除本次流程鎖定，但保留會員輸入內容方便修改。
+  _loginInProgress = false;
 }
 
 function showLoginError(msg) {
@@ -1346,8 +1365,14 @@ function showLoginError(msg) {
       titleEl.style.animation = 'lp-shake 0.4s ease';
   }
   
-  if (errEl) { errEl.style.display = 'block'; errEl.innerHTML = '<b>Reason:</b><br>' + msg; }
+  if (errEl) {
+    errEl.style.display = 'block';
+    errEl.innerHTML = '<b>登入失敗原因</b><br>' + msg;
+  }
   if (retryEl) retryEl.style.display = 'block';
+
+  const subTitleEl = document.getElementById('lp-sub-title');
+  if (subTitleEl) subTitleEl.innerText = '請檢查資料後重新嘗試';
 }
 
 async function doLogin() {
@@ -1368,7 +1393,18 @@ async function doLogin() {
   
   let res;
   try {
-    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: uid, pw: upw }) });
+    const raw = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'login',
+        uid: uid,
+        pw: upw,
+        userAgent: navigator.userAgent || '',
+        deviceName: (navigator.platform || '未知裝置'),
+        platform: navigator.platform || '',
+        browser: navigator.userAgent || ''
+      })
+    });
     res = await raw.json();
   } catch(e) {
     setLoginStep('ls_auth', 'failed');
@@ -1499,8 +1535,10 @@ updateSuspensionUI();
 render();
   setLoginStep('ls_load', 'done');
   
-  document.getElementById('lp-pct').innerText = '100%';
-  document.getElementById('lp-bar').style.width = '100%';
+  const finalPctEl = document.getElementById('lp-pct');
+  const finalBarEl = document.getElementById('lp-bar');
+  if (finalPctEl) finalPctEl.innerText = '100%';
+  if (finalBarEl) finalBarEl.style.width = '100%';
   
   const titleEl = document.getElementById('lp-main-title');
   const subTitleEl = document.getElementById('lp-sub-title');
