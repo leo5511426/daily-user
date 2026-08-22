@@ -1007,22 +1007,25 @@ document.getElementById('bnpl_uid').innerHTML = '<option value="">--請選擇要
 document.getElementById('bnpl_manage_uid').innerHTML = '<option value="">--請選擇會員查看明細--</option>' + uOpts;
 
 let suspOpts = '<option value="">--請選擇目前停權中的會員--</option>';
+if (ACTIVE_SUSPENSIONS.length > 0) {
+suspOpts += ACTIVE_SUSPENSIONS.map(s => `<option value="${s.uid}">${s.uid} (至: ${s.endTime || '永久'})</option>`).join('');
+}
 const seenSusp = new Set();
 const backendSusp = Array.isArray(ACTIVE_SUSPENSIONS) ? ACTIVE_SUSPENSIONS : [];
 backendSusp.forEach(s => {
-const uid = String(s.uid || s.memberId || '').trim();
-if (!uid || seenSusp.has(uid)) return;
-seenSusp.add(uid);
-suspOpts += `<option value="${escapeFolderText(uid)}">${escapeFolderText(uid)} (至: ${escapeFolderText(String(s.endTime || '永久'))})</option>`;
+  const uid = String(s.uid || s.memberId || '').trim();
+  if (!uid || seenSusp.has(uid)) return;
+  seenSusp.add(uid);
+  suspOpts += `<option value="${escapeFolderText(uid)}">${escapeFolderText(uid)} (至: ${escapeFolderText(String(s.endTime || '永久'))})</option>`;
 });
 // 即使後端舊版本沒有 activeSuspensions，也從 Users.H=「停權中」補回選項。
 (U_DB || []).forEach(u => {
-const uid = String(u.id || '').trim();
-const status = String(u.status || '').trim();
-if (uid && status === '停權中' && !seenSusp.has(uid)) {
-seenSusp.add(uid);
-suspOpts += `<option value="${escapeFolderText(uid)}">${escapeFolderText(uid)}（Users 顯示停權中）</option>`;
-}
+  const uid = String(u.id || '').trim();
+  const status = String(u.status || '').trim();
+  if (uid && status === '停權中' && !seenSusp.has(uid)) {
+    seenSusp.add(uid);
+    suspOpts += `<option value="${escapeFolderText(uid)}">${escapeFolderText(uid)}（Users 顯示停權中）</option>`;
+  }
 });
 document.getElementById('lift_suspension_uid').innerHTML = suspOpts;
 
@@ -1310,9 +1313,6 @@ let eligible = uid
 ? O_DB.filter(o => String(o.uid || '').trim() === uid)
 : O_DB.slice();
 let html = '<option value="">-- 不關聯訂單 --</option>';
-if (uid && eligible.length === 0) {
-  html += '<option value="" disabled>（此會員目前沒有可關聯訂單）</option>';
-}
 html += eligible.map(o => {
 const owner = String(o.uid || '').trim();
 const ownerText = uid ? '' : `｜會員：${owner}`;
@@ -1404,26 +1404,26 @@ if(!res.aborted) handlePostSuccess(res);
 }
 
 async function saveReturnTracking(oid) {
-const order = O_DB.find(o => String(o.id) === String(oid));
-const trackEl = document.getElementById('r_audit_wait_track');
-const track = String(trackEl?.value || '').trim();
-if (!order || !order.returnData) return Swal.fire('錯誤','找不到售後資料。','error');
-if (!track) {
-if (trackEl) trackEl.focus();
-return Swal.fire('提示','請先填寫退貨物流編號。','warning');
-}
-const notifyMode = await confirmActionWithPush('儲存退貨物流編號');
-if (!notifyMode) return;
-const res = await fetchWithQueue(GAS, {
-action:'adminAction',
-type:'auditReturn',
-oid,
-mode:'update_return_tracking',
-track,
-notifyMode
-}, '儲存退貨物流編號中...');
-if (!res || res.aborted) return;
-handlePostSuccess(res);
+  const order = O_DB.find(o => String(o.id) === String(oid));
+  const trackEl = document.getElementById('r_audit_wait_track');
+  const track = String(trackEl?.value || '').trim();
+  if (!order || !order.returnData) return Swal.fire('錯誤','找不到售後資料。','error');
+  if (!track) {
+    if (trackEl) trackEl.focus();
+    return Swal.fire('提示','請先填寫退貨物流編號。','warning');
+  }
+  const notifyMode = await confirmActionWithPush('儲存退貨物流編號');
+  if (!notifyMode) return;
+  const res = await fetchWithQueue(GAS, {
+    action:'adminAction',
+    type:'auditReturn',
+    oid,
+    mode:'update_return_tracking',
+    track,
+    notifyMode
+  }, '儲存退貨物流編號中...');
+  if (!res || res.aborted) return;
+  handlePostSuccess(res);
 }
 
 async function processReturnAction(oid, mode) {
@@ -1451,25 +1451,17 @@ if (!ship && shipEl) shipEl.focus();
 else if (deadlineEl) deadlineEl.focus();
 return;
 }
-if (mode === 'mark_received') {
-const waitTrackEl = document.getElementById('r_audit_wait_track');
-const waitTrack = String(waitTrackEl?.value || track || '').trim();
-if (!waitTrack) {
-if (waitTrackEl) waitTrackEl.focus();
-return Swal.fire('提示','開始驗收前，請先填寫退貨物流編號。','warning');
-}
-}
+  if (mode === 'mark_received') {
+    const waitTrackEl = document.getElementById('r_audit_wait_track');
+    const waitTrack = String(waitTrackEl?.value || track || '').trim();
+    if (!waitTrack) {
+      if (waitTrackEl) waitTrackEl.focus();
+      return Swal.fire('提示','開始驗收前，請先填寫退貨物流編號。','warning');
+    }
+  }
 if ((mode === 'execute_refund' || mode === 'approve_refund_only') && (!Number.isFinite(amount) || amount < 0)) {
 if (amtEl) amtEl.focus();
-    return;
-    return Swal.fire('提示','退款金額必須為 0 或以上的有效數字。','warning');
-  }
-  if (mode === 'execute_refund' || mode === 'approve_refund_only') {
-    const orderTotal = Number(order.total || 0);
-    if (Number.isFinite(orderTotal) && orderTotal >= 0 && amount > orderTotal) {
-      if (amtEl) amtEl.focus();
-      return Swal.fire('提示', `退款金額不可高於訂單應付總額 $${orderTotal}。`, 'warning');
-    }
+return;
 }
 
 let confirmText = '執行售後審核';
@@ -1490,7 +1482,8 @@ mode,
 amt: amount,
 reason,
 ship,
-track: track || String(document.getElementById('r_audit_wait_track')?.value || '').trim(),
+    track,
+    track: track || String(document.getElementById('r_audit_wait_track')?.value || '').trim(),
 deadline,
 notifyMode
 };
@@ -1829,28 +1822,32 @@ actionHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
 actionHtml += `<div><label style="font-size:13px;font-weight:bold;">最終退款金額</label><input id="r_audit_amt" type="number" min="0" step="1" class="admin-input" style="width:100%;box-sizing:border-box;" placeholder="請輸入實際退款金額"></div>`;
 actionHtml += `</div>`;
 } else if (currentStatus === '賣家同意-待退貨') {
-const currentShip = String(order.returnData.ship || '未設定');
-const currentTrack = String(order.returnData.track || '').trim();
-const currentDeadline = String(order.returnData.deadline || '').trim();
-actionHtml += `<div style="padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;color:#1d4ed8;font-size:13px;line-height:1.6;">
-   <b>📍 目前階段：等待退貨寄回</b><br>
-   ① 管理員已同意退貨　→　② 買家依指示寄回　→　③ 管理員填入／確認退貨單號　→　④ 收到商品後按「開始驗收」
- </div>`;
-actionHtml += `<div style="display:grid;gap:8px;margin-top:4px;">
-   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-     <div style="padding:9px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;"><div style="font-size:11px;color:#64748b;">退貨物流方式</div><b>${esc(currentShip)}</b></div>
-     <div style="padding:9px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;"><div style="font-size:11px;color:#64748b;">寄件截止日</div><b>${esc(currentDeadline || '未設定')}</b></div>
-   </div>
-   <div>
-     <label style="font-size:13px;font-weight:bold;">📦 退貨物流編號（驗收前請填寫／確認）</label>
-     <input id="r_audit_wait_track" class="admin-input" value="${esc(currentTrack)}" style="width:100%;box-sizing:border-box;margin-top:5px;" placeholder="請輸入買家實際寄回的物流單號">
-     <div style="font-size:11px;color:#64748b;margin-top:4px;">這裡填的是「退回商品」的實際物流編號，不是原訂單出貨單號。</div>
-   </div>
-   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-     <button type="button" onclick="saveReturnTracking('${String(oid).replace(/'/g,"\'")}')" style="background:#3b82f6;color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">💾 儲存退貨單號</button>
-     <button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'mark_received')" style="background:#f59e0b;color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">📦 已收到，開始驗收</button>
-   </div>
- </div>`;
+  actionHtml += `<div style="display:grid;gap:8px;margin-top:4px;">`;
+  actionHtml += `<div style="padding:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;font-size:13px;">等待買家寄回商品。收到退貨後，請先標記「退貨驗收中」，完成檢查後再退款。</div>`;
+  actionHtml += `<button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'mark_received')" style="background:#f59e0b;color:#fff;padding:12px;border:0;border-radius:8px;cursor:pointer;">📦 已收到退貨，開始驗收</button>`;
+  actionHtml += `</div>`;
+  const currentShip = String(order.returnData.ship || '未設定');
+  const currentTrack = String(order.returnData.track || '').trim();
+  const currentDeadline = String(order.returnData.deadline || '').trim();
+  actionHtml += `<div style="padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;color:#1d4ed8;font-size:13px;line-height:1.6;">
+    <b>📍 目前階段：等待退貨寄回</b><br>
+    ① 管理員已同意退貨　→　② 買家依指示寄回　→　③ 管理員填入／確認退貨單號　→　④ 收到商品後按「開始驗收」
+  </div>`;
+  actionHtml += `<div style="display:grid;gap:8px;margin-top:4px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="padding:9px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;"><div style="font-size:11px;color:#64748b;">退貨物流方式</div><b>${esc(currentShip)}</b></div>
+      <div style="padding:9px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;"><div style="font-size:11px;color:#64748b;">寄件截止日</div><b>${esc(currentDeadline || '未設定')}</b></div>
+    </div>
+    <div>
+      <label style="font-size:13px;font-weight:bold;">📦 退貨物流編號（驗收前請填寫／確認）</label>
+      <input id="r_audit_wait_track" class="admin-input" value="${esc(currentTrack)}" style="width:100%;box-sizing:border-box;margin-top:5px;" placeholder="請輸入買家實際寄回的物流單號">
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">這裡填的是「退回商品」的實際物流編號，不是原訂單出貨單號。</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button type="button" onclick="saveReturnTracking('${String(oid).replace(/'/g,"\'")}')" style="background:#3b82f6;color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">💾 儲存退貨單號</button>
+      <button type="button" onclick="processReturnAction('${String(oid).replace(/'/g,"\'")}', 'mark_received')" style="background:#f59e0b;color:#fff;padding:11px;border:0;border-radius:8px;cursor:pointer;">📦 已收到，開始驗收</button>
+    </div>
+  </div>`;
 } else if (currentStatus === '退貨驗收中') {
 actionHtml += `<div style="display:grid;gap:8px;margin-top:4px;">`;
 actionHtml += `<div style="padding:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#c2410c;font-size:13px;">目前正在退貨驗收。確認商品狀況後，再填寫最終退款金額。</div>`;
@@ -1879,10 +1876,6 @@ let TRACKTW_CARRIERS = [];
 let TRACKTW_REQUIREMENTS = [];
 
 async function trackTWBackgroundRequest(payload, timeoutMs = 30000) {
-const TRACKTW_STATUS_TIMEOUT_MS = 15000;
-const TRACKTW_OPERATION_TIMEOUT_MS = 30000;
-
-async function trackTWBackgroundRequest(payload, timeoutMs = TRACKTW_OPERATION_TIMEOUT_MS) {
 payload = Object.assign({}, payload, { adminToken: ADMIN_TOKEN });
 const targets = [];
 if (GAS) targets.push(GAS);
@@ -1898,17 +1891,8 @@ body:JSON.stringify(payload),
 signal:controller.signal
 });
 const text = await response.text();
-      try { return JSON.parse(text); }
-      catch(e) { return {success:false,aborted:false,errorCode:'TRACK_ADMIN_INVALID_JSON',message:`HTTP ${response.status}：API 回應不是有效 JSON。`}; }
-      let parsed;
-      try { parsed = JSON.parse(text); }
-      catch(e) {
-        return {success:false,aborted:false,errorCode:'TRACK_ADMIN_INVALID_JSON',httpStatus:response.status,message:`HTTP ${response.status}：API 回應不是有效 JSON。`};
-      }
-      if (!response.ok) {
-        return Object.assign({}, parsed, {success:false,aborted:false,httpStatus:response.status,errorCode:parsed.errorCode || 'TRACK_ADMIN_HTTP_ERROR',message:parsed.message || `Track.TW 後端 HTTP ${response.status}。`});
-      }
-      return parsed;
+try { return JSON.parse(text); }
+catch(e) { return {success:false,aborted:false,errorCode:'TRACK_ADMIN_INVALID_JSON',message:`HTTP ${response.status}：API 回應不是有效 JSON。`}; }
 } catch(e) {
 lastErr = e;
 } finally {
@@ -1934,8 +1918,7 @@ el.innerHTML = '📡 Track.TW 連線狀態：檢查中…';
 
 const res = await trackTWBackgroundRequest(
 { action:'adminAction', type:'trackGetStatus' },
-    30000
-    TRACKTW_STATUS_TIMEOUT_MS
+30000
 );
 
 if (!res || res.aborted) {
@@ -1993,8 +1976,7 @@ const status = document.getElementById('tt_status');
 if (status) status.innerText = '正在取得 Track.TW 物流商…';
 const res = await trackTWBackgroundRequest(
 { action:'adminAction', type:'trackGetCarriers' },
-    30000
-    TRACKTW_STATUS_TIMEOUT_MS
+30000
 );
 if (!res || res.aborted) {
 if (status) status.innerText = `Track.TW 物流商取得逾時：${res?.message || '請稍後再試。'}`;
