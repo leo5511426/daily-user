@@ -2334,7 +2334,16 @@ return { html: `<div class="order-timeline">${html}</div>`, deadline: deadlineDi
 }
 
 function trackTWDomId(oid, packageType, trackingNumber) {
-  return 'tracktw_live_' + btoa(unescape(encodeURIComponent(String(oid)+'|'+String(packageType)+'|'+String(trackingNumber)))).replace(/[^a-zA-Z0-9]/g,'').slice(0,24);
+  // 必須使用「完整包裹識別資訊」產生穩定且不易碰撞的 DOM ID。
+  // 舊版只取 Base64 前 24 碼；同筆訂單多個物流單號若前段相同，會產生相同 ID，
+  // 導致第二包裹的資料更新到第一包裹的卡片，第二包裹就會一直停在「確認對應」。
+  const raw = String(oid) + '|' + String(packageType) + '|' + String(trackingNumber);
+  let hash = 2166136261;
+  for (let i = 0; i < raw.length; i++) {
+    hash ^= raw.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return 'tracktw_live_' + (hash >>> 0).toString(16);
 }
 
 function trackTWFormatTime(value) {
