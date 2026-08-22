@@ -875,8 +875,8 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <div class="footer-info">
-<div>版本：V1</div>
-<div>更新日期：2026-08-21</div>
+<div>版本：iOS 26 Liquid Glass V1（功能邏輯維持原版）</div>
+<div>更新日期：2026-08-17</div>
 <div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
 <span class="about-link" onclick="showAboutSystem()">關於本系統</span>
 <span style="margin: 0 6px; opacity:0.4;">｜</span>
@@ -1234,7 +1234,7 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：V1<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：iOS 26 Liquid Glass V1 + Track.TW<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -2433,6 +2433,17 @@ function renderTrackTWResult(targetId, data) {
   el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;"><div class="track-glass-head"><div class="track-glass-title">${icon} ${escapeHTML(label)}</div><span class="track-status-pill">Track.TW</span></div>${syncText ? `<div style="margin-top:8px;font-size:.76em;color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:7px 9px;">${syncText}</div>` : ''}<div style="margin-top:10px;">${timeline}</div><div class="track-source">物流資料來源：Track.TW</div></div>`;
 }
 
+async function renderTrackTWResultWithRetry(targetId, data) {
+  let el = document.getElementById(targetId);
+  if (!el) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    el = document.getElementById(targetId);
+  }
+  if (!el) return false;
+  renderTrackTWResult(targetId, data);
+  return true;
+}
+
 async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
   const el = document.getElementById(targetId);
   if (!el) return;
@@ -2643,29 +2654,82 @@ let htmlContent = `
                </div>
            `;
 Swal.fire({title:'📦 訂單詳細資訊',html:`<div style="text-align:left;"><div class="track-glass-card" style="margin-top:0;"><div class="track-glass-head"><div class="track-glass-title">🫧 智慧物流</div><span class="track-status-pill" data-track-order-status="${escapeHTML(String(o.id))}">● ${escapeHTML(currentStatus)}</span></div><div class="track-meta"><span class="track-meta-chip">🚚 ${escapeHTML(o.ship)||'物流方式未提供'}</span><span class="track-meta-chip">📦 ${escapeHTML(outboundTracks.join(', '))||'尚無出貨單號'}</span></div><div class="track-source">Track.TW 為主要即時物流來源；系統時間線保留管理／訂單操作紀錄。</div></div>${htmlContent}</div>`,confirmButtonColor:'var(--pink)',confirmButtonText:'完成'});
+const TRACK_TW_MAP_REQUEST_TIMEOUT_MS = 10000;
+const TRACK_TW_PACKAGE_GAP_MS = 1500;
+
+function trackTWWait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function trackTWFetchPackageMapping(endpoint, payload) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TRACK_TW_MAP_REQUEST_TIMEOUT_MS);
+  try {
+    const r = await fetch(endpoint, {
+      method:'POST',
+      body:JSON.stringify(payload),
+      signal:controller.signal
+    });
+    const t = await r.text();
+    try {
+      return { ok:true, response:JSON.parse(t) };
+    } catch (e) {
+      return { ok:false, error:`HTTP ${r.status}：Google Apps Script 回傳非 JSON` };
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') {
+      return { ok:false, timeout:true, error:`請求逾時（${TRACK_TW_MAP_REQUEST_TIMEOUT_MS / 1000} 秒）` };
+    }
+    return { ok:false, error:e && e.message ? e.message : '請求失敗' };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 setTimeout(async () => {
   if (trackPackages.length) {
     loadTrackTWStatus(o.id, trackTWStatusDomId(o.id));
-    for (const pkg of trackPackages) {
+
+    // 同一筆訂單的多包裹採「單一併發」處理，避免短時間同時打 Track.TW。
+    // 每包裹都有獨立逾時；某一包失敗不會阻止後續包裹。
+    for (let packageIndex = 0; packageIndex < trackPackages.length; packageIndex++) {
+      const pkg = trackPackages[packageIndex];
       const pType = String(pkg.packageType || 'OUTBOUND').toUpperCase();
       const pTrack = String(pkg.trackingNumber || '');
       const target = trackTWDomId(o.id, pType, pTrack);
+
+      if (packageIndex > 0) await trackTWWait(TRACK_TW_PACKAGE_GAP_MS);
+
       if (pkg.pendingMapping) {
         const targetEl = document.getElementById(target);
         try {
+          if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;text-align:center;opacity:.72;">📡 正在確認 Track.TW 包裹對應…</div>';
           const ensurePayload = { action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack };
-const ensureEndpoints = [TRACK_TW_GAS_URL, SCRIPT_URL];
-let ensureRes = null;
-let ensureLastError = '';
-for (const endpoint of ensureEndpoints) {
-  try {
-    const r = await fetch(endpoint, { method:'POST', body:JSON.stringify(ensurePayload) });
-    const t = await r.text();
-    try { ensureRes = JSON.parse(t); break; }
-    catch (e) { ensureLastError = `HTTP ${r.status}：Google Apps Script 回傳非 JSON`; }
-  } catch (e) { ensureLastError = e.message || '請求失敗'; }
-}
-if (!ensureRes) ensureRes = {success:false,message:ensureLastError || '目前無法自動建立 Track.TW 對應。',errorCode:'TRACK_ENSURE_API_FORMAT_ERROR'};
+          const ensureEndpoints = [TRACK_TW_GAS_URL, SCRIPT_URL];
+          let ensureRes = null;
+          let ensureLastError = '';
+          let timedOut = false;
+
+          for (const endpoint of ensureEndpoints) {
+            const result = await trackTWFetchPackageMapping(endpoint, ensurePayload);
+            if (result.ok) {
+              ensureRes = result.response;
+              break;
+            }
+            ensureLastError = result.error || ensureLastError || '請求失敗';
+            timedOut = timedOut || !!result.timeout;
+          }
+
+          if (!ensureRes) {
+            ensureRes = {
+              success:false,
+              message: timedOut
+                ? `Track.TW 對應確認逾時，請稍後再試。`
+                : (ensureLastError || '目前無法自動建立 Track.TW 對應。'),
+              errorCode: timedOut ? 'TRACK_ENSURE_TIMEOUT' : 'TRACK_ENSURE_API_FORMAT_ERROR'
+            };
+          }
+
           if (ensureRes && ensureRes.success) {
             await loadTrackTWTracking(o.id, pType, pTrack, target);
           } else if (targetEl) {
@@ -2683,7 +2747,7 @@ if (!ensureRes) ensureRes = {success:false,message:ensureLastError || '目前無
           if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;border:1px solid #fecaca;background:#fef2f2;">🔴 無法取得 Track.TW 對應診斷結果，請稍後再試。</div>';
         }
       } else {
-        loadTrackTWTracking(o.id, pType, pTrack, target);
+        await loadTrackTWTracking(o.id, pType, pTrack, target);
       }
     }
   }
