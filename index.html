@@ -642,6 +642,10 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <div id="loginView" style="display:flex; height:100vh; flex-direction:column; justify-content:center; padding:40px; box-sizing: border-box; overflow-y: auto;">
 <button type="button" class="ui-pref-gear" aria-label="介面設定" onclick="openInterfaceSettings(false)">⚙️</button>
 <h1 style="color:var(--pink); text-align:center;">小佑的日常生活行動會員</h1>
+<div id="guestAnnouncementSection" style="display:none; width:100%; margin:0 0 14px 0;">
+<div style="font-size:1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px; margin-bottom:8px;">📢 公告</div>
+<div id="guestAnnouncementList"></div>
+</div>
 <input type="text" id="acc" placeholder="帳號 / ID">
 <input type="password" id="pw" placeholder="密碼">
 <label class="pwd-toggle-container"><input type="checkbox" id="showPwdCheck" onchange="togglePasswordVisibility()"> 顯示輸入的密碼</label>
@@ -726,6 +730,10 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 
 <div id="p0" class="page" style="display:block;">
 <div class="glass-hero"><div class="glass-kicker">小佑的日常生活行動會員</div><div class="glass-hero-title">生活，一眼就能掌握。</div><p class="glass-hero-subtitle">訂單、帳務、發票與物流，都在這裡。</p></div>
+<div id="homeAnnouncementSection" style="display:none; margin-bottom:18px;">
+<div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px; margin-bottom:10px;">📢 公告</div>
+<div id="homeAnnouncementList"></div>
+</div>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 最新通知</div>
 <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(7)">查看全部 ➔</span>
@@ -975,6 +983,7 @@ const TRACK_TW_GAS_URL = 'https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6
 document.addEventListener('DOMContentLoaded', function(){
   const nav = document.getElementById('memberNav');
   if (nav && nav.parentElement !== document.body) document.body.appendChild(nav);
+  loadPublicAnnouncements();
 });
 
 function setMemberNavVisible(visible){
@@ -2008,8 +2017,58 @@ if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', blo
 });
 }
 
+let PUBLIC_ANNOUNCEMENTS = [];
+
+function announcementCardHtml(n, compact) {
+  const displayTime = formatDateString(n && n.time);
+  const color = (n && n.color) || '#ec4899';
+  const tag = escapeHTML(String((n && n.subTag) || '公告'));
+  const content = escapeHTML(String((n && n.content) || ''));
+  return `<div class="card" style="padding:${compact ? '11px 12px' : '12px'}; border-left:4px solid ${escapeHTML(String(color))}; margin-bottom:10px;">
+    <span style="position:absolute; top:8px; right:8px; background:${escapeHTML(String(color))}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${tag}</span>
+    <div style="font-size:11px; opacity:0.5; margin-bottom:4px; padding-right:58px;">${escapeHTML(String(displayTime || ''))}</div>
+    <div style="font-size:13px; font-weight:normal; line-height:1.45; color:var(--text);${compact ? ' display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;' : ''}">${content}</div>
+  </div>`;
+}
+
+function renderPublicAnnouncements() {
+  const list = Array.isArray(PUBLIC_ANNOUNCEMENTS) ? PUBLIC_ANNOUNCEMENTS.slice(0, 2) : [];
+  const targets = [
+    {section:'guestAnnouncementSection', list:'guestAnnouncementList', compact:true},
+    {section:'homeAnnouncementSection', list:'homeAnnouncementList', compact:false}
+  ];
+  targets.forEach(function(t){
+    const section = document.getElementById(t.section);
+    const box = document.getElementById(t.list);
+    if (!section || !box) return;
+    if (!list.length) {
+      section.style.display = 'none';
+      box.innerHTML = '';
+      return;
+    }
+    box.innerHTML = list.map(function(n){ return announcementCardHtml(n, t.compact); }).join('');
+    section.style.display = 'block';
+  });
+}
+
+async function loadPublicAnnouncements() {
+  try {
+    const response = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body:JSON.stringify({action:'getPublicAnnouncements'})
+    });
+    const text = await response.text();
+    const data = JSON.parse(text);
+    PUBLIC_ANNOUNCEMENTS = data && data.success && Array.isArray(data.announcements) ? data.announcements : [];
+  } catch (e) {
+    PUBLIC_ANNOUNCEMENTS = [];
+    console.warn('[public announcements] load failed', e);
+  }
+  renderPublicAnnouncements();
+}
+
 function renderNotifications() {
-let allNotifications = Array.isArray(store && store.notifications) ? store.notifications : [];
+let allNotifications = Array.isArray(store && store.notifications) ? store.notifications.filter(n => String(n && n.mainCat || '').trim() !== '公告') : [];
 renderNotifyTabBar(allNotifications);
 
 let filteredByTab = currentNotifyTab === 'ALL' ? allNotifications : allNotifications.filter(n => getNotifyMainCat(n) === currentNotifyTab);
@@ -2115,6 +2174,7 @@ function render() {
 
   safeRender('shortcuts', renderShortcuts);
   safeRender('notifications', renderNotifications);
+  try { renderPublicAnnouncements(); } catch (e) { console.warn('Announcement render skipped:', e); }
 
   const sortHEl = document.getElementById('sortH');
   const sortH = sortHEl ? sortHEl.value : 'desc';
