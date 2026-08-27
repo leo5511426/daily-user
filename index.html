@@ -638,15 +638,38 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 
 <div id="loading" class="mask"><p>資料同步中...</p></div>
 
-<!-- 🔧 Vercel 靜態維護閘門（不依賴 GAS） -->
-<div id="maintenanceView" style="display:none; min-height:100vh; flex-direction:column; justify-content:center; padding:34px 28px; box-sizing:border-box; overflow-y:auto;">
-  <div class="card" style="max-width:560px; width:100%; margin:0 auto; padding:28px 24px; text-align:center; border:1px solid var(--border);">
-    <div style="font-size:3.2em; line-height:1; margin-bottom:14px;">🔧</div>
-    <h1 id="maintenanceTitle" style="margin:0 0 12px; color:var(--pink); font-size:1.55em;">系統維護中</h1>
-    <div id="maintenanceMessage" style="font-size:.95em; line-height:1.8; color:var(--text); font-weight:normal; white-space:pre-wrap; text-align:left; background:rgba(0,0,0,.025); border-radius:14px; padding:14px 16px; margin-top:14px;"></div>
-    <div id="maintenanceTimes" style="margin-top:16px; text-align:left; font-size:.84em; line-height:1.8; opacity:.72;"></div>
-    <div style="margin-top:18px; font-size:.78em; opacity:.55; line-height:1.6;">維護期間會員登入及部分服務可能暫時無法使用。<br>請稍後再試。</div>
-    <button type="button" onclick="refreshMaintenanceStatus()" style="margin-top:18px; background:var(--pink);">重新檢查服務狀態</button>
+<!-- 🔧 Vercel 靜態維護閘門（不依賴 GAS）／獨立全頁 -->
+<div id="maintenanceView" style="display:none; min-height:100vh; flex-direction:column; box-sizing:border-box; overflow-y:auto; padding:0 0 32px;">
+  <div style="padding:34px 24px 26px; background:linear-gradient(180deg, rgba(255,143,163,.18), rgba(255,255,255,0)); text-align:center;">
+    <div style="width:70px;height:70px;margin:0 auto 14px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.72);border:1px solid var(--border);box-shadow:0 12px 32px rgba(15,23,42,.08);font-size:2.25em;">🔧</div>
+    <div style="font-size:.78em;font-weight:900;letter-spacing:.12em;color:var(--pink);margin-bottom:6px;">SERVICE MAINTENANCE</div>
+    <h1 id="maintenanceTitle" style="margin:0; color:var(--text); font-size:1.7em;line-height:1.25;">系統維護中</h1>
+    <div style="margin-top:10px;font-size:.86em;opacity:.62;font-weight:normal;">目前部分或全部會員服務暫停使用</div>
+  </div>
+  <div style="padding:0 20px; width:100%; box-sizing:border-box;">
+    <div id="maintenanceTimes" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;"></div>
+    <div class="card" style="margin:0 0 14px;padding:20px;border:1px solid var(--border);box-shadow:none;">
+      <div style="font-size:.82em;font-weight:900;color:var(--pink);margin-bottom:10px;">維護公告</div>
+      <div id="maintenanceMessage" style="font-size:.95em; line-height:1.9; color:var(--text); font-weight:normal; white-space:pre-wrap; text-align:left; word-break:break-word;"></div>
+    </div>
+    <div id="maintenanceNote" style="display:none;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.25);font-size:.82em;line-height:1.65;font-weight:normal;"></div>
+    <button type="button" onclick="refreshMaintenanceStatus()" style="background:var(--pink);margin:2px 0 8px;">重新檢查服務狀態</button>
+    <div style="text-align:center;font-size:.76em;opacity:.5;font-weight:normal;line-height:1.6;">服務恢復後，本頁會在重新檢查時返回會員系統。</div>
+  </div>
+</div>
+
+<!-- 📢 公告中心／獨立全頁 -->
+<div id="announcementView" style="display:none; min-height:100vh; flex-direction:column; box-sizing:border-box; overflow-y:auto; padding-bottom:30px;">
+  <div style="position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--border);">
+    <button type="button" onclick="closeAnnouncementCenter()" style="width:42px;height:42px;margin:0;padding:0;border-radius:50%;background:rgba(148,163,184,.14);color:var(--text);font-size:1.15em;">‹</button>
+    <div style="min-width:0;">
+      <div style="font-size:1.12em;font-weight:900;color:var(--text);">📢 公告中心</div>
+      <div style="font-size:.72em;opacity:.52;font-weight:normal;margin-top:2px;">最新服務資訊與重要通知</div>
+    </div>
+  </div>
+  <div style="padding:18px 18px 0;">
+    <div id="announcementCenterList"></div>
+    <div id="announcementCenterEmpty" style="display:none;text-align:center;padding:70px 20px;opacity:.5;font-weight:normal;">目前沒有公告</div>
   </div>
 </div>
 
@@ -655,8 +678,11 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <button type="button" class="ui-pref-gear" aria-label="介面設定" onclick="openInterfaceSettings(false)">⚙️</button>
 <h1 style="color:var(--pink); text-align:center;">小佑的日常生活行動會員</h1>
 <div id="guestAnnouncementSection" style="display:none; width:100%; margin:0 0 14px 0;">
-<div style="font-size:1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px; margin-bottom:8px;">📢 公告</div>
-<div id="guestAnnouncementList"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+    <div style="font-size:1em;color:var(--pink);font-weight:bold;display:flex;align-items:center;gap:6px;">📢 最新公告</div>
+    <span onclick="openAnnouncementCenter('login')" style="font-size:.78em;color:var(--blue);cursor:pointer;font-weight:bold;white-space:nowrap;">查看完整公告 ›</span>
+  </div>
+  <div id="guestAnnouncementList"></div>
 </div>
 <input type="text" id="acc" placeholder="帳號 / ID">
 <input type="password" id="pw" placeholder="密碼">
@@ -743,8 +769,11 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <div id="p0" class="page" style="display:block;">
 <div class="glass-hero"><div class="glass-kicker">小佑的日常生活行動會員</div><div class="glass-hero-title">生活，一眼就能掌握。</div><p class="glass-hero-subtitle">訂單、帳務、發票與物流，都在這裡。</p></div>
 <div id="homeAnnouncementSection" style="display:none; margin-bottom:18px;">
-<div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px; margin-bottom:10px;">📢 公告</div>
-<div id="homeAnnouncementList"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+    <div style="font-size:1.1em;color:var(--pink);font-weight:bold;display:flex;align-items:center;gap:6px;">📢 最新公告</div>
+    <span onclick="openAnnouncementCenter('home')" style="font-size:.82em;color:var(--blue);cursor:pointer;font-weight:bold;white-space:nowrap;">查看完整公告 ›</span>
+  </div>
+  <div id="homeAnnouncementList"></div>
 </div>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 <div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 最新通知</div>
@@ -1048,7 +1077,9 @@ function showMaintenanceScreen(data) {
   const loginView = document.getElementById('loginView');
   const appView = document.getElementById('appView');
   const suspendedView = document.getElementById('suspendedView');
+  const announcementView = document.getElementById('announcementView');
   if (maintenanceView) maintenanceView.style.display = 'flex';
+  if (announcementView) announcementView.style.display = 'none';
   if (loginView) loginView.style.display = 'none';
   if (appView) appView.style.display = 'none';
   if (suspendedView) suspendedView.style.display = 'none';
@@ -1070,17 +1101,24 @@ function showMaintenanceScreen(data) {
   const startText = formatMaintenanceTime(MAINTENANCE_DATA.startTime);
   const endText = formatMaintenanceTime(MAINTENANCE_DATA.estimatedEndTime);
   let timeHtml = '';
-  if (startText) timeHtml += '<div><b>維護開始：</b>' + maintenanceEscape(startText) + '</div>';
-  if (endText) timeHtml += '<div><b>預計恢復：</b>' + maintenanceEscape(endText) + '</div>';
-  if (MAINTENANCE_DATA.note) timeHtml += '<div style="margin-top:6px;">' + maintenanceEscape(MAINTENANCE_DATA.note) + '</div>';
-  if (times) { times.innerHTML = timeHtml; times.style.display = timeHtml ? 'block' : 'none'; }
+  if (startText) timeHtml += '<div style="padding:12px 13px;border-radius:14px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.18);"><div style="font-size:.72em;opacity:.56;margin-bottom:4px;">維護開始</div><div style="font-size:.9em;font-weight:900;">' + maintenanceEscape(startText) + '</div></div>';
+  if (endText) timeHtml += '<div style="padding:12px 13px;border-radius:14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);"><div style="font-size:.72em;opacity:.56;margin-bottom:4px;">預計恢復</div><div style="font-size:.9em;font-weight:900;">' + maintenanceEscape(endText) + '</div></div>';
+  if (times) { times.innerHTML = timeHtml; times.style.display = timeHtml ? 'grid' : 'none'; }
+  const noteEl = document.getElementById('maintenanceNote');
+  if (noteEl) {
+    const note = String(MAINTENANCE_DATA.note || '').trim();
+    noteEl.textContent = note;
+    noteEl.style.display = note ? 'block' : 'none';
+  }
 }
 
 function restoreNormalViewAfterMaintenance() {
   MAINTENANCE_ACTIVE = false;
   MAINTENANCE_DATA = null;
   const maintenanceView = document.getElementById('maintenanceView');
+  const announcementView = document.getElementById('announcementView');
   if (maintenanceView) maintenanceView.style.display = 'none';
+  if (announcementView) announcementView.style.display = 'none';
 
   // 已有登入資料時回會員首頁；否則回登入頁。
   if (store && store.userData) {
@@ -2192,73 +2230,98 @@ if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', blo
 let PUBLIC_ANNOUNCEMENTS = [];
 const PUBLIC_ANNOUNCEMENTS_CACHE_KEY = 'member_public_announcements_v1';
 
-function announcementCardHtml(n, compact, idx) {
+let ANNOUNCEMENT_RETURN_TARGET = 'login';
+
+function announcementSummaryHtml(n, surface) {
   const displayTime = formatDateString(n && n.time);
   const color = (n && n.color) || '#ec4899';
   const tag = escapeHTML(String((n && n.subTag) || '公告'));
   const content = escapeHTML(String((n && n.content) || ''));
-  const contentId = 'announcement_content_' + (compact ? 'guest_' : 'home_') + idx;
-  const clamp = compact ? 3 : 4;
-  return `<div class="card" style="padding:${compact ? '11px 12px' : '12px'}; border-left:4px solid ${escapeHTML(String(color))}; margin-bottom:10px;">
-    <span style="position:absolute; top:8px; right:8px; background:${escapeHTML(String(color))}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${tag}</span>
-    <div style="font-size:11px; opacity:0.5; margin-bottom:4px; padding-right:58px;">${escapeHTML(String(displayTime || ''))}</div>
-    <div id="${contentId}" data-announcement-collapsed="1" style="font-size:13px; font-weight:normal; line-height:1.55; color:var(--text); display:-webkit-box; -webkit-line-clamp:${clamp}; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-wrap; word-break:break-word;">${content}</div>
-    <button type="button" data-announcement-toggle="${contentId}" onclick="toggleAnnouncementText('${contentId}', this)" style="display:none; width:auto; margin:7px 0 0; padding:4px 0; border:0; background:transparent; color:var(--blue); font-size:12px; font-weight:bold; box-shadow:none;">顯示更多</button>
+  return `<div class="card" onclick="openAnnouncementCenter('${surface}')" style="padding:12px 13px;border-left:4px solid ${escapeHTML(String(color))};margin-bottom:10px;cursor:pointer;box-shadow:none;">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+      <div style="min-width:0;flex:1;">
+        <div style="font-size:11px;opacity:.48;margin-bottom:5px;">${escapeHTML(String(displayTime || ''))}</div>
+        <div style="font-size:13px;font-weight:normal;line-height:1.5;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">${content}</div>
+      </div>
+      <span style="flex:0 0 auto;background:${escapeHTML(String(color))};color:#fff;font-size:10px;padding:3px 6px;border-radius:6px;">${tag}</span>
+    </div>
+    <div style="font-size:11px;color:var(--blue);font-weight:bold;margin-top:7px;">查看完整內容 ›</div>
   </div>`;
 }
 
-window.toggleAnnouncementText = function(contentId, buttonEl) {
-  const el = document.getElementById(contentId);
-  if (!el) return;
-  const collapsed = el.getAttribute('data-announcement-collapsed') !== '0';
-  if (collapsed) {
-    el.setAttribute('data-announcement-collapsed', '0');
-    el.style.display = 'block';
-    el.style.webkitLineClamp = 'unset';
-    el.style.overflow = 'visible';
-    if (buttonEl) buttonEl.textContent = '收合內容';
+function announcementDetailHtml(n) {
+  const displayTime = formatDateString(n && n.time);
+  const color = (n && n.color) || '#ec4899';
+  const tag = escapeHTML(String((n && n.subTag) || '公告'));
+  const content = escapeHTML(String((n && n.content) || '')).replace(/\n/g, '<br>');
+  return `<article class="card" style="padding:20px 18px;margin-bottom:14px;border-top:4px solid ${escapeHTML(String(color))};box-shadow:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px;">
+      <span style="background:${escapeHTML(String(color))};color:#fff;font-size:11px;padding:4px 8px;border-radius:7px;font-weight:900;">${tag}</span>
+      <span style="font-size:11px;opacity:.48;font-weight:normal;">${escapeHTML(String(displayTime || ''))}</span>
+    </div>
+    <div style="font-size:14px;line-height:1.95;color:var(--text);font-weight:normal;word-break:break-word;">${content}</div>
+  </article>`;
+}
+
+function renderAnnouncementCenter() {
+  const box = document.getElementById('announcementCenterList');
+  const empty = document.getElementById('announcementCenterEmpty');
+  if (!box || !empty) return;
+  const list = Array.isArray(PUBLIC_ANNOUNCEMENTS) ? PUBLIC_ANNOUNCEMENTS.slice(0, 2) : [];
+  box.innerHTML = list.map(announcementDetailHtml).join('');
+  empty.style.display = list.length ? 'none' : 'block';
+}
+
+window.openAnnouncementCenter = function(returnTarget) {
+  if (MAINTENANCE_ACTIVE) return;
+  ANNOUNCEMENT_RETURN_TARGET = returnTarget === 'home' ? 'home' : 'login';
+  const announcementView = document.getElementById('announcementView');
+  const loginView = document.getElementById('loginView');
+  const appView = document.getElementById('appView');
+  const suspendedView = document.getElementById('suspendedView');
+  if (loginView) loginView.style.display = 'none';
+  if (appView) appView.style.display = 'none';
+  if (suspendedView) suspendedView.style.display = 'none';
+  setMemberNavVisible(false);
+  renderAnnouncementCenter();
+  if (announcementView) { announcementView.style.display = 'flex'; announcementView.scrollTop = 0; }
+};
+
+window.closeAnnouncementCenter = function() {
+  const announcementView = document.getElementById('announcementView');
+  if (announcementView) announcementView.style.display = 'none';
+  if (MAINTENANCE_ACTIVE) { showMaintenanceScreen(MAINTENANCE_DATA || {}); return; }
+  if (ANNOUNCEMENT_RETURN_TARGET === 'home' && store && store.userData) {
+    const appView = document.getElementById('appView');
+    if (appView) appView.style.display = 'block';
+    setMemberNavVisible(true);
   } else {
-    const isGuest = contentId.indexOf('_guest_') !== -1;
-    el.setAttribute('data-announcement-collapsed', '1');
-    el.style.display = '-webkit-box';
-    el.style.webkitLineClamp = isGuest ? '3' : '4';
-    el.style.overflow = 'hidden';
-    if (buttonEl) buttonEl.textContent = '顯示更多';
+    const loginView = document.getElementById('loginView');
+    if (loginView) loginView.style.display = 'flex';
+    setMemberNavVisible(false);
   }
 };
 
-function refreshAnnouncementMoreButtons() {
-  requestAnimationFrame(function(){
-    document.querySelectorAll('[data-announcement-toggle]').forEach(function(btn){
-      const id = btn.getAttribute('data-announcement-toggle');
-      const el = document.getElementById(id);
-      if (!el) return;
-      // 在收合狀態比較實際內容高度與可見高度；只有真的被截斷才顯示按鈕。
-      const clipped = el.scrollHeight > el.clientHeight + 2;
-      btn.style.display = clipped ? 'inline-block' : 'none';
-    });
-  });
-}
-
 function renderPublicAnnouncements() {
   const list = Array.isArray(PUBLIC_ANNOUNCEMENTS) ? PUBLIC_ANNOUNCEMENTS.slice(0, 2) : [];
+  const latest = list[0] || null;
   const targets = [
-    {section:'guestAnnouncementSection', list:'guestAnnouncementList', compact:true},
-    {section:'homeAnnouncementSection', list:'homeAnnouncementList', compact:false}
+    {section:'guestAnnouncementSection', list:'guestAnnouncementList', surface:'login'},
+    {section:'homeAnnouncementSection', list:'homeAnnouncementList', surface:'home'}
   ];
   targets.forEach(function(t){
     const section = document.getElementById(t.section);
     const box = document.getElementById(t.list);
     if (!section || !box) return;
-    if (!list.length) {
+    if (!latest) {
       section.style.display = 'none';
       box.innerHTML = '';
       return;
     }
-    box.innerHTML = list.map(function(n, idx){ return announcementCardHtml(n, t.compact, idx); }).join('');
+    box.innerHTML = announcementSummaryHtml(latest, t.surface);
     section.style.display = 'block';
   });
-  refreshAnnouncementMoreButtons();
+  renderAnnouncementCenter();
 }
 
 function readPublicAnnouncementCache() {
