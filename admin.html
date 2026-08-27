@@ -281,8 +281,14 @@ border-radius: 12px;
 <p style="font-size:0.85em; color:#666; margin-top:0;">處理會員通報的工單，或主動發送站內通知信。</p>
 
 <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
-<h4 style="margin:0 0 5px 0; color:var(--dark);">📩 發送個人化站內推播</h4>
-<select id="nt_uid"></select>
+<h4 id="nt_section_title" style="margin:0 0 5px 0; color:var(--dark);">📩 發送站內推播</h4>
+<select id="nt_mode" onchange="updateNotificationMode()">
+<option value="personal">👤 發送個人通知</option>
+<option value="broadcast">📢 群發所有會員</option>
+<option value="announcement">📣 發布公告</option>
+</select>
+<div id="nt_uid_wrap"><select id="nt_uid"></select></div>
+<div id="nt_mode_hint" class="folder-hint" style="margin-top:8px;">選擇會員後發送個人站內通知。</div>
 
 <div style="display:flex; gap:10px; margin-top:8px;">
 <input type="text" id="nt_mainCat" placeholder="主分類 (例: 個人通知)" value="個人通知" style="margin:0; flex:1;">
@@ -291,7 +297,7 @@ border-radius: 12px;
 </div>
 
 <textarea id="nt_msg" rows="3" placeholder="通知內容（必填）：送出後買家將在中心收到提醒..."></textarea>
-<button onclick="sendCustomNotification()" style="background:#8b5cf6; margin-top:10px;">發送推播給會員</button>
+<button id="nt_send_btn" onclick="sendCustomNotification()" style="background:#8b5cf6; margin-top:10px;">發送推播給會員</button>
 </div>
 
 <div>
@@ -629,6 +635,7 @@ title:'⚙️ 系統管理', desc:'發票、優惠券、客服、法律文件', 
 {title:'🧾 電子發票', desc:'中獎登錄與手動開立', action:()=>openAdminSection('invoice_section')},
 {title:'🎟️ 發送優惠券', desc:'發送實體優惠券給會員', action:()=>openAdminSection('coupon_section')},
 {title:'🎧 客服／推播', desc:'客服工單與站內通知', action:()=>openAdminSection('cs_section')},
+{title:'📣 發布公告', desc:'發布登入前後皆可看到的公開公告', action:()=>{ openAdminSection('cs_section'); setTimeout(()=>{ const m=document.getElementById('nt_mode'); if(m){m.value='announcement'; updateNotificationMode();} },0); }},
 {title:'📋 法律文件', desc:'新增、修改、發布法律文件', action:()=>openAdminSection('ldms_section')}
 ]
 },
@@ -1228,14 +1235,66 @@ let res = await fetchWithQueue(GAS, { action: 'adminAction', type: 'createLoanPl
 if(!res.aborted) handlePostSuccess(res);
 }
 
+function updateNotificationMode() {
+const mode = document.getElementById('nt_mode')?.value || 'personal';
+const uidWrap = document.getElementById('nt_uid_wrap');
+const uidEl = document.getElementById('nt_uid');
+const mainCatEl = document.getElementById('nt_mainCat');
+const subTagEl = document.getElementById('nt_subTag');
+const msgEl = document.getElementById('nt_msg');
+const hintEl = document.getElementById('nt_mode_hint');
+const titleEl = document.getElementById('nt_section_title');
+const sendBtn = document.getElementById('nt_send_btn');
+if (!uidEl || !mainCatEl || !subTagEl || !msgEl) return;
+
+mainCatEl.readOnly = false;
+mainCatEl.style.background = '';
+mainCatEl.style.opacity = '';
+
+if (mode === 'announcement') {
+  uidEl.value = 'ALL';
+  if (uidWrap) uidWrap.style.display = 'none';
+  mainCatEl.value = '公告';
+  mainCatEl.readOnly = true;
+  mainCatEl.style.background = '#f1f5f9';
+  mainCatEl.style.opacity = '0.8';
+  if (!subTagEl.value || ['專屬訊息','全體通知'].includes(subTagEl.value)) subTagEl.value = '系統公告';
+  msgEl.placeholder = '公告內容（必填）：發布後登入前與登入後首頁皆可看到...';
+  if (hintEl) hintEl.textContent = '公告會發布給所有人，未登入訪客與已登入會員首頁都能看到。';
+  if (titleEl) titleEl.textContent = '📣 發布公告';
+  if (sendBtn) { sendBtn.textContent = '📣 發布公告'; sendBtn.style.background = '#db2777'; }
+} else if (mode === 'broadcast') {
+  uidEl.value = 'ALL';
+  if (uidWrap) uidWrap.style.display = 'none';
+  mainCatEl.value = mainCatEl.value === '公告' ? '系統通知' : (mainCatEl.value || '系統通知');
+  if (!subTagEl.value || subTagEl.value === '系統公告') subTagEl.value = '全體通知';
+  msgEl.placeholder = '通知內容（必填）：送出後所有會員會在通知中心收到...';
+  if (hintEl) hintEl.textContent = '群發通知只會出現在已登入會員的通知中心，不會顯示在公開公告區。';
+  if (titleEl) titleEl.textContent = '📢 群發所有會員';
+  if (sendBtn) { sendBtn.textContent = '📢 群發所有會員'; sendBtn.style.background = '#8b5cf6'; }
+} else {
+  if (uidWrap) uidWrap.style.display = 'block';
+  if (uidEl.value === 'ALL' && uidEl.options.length > 1) uidEl.selectedIndex = 1;
+  if (mainCatEl.value === '公告' || mainCatEl.value === '系統通知') mainCatEl.value = '個人通知';
+  if (!subTagEl.value || ['系統公告','全體通知'].includes(subTagEl.value)) subTagEl.value = '專屬訊息';
+  msgEl.placeholder = '通知內容（必填）：送出後買家將在中心收到提醒...';
+  if (hintEl) hintEl.textContent = '選擇會員後發送個人站內通知。';
+  if (titleEl) titleEl.textContent = '📩 發送個人化站內推播';
+  if (sendBtn) { sendBtn.textContent = '發送推播給會員'; sendBtn.style.background = '#8b5cf6'; }
+}
+}
+
 async function sendCustomNotification() {
+let mode = document.getElementById('nt_mode')?.value || 'personal';
 let uid = document.getElementById('nt_uid').value; 
 let msg = document.getElementById('nt_msg').value.trim();
 let mainCat = document.getElementById('nt_mainCat').value.trim() || '個人通知';
 let subTag = document.getElementById('nt_subTag').value.trim() || '專屬訊息';
 let color = document.getElementById('nt_color').value || '#db2777';
 
-if(!uid || !msg) return Swal.fire("提示", "請填寫通知內容", "warning");
+if (mode === 'announcement') { uid = 'ALL'; mainCat = '公告'; }
+if (mode === 'broadcast') uid = 'ALL';
+if(!uid || !msg) return Swal.fire("提示", mode === 'personal' && !uid ? "請選擇會員並填寫通知內容" : "請填寫通知內容", "warning");
 
 let res = await fetchWithQueue(GAS, {
 action: 'sendCustomNotification',
@@ -1245,7 +1304,7 @@ content: msg,
 category: mainCat,
 tag: subTag,
 color: color
-}, "發送中...");
+}, mode === 'announcement' ? "發布公告中..." : "發送中...");
 if(!res.aborted) handlePostSuccess(res);
 }
 
@@ -2377,7 +2436,10 @@ FORM = {};
 function quickGoNotify() {
 let uid = FORM.uid;
 document.getElementById('quickActionModal').style.display = 'none';
+const modeEl = document.getElementById('nt_mode');
+if (modeEl) modeEl.value = 'personal';
 document.getElementById('nt_uid').value = uid;
+updateNotificationMode();
 scrollToSection('cs_section');
 FORM = {};
 }
