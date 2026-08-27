@@ -976,7 +976,8 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 
 <script>
 // ⚠️ 請務必將此處替換為您自己的最新 Google Apps Script 部署網址！
-const SCRIPT_URL = '/api/gas';
+//設定值:/api/gas
+const SCRIPT_URL = '';
 const TRACK_TW_GAS_URL = 'https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec';
 
 // 將主選單移出 app-container，避免父層 overflow:hidden 在部分瀏覽器／手機環境裁切 fixed 元素。
@@ -1574,7 +1575,8 @@ async function doLogin() {
     res = await raw.json();
   } catch(e) {
     setLoginStep('ls_auth', 'failed');
-    showLoginError('系統維護中，無法連線至伺服器，若問題持續發生請聯絡客服中心<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');
+    showLoginError('伺服器移機維護公告｜親愛的會員您好：因應辦公室搬遷作業，行動會員網所使用之伺服器設備將同步進行移機及網路環境調整。為確保設備搬遷及系統重新部署過程順利，行動會員網將於搬遷期間暫停部分或全部服務。維護原因：辦公室搬遷暨伺服器設備移機、網路重新配置及系統連線測試。維護期間：2026年8月27日18:00起，預計至2026年8月28日11:00前恢復服務。實際恢復時間將視設備搬遷、網路設定及系統測試狀況調整。維護期間會員登入、會員資料、訂單、帳單、交易紀錄、先享後付（BNPL）、借貸、退款、退貨、物流進度、通知、發票及客服等相關功能可能暫時無法使用。維護完成後，我們將進行系統及資料完整性確認，確認服務正常後重新開放會員使用。如維護時間有所延長，將另行公告。因設備搬遷造成使用上的不便，敬請見諒，感謝各位會員的理解與配合。小佑的日常生活行動會員網 敬上
+<br><small style="font-weight:normal;opacity:0.7;">' + e.message + '</small>');    
     return;
   }
 
