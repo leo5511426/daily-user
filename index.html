@@ -2018,17 +2018,54 @@ if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'nearest', blo
 }
 
 let PUBLIC_ANNOUNCEMENTS = [];
+const PUBLIC_ANNOUNCEMENTS_CACHE_KEY = 'member_public_announcements_v1';
 
-function announcementCardHtml(n, compact) {
+function announcementCardHtml(n, compact, idx) {
   const displayTime = formatDateString(n && n.time);
   const color = (n && n.color) || '#ec4899';
   const tag = escapeHTML(String((n && n.subTag) || '公告'));
   const content = escapeHTML(String((n && n.content) || ''));
+  const contentId = 'announcement_content_' + (compact ? 'guest_' : 'home_') + idx;
+  const clamp = compact ? 3 : 4;
   return `<div class="card" style="padding:${compact ? '11px 12px' : '12px'}; border-left:4px solid ${escapeHTML(String(color))}; margin-bottom:10px;">
     <span style="position:absolute; top:8px; right:8px; background:${escapeHTML(String(color))}; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px;">${tag}</span>
     <div style="font-size:11px; opacity:0.5; margin-bottom:4px; padding-right:58px;">${escapeHTML(String(displayTime || ''))}</div>
-    <div style="font-size:13px; font-weight:normal; line-height:1.45; color:var(--text);${compact ? ' display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;' : ''}">${content}</div>
+    <div id="${contentId}" data-announcement-collapsed="1" style="font-size:13px; font-weight:normal; line-height:1.55; color:var(--text); display:-webkit-box; -webkit-line-clamp:${clamp}; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-wrap; word-break:break-word;">${content}</div>
+    <button type="button" data-announcement-toggle="${contentId}" onclick="toggleAnnouncementText('${contentId}', this)" style="display:none; width:auto; margin:7px 0 0; padding:4px 0; border:0; background:transparent; color:var(--blue); font-size:12px; font-weight:bold; box-shadow:none;">顯示更多</button>
   </div>`;
+}
+
+window.toggleAnnouncementText = function(contentId, buttonEl) {
+  const el = document.getElementById(contentId);
+  if (!el) return;
+  const collapsed = el.getAttribute('data-announcement-collapsed') !== '0';
+  if (collapsed) {
+    el.setAttribute('data-announcement-collapsed', '0');
+    el.style.display = 'block';
+    el.style.webkitLineClamp = 'unset';
+    el.style.overflow = 'visible';
+    if (buttonEl) buttonEl.textContent = '收合內容';
+  } else {
+    const isGuest = contentId.indexOf('_guest_') !== -1;
+    el.setAttribute('data-announcement-collapsed', '1');
+    el.style.display = '-webkit-box';
+    el.style.webkitLineClamp = isGuest ? '3' : '4';
+    el.style.overflow = 'hidden';
+    if (buttonEl) buttonEl.textContent = '顯示更多';
+  }
+};
+
+function refreshAnnouncementMoreButtons() {
+  requestAnimationFrame(function(){
+    document.querySelectorAll('[data-announcement-toggle]').forEach(function(btn){
+      const id = btn.getAttribute('data-announcement-toggle');
+      const el = document.getElementById(id);
+      if (!el) return;
+      // 在收合狀態比較實際內容高度與可見高度；只有真的被截斷才顯示按鈕。
+      const clipped = el.scrollHeight > el.clientHeight + 2;
+      btn.style.display = clipped ? 'inline-block' : 'none';
+    });
+  });
 }
 
 function renderPublicAnnouncements() {
@@ -2046,9 +2083,30 @@ function renderPublicAnnouncements() {
       box.innerHTML = '';
       return;
     }
-    box.innerHTML = list.map(function(n){ return announcementCardHtml(n, t.compact); }).join('');
+    box.innerHTML = list.map(function(n, idx){ return announcementCardHtml(n, t.compact, idx); }).join('');
     section.style.display = 'block';
   });
+  refreshAnnouncementMoreButtons();
+}
+
+function readPublicAnnouncementCache() {
+  try {
+    const raw = localStorage.getItem(PUBLIC_ANNOUNCEMENTS_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return parsed && Array.isArray(parsed.announcements) ? parsed.announcements : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function savePublicAnnouncementCache(list) {
+  try {
+    localStorage.setItem(PUBLIC_ANNOUNCEMENTS_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      announcements: Array.isArray(list) ? list.slice(0, 2) : []
+    }));
+  } catch (e) {}
 }
 
 async function loadPublicAnnouncements() {
@@ -2059,10 +2117,13 @@ async function loadPublicAnnouncements() {
     });
     const text = await response.text();
     const data = JSON.parse(text);
-    PUBLIC_ANNOUNCEMENTS = data && data.success && Array.isArray(data.announcements) ? data.announcements : [];
+    if (!data || !data.success || !Array.isArray(data.announcements)) throw new Error('公開公告回應格式不正確');
+    PUBLIC_ANNOUNCEMENTS = data.announcements;
+    savePublicAnnouncementCache(PUBLIC_ANNOUNCEMENTS);
   } catch (e) {
-    PUBLIC_ANNOUNCEMENTS = [];
-    console.warn('[public announcements] load failed', e);
+    // GAS / API 暫時無法連線時，至少顯示這台裝置最後一次成功取得的公告。
+    PUBLIC_ANNOUNCEMENTS = readPublicAnnouncementCache();
+    console.warn('[public announcements] live load failed; using cache when available', e);
   }
   renderPublicAnnouncements();
 }
