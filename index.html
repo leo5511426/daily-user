@@ -638,6 +638,18 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 
 <div id="loading" class="mask"><p>資料同步中...</p></div>
 
+<!-- 🔧 Vercel 靜態維護閘門（不依賴 GAS） -->
+<div id="maintenanceView" style="display:none; min-height:100vh; flex-direction:column; justify-content:center; padding:34px 28px; box-sizing:border-box; overflow-y:auto;">
+  <div class="card" style="max-width:560px; width:100%; margin:0 auto; padding:28px 24px; text-align:center; border:1px solid var(--border);">
+    <div style="font-size:3.2em; line-height:1; margin-bottom:14px;">🔧</div>
+    <h1 id="maintenanceTitle" style="margin:0 0 12px; color:var(--pink); font-size:1.55em;">系統維護中</h1>
+    <div id="maintenanceMessage" style="font-size:.95em; line-height:1.8; color:var(--text); font-weight:normal; white-space:pre-wrap; text-align:left; background:rgba(0,0,0,.025); border-radius:14px; padding:14px 16px; margin-top:14px;"></div>
+    <div id="maintenanceTimes" style="margin-top:16px; text-align:left; font-size:.84em; line-height:1.8; opacity:.72;"></div>
+    <div style="margin-top:18px; font-size:.78em; opacity:.55; line-height:1.6;">維護期間會員登入及部分服務可能暫時無法使用。<br>請稍後再試。</div>
+    <button type="button" onclick="refreshMaintenanceStatus()" style="margin-top:18px; background:var(--pink);">重新檢查服務狀態</button>
+  </div>
+</div>
+
 <!-- 🔐 登入畫面 -->
 <div id="loginView" style="display:flex; height:100vh; flex-direction:column; justify-content:center; padding:40px; box-sizing: border-box; overflow-y: auto;">
 <button type="button" class="ui-pref-gear" aria-label="介面設定" onclick="openInterfaceSettings(false)">⚙️</button>
@@ -979,18 +991,167 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 const SCRIPT_URL = '/api/gas';
 const TRACK_TW_GAS_URL = 'https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec';
 
-// 將主選單移出 app-container，避免父層 overflow:hidden 在部分瀏覽器／手機環境裁切 fixed 元素。
-document.addEventListener('DOMContentLoaded', function(){
-  const nav = document.getElementById('memberNav');
-  if (nav && nav.parentElement !== document.body) document.body.appendChild(nav);
 
-  // 公告不得和登入搶同一個 /api/gas 請求。
-  // 先使用瀏覽器快取立即顯示；即時公告稍後背景更新，登入進行中則繼續延後。
+// ============================================================
+// 🔧 Vercel 靜態維護閘門 V1
+// 設定來源：/maintenance.json（完全不依賴 GAS）
+// ============================================================
+let MAINTENANCE_ACTIVE = false;
+let MAINTENANCE_DATA = null;
+let _maintenanceWatcherTimer = null;
+
+function maintenanceEscape(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function formatMaintenanceTime(value) {
+  if (!value) return '';
+  const d = new Date(String(value));
+  if (isNaN(d.getTime())) return String(value);
+  return d.toLocaleString('zh-TW', {
+    timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', hour12:false
+  });
+}
+
+function maintenanceIsActive(data) {
+  if (!data || data.enabled !== true) return false;
+  // allowLogin=true 代表只做資訊公告，不啟動整站阻擋。
+  if (data.allowLogin === true) return false;
+  const start = data.startTime ? new Date(String(data.startTime)).getTime() : 0;
+  if (start && Number.isFinite(start) && Date.now() < start) return false;
+  return true;
+}
+
+async function checkMaintenanceMode() {
+  try {
+    const res = await fetch('/maintenance.json?t=' + Date.now(), {
+      method:'GET', cache:'no-store', headers:{'Accept':'application/json'}
+    });
+    if (!res.ok) return { active:false, data:null };
+    const data = await res.json();
+    return { active:maintenanceIsActive(data), data:data || null };
+  } catch (e) {
+    console.warn('[maintenance] static config unavailable:', e);
+    // 維護設定檔讀不到時，不可誤鎖正常網站。
+    return { active:false, data:null };
+  }
+}
+
+function showMaintenanceScreen(data) {
+  MAINTENANCE_ACTIVE = true;
+  MAINTENANCE_DATA = data || {};
+
+  const maintenanceView = document.getElementById('maintenanceView');
+  const loginView = document.getElementById('loginView');
+  const appView = document.getElementById('appView');
+  const suspendedView = document.getElementById('suspendedView');
+  if (maintenanceView) maintenanceView.style.display = 'flex';
+  if (loginView) loginView.style.display = 'none';
+  if (appView) appView.style.display = 'none';
+  if (suspendedView) suspendedView.style.display = 'none';
+  setMemberNavVisible(false);
+
+  // 停止登入進度與 Session heartbeat；保留記憶體中的會員資料，維護解除可恢復畫面。
+  try { stopLoginProgressTicker(); } catch (_) {}
+  if (typeof _sessionHeartbeatTimer !== 'undefined' && _sessionHeartbeatTimer) {
+    clearInterval(_sessionHeartbeatTimer);
+    _sessionHeartbeatTimer = null;
+  }
+
+  const title = document.getElementById('maintenanceTitle');
+  const msg = document.getElementById('maintenanceMessage');
+  const times = document.getElementById('maintenanceTimes');
+  if (title) title.textContent = String(MAINTENANCE_DATA.title || '系統維護中');
+  if (msg) msg.textContent = String(MAINTENANCE_DATA.message || '目前系統正在進行維護，暫時無法提供會員服務。');
+
+  const startText = formatMaintenanceTime(MAINTENANCE_DATA.startTime);
+  const endText = formatMaintenanceTime(MAINTENANCE_DATA.estimatedEndTime);
+  let timeHtml = '';
+  if (startText) timeHtml += '<div><b>維護開始：</b>' + maintenanceEscape(startText) + '</div>';
+  if (endText) timeHtml += '<div><b>預計恢復：</b>' + maintenanceEscape(endText) + '</div>';
+  if (MAINTENANCE_DATA.note) timeHtml += '<div style="margin-top:6px;">' + maintenanceEscape(MAINTENANCE_DATA.note) + '</div>';
+  if (times) { times.innerHTML = timeHtml; times.style.display = timeHtml ? 'block' : 'none'; }
+}
+
+function restoreNormalViewAfterMaintenance() {
+  MAINTENANCE_ACTIVE = false;
+  MAINTENANCE_DATA = null;
+  const maintenanceView = document.getElementById('maintenanceView');
+  if (maintenanceView) maintenanceView.style.display = 'none';
+
+  // 已有登入資料時回會員首頁；否則回登入頁。
+  if (store && store.userData) {
+    const loginView = document.getElementById('loginView');
+    const appView = document.getElementById('appView');
+    if (loginView) loginView.style.display = 'none';
+    if (appView) appView.style.display = 'block';
+    setMemberNavVisible(true);
+    try { startSessionHeartbeat(); } catch (_) {}
+  } else {
+    const loginView = document.getElementById('loginView');
+    const appView = document.getElementById('appView');
+    if (loginView) loginView.style.display = 'flex';
+    if (appView) appView.style.display = 'none';
+    setMemberNavVisible(false);
+  }
+}
+
+async function refreshMaintenanceStatus() {
+  const result = await checkMaintenanceMode();
+  if (result.active) {
+    showMaintenanceScreen(result.data);
+    return;
+  }
+  restoreNormalViewAfterMaintenance();
   try {
     PUBLIC_ANNOUNCEMENTS = readPublicAnnouncementCache();
     renderPublicAnnouncements();
-  } catch (e) {}
-  schedulePublicAnnouncementRefresh(1200);
+  } catch (_) {}
+  schedulePublicAnnouncementRefresh(250);
+}
+
+function startMaintenanceWatcher() {
+  if (_maintenanceWatcherTimer) clearInterval(_maintenanceWatcherTimer);
+  _maintenanceWatcherTimer = setInterval(async function(){
+    const result = await checkMaintenanceMode();
+    if (result.active) {
+      if (!MAINTENANCE_ACTIVE || JSON.stringify(result.data || {}) !== JSON.stringify(MAINTENANCE_DATA || {})) {
+        showMaintenanceScreen(result.data);
+      }
+    } else if (MAINTENANCE_ACTIVE) {
+      restoreNormalViewAfterMaintenance();
+      schedulePublicAnnouncementRefresh(250);
+    }
+  }, 60000);
+}
+
+// 將主選單移出 app-container，避免父層 overflow:hidden 在部分瀏覽器／手機環境裁切 fixed 元素。
+document.addEventListener('DOMContentLoaded', async function(){
+  const nav = document.getElementById('memberNav');
+  if (nav && nav.parentElement !== document.body) document.body.appendChild(nav);
+
+  // 維護閘門優先於登入、公告與所有 GAS 請求。
+  // maintenance.json 由 Vercel 靜態提供，因此 GAS 故障時仍能顯示維護資訊。
+  const maintenance = await checkMaintenanceMode();
+  if (maintenance.active) {
+    showMaintenanceScreen(maintenance.data);
+  } else {
+    restoreNormalViewAfterMaintenance();
+  }
+
+  // 公告不得和登入搶同一個 /api/gas 請求。維護期間不呼叫公告 API。
+  if (!maintenance.active) {
+    try {
+      PUBLIC_ANNOUNCEMENTS = readPublicAnnouncementCache();
+      renderPublicAnnouncements();
+    } catch (e) {}
+    schedulePublicAnnouncementRefresh(1200);
+  }
+
+  startMaintenanceWatcher();
 });
 
 function setMemberNavVisible(visible){
@@ -1560,6 +1721,10 @@ function showLoginError(msg) {
 }
 
 async function doLogin() {
+  if (MAINTENANCE_ACTIVE) {
+    showMaintenanceScreen(MAINTENANCE_DATA || {});
+    return;
+  }
   if (_loginInProgress) return;
   _loginInProgress = true;
 
