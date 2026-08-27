@@ -5,6 +5,6 @@
   "message": "因應系統維護作業，目前會員服務暫停使用。",
   "startTime": "2026-08-27T18:00:00+08:00",
   "estimatedEndTime": "2026-08-28T11:00:00+08:00",
-  "allowLogin": false,
+  "allowLogin": false, //false=🟢正常營運，true=🔧 進入維護模式
   "note": "實際恢復時間將視系統測試狀況調整。"
 }
