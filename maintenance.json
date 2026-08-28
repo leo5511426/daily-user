@@ -1,8 +1,8 @@
 {
-  "enabled": true,
+  "enabled": false,
   "level": "maintenance",
-  "title": "伺服器移機維護",
-  "message": "親愛的會員您好：伺服器已可正常連線，伺服器正在執行開機作業，請稍待幾分鐘後再重新整理此頁面來使用行動會員服務，若仍持續無法連線，請聯絡客服中心",
+  "title": "公告主旨",
+  "message": "公告內文",
   "startTime": "",
   "estimatedEndTime": "",
   "allowLogin": false
