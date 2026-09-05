@@ -875,14 +875,26 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 
 <div class="settings-section-title">🔐 安全與登入管理</div>
 <div class="card" style="padding:15px;">
-<button class="btn" onclick="openSessionManager()" style="background:#7c3aed; font-size:1em; padding:14px;">📱 目前登入裝置管理</button>
+<div id="securityOverview" style="font-size:0.9em;line-height:1.65;margin-bottom:10px;opacity:0.8;">登入裝置與安全活動可在此查看。</div>
+<button class="btn" onclick="openSessionManager()" style="background:#7c3aed; font-size:1em; padding:14px;">📱 登入裝置與安全活動</button>
 </div>
 
 <div class="settings-section-title">👤 個人資料管理</div>
-<div class="card" style="display: flex; flex-direction: column; gap: 10px; padding: 15px;">
-<button class="btn" onclick="updateProfileName()" style="background:#0284c7; font-size: 1em; padding: 14px;">修改真實姓名</button>
-<button class="btn" onclick="updateUserPassword()" style="background:#0f172a; font-size: 1em; padding: 14px;">變更登入密碼</button>
-<button class="btn" onclick="triggerLogout()" style="background:var(--red); font-size: 1em; padding: 14px;">安全登出系統</button>
+<div class="card" style="display:flex;flex-direction:column;gap:10px;padding:15px;">
+<div style="display:grid;grid-template-columns:minmax(110px,0.8fr) 2fr;gap:8px 12px;font-size:0.92em;line-height:1.55;">
+  <div style="opacity:.58;">會員 ID</div><div id="profileId" style="font-weight:bold;word-break:break-all;">—</div>
+  <div style="opacity:.58;">真實姓名</div><div id="profileName">—</div>
+  <div style="opacity:.58;">電子郵件地址</div><div id="profileEmail">未填寫</div>
+  <div style="opacity:.58;">手機號碼</div><div id="profileMobilePhone">未填寫</div>
+  <div style="opacity:.58;">出生年月日</div><div id="profileBirthDate">未填寫</div>
+  <div style="opacity:.58;">通訊地址</div><div id="profileMailingAddress" style="word-break:break-word;">未填寫</div>
+  <div style="opacity:.58;">住家電話</div><div id="profileHomePhone">未填寫</div>
+</div>
+<div style="height:1px;background:var(--border);opacity:.55;margin:4px 0;"></div>
+<button class="btn" onclick="updateProfileName()" style="background:#0284c7; font-size:1em; padding:14px;">修改真實姓名</button>
+<button class="btn" onclick="updateProfileDetails()" style="background:#0f766e; font-size:1em; padding:14px;">編輯其他個人資料</button>
+<button class="btn" onclick="updateUserPassword()" style="background:#0f172a; font-size:1em; padding:14px;">變更登入密碼</button>
+<button class="btn" onclick="triggerLogout()" style="background:var(--red); font-size:1em; padding:14px;">安全登出系統</button>
 </div>
 
 <div class="settings-section-title">🎨 介面與顯示設定</div>
@@ -1223,40 +1235,175 @@ const FEATURES = {
   CUSTOMER_SERVICE:  'CUSTOMER_SERVICE'
 };
 
-window.openSessionManager = async function() {
-  Swal.fire({ title: '載入裝置清單...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+let _securitySessionCache = [];
+let _securityEventCache = [];
+let _securityEventTypes = [];
+
+function securityEventLabel(type) {
+  const map = {
+    LOGIN_SUCCESS:'登入成功',
+    LOGIN_FAILED:'登入失敗',
+    PASSWORD_CHANGED:'登入密碼已變更',
+    EMAIL_CHANGED:'電子郵件已變更',
+    PHONE_CHANGED:'手機號碼已變更',
+    LEGAL_CONSENT:'法律文件同意',
+    BNPL_ENABLED:'已啟用先享後付',
+    ACCOUNT_LOCKED:'帳戶已鎖定',
+    ADMIN_ACTION:'管理員帳戶操作',
+    LOGOUT:'安全登出',
+    SESSION_TERMINATED:'工作階段已終止'
+  };
+  return map[String(type || '').trim().toUpperCase()] || String(type || '安全活動');
+}
+
+function securityEventIcon(type) {
+  const map = {
+    LOGIN_SUCCESS:'✅', LOGIN_FAILED:'⚠️', PASSWORD_CHANGED:'🔐',
+    EMAIL_CHANGED:'✉️', PHONE_CHANGED:'📱', LEGAL_CONSENT:'📋',
+    BNPL_ENABLED:'💳', ACCOUNT_LOCKED:'🔒', ADMIN_ACTION:'🛡️',
+    LOGOUT:'🚪', SESSION_TERMINATED:'⛔'
+  };
+  return map[String(type || '').trim().toUpperCase()] || '🔎';
+}
+
+function maskSessionId(id) {
+  const v = String(id || '');
+  if (!v) return '—';
+  return '••••••••' + v.slice(-8);
+}
+
+window.openSessionDetail = function(index) {
+  const s = _securitySessionCache[index];
+  if (!s) return;
+  const isCurrent = s.sessionId === currentSessionId;
+  const statusLabel = isCurrent ? '目前裝置' : (s.isActive ? '登入中' : '已登出');
+  const html =
+    '<div style="text-align:left;line-height:1.75;font-size:.9em;">' +
+    '<div><b>狀態：</b>' + escapeHTML(statusLabel) + '</div>' +
+    '<div><b>裝置名稱：</b>' + escapeHTML(s.deviceName || '—') + '</div>' +
+    '<div><b>平台：</b>' + escapeHTML(s.platform || '—') + '</div>' +
+    '<div><b>瀏覽器：</b>' + escapeHTML(s.browser || '—') + '</div>' +
+    '<div><b>登入時間：</b>' + escapeHTML(s.loginTime || '—') + '</div>' +
+    '<div><b>最近活動：</b>' + escapeHTML(s.lastActivityTime || '—') + '</div>' +
+    '<div><b>登出時間：</b>' + escapeHTML(s.logoutTime || '—') + '</div>' +
+    '<div><b>國家／地區：</b>' + escapeHTML(s.country || '—') + '</div>' +
+    '<div><b>城市：</b>' + escapeHTML(s.city || '—') + '</div>' +
+    '<div><b>IP 位址：</b>' + escapeHTML(s.ipAddress || '—') + '</div>' +
+    '<div><b>Session ID：</b>' + escapeHTML(maskSessionId(s.sessionId)) + '</div>' +
+    '<div><b>Log ID：</b>' + escapeHTML(s.logId || '—') + '</div>' +
+    '<div><b>備註：</b>' + escapeHTML(s.remark || '—') + '</div>' +
+    '<div style="margin-top:8px;"><b>User Agent</b><div style="word-break:break-all;opacity:.72;">' + escapeHTML(s.userAgent || '—') + '</div></div>' +
+    '</div>';
+  Swal.fire({
+    title:'📱 登入裝置詳細資訊',
+    html:html,
+    confirmButtonColor:'var(--pink)',
+    confirmButtonText:'返回',
+    width:'min(92vw,680px)'
+  }).then(function(){ openSessionManager('devices'); });
+};
+
+window.openSecurityEventDetail = function(index) {
+  const e = _securityEventCache[index];
+  if (!e) return;
+  const html =
+    '<div style="text-align:left;line-height:1.75;font-size:.9em;">' +
+    '<div><b>事件：</b>' + escapeHTML(securityEventLabel(e.eventType)) + '</div>' +
+    '<div><b>事件類型：</b>' + escapeHTML(e.eventType || '—') + '</div>' +
+    '<div><b>發生時間：</b>' + escapeHTML(e.eventTime || '—') + '</div>' +
+    '<div><b>詳細資訊：</b>' + escapeHTML(e.detail || '—') + '</div>' +
+    '<div><b>IP 位址：</b>' + escapeHTML(e.ipAddress || '—') + '</div>' +
+    '<div><b>Session ID：</b>' + escapeHTML(maskSessionId(e.sessionId)) + '</div>' +
+    '<div><b>Event ID：</b>' + escapeHTML(e.eventId || '—') + '</div>' +
+    '<div style="margin-top:8px;"><b>User Agent</b><div style="word-break:break-all;opacity:.72;">' + escapeHTML(e.userAgent || '—') + '</div></div>' +
+    '</div>';
+  Swal.fire({
+    title:securityEventIcon(e.eventType) + ' 安全活動詳細資訊',
+    html:html,
+    confirmButtonColor:'var(--pink)',
+    confirmButtonText:'返回',
+    width:'min(92vw,680px)'
+  }).then(function(){ openSessionManager('events'); });
+};
+
+window.openSessionManager = async function(initialTab) {
+  Swal.fire({ title:'載入登入裝置與安全活動...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
   let res;
   try {
-    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getSessions', uid: store.userData.id }) });
+    const raw = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body:JSON.stringify({ action:'getSessions', uid:store.userData.id, sessionId:currentSessionId })
+    });
     res = await raw.json();
-  } catch(e) { Swal.fire('錯誤', '無法取得裝置清單，請稍後再試。', 'error'); return; }
+  } catch(e) {
+    Swal.fire('錯誤','無法取得登入與安全資料，請稍後再試。','error');
+    return;
+  }
   Swal.close();
-  if (!res || !res.success) { Swal.fire('錯誤', res ? res.message : '無回應', 'error'); return; }
+  if (!res || !res.success) {
+    Swal.fire('錯誤', res ? res.message : '無回應', 'error');
+    return;
+  }
 
-  const sessions = res.sessions || [];
-  if (sessions.length === 0) { Swal.fire({ title: '📱 登入裝置', text: '目前無登入記錄。', icon: 'info', confirmButtonColor: 'var(--pink)' }); return; }
+  _securitySessionCache = Array.isArray(res.sessions) ? res.sessions : [];
+  _securityEventCache = Array.isArray(res.securityEvents) ? res.securityEvents : [];
+  _securityEventTypes = Array.isArray(res.securityEventTypes) ? res.securityEventTypes : [];
 
-  const listHtml = sessions.map(function(s) {
-    const isCurrent = s.sessionId === currentSessionId;
-    const isActive = s.isActive;
-    const statusColor = isCurrent ? '#10b981' : (isActive ? '#3b82f6' : '#94a3b8');
-    const statusLabel = isCurrent ? '目前裝置' : (isActive ? '登入中' : '已登出');
-    const terminateBtn = (!isCurrent && isActive)
-      ? '<button onclick="terminateSessionById(\'' + s.sessionId + '\')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:transparent;color:var(--red);border:1px solid var(--red);font-size:0.8em;font-weight:bold;cursor:pointer;">🔴 終止此裝置</button>'
-      : '';
-    return '<div style="background:' + (isCurrent ? 'rgba(16,185,129,0.07)' : 'rgba(0,0,0,0.03)') + ';border:1px solid ' + (isCurrent ? '#10b981' : 'var(--border)') + ';border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-      + '<span style="font-size:0.78em;color:#aaa;font-weight:normal;">....' + s.sessionId.slice(-8) + '</span>'
-      + '<span style="background:' + statusColor + ';color:#fff;font-size:0.72em;padding:2px 8px;border-radius:6px;">' + statusLabel + '</span>'
-      + '</div>'
-      + '<div style="font-size:0.82em;margin-bottom:2px;">登入時間：' + (s.loginTime || '—') + '</div>'
-      + '<div style="font-size:0.82em;opacity:0.65;">最後活動：' + (s.lastActivityTime || '—') + '</div>'
-      + terminateBtn + '</div>';
-  }).join('');
+  const current = _securitySessionCache.find(function(x){ return x.sessionId === currentSessionId; });
+  const overview = document.getElementById('securityOverview');
+  if (overview) {
+    overview.innerHTML = current
+      ? '目前裝置：<b>' + escapeHTML((current.deviceName || current.platform || '未知裝置') + (current.browser ? ' · ' + current.browser : '')) + '</b><br>最近活動：' + escapeHTML(current.lastActivityTime || current.loginTime || '—')
+      : '登入裝置與安全活動可在此查看。';
+  }
+
+  const tab = initialTab === 'events' ? 'events' : 'devices';
+  const deviceHtml = _securitySessionCache.length
+    ? _securitySessionCache.map(function(s, i) {
+        const isCurrent = s.sessionId === currentSessionId;
+        const statusLabel = isCurrent ? '目前裝置' : (s.isActive ? '登入中' : '已登出');
+        const subtitle = [s.deviceName || s.platform || '未知裝置', s.browser || ''].filter(Boolean).join(' · ');
+        const location = [s.city, s.country].filter(Boolean).join(' · ');
+        const terminateBtn = (!isCurrent && s.isActive)
+          ? '<button onclick="event.stopPropagation();terminateSessionById(' + JSON.stringify(String(s.sessionId || '')) + ')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:transparent;color:var(--red);border:1px solid var(--red);font-weight:bold;cursor:pointer;">終止此裝置</button>'
+          : '';
+        return '<div onclick="openSessionDetail(' + i + ')" style="cursor:pointer;background:' + (isCurrent ? 'rgba(16,185,129,.07)' : 'rgba(0,0,0,.03)') + ';border:1px solid ' + (isCurrent ? '#10b981' : 'var(--border)') + ';border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;">'
+          + '<div style="display:flex;justify-content:space-between;gap:8px;"><b>' + escapeHTML(subtitle) + '</b><span style="font-size:.72em;white-space:nowrap;">' + escapeHTML(statusLabel) + '</span></div>'
+          + (location ? '<div style="opacity:.6;font-size:.82em;margin-top:3px;">' + escapeHTML(location) + '</div>' : '')
+          + '<div style="opacity:.72;font-size:.82em;margin-top:5px;">最近活動：' + escapeHTML(s.lastActivityTime || s.loginTime || '—') + '</div>'
+          + '<div style="opacity:.48;font-size:.75em;margin-top:2px;">點擊查看詳細資訊</div>'
+          + terminateBtn + '</div>';
+      }).join('')
+    : '<div style="opacity:.55;padding:20px;text-align:center;">目前無登入記錄。</div>';
+
+  const eventHtml = _securityEventCache.length
+    ? _securityEventCache.map(function(e, i) {
+        return '<div onclick="openSecurityEventDetail(' + i + ')" style="cursor:pointer;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;text-align:left;background:rgba(0,0,0,.02);">'
+          + '<div style="display:flex;justify-content:space-between;gap:8px;"><b>' + securityEventIcon(e.eventType) + ' ' + escapeHTML(securityEventLabel(e.eventType)) + '</b><span style="opacity:.55;font-size:.75em;white-space:nowrap;">' + escapeHTML(e.eventTime || '—') + '</span></div>'
+          + '<div style="opacity:.72;font-size:.82em;margin-top:5px;">' + escapeHTML(e.detail || e.eventType || '') + '</div>'
+          + '<div style="opacity:.48;font-size:.75em;margin-top:2px;">點擊查看詳細資訊</div>'
+          + '</div>';
+      }).join('')
+    : '<div style="opacity:.55;padding:20px;text-align:center;">目前無安全活動紀錄。</div>';
+
+  const eventTypeNote = _securityEventTypes.length
+    ? '<div style="font-size:.72em;opacity:.45;margin-top:10px;">系統支援事件：' + escapeHTML(_securityEventTypes.map(securityEventLabel).join('、')) + '</div>'
+    : '';
+
+  const html = '<div style="text-align:left;">'
+    + '<div style="display:flex;gap:8px;margin-bottom:12px;">'
+    + '<button id="secTabDevices" type="button" style="flex:1;padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:bold;background:' + (tab === 'devices' ? '#7c3aed' : '#e5e7eb') + ';color:' + (tab === 'devices' ? '#fff' : '#374151') + ';" onclick="openSessionManager(\'devices\')">登入裝置</button>'
+    + '<button id="secTabEvents" type="button" style="flex:1;padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:bold;background:' + (tab === 'events' ? '#7c3aed' : '#e5e7eb') + ';color:' + (tab === 'events' ? '#fff' : '#374151') + ';" onclick="openSessionManager(\'events\')">安全活動</button>'
+    + '</div>'
+    + '<div style="max-height:58vh;overflow-y:auto;padding-right:3px;">' + (tab === 'devices' ? deviceHtml : eventHtml + eventTypeNote) + '</div>'
+    + '</div>';
 
   Swal.fire({
-    title: '📱 目前登入裝置', confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉', width: '90%',
-    html: '<div style="text-align:left;max-height:55vh;overflow-y:auto;padding-right:4px;">' + listHtml + '</div>'
+    title:'🔐 登入裝置與安全活動',
+    html:html,
+    confirmButtonColor:'var(--pink)',
+    confirmButtonText:'關閉',
+    width:'min(94vw,760px)'
   });
 };
 
@@ -2454,6 +2601,18 @@ function render() {
   document.getElementById('uName').innerText = u.name || '會員';
   document.getElementById('uBal').innerText = (Number(u.bal) || 0).toLocaleString();
 
+  const profileText = function(id, value, emptyText) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = (value !== undefined && value !== null && String(value).trim() !== '') ? String(value) : (emptyText || '未填寫');
+  };
+  profileText('profileId', u.id, '—');
+  profileText('profileName', u.name, '—');
+  profileText('profileEmail', u.email);
+  profileText('profileMobilePhone', u.mobilePhone);
+  profileText('profileBirthDate', u.birthDate);
+  profileText('profileMailingAddress', u.mailingAddress);
+  profileText('profileHomePhone', u.homePhone);
+
   let totalBnpl = (u.bnplLimit !== undefined && u.bnplLimit !== '') ? Number(u.bnplLimit) : 500;
   if (!Number.isFinite(totalBnpl)) totalBnpl = 500;
   let outstanding = 0;
@@ -3647,6 +3806,91 @@ if (res.aborted) return;
 if (res && res.success) { store.userData.name = finalizedName; render(); await Swal.fire({ title: '基本資料變更成功！', text: `您的姓名已成功更新為：${finalizedName}`, icon: 'success', confirmButtonColor: 'var(--pink)', confirmButtonText: '確定' }); } 
 else if (res) showCustomerServiceAlert("基本資料更新失敗", res.message || "伺服器更新拒絕，請稍後再試");
 } catch (e) { showCustomerServiceAlert("錯誤", "網路連線異常，無法完成基本資料變更"); }
+}
+
+async function updateProfileDetails() {
+  if (store && store.userData && store.userData.isSuspended) return Swal.fire('提示','停權期間無法修改個人資料','warning');
+  if (!store || !store.userData) return;
+  const u = store.userData;
+  const { value: values } = await Swal.fire({
+    title:'編輯其他個人資料',
+    html:
+      '<div style="text-align:left;font-size:.88em;margin-bottom:4px;opacity:.65;">會員 ID（唯讀）</div>'
+      + '<input class="swal2-input" value="' + escapeHTML(String(u.id || '')) + '" disabled style="width:100%;margin:4px 0 12px;">'
+      + '<div style="text-align:left;font-size:.88em;opacity:.65;">電子郵件地址</div>'
+      + '<input id="pf_email" class="swal2-input" type="email" value="' + escapeHTML(String(u.email || '')) + '" placeholder="非必填" style="width:100%;margin:4px 0 12px;">'
+      + '<div style="text-align:left;font-size:.88em;opacity:.65;">手機號碼</div>'
+      + '<input id="pf_mobile" class="swal2-input" type="tel" value="' + escapeHTML(String(u.mobilePhone || '')) + '" placeholder="非必填" style="width:100%;margin:4px 0 12px;">'
+      + '<div style="text-align:left;font-size:.88em;opacity:.65;">出生年月日</div>'
+      + '<input id="pf_birth" class="swal2-input" type="date" value="' + escapeHTML(String(u.birthDate || '')) + '" style="width:100%;margin:4px 0 12px;">'
+      + '<div style="text-align:left;font-size:.88em;opacity:.65;">通訊地址</div>'
+      + '<input id="pf_address" class="swal2-input" type="text" value="' + escapeHTML(String(u.mailingAddress || '')) + '" placeholder="非必填" style="width:100%;margin:4px 0 12px;">'
+      + '<div style="text-align:left;font-size:.88em;opacity:.65;">住家電話</div>'
+      + '<input id="pf_home" class="swal2-input" type="tel" value="' + escapeHTML(String(u.homePhone || '')) + '" placeholder="非必填" style="width:100%;margin:4px 0;">',
+    showCancelButton:true,
+    confirmButtonColor:'#0f766e',
+    cancelButtonText:'取消',
+    confirmButtonText:'儲存資料',
+    focusConfirm:false,
+    preConfirm: function() {
+      const email = document.getElementById('pf_email').value.trim();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        Swal.showValidationMessage('電子郵件格式不正確');
+        return false;
+      }
+      return {
+        email: email,
+        mobilePhone: document.getElementById('pf_mobile').value.trim(),
+        birthDate: document.getElementById('pf_birth').value,
+        mailingAddress: document.getElementById('pf_address').value.trim(),
+        homePhone: document.getElementById('pf_home').value.trim()
+      };
+    }
+  });
+  if (!values) return;
+
+  const noChange =
+    String(u.email || '') === values.email &&
+    String(u.mobilePhone || '') === values.mobilePhone &&
+    String(u.birthDate || '') === values.birthDate &&
+    String(u.mailingAddress || '') === values.mailingAddress &&
+    String(u.homePhone || '') === values.homePhone;
+  if (noChange) return Swal.fire('沒有變更','資料內容與目前相同。','info');
+
+  const confirm = await Swal.fire({
+    title:'確認儲存個人資料？',
+    text:'電子郵件、手機、生日、地址與住家電話皆為非必填，可隨時再次修改。',
+    icon:'question',
+    showCancelButton:true,
+    confirmButtonColor:'#0f766e',
+    cancelButtonText:'返回',
+    confirmButtonText:'確認儲存'
+  });
+  if (!confirm.isConfirmed) return;
+
+  const res = await fetchWithQueue(SCRIPT_URL, {
+    action:'updateProfile',
+    uid:u.id,
+    pw:savedPw,
+    newName:u.name,
+    email:values.email,
+    mobilePhone:values.mobilePhone,
+    birthDate:values.birthDate,
+    mailingAddress:values.mailingAddress,
+    homePhone:values.homePhone,
+    sessionId:currentSessionId,
+    updateContactFields:true
+  }, '個人資料更新中...');
+  if (res.aborted) return;
+  if (!res || !res.success) return showCustomerServiceAlert('基本資料更新失敗', (res && res.message) || '伺服器更新拒絕，請稍後再試');
+
+  u.email = values.email;
+  u.mobilePhone = values.mobilePhone;
+  u.birthDate = values.birthDate;
+  u.mailingAddress = values.mailingAddress;
+  u.homePhone = values.homePhone;
+  render();
+  await Swal.fire({title:'個人資料已更新',text:'新的聯絡與基本資料已儲存。',icon:'success',confirmButtonColor:'var(--pink)'});
 }
 
 async function updateUserPassword() {
