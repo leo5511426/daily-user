@@ -547,6 +547,33 @@ body.performance-lite .track-glass-card {
   background: var(--card) !important;
 }
 
+
+/* ============================================================
+   小佑的日常生活｜品牌服務總覽 / 共用頁尾
+   ============================================================ */
+.brand-service-entry{
+  margin:28px 0 8px;padding:24px;border:1px solid var(--border);
+  border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.78),rgba(255,240,246,.54));
+  box-shadow:0 14px 38px rgba(236,72,153,.08);position:relative;overflow:hidden;
+}
+body[data-theme="dark"] .brand-service-entry{background:linear-gradient(135deg,rgba(30,41,59,.82),rgba(62,31,50,.72));}
+.brand-service-entry::after{content:"SERVICES";position:absolute;right:18px;top:14px;font-size:.62em;letter-spacing:.22em;opacity:.26;}
+.brand-service-entry h3{margin:4px 0 8px;font-size:1.28em;color:var(--text);}
+.brand-service-entry p{margin:0 0 16px;line-height:1.75;font-size:.86em;opacity:.72;font-weight:normal;}
+.brand-service-entry a{display:inline-flex;align-items:center;gap:8px;color:var(--pink);font-weight:900;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px;}
+.brand-footer{margin:42px 0 8px;padding:28px 0 10px;border-top:1px solid var(--border);color:var(--text);}
+.brand-footer-kicker{font-size:.65em;letter-spacing:.2em;color:var(--pink);margin-bottom:8px;}
+.brand-footer-title{font-size:1.35em;font-weight:900;margin-bottom:5px;}
+.brand-footer-tagline{font-size:.82em;opacity:.62;font-weight:normal;line-height:1.7;margin-bottom:22px;}
+.brand-footer-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding:18px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.brand-footer-group b{display:block;font-size:.72em;color:var(--pink);letter-spacing:.06em;margin-bottom:9px;}
+.brand-footer-link{display:block;width:max-content;max-width:100%;color:var(--text);text-decoration:none;font-size:.78em;line-height:1.9;opacity:.78;cursor:pointer;font-weight:normal;}
+.brand-footer-link:hover{color:var(--pink);opacity:1;}
+.brand-footer-meta{display:flex;justify-content:space-between;gap:14px;align-items:flex-end;margin-top:16px;font-size:.7em;line-height:1.7;opacity:.54;font-weight:normal;}
+.login-brand-links{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:.78em;}
+.login-brand-links a,.login-brand-links span{color:var(--pink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+@media(max-width:640px){.brand-footer-grid{grid-template-columns:1fr 1fr;gap:18px 14px}.brand-footer-meta{display:block}.brand-footer-meta>div+div{margin-top:7px}}
+@media(max-width:420px){.brand-footer-grid{grid-template-columns:1fr}}
 </style>
 
 <style id="ui-preference-layer">
@@ -690,8 +717,10 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <button class="btn" onclick="doLogin()">登入</button>
 
 <button class="btn" style="background:var(--blue); margin-top:15px; font-size:1em; padding:15px;" onclick="openGuestTicketForm()">🎧 忘記密碼/無法登入？聯絡客服</button>
-<div style="text-align:center; margin-top:20px; font-size:0.78em; color:#aaa;">
-<span onclick="openLegalCenter()" style="cursor:pointer; color:var(--pink); text-decoration:underline;">📋 查看使用條款與隱私權政策</span>
+<div class="login-brand-links">
+  <a href="/services">服務總覽</a>
+  <span onclick="openUnifiedSupport('行動會員')">統一客服中心</span>
+  <span onclick="openLegalCenter()">使用條款與隱私權政策</span>
 </div>
 </div>
 
@@ -816,6 +845,41 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <div class="shortcut-item" id="sc_6" onclick="openTab(6)">🎧 客服設定</div>
 <div class="shortcut-item" id="sc_7" onclick="openTab(7)">🔔 通知中心</div>
 </div>
+
+<section class="brand-service-entry" aria-label="小佑的日常生活服務總覽">
+  <div style="font-size:.7em;color:var(--pink);font-weight:900;letter-spacing:.08em;">EXPLORE OUR SERVICES</div>
+  <h3>不只會員服務，還有更多日常便利。</h3>
+  <p>前往服務總覽，認識小佑的日常生活目前提供的行動會員與生活代繳費服務。</p>
+  <a href="/services">探索所有服務 →</a>
+</section>
+
+<footer class="brand-footer">
+  <div class="brand-footer-kicker">XIAOYOU DAILY LIFE</div>
+  <div class="brand-footer-title">小佑的日常生活</div>
+  <div class="brand-footer-tagline">讓日常生活，多一點便利。從會員服務到生活代繳，以清楚的資訊連結每一項日常需求。</div>
+  <div class="brand-footer-grid">
+    <div class="brand-footer-group">
+      <b>探索服務</b>
+      <a class="brand-footer-link" href="/services">服務總覽</a>
+      <a class="brand-footer-link" href="/">行動會員</a>
+      <a class="brand-footer-link" href="https://daily-pay-user.vercel.app/" target="_blank" rel="noopener">生活代繳費</a>
+    </div>
+    <div class="brand-footer-group">
+      <b>協助與支援</b>
+      <span class="brand-footer-link" onclick="openUnifiedSupport('行動會員')">統一客服中心</span>
+      <span class="brand-footer-link" onclick="openCustomerServiceModal()">會員客服</span>
+    </div>
+    <div class="brand-footer-group">
+      <b>法律與政策</b>
+      <span class="brand-footer-link" onclick="openLegalCenter()">行動會員法律資訊</span>
+      <span class="brand-footer-link">各服務法律文件獨立適用</span>
+    </div>
+  </div>
+  <div class="brand-footer-meta">
+    <div>目前所在服務：小佑的日常生活行動會員</div>
+    <div>© 2026 小佑的日常生活</div>
+  </div>
+</footer>
 </div>
 
 <div id="p1" class="page">
@@ -870,7 +934,7 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 
 <button class="btn" onclick="openCustomerServiceModal()" style="background:var(--blue); margin-bottom:20px; padding:20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); display:flex; flex-direction:column; align-items:center; gap:6px;">
 <span style="font-size:1.15em;">🎧 線上客服與問題通報</span>
-<span style="font-size:0.75em; opacity:0.85; font-weight:normal;">聯絡管理員 / 售後通報 / 系統問題回報</span>
+<span style="font-size:0.75em; opacity:0.85; font-weight:normal;">行動會員 / 生活代繳費 / 售後 / 系統問題</span>
 </button>
 
 <div class="settings-section-title">🔐 安全與登入管理</div>
@@ -935,14 +999,33 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 </div>
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
-<div class="footer-info">
-<div>版本：iOS 26 Liquid Glass V1（功能邏輯維持原版）</div>
-<div>更新日期：2026-08-17</div>
-<div>© 2026 小佑的日常生活行動會員.<br>All Rights Reserved.</div>
-<span class="about-link" onclick="showAboutSystem()">關於本系統</span>
-<span style="margin: 0 6px; opacity:0.4;">｜</span>
-<span class="about-link" onclick="openLegalCenter()">📋 法律資訊</span>
-</div>
+<footer class="brand-footer">
+  <div class="brand-footer-kicker">XIAOYOU DAILY LIFE</div>
+  <div class="brand-footer-title">小佑的日常生活</div>
+  <div class="brand-footer-tagline">讓日常生活，多一點便利。各項服務使用獨立帳號、資料與服務規範，並共用統一客服入口。</div>
+  <div class="brand-footer-grid">
+    <div class="brand-footer-group">
+      <b>探索服務</b>
+      <a class="brand-footer-link" href="/services">服務總覽</a>
+      <a class="brand-footer-link" href="/">行動會員</a>
+      <a class="brand-footer-link" href="https://daily-pay-user.vercel.app/" target="_blank" rel="noopener">生活代繳費</a>
+    </div>
+    <div class="brand-footer-group">
+      <b>協助與支援</b>
+      <span class="brand-footer-link" onclick="openUnifiedSupport('行動會員')">統一客服中心</span>
+      <span class="brand-footer-link" onclick="showAboutSystem()">關於本系統</span>
+    </div>
+    <div class="brand-footer-group">
+      <b>法律與政策</b>
+      <span class="brand-footer-link" onclick="openLegalCenter()">行動會員法律資訊</span>
+      <span class="brand-footer-link">各服務法律文件獨立適用</span>
+    </div>
+  </div>
+  <div class="brand-footer-meta">
+    <div>版本：iOS 26 Liquid Glass V1<br>目前所在服務：小佑的日常生活行動會員</div>
+    <div>© 2026 小佑的日常生活</div>
+  </div>
+</footer>
 </div>
 
 <div id="p7" class="page">
@@ -1202,6 +1285,11 @@ document.addEventListener('DOMContentLoaded', async function(){
   }
 
   startMaintenanceWatcher();
+
+  const supportHint = new URLSearchParams(location.search).get('support');
+  if (supportHint && !maintenance.active) {
+    setTimeout(() => openGuestTicketForm(supportHint), 650);
+  }
 });
 
 function setMemberNavVisible(visible){
@@ -3952,47 +4040,69 @@ async function triggerLogout() {
   location.reload();
 }
 
-window.openGuestTicketForm = function() {
+window.openGuestTicketForm = function(serviceHint = '行動會員') {
+const normalizedHint =
+  serviceHint === 'payment' ? '生活代繳費' :
+  serviceHint === 'membership' ? '行動會員' :
+  serviceHint === 'general' ? '其他服務' :
+  serviceHint;
+
 Swal.fire({
-title: '訪客 / 登入問題通報',
+title: '小佑的日常生活｜訪客客服',
 html: `
-                   <div style="text-align:left; font-size:14px;">
-                       <p style="color:#666; font-size:13px; margin-bottom:10px;">無法登入或忘記密碼？請填寫下方表單，管理員將盡快與您聯繫。</p>
-                       <label style="color:var(--text);">您的稱呼 / 帳號：</label>
-                       <input type="text" id="g_tic_name" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請輸入您記得的帳號或姓名">
-                       <label style="color:var(--text);">聯絡方式：</label>
-                       <input type="text" id="g_tic_contact" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請填寫手機號碼或 Email">
-                       <label style="color:var(--text);">詳細問題描述：</label>
-                       <textarea id="g_tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:80px;" placeholder="請描述您遇到的問題..."></textarea>
-                   </div>
-               `,
-showCancelButton: true, confirmButtonText: '送出通報', confirmButtonColor: '#3b82f6', cancelButtonText: '取消',
-preConfirm: () => {
-let name = document.getElementById('g_tic_name').value.trim();
-let contact = document.getElementById('g_tic_contact').value.trim();
-let desc = document.getElementById('g_tic_desc').value.trim();
-if(!name || !contact || !desc) { Swal.showValidationMessage('請確實填寫所有欄位'); return false; }
-return { name, contact, desc };
+  <div style="text-align:left; font-size:14px;">
+    <p style="color:#666; font-size:13px; margin-bottom:12px; line-height:1.6;">沒有行動會員帳號也可以提交客服案件。請勿填寫登入密碼、PIN 或其他驗證碼。</p>
+    <label style="color:var(--text);">所屬服務：</label>
+    <select id="g_tic_service" class="swal2-select" style="width:100%; margin:5px 0 10px 0;">
+      <option value="行動會員">行動會員</option>
+      <option value="生活代繳費">生活代繳費</option>
+      <option value="其他服務">其他服務 / 不確定</option>
+    </select>
+    <label style="color:var(--text);">問題分類：</label>
+    <select id="g_tic_cat" class="swal2-select" style="width:100%; margin:5px 0 10px 0;">
+      <option>登入與帳號</option><option>帳務與繳費</option><option>訂單與售後</option><option>系統問題</option><option>其他問題</option>
+    </select>
+    <label style="color:var(--text);">您的稱呼：</label>
+    <input type="text" id="g_tic_name" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="請輸入姓名或方便稱呼">
+    <label style="color:var(--text);">回覆聯絡方式：</label>
+    <input type="text" id="g_tic_contact" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="手機號碼或 Email">
+    <label style="color:var(--text);">主旨：</label>
+    <input type="text" id="g_tic_subject" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="簡短說明需要協助的事情">
+    <label style="color:var(--text);">詳細問題描述：</label>
+    <textarea id="g_tic_desc" class="swal2-textarea" style="width:100%; margin:5px 0; height:90px;" placeholder="請描述遇到的問題；請勿提供密碼或 PIN。"></textarea>
+  </div>
+`,
+showCancelButton:true,confirmButtonText:'送出客服案件',confirmButtonColor:'#3b82f6',cancelButtonText:'取消',
+didOpen:()=>{const service=document.getElementById('g_tic_service');if(service&&['行動會員','生活代繳費','其他服務'].includes(normalizedHint))service.value=normalizedHint;},
+preConfirm:()=>{
+  const service=document.getElementById('g_tic_service').value;
+  const category=document.getElementById('g_tic_cat').value;
+  const name=document.getElementById('g_tic_name').value.trim();
+  const contact=document.getElementById('g_tic_contact').value.trim();
+  const subject=document.getElementById('g_tic_subject').value.trim();
+  const desc=document.getElementById('g_tic_desc').value.trim();
+  if(!service||!category||!name||!contact||!subject||!desc){Swal.showValidationMessage('請確實填寫所有欄位');return false;}
+  return {service,category,name,contact,subject,desc};
 }
-}).then(async (res) => {
-if (res.isConfirmed) {
-let fullDesc = "【訪客通報】\n聯絡方式: " + res.value.contact + "\n問題描述: " + res.value.desc;
-let fetchRes = await fetchWithQueue(
-    SCRIPT_URL,
-    {
-        action: 'submitTicket',
-        uid: '訪客_' + res.value.name,
-        category: '系統問題',
-        subCategory: '登入障礙/忘記密碼',
-        subject: '訪客登入問題通報',
-        message: fullDesc
-    },
-    "通報送出中..."
-);
-if (fetchRes && fetchRes.success) Swal.fire('通報成功', '您的問題已送出！管理員會盡快透過您留下的聯絡方式協助您。', 'success');
-else Swal.fire('錯誤', '通報失敗，請稍後再試。', 'error');
+}).then(async(res)=>{
+if(res.isConfirmed){
+const fullDesc="【統一客服／訪客案件】\n所屬服務: "+res.value.service+"\n回覆聯絡方式: "+res.value.contact+"\n問題描述: "+res.value.desc;
+const fetchRes=await fetchWithQueue(SCRIPT_URL,{
+  action:'submitTicket',uid:'訪客_'+res.value.name,category:res.value.service,
+  subCategory:res.value.category,subject:res.value.subject,message:fullDesc
+},"客服案件送出中...");
+if(fetchRes&&fetchRes.success) Swal.fire('案件已送出','客服將依您留下的聯絡方式回覆。涉及帳務或個人資料時，可能需要另外進行身分核對。','success');
+else Swal.fire('錯誤',(fetchRes&&fetchRes.message)||'通報失敗，請稍後再試。','error');
 }
 });
+}
+
+window.openUnifiedSupport = function(serviceHint = '行動會員') {
+  if (store && store.userData && store.userData.id) {
+    openCustomerServiceModal();
+    return;
+  }
+  openGuestTicketForm(serviceHint);
 }
 
 window.openCustomerServiceModal = function() {
@@ -4026,6 +4136,7 @@ html: `
                            <option>訂單問題</option>
                            <option>帳務問題</option>
                            <option>系統問題</option>
+                           <option>生活代繳費</option>
                            <option>我想問的問題分類不在這上面</option>
                        </select>
                        <label style="color:var(--text);">問題子分類：</label><input type="text" id="tic_subcat" class="swal2-input" style="width:100%; margin:5px 0 10px 0;" placeholder="例如: 忘記密碼、商品損壞">
