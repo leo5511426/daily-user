@@ -47,7 +47,7 @@
     const range = document.getElementById('uiFontSizeRange');
     const readout = document.getElementById('uiFontSizeReadout');
     if (range) range.value = String(fontPx);
-    if (readout) readout.textContent = '目前：' + fontPx + ' px';
+    if (readout) readout.textContent = '目前：' + fontPx + ' 像素';
     const th = document.getElementById('uiThemeSelect'); if (th) th.value = pref.theme;
     const mo = document.getElementById('uiMotionSelect'); if (mo) mo.value = pref.motion;
   }
@@ -104,23 +104,23 @@
     const html = `
       <div style="text-align:left;display:grid;gap:14px;">
         <div class="ui-pref-card">
-          <div class="ui-pref-title">🔤 字型大小</div>
+          <div class="ui-pref-title">字型大小</div>
           <div class="ui-pref-help">和登入後設定使用完全相同的 14～28 px 滑桿。你可以直接調整，畫面會立即預覽。</div>
           <input id="${rangeId}" class="ui-pref-range" type="range" min="14" max="28" step="1" value="${pref.fontSizePx}">
-          <div id="guestFontSizeReadout" class="ui-font-readout">目前：${pref.fontSizePx} px</div>
+          <div id="guestFontSizeReadout" class="ui-font-readout">目前：${pref.fontSizePx} 像素</div>
         </div>
         <div class="ui-pref-card">
-          <div class="ui-pref-title">🌓 顯示模式</div>
+          <div class="ui-pref-title">顯示模式</div>
           <div class="ui-pref-help">淺色適合一般日間瀏覽；深色較適合低光環境；跟隨系統會使用裝置目前的外觀。</div>
           <select id="guestTheme" class="swal2-select" style="width:100%;">
-            <option value="light">☀️ 淺色</option><option value="dark">🌙 深色</option><option value="system">🌓 跟隨系統</option>
+            <option value="light">淺色</option><option value="dark">深色</option><option value="system">跟隨系統</option>
           </select>
         </div>
         <div class="ui-pref-card">
-          <div class="ui-pref-title">✨ 動態效果</div>
-          <div class="ui-pref-help">完整動態保留 Liquid Glass 的互動感；簡化動態降低轉場與動畫；關閉動態則停用非必要動畫。</div>
+          <div class="ui-pref-title">動態效果</div>
+          <div class="ui-pref-help">完整動態保留必要的頁面轉場與操作回饋；簡化動態會降低非必要動畫；關閉動態則停用非必要動畫。</div>
           <select id="guestMotion" class="swal2-select" style="width:100%;">
-            <option value="full">✨ 完整動態</option><option value="reduced">🌿 簡化動態</option><option value="off">🚫 關閉動態</option>
+            <option value="full">完整動態</option><option value="reduced">簡化動態</option><option value="off">關閉動態</option>
           </select>
         </div>
       </div>`;
@@ -128,7 +128,7 @@
       title:'⚙️ 介面設定',
       html,
       showCancelButton:true,
-      confirmButtonText:'💾 儲存設定',
+      confirmButtonText:'儲存設定',
       cancelButtonText:'取消',
       showCloseButton:true,
       confirmButtonColor:'var(--pink)',
@@ -239,7 +239,6 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
 :root { 
 --bg: #ffffff; --text: #000; --pink: #FF8FA3; --accent: #FF8FA3; --card: #f5f5f5; 
@@ -376,7 +375,7 @@ body .sync-indicator[data-sync-state="error"] { color:#b91c1c !important; }
 .footer-info { text-align: center; margin-top: 40px; padding-bottom: 20px; font-size: 0.75em; color: #888; line-height: 1.6; }
 .footer-info .about-link { color: var(--pink); text-decoration: underline; cursor: pointer; margin-top: 10px; display: inline-block; }
 
-/* 📋 法律資訊中心 Overlay */
+/* 法律資訊中心 Overlay */
 .legal-mask { display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:1000; flex-direction:column; overflow:hidden; }
 .legal-header { position:sticky; top:0; background:var(--bg); padding:15px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); z-index:1; flex-shrink:0; }
 .legal-back-btn { background:none; border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:20px; font-size:0.8em; font-weight:bold; cursor:pointer; width:auto; margin:0; }
@@ -557,7 +556,7 @@ body.performance-lite .track-glass-card {
   box-shadow:0 14px 38px rgba(236,72,153,.08);position:relative;overflow:hidden;
 }
 body[data-theme="dark"] .brand-service-entry{background:linear-gradient(135deg,rgba(30,41,59,.82),rgba(62,31,50,.72));}
-.brand-service-entry::after{content:"SERVICES";position:absolute;right:18px;top:14px;font-size:.62em;letter-spacing:.22em;opacity:.26;}
+.brand-service-entry::after{content:"服務總覽";position:absolute;right:18px;top:14px;font-size:.62em;letter-spacing:.22em;opacity:.26;}
 .brand-service-entry h3{margin:4px 0 8px;font-size:1.28em;color:var(--text);}
 .brand-service-entry p{margin:0 0 16px;line-height:1.75;font-size:.86em;opacity:.72;font-weight:normal;}
 .brand-service-entry a{display:inline-flex;align-items:center;gap:8px;color:var(--pink);font-weight:900;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px;}
@@ -657,6 +656,318 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
   body[data-theme="dark"] .ui-pref-help,
   body[data-theme="dark"] .ui-font-readout { color: #cbd5e1; }
 }
+
+/* ============================================================
+   2026 小佑的日常生活｜正式品牌介面覆蓋層
+   僅調整視覺，不更動頁面切換、API 或資料流程
+   ============================================================ */
+:root{
+  --bg:#fffafa;
+  --text:#40363a;
+  --pink:#b95878;
+  --accent:#b95878;
+  --card:#fffefe;
+  --border:#ead5dc;
+  --nav:#fffafb;
+  --red:#b8666d;
+  --green:#6f8976;
+  --orange:#a98257;
+  --blue:#8f7480;
+  --brand-soft:#f8e9ee;
+  --brand-soft-2:#f4dfe6;
+  --brand-muted:#7c6d72;
+  --brand-strong:#8f3f5b;
+}
+[data-theme='dark']{
+  --bg:#1b1719;
+  --text:#f5edef;
+  --pink:#d287a0;
+  --accent:#c97592;
+  --card:#262024;
+  --border:#46353c;
+  --nav:#211b1e;
+  --red:#c47c82;
+  --green:#8ba392;
+  --orange:#b59a71;
+  --blue:#aa8f99;
+  --brand-soft:#302429;
+  --brand-soft-2:#3a2930;
+  --brand-muted:#c3b4b9;
+  --brand-strong:#e0a0b5;
+}
+html{
+  background:#f3eaed !important;
+  min-height:100%;
+}
+[data-theme='dark'] html{background:#151214 !important;}
+body{
+  background:transparent !important;
+  color:var(--text);
+  font-weight:650;
+  transition:background-color .16s ease,color .16s ease;
+}
+.app-container{
+  background:var(--bg) !important;
+  border-left:1px solid var(--border) !important;
+  border-right:1px solid var(--border) !important;
+  box-shadow:0 6px 26px rgba(86,57,68,.08) !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.page{
+  padding:28px 20px 102px;
+  scroll-behavior:auto;
+}
+.page>h2,.header-container h2{
+  color:var(--text);
+  letter-spacing:-.02em;
+  font-weight:800;
+}
+.glass-hero{
+  margin:0 0 24px !important;
+  padding:0 0 18px !important;
+  border:0 !important;
+  border-bottom:1px solid var(--border) !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  overflow:visible !important;
+}
+.glass-hero::before,.glass-hero::after{display:none !important;}
+.glass-kicker{display:none !important;}
+.glass-hero-title{
+  font-size:1.75em !important;
+  line-height:1.2 !important;
+  letter-spacing:-.035em !important;
+  color:var(--brand-strong) !important;
+  margin:0 0 7px !important;
+}
+.glass-hero-subtitle{
+  margin:0 !important;
+  color:var(--brand-muted) !important;
+  font-size:.86em !important;
+  line-height:1.65 !important;
+  font-weight:500 !important;
+}
+.card{
+  background:var(--card) !important;
+  border:1px solid var(--border) !important;
+  border-radius:12px !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+#hList .card,#ntList .card,#ntListPreview .card,#invList .card{
+  background:transparent !important;
+  border:0 !important;
+  border-bottom:1px solid var(--border) !important;
+  border-radius:0 !important;
+  margin-bottom:0 !important;
+  padding:15px 4px !important;
+}
+#orderListPreview .card{
+  background:var(--brand-soft) !important;
+  border-color:var(--brand-soft-2) !important;
+  border-radius:10px !important;
+}
+#oList>.card{
+  border-radius:12px !important;
+  box-shadow:none !important;
+}
+.btn{
+  border-radius:10px !important;
+  background:var(--accent) !important;
+  color:#fff !important;
+  box-shadow:none !important;
+  font-weight:750 !important;
+  transition:background-color .15s ease,opacity .15s ease,transform .12s ease !important;
+}
+.btn:hover{background:var(--brand-strong) !important;}
+.btn:active{transform:translateY(1px) !important;}
+.btn[style*="background:var(--blue)"],
+.btn[style*="background:#3b82f6"],
+.btn[style*="background:#7c3aed"],
+.btn[style*="background:#0284c7"],
+.btn[style*="background:#0f766e"],
+button[style*="background:#8b5cf6"]{
+  background:var(--accent) !important;
+}
+input,select,textarea,.sort-select{
+  background:var(--card) !important;
+  border:1px solid var(--border) !important;
+  color:var(--text) !important;
+  border-radius:9px !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  outline:none !important;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 2px rgba(185,88,120,.10) !important;
+}
+.shortcut-grid{gap:8px;}
+.shortcut-item{
+  background:transparent !important;
+  border:1px solid var(--border) !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  padding:11px 6px !important;
+}
+.shortcut-item:hover{background:var(--brand-soft) !important;}
+.coupon-tabs,.loan-tabs{
+  background:transparent !important;
+  border:0 !important;
+  border-bottom:1px solid var(--border) !important;
+  border-radius:0 !important;
+  padding:0 !important;
+}
+.coupon-tab,.loan-tab{
+  border-radius:0 !important;
+  color:var(--brand-muted) !important;
+  border-bottom:2px solid transparent;
+}
+.coupon-tab.active,.loan-tab.active{
+  background:transparent !important;
+  color:var(--brand-strong) !important;
+  border-bottom-color:var(--accent) !important;
+  box-shadow:none !important;
+}
+.pill-tab{
+  background:transparent !important;
+  border:1px solid var(--border) !important;
+  border-radius:999px !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.pill-tab.active{
+  background:var(--brand-soft) !important;
+  color:var(--brand-strong) !important;
+  border-color:var(--accent) !important;
+  box-shadow:none !important;
+}
+.nav-bar{
+  bottom:0 !important;
+  width:100% !important;
+  height:72px !important;
+  border:0 !important;
+  border-top:1px solid var(--border) !important;
+  border-radius:0 !important;
+  background:var(--nav) !important;
+  box-shadow:0 -4px 16px rgba(78,52,61,.05) !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.nav-item{
+  color:var(--brand-muted) !important;
+  font-size:.72em !important;
+  font-weight:650 !important;
+  transition:color .14s ease,background-color .14s ease !important;
+}
+.nav-item.active{
+  color:var(--brand-strong) !important;
+  background:var(--brand-soft) !important;
+}
+.nav-icon{display:none !important;}
+.swal2-container{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.swal2-popup{
+  background:var(--card) !important;
+  color:var(--text) !important;
+  border:1px solid var(--border) !important;
+  border-radius:14px !important;
+  box-shadow:0 18px 50px rgba(70,45,54,.14) !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.swal2-confirm{background:var(--accent) !important;}
+.swal2-cancel{background:#81767a !important;}
+.chat-container{
+  background:var(--brand-soft) !important;
+  border:1px solid var(--border) !important;
+  border-radius:12px !important;
+}
+.chat-input-area{background:var(--card) !important;border-color:var(--border) !important;}
+.msg-user{background:var(--accent) !important;}
+.msg-admin{background:var(--card) !important;border-color:var(--border) !important;color:var(--text) !important;}
+.legal-doc-card{
+  border-radius:9px !important;
+  box-shadow:none !important;
+}
+.brand-service-entry{
+  background:var(--brand-soft) !important;
+  border:1px solid var(--brand-soft-2) !important;
+  border-radius:12px !important;
+  box-shadow:none !important;
+}
+.brand-service-entry::after{
+  content:"服務總覽" !important;
+  color:var(--brand-muted);
+}
+.brand-footer{
+  border-color:var(--border) !important;
+}
+.brand-footer-kicker{
+  color:var(--brand-strong) !important;
+  letter-spacing:.04em !important;
+}
+.brand-footer-grid{border-color:var(--border) !important;}
+body .sync-indicator{
+  background:var(--card) !important;
+  color:var(--brand-muted) !important;
+  border:1px solid var(--border) !important;
+  border-radius:9px !important;
+  box-shadow:0 8px 20px rgba(70,45,54,.08) !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.lp-step.running{
+  animation:none !important;
+  background:var(--brand-soft) !important;
+  border-left-color:var(--accent) !important;
+}
+.lp-progress-fill{
+  background:var(--accent) !important;
+  box-shadow:none !important;
+}
+#loginView h1{
+  color:var(--brand-strong) !important;
+  font-size:1.75em !important;
+  letter-spacing:-.025em;
+}
+.settings-section-title{
+  color:var(--brand-strong) !important;
+  gap:0 !important;
+}
+.app-overlay-dialog{
+  border-radius:12px !important;
+  box-shadow:0 20px 50px rgba(30,20,24,.22) !important;
+}
+.app-overlay-close{
+  background:var(--brand-soft) !important;
+  color:var(--brand-strong) !important;
+}
+.app-overlay-body.light{background:var(--bg) !important;}
+@media(max-width:560px){
+  .page{padding:22px 16px 94px;}
+  .shortcut-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .brand-footer-grid{grid-template-columns:1fr !important;}
+  .header-container{gap:10px;align-items:flex-start;}
+  .header-container h2{font-size:1.35em;}
+  .sort-select{width:auto;max-width:46%;margin:0;}
+  .swal2-popup{width:min(94vw,32rem) !important;}
+  .chat-container{height:min(64vh,34rem);}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto !important;animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+}
 </style>
 </head>
 <body data-theme="light">
@@ -706,7 +1017,7 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <h1 style="color:var(--pink); text-align:center;">小佑的日常生活行動會員</h1>
 <div id="guestAnnouncementSection" style="display:none; width:100%; margin:0 0 14px 0;">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
-    <div style="font-size:1em;color:var(--pink);font-weight:bold;display:flex;align-items:center;gap:6px;">📢 最新公告</div>
+    <div style="font-size:1em;color:var(--pink);font-weight:bold;display:flex;align-items:center;gap:6px;">最新公告</div>
     <span onclick="openAnnouncementCenter('login')" style="font-size:.78em;color:var(--blue);cursor:pointer;font-weight:bold;white-space:nowrap;">查看完整公告 ›</span>
   </div>
   <div id="guestAnnouncementList"></div>
@@ -716,7 +1027,7 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <label class="pwd-toggle-container"><input type="checkbox" id="showPwdCheck" onchange="togglePasswordVisibility()"> 顯示輸入的密碼</label>
 <button class="btn" onclick="doLogin()">登入</button>
 
-<button class="btn" style="background:var(--blue); margin-top:15px; font-size:1em; padding:15px;" onclick="openGuestTicketForm()">🎧 忘記密碼/無法登入？聯絡客服</button>
+<button class="btn" style="background:var(--blue); margin-top:15px; font-size:1em; padding:15px;" onclick="openGuestTicketForm()">忘記密碼／無法登入？聯絡客服</button>
 <div class="login-brand-links">
   <a href="/services">服務總覽</a>
   <span onclick="openUnifiedSupport('行動會員')">統一客服中心</span>
@@ -788,7 +1099,7 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
             cursor:pointer;
         "
     >
-        👉 我要申訴
+        我要申訴
     </button>
 
 </div>
@@ -796,16 +1107,16 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
 
 <div id="p0" class="page" style="display:block;">
-<div class="glass-hero"><div class="glass-kicker">小佑的日常生活行動會員</div><div class="glass-hero-title">生活，一眼就能掌握。</div><p class="glass-hero-subtitle">訂單、帳務、發票與物流，都在這裡。</p></div>
+<div class="glass-hero"><div class="glass-kicker">小佑的日常生活行動會員</div><div class="glass-hero-title">會員首頁</div><p class="glass-hero-subtitle">快速查看近期通知、帳務、訂單與常用服務。</p></div>
 <div id="homeAnnouncementSection" style="display:none; margin-bottom:18px;">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
-    <div style="font-size:1.1em;color:var(--pink);font-weight:bold;display:flex;align-items:center;gap:6px;">📢 最新公告</div>
+    <div style="font-size:1.1em;color:var(--pink);font-weight:bold;display:flex;align-items:center;gap:6px;">最新公告</div>
     <span onclick="openAnnouncementCenter('home')" style="font-size:.82em;color:var(--blue);cursor:pointer;font-weight:bold;white-space:nowrap;">查看完整公告 ›</span>
   </div>
   <div id="homeAnnouncementList"></div>
 </div>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-<div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">🔔 最新通知</div>
+<div style="font-size:1.1em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">最新通知</div>
 <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(7)">查看全部 ➔</span>
 </div>
 <div id="ntTabBarHome" class="tab-bar-scroll"></div>
@@ -827,34 +1138,34 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <button class="btn" onclick="showQR()">顯示個人識別碼</button>
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
-<span style="font-size:1.05em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">📦 最新訂單動態</span>
+<span style="font-size:1.05em; color:var(--pink); font-weight:bold; display:flex; align-items:center; gap:6px;">最新訂單動態</span>
 <span style="font-size:0.85em; color:var(--blue); cursor:pointer; font-weight:bold;" onclick="openTab(2)">查看全部 ➔</span>
 </div>
 <div id="orderListPreview" style="margin-bottom: 15px;"></div>
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
-<span style="font-size:0.9em; opacity:0.7;">⚡ 常用功能捷徑</span>
+<span style="font-size:0.9em; opacity:0.7;">常用功能捷徑</span>
 <span style="font-size:0.8em; color:var(--pink); cursor:pointer;" onclick="customizeShortcuts()">[✏️ 自訂選單]</span>
 </div>
 <div class="shortcut-grid" id="shortcut_container">
-<div class="shortcut-item" id="sc_1" onclick="openTab(1)">📊 收支明細</div>
-<div class="shortcut-item" id="sc_2" onclick="openTab(2)">📦 訂單追蹤</div>
-<div class="shortcut-item" id="sc_3" onclick="openTab(3)">🤝 待還帳單</div>
-<div class="shortcut-item" id="sc_4" onclick="openTab(4)">🎟️ 我的優惠</div>
-<div class="shortcut-item" id="sc_5" onclick="openTab(5)">🧾 電子發票</div>
-<div class="shortcut-item" id="sc_6" onclick="openTab(6)">🎧 客服設定</div>
-<div class="shortcut-item" id="sc_7" onclick="openTab(7)">🔔 通知中心</div>
+<div class="shortcut-item" id="sc_1" onclick="openTab(1)">收支明細</div>
+<div class="shortcut-item" id="sc_2" onclick="openTab(2)">訂單追蹤</div>
+<div class="shortcut-item" id="sc_3" onclick="openTab(3)">待還帳單</div>
+<div class="shortcut-item" id="sc_4" onclick="openTab(4)">我的優惠</div>
+<div class="shortcut-item" id="sc_5" onclick="openTab(5)">電子發票</div>
+<div class="shortcut-item" id="sc_6" onclick="openTab(6)">客服設定</div>
+<div class="shortcut-item" id="sc_7" onclick="openTab(7)">通知中心</div>
 </div>
 
 <section class="brand-service-entry" aria-label="小佑的日常生活服務總覽">
-  <div style="font-size:.7em;color:var(--pink);font-weight:900;letter-spacing:.08em;">EXPLORE OUR SERVICES</div>
+  <div style="font-size:.7em;color:var(--pink);font-weight:900;letter-spacing:.08em;">服務總覽</div>
   <h3>不只會員服務，還有更多日常便利。</h3>
   <p>前往服務總覽，認識小佑的日常生活目前提供的行動會員與生活代繳費服務。</p>
   <a href="/services">探索所有服務 →</a>
 </section>
 
 <footer class="brand-footer">
-  <div class="brand-footer-kicker">XIAOYOU DAILY LIFE</div>
+  <div class="brand-footer-kicker">小佑的日常生活</div>
   <div class="brand-footer-title">小佑的日常生活</div>
   <div class="brand-footer-tagline">讓日常生活，多一點便利。從會員服務到生活代繳，以清楚的資訊連結每一項日常需求。</div>
   <div class="brand-footer-grid">
@@ -933,14 +1244,14 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <h2>會員中心與設定</h2>
 
 <button class="btn" onclick="openCustomerServiceModal()" style="background:var(--blue); margin-bottom:20px; padding:20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); display:flex; flex-direction:column; align-items:center; gap:6px;">
-<span style="font-size:1.15em;">🎧 線上客服與問題通報</span>
+<span style="font-size:1.15em;">線上客服與問題通報</span>
 <span style="font-size:0.75em; opacity:0.85; font-weight:normal;">行動會員 / 生活代繳費 / 售後 / 系統問題</span>
 </button>
 
 <div class="settings-section-title">🔐 安全與登入管理</div>
 <div class="card" style="padding:15px;">
 <div id="securityOverview" style="font-size:0.9em;line-height:1.65;margin-bottom:10px;opacity:0.8;">登入裝置與安全活動可在此查看。</div>
-<button class="btn" onclick="openSessionManager()" style="background:#7c3aed; font-size:1em; padding:14px;">📱 登入裝置與安全活動</button>
+<button class="btn" onclick="openSessionManager()" style="background:#7c3aed; font-size:1em; padding:14px;">登入裝置與安全活動</button>
 </div>
 
 <div class="settings-section-title">👤 個人資料管理</div>
@@ -961,46 +1272,46 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 <button class="btn" onclick="triggerLogout()" style="background:var(--red); font-size:1em; padding:14px;">安全登出系統</button>
 </div>
 
-<div class="settings-section-title">🎨 介面與顯示設定</div>
+<div class="settings-section-title">介面與顯示設定</div>
 <div class="card" style="padding:15px;">
-  <div class="ui-pref-title">🔤 字型大小</div>
+  <div class="ui-pref-title">字型大小</div>
   <div class="ui-pref-help">調整網站主要文字大小。範圍與原本登入後設定滑桿一致，14～28 px；改變後會立即預覽。</div>
   <input id="uiFontSizeRange" class="ui-pref-range" type="range" min="14" max="28" step="1" value="18"
     oninput="setInterfacePreference('fontSizePx', this.value, true)">
-  <div id="uiFontSizeReadout" class="ui-font-readout">目前：18 px</div>
+  <div id="uiFontSizeReadout" class="ui-font-readout">目前：18 像素</div>
 
-  <div class="ui-pref-title" style="margin-top:16px;">🌓 顯示模式</div>
+  <div class="ui-pref-title" style="margin-top:16px;">顯示模式</div>
   <div class="ui-pref-help">控制整個會員網站的明暗外觀；「跟隨系統」會依裝置的深色／淺色設定自動切換。</div>
   <select id="uiThemeSelect" class="sort-select" style="width:100%;"
     onchange="setInterfacePreference('theme', this.value, true)">
-    <option value="light">☀️ 淺色</option>
-    <option value="dark">🌙 深色</option>
-    <option value="system">🌓 跟隨系統</option>
+    <option value="light">淺色</option>
+    <option value="dark">深色</option>
+    <option value="system">跟隨系統</option>
   </select>
 
-  <div class="ui-pref-title" style="margin-top:16px;">✨ 動態效果</div>
+  <div class="ui-pref-title" style="margin-top:16px;">動態效果</div>
   <div class="ui-pref-help">控制卡片轉場、微動畫與互動效果。完整動態最華麗，簡化動態較省效能，關閉動態則停用非必要動畫。</div>
   <select id="uiMotionSelect" class="sort-select" style="width:100%;"
     onchange="setInterfacePreference('motion', this.value, true)">
-    <option value="full">✨ 完整動態</option>
-    <option value="reduced">🌿 簡化動態</option>
-    <option value="off">🚫 關閉動態</option>
+    <option value="full">完整動態</option>
+    <option value="reduced">簡化動態</option>
+    <option value="off">關閉動態</option>
   </select>
 
-  <div class="ui-pref-title" style="margin-top:16px;">🖥️ 版面寬度</div>
+  <div class="ui-pref-title" style="margin-top:16px;">版面寬度</div>
   <div class="ui-pref-help">切換較適合手機或桌面瀏覽器的內容寬度；不會修改訂單或其他功能。</div>
-  <button class="btn" onclick="toggleLayoutMode()">🖥️ 電腦版 / 📱 手機版 寬度切換</button>
+  <button class="btn" onclick="toggleLayoutMode()">電腦版／手機版寬度切換</button>
 
   <div style="display:flex;gap:8px;margin-top:10px;">
-    <button class="btn" style="background:#64748b;flex:1;" onclick="resetInterfacePreferences()">↩️ 恢復預設</button>
-    <button class="btn" style="background:#0f766e;flex:1;" onclick="saveInterfacePreferencesExplicit()">💾 儲存設定</button>
+    <button class="btn" style="background:#64748b;flex:1;" onclick="resetInterfacePreferences()">恢復預設</button>
+    <button class="btn" style="background:#0f766e;flex:1;" onclick="saveInterfacePreferencesExplicit()">儲存設定</button>
   </div>
   <div class="ui-pref-help" style="margin-top:8px;">設定會保存在目前裝置的瀏覽器；登入前後共用同一套介面偏好。</div>
 </div>
 <button class="btn" onclick="changeTheme()" style="background:#333; margin-bottom:10px;">外觀配色切換</button>
 
 <footer class="brand-footer">
-  <div class="brand-footer-kicker">XIAOYOU DAILY LIFE</div>
+  <div class="brand-footer-kicker">小佑的日常生活</div>
   <div class="brand-footer-title">小佑的日常生活</div>
   <div class="brand-footer-tagline">讓日常生活，多一點便利。各項服務使用獨立帳號、資料與服務規範，並共用統一客服入口。</div>
   <div class="brand-footer-grid">
@@ -1022,7 +1333,7 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
     </div>
   </div>
   <div class="brand-footer-meta">
-    <div>版本：iOS 26 Liquid Glass V1<br>目前所在服務：小佑的日常生活行動會員</div>
+    <div>版本：品牌介面版<br>目前所在服務：小佑的日常生活行動會員</div>
     <div>© 2026 小佑的日常生活</div>
   </div>
 </footer>
@@ -1030,7 +1341,7 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 
 <div id="p7" class="page">
 <div class="header-container">
-<h2 style="color:var(--pink); display:flex; align-items:center; gap:6px;">🔔 通知中心</h2>
+<h2 style="color:var(--pink); display:flex; align-items:center; gap:6px;">通知中心</h2>
 <select id="sortNt" class="sort-select" onchange="renderNotifications()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select>
 </div>
 <div id="ntTabBarCenter" class="tab-bar-scroll"></div>
@@ -1079,11 +1390,11 @@ body.ui-dynamic-full .lp-progress-fill { transition: width .6s cubic-bezier(.22,
 </div>
 </div>
 
-<!-- 📋 法律資訊中心（清單） -->
+<!-- 法律資訊中心（清單） -->
 <div id="legalCenterBox" class="legal-mask">
 <div class="legal-header">
 <button class="legal-back-btn" onclick="document.getElementById('legalCenterBox').style.display='none'">← 返回</button>
-<h3 style="margin:0; color:var(--pink); font-size:1em;">📋 法律資訊中心</h3>
+<h3 style="margin:0; color:var(--pink); font-size:1em;">法律資訊中心</h3>
 </div>
 <div class="legal-body">
 <p style="font-size:0.8em; color:#888; margin:0 0 15px 0;">點擊下方文件以閱讀完整內容。所有文件依最新版本顯示。</p>
@@ -1377,8 +1688,8 @@ window.openSessionDetail = function(index) {
     '<div><b>國家／地區：</b>' + escapeHTML(s.country || '—') + '</div>' +
     '<div><b>城市：</b>' + escapeHTML(s.city || '—') + '</div>' +
     '<div><b>IP 位址：</b>' + escapeHTML(s.ipAddress || '—') + '</div>' +
-    '<div><b>Session ID：</b>' + escapeHTML(maskSessionId(s.sessionId)) + '</div>' +
-    '<div><b>Log ID：</b>' + escapeHTML(s.logId || '—') + '</div>' +
+    '<div><b>工作階段識別碼：</b>' + escapeHTML(maskSessionId(s.sessionId)) + '</div>' +
+    '<div><b>紀錄識別碼：</b>' + escapeHTML(s.logId || '—') + '</div>' +
     '<div><b>備註：</b>' + escapeHTML(s.remark || '—') + '</div>' +
     '<div style="margin-top:8px;"><b>User Agent</b><div style="word-break:break-all;opacity:.72;">' + escapeHTML(s.userAgent || '—') + '</div></div>' +
     '</div>';
@@ -1401,8 +1712,8 @@ window.openSecurityEventDetail = function(index) {
     '<div><b>發生時間：</b>' + escapeHTML(e.eventTime || '—') + '</div>' +
     '<div><b>詳細資訊：</b>' + escapeHTML(e.detail || '—') + '</div>' +
     '<div><b>IP 位址：</b>' + escapeHTML(e.ipAddress || '—') + '</div>' +
-    '<div><b>Session ID：</b>' + escapeHTML(maskSessionId(e.sessionId)) + '</div>' +
-    '<div><b>Event ID：</b>' + escapeHTML(e.eventId || '—') + '</div>' +
+    '<div><b>工作階段識別碼：</b>' + escapeHTML(maskSessionId(e.sessionId)) + '</div>' +
+    '<div><b>事件識別碼：</b>' + escapeHTML(e.eventId || '—') + '</div>' +
     '<div style="margin-top:8px;"><b>User Agent</b><div style="word-break:break-all;opacity:.72;">' + escapeHTML(e.userAgent || '—') + '</div></div>' +
     '</div>';
   Swal.fire({
@@ -1583,12 +1894,7 @@ return { color: '#94a3b8', text: '😔 未中獎' };
 }
 
 function triggerConfetti() {
-var duration = 4 * 1000; var end = Date.now() + duration;
-(function frame() {
-confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff5252', '#2ecc71', '#3498db', '#f59e0b'] });
-confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff5252', '#2ecc71', '#3498db', '#f59e0b'] });
-if (Date.now() < end) { requestAnimationFrame(frame); }
-}());
+  // 品牌介面不使用粒子動畫；保留函式供既有流程呼叫。
 }
 
 window.revealRandCode = function(code) {
@@ -1684,7 +1990,7 @@ if (!isPrompting) Swal.close(); throw err;
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
 
-function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：iOS 26 Liquid Glass V1 + Track.TW<br>核心架構：Google Apps Script 驅動<br>UI/UX 設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
+function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div style="text-align: left; font-size: 0.9em; line-height: 1.6; color: var(--text);"><p><b>小佑的日常生活行動會員</b> 致力於提供最便捷的個人化整合服務。</p><p>本系統包含以下核心模組：</p><ul style="padding-left: 20px; margin-bottom: 15px;"><li>即時餘額與交易紀錄查詢</li><li>動態包裹與物流時間線追蹤</li><li>專屬優惠券核銷系統</li><li>全方位售後退貨退款與自助完成機制</li><li><b>電子發票載具與自動對獎通知功能</b></li><li><b>BNPL 2.0 先享後付分期系統</b></li></ul><p style="font-size: 0.85em; opacity: 0.7; border-top: 1px dashed var(--border); padding-top: 10px;">系統版本：品牌介面版 + Track.TW<br>核心架構：Google Apps Script 驅動<br>介面與操作設計：最佳化響應式行動介面</p></div>`, confirmButtonColor: 'var(--pink)', confirmButtonText: '關閉' }); }
 
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
@@ -2398,7 +2704,7 @@ function startSessionHeartbeat() {
 function customizeShortcuts() {
 let current = JSON.parse(localStorage.getItem('myShortcuts') || '[1,2,3,4,5,6,7]');
 let html = `<div style="text-align:left; font-size:15px;">`;
-let items = ["📊 收支明細","📦 訂單追蹤","🤝 待還帳單","🎟️ 我的優惠","🧾 電子發票","🎧 客服設定","🔔 通知中心"];
+let items = ["收支明細","訂單追蹤","待還帳單","我的優惠","電子發票","客服設定","通知中心"];
 items.forEach((item, index) => {
 let id = index + 1;
 html += `<label style="display:flex; align-items:center; gap:10px; margin:8px 0; cursor:pointer;"><input type="checkbox" class="sc-chk" value="${id}" ${current.includes(id)?'checked':''} style="width:20px; height:20px;"> ${item}</label>`;
@@ -2760,8 +3066,8 @@ const ORDER_TABS = [
 { key: 'cancelled', label: '不成立' }
 ];
 const ORDER_CATEGORY_COLOR = {
-shipping: '#f59e0b', receive: '#3b82f6', pickup: '#8b5cf6',
-done: '#2ecc71', return: '#ff5252', cancelled: '#94a3b8'
+shipping: '#a98257', receive: '#8f7480', pickup: '#9a7c8b',
+done: '#6f8a76', return: '#b66d75', cancelled: '#91898c'
 };
 
 const ORDER_LABEL_TO_KEY = {
