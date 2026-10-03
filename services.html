@@ -14,18 +14,77 @@ header{position:sticky;top:0;z-index:20;background:rgba(255,250,253,.88);backdro
 footer{border-top:1px solid var(--line);padding:44px 0 36px}.footer-title{font-size:1.2rem;font-weight:900}.footer-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:30px;margin-top:24px}.footer-grid b{display:block;color:var(--pink);font-size:.72rem;letter-spacing:.08em;margin-bottom:8px}.footer-grid a,.footer-grid span{display:block;text-decoration:none;color:var(--muted);font-size:.82rem;line-height:2}.footer-meta{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:.74rem}
 @media(max-width:760px){.nav-links{display:none}.hero{grid-template-columns:1fr;padding:70px 0 54px;gap:28px}.hero-note{border-left:0;border-top:1px solid var(--line);padding:22px 0 0}.section-head,.copy-grid{display:block}.section-head p{margin-top:16px}.service{grid-template-columns:46px 1fr}.service-actions{grid-column:2}.support-box{grid-template-columns:1fr}.support-actions{justify-content:flex-start}.footer-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:460px){.wrap{width:min(100% - 28px,1120px)}.service{grid-template-columns:1fr;gap:14px}.service-actions{grid-column:1}.footer-grid{grid-template-columns:1fr}.footer-meta{display:block}.footer-meta div+div{margin-top:8px}}
+
+/* 2026 品牌介面統一：成熟柔和粉色、減少模板感 */
+:root{
+  --pink:#b95878;
+  --ink:#40363a;
+  --muted:#7c6d72;
+  --line:#ead5dc;
+  --paper:#fffafa;
+  --soft:#f8e9ee;
+}
+body{background:var(--paper);color:var(--ink);}
+header{
+  background:rgba(255,250,250,.96);
+  backdrop-filter:none;
+  border-color:var(--line);
+}
+.brand{color:#8f3f5b;}
+.nav-links a:hover{color:var(--pink);}
+.hero{
+  padding-top:76px;
+  padding-bottom:62px;
+  grid-template-columns:1.15fr .85fr;
+}
+.kicker,.section-kicker{
+  letter-spacing:.04em;
+  color:#8f3f5b;
+  font-weight:800;
+}
+h1{
+  max-width:680px;
+  font-size:clamp(2.6rem,6vw,5.2rem);
+  line-height:1.04;
+  letter-spacing:-.045em;
+}
+.hero p,.hero-note,.section-head p,.service p,.copy-grid p,.support-box p{color:var(--muted);}
+.hero-note{border-color:var(--line);}
+.services,.about,.support,footer{border-color:var(--line);}
+.service{
+  grid-template-columns:72px 1fr minmax(240px,.55fr);
+  border-color:var(--line);
+}
+.primary{
+  background:var(--pink);
+  border-radius:9px;
+}
+.secondary{
+  border-color:var(--line);
+  border-radius:9px;
+  background:#fffefe;
+}
+.support-box{
+  background:var(--soft);
+  border-color:#efd7df;
+  border-radius:14px;
+}
+.footer-grid a,.footer-grid span,.footer-meta{color:var(--muted);}
+@media(max-width:760px){
+  .hero{padding-top:56px;}
+}
 </style>
 </head>
 <body>
 <header><div class="wrap nav"><div class="brand">小佑的日常生活</div><nav class="nav-links"><a href="#services">服務</a><a href="#about">關於我們</a><a href="#support">客服</a><a href="/">行動會員</a></nav></div></header>
 <main>
-<section class="wrap hero"><div><div class="kicker">WELCOME TO XIAOYOU DAILY LIFE</div><h1>讓日常生活，<br>多一點便利。</h1><p>從日常消費到生活代繳，探索小佑的日常生活目前提供的服務，讓資訊更清楚、日常事務更容易管理。</p><a class="cta" href="#services">探索我們的服務 →</a></div><div class="hero-note">這裡是「小佑的日常生活」公開服務總覽。各項服務使用獨立帳號、資料紀錄及服務規範；進入服務後，請依各平台的實際說明使用。</div></section>
-<section id="services" class="services"><div class="wrap"><div class="section-head"><div><div class="section-kicker">01 / OUR SERVICES</div><h2>探索我們的服務</h2></div><p>不同服務各自維持原有系統與資料，只透過品牌導覽與統一客服互相連結。</p></div>
-<article class="service"><div class="no">01 / MEMBERSHIP</div><div><h3>小佑的日常生活行動會員</h3><p>整合會員餘額、交易紀錄、訂單、帳單、優惠、發票與客服等功能，方便集中查看會員資訊。</p></div><div class="service-actions"><a class="primary" href="/">進入行動會員 →</a><a class="secondary" href="/?support=membership">會員服務客服</a></div></article>
-<article class="service"><div class="no">02 / PAYMENT</div><div><h3>小佑的日常生活代繳費平台</h3><p>提供預定代繳、處理進度與歷史繳費紀錄查詢，方便掌握日常費用的處理情況。</p></div><div class="service-actions"><a class="primary" href="https://daily-pay-user.vercel.app/">進入代繳費平台 →</a><a class="secondary" href="/?support=payment">代繳費服務客服</a></div></article>
+<section class="wrap hero"><div><div class="kicker">歡迎使用小佑的日常生活</div><h1>讓日常生活，<br>多一點便利。</h1><p>從日常消費到生活代繳，探索小佑的日常生活目前提供的服務，讓資訊更清楚、日常事務更容易管理。</p><a class="cta" href="#services">探索我們的服務 →</a></div><div class="hero-note">這裡是「小佑的日常生活」公開服務總覽。各項服務使用獨立帳號、資料紀錄及服務規範；進入服務後，請依各平台的實際說明使用。</div></section>
+<section id="services" class="services"><div class="wrap"><div class="section-head"><div><div class="section-kicker">一、服務項目</div><h2>探索我們的服務</h2></div><p>不同服務各自維持原有系統與資料，只透過品牌導覽與統一客服互相連結。</p></div>
+<article class="service"><div class="no">行動會員</div><div><h3>小佑的日常生活行動會員</h3><p>整合會員餘額、交易紀錄、訂單、帳單、優惠、發票與客服等功能，方便集中查看會員資訊。</p></div><div class="service-actions"><a class="primary" href="/">進入行動會員 →</a><a class="secondary" href="/?support=membership">會員服務客服</a></div></article>
+<article class="service"><div class="no">生活代繳費</div><div><h3>小佑的日常生活代繳費平台</h3><p>提供預定代繳、處理進度與歷史繳費紀錄查詢，方便掌握日常費用的處理情況。</p></div><div class="service-actions"><a class="primary" href="https://daily-pay-user.vercel.app/">進入代繳費平台 →</a><a class="secondary" href="/?support=payment">代繳費服務客服</a></div></article>
 <p style="margin:26px 0 0;color:var(--muted);font-size:.82rem;line-height:1.8;">各項服務的申請資格、服務範圍與使用規範，以各平台最新公告及法律文件為準。</p></div></section>
-<section id="about" class="about"><div class="wrap copy-grid"><div><div class="section-kicker">02 / ABOUT US</div><h2>關於小佑的日常生活</h2></div><p>我們希望透過清楚、便利的數位服務，協助使用者管理日常事務，並持續改善每一項服務的使用體驗。服務總覽只負責品牌介紹與導覽，不會合併各平台的會員帳號、交易資料或法律文件。</p></div></section>
-<section id="support" class="support"><div class="wrap"><div class="section-kicker">03 / CUSTOMER SUPPORT</div><div class="support-box"><div><h3>小佑的日常生活統一客服中心</h3><p>行動會員可在登入後使用既有會員客服；沒有行動會員帳號，也可以透過訪客客服表單提交行動會員或生活代繳費相關問題。</p></div><div class="support-actions"><a class="secondary" href="/">進入行動會員</a><a class="primary" href="/?support=general">使用訪客客服 →</a></div></div></div></section>
+<section id="about" class="about"><div class="wrap copy-grid"><div><div class="section-kicker">二、關於我們</div><h2>關於小佑的日常生活</h2></div><p>我們希望透過清楚、便利的數位服務，協助使用者管理日常事務，並持續改善每一項服務的使用體驗。服務總覽只負責品牌介紹與導覽，不會合併各平台的會員帳號、交易資料或法律文件。</p></div></section>
+<section id="support" class="support"><div class="wrap"><div class="section-kicker">三、客服支援</div><div class="support-box"><div><h3>小佑的日常生活統一客服中心</h3><p>行動會員可在登入後使用既有會員客服；沒有行動會員帳號，也可以透過訪客客服表單提交行動會員或生活代繳費相關問題。</p></div><div class="support-actions"><a class="secondary" href="/">進入行動會員</a><a class="primary" href="/?support=general">使用訪客客服 →</a></div></div></div></section>
 </main>
-<footer><div class="wrap"><div class="section-kicker">XIAOYOU DAILY LIFE</div><div class="footer-title">小佑的日常生活</div><div class="footer-grid"><div><b>品牌</b><span>讓日常生活，多一點便利。</span><span>服務總覽不儲存會員或代繳費帳務資料。</span></div><div><b>探索服務</b><a href="/">行動會員</a><a href="https://daily-pay-user.vercel.app/">生活代繳費</a></div><div><b>協助與政策</b><a href="/?support=general">統一客服中心</a><span>法律文件請於各服務平台查看</span></div></div><div class="footer-meta"><div>各平台帳號、資料與服務規範獨立</div><div>© 2026 小佑的日常生活</div></div></div></footer>
+<footer><div class="wrap"><div class="section-kicker">小佑的日常生活</div><div class="footer-title">小佑的日常生活</div><div class="footer-grid"><div><b>品牌</b><span>讓日常生活，多一點便利。</span><span>服務總覽不儲存會員或代繳費帳務資料。</span></div><div><b>探索服務</b><a href="/">行動會員</a><a href="https://daily-pay-user.vercel.app/">生活代繳費</a></div><div><b>協助與政策</b><a href="/?support=general">統一客服中心</a><span>法律文件請於各服務平台查看</span></div></div><div class="footer-meta"><div>各平台帳號、資料與服務規範獨立</div><div>© 2026 小佑的日常生活</div></div></div></footer>
 </body></html>
