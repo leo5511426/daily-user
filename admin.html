@@ -168,7 +168,152 @@ border-radius: 12px;
 
 </style>
 <!-- Track.TW V91.9: 狀態監控與 Orders.N 自動對應相容 -->
-<style>@media(max-width:560px){#return_audit_summary{grid-template-columns:1fr!important;}}</style></head>
+<style>@media(max-width:560px){#return_audit_summary{grid-template-columns:1fr!important;}}
+/* ============================================================
+   2026 小佑的日常生活｜行動會員管理後台品牌介面
+   僅調整視覺，不變更管理功能與資料流程
+   ============================================================ */
+:root{
+  --primary:#b95878;
+  --dark:#4a3c41;
+  --bg:#fffafa;
+  --accent:#9f4968;
+  --green:#6f8976;
+  --red:#b8666d;
+  --orange:#a98257;
+  --blue:#8f7480;
+  --admin-card:#fffefe;
+  --admin-soft:#f8e9ee;
+  --admin-border:#ead5dc;
+  --admin-muted:#7c6d72;
+}
+body{
+  background:var(--bg) !important;
+  color:var(--dark);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","Noto Sans TC",sans-serif;
+  font-weight:650;
+}
+.card{
+  background:var(--admin-card) !important;
+  border:1px solid var(--admin-border) !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
+}
+.menu-grid{gap:8px;}
+.m-btn{
+  background:transparent !important;
+  border:1px solid var(--admin-border) !important;
+  border-radius:9px !important;
+  color:var(--dark) !important;
+  padding:16px 12px !important;
+}
+.m-btn:hover{background:var(--admin-soft) !important;border-color:var(--accent) !important;}
+.full-btn{
+  background:var(--accent) !important;
+  color:#fff !important;
+  border-color:var(--accent) !important;
+}
+input,select,textarea{
+  background:#fffefe !important;
+  border:1px solid var(--admin-border) !important;
+  border-radius:8px !important;
+  color:var(--dark) !important;
+  box-shadow:none !important;
+  outline:none !important;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 2px rgba(185,88,120,.10) !important;
+}
+button{
+  background:var(--primary);
+  border-radius:8px !important;
+  box-shadow:none !important;
+}
+button:hover{filter:brightness(.96);}
+.modal{
+  background:rgba(50,38,43,.48) !important;
+  backdrop-filter:none !important;
+}
+.modal-content{
+  background:var(--admin-card) !important;
+  border:1px solid var(--admin-border) !important;
+  border-radius:12px !important;
+  box-shadow:0 18px 48px rgba(67,45,54,.14) !important;
+}
+.calc-box,.folder-hint{
+  background:var(--admin-soft) !important;
+  border-color:var(--admin-border) !important;
+  color:var(--dark) !important;
+}
+.folder-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px !important;
+}
+.folder-card{
+  background:transparent !important;
+  border:1px solid var(--admin-border) !important;
+  border-radius:9px !important;
+  padding:13px 14px !important;
+  min-height:0 !important;
+  box-shadow:none !important;
+  transform:none !important;
+}
+.folder-card:hover{
+  background:var(--admin-soft) !important;
+  border-color:var(--accent) !important;
+  box-shadow:none !important;
+  transform:none !important;
+}
+.folder-icon{display:none !important;}
+.folder-title{color:var(--dark) !important;font-size:14px !important;}
+.folder-desc{color:var(--admin-muted) !important;font-weight:500 !important;}
+.folder-breadcrumb button{
+  background:var(--admin-soft) !important;
+  color:var(--dark) !important;
+}
+.chat-container{
+  background:var(--admin-soft) !important;
+  border:1px solid var(--admin-border);
+  border-radius:10px !important;
+}
+.msg-user{
+  background:var(--admin-card) !important;
+  border-color:var(--admin-border) !important;
+}
+.msg-admin{background:var(--primary) !important;}
+.chat-input-area{background:var(--admin-card) !important;border-color:var(--admin-border) !important;}
+.swal2-popup{
+  border-radius:12px !important;
+  border:1px solid var(--admin-border) !important;
+  box-shadow:0 18px 50px rgba(67,45,54,.14) !important;
+}
+.swal2-confirm{background:var(--primary) !important;}
+.app-overlay-dialog{
+  border-radius:12px !important;
+  box-shadow:0 18px 50px rgba(20,15,17,.22) !important;
+}
+.app-overlay-header{border-color:var(--admin-border) !important;}
+.app-overlay-close{
+  background:var(--admin-soft) !important;
+  color:var(--dark) !important;
+}
+.brand-admin-footer{
+  border-color:var(--admin-border) !important;
+  color:var(--admin-muted) !important;
+}
+.brand-admin-footer a{color:var(--accent) !important;}
+@media(max-width:560px){
+  body{padding:10px !important;}
+  .card{padding:15px !important;}
+  .folder-grid{grid-template-columns:1fr !important;}
+  .modal-content{width:94% !important;padding:18px !important;}
+  input,select,button,textarea{font-size:15px !important;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
+}
+</style></head>
 <body>
 
 <div id="reader-modal"><div id="reader"></div><button onclick="stopScan()" style="background:var(--red); border-radius:0; margin:0; height:80px; font-size:20px; color:white; border:none; width:100%;">關閉相機</button></div>
@@ -246,7 +391,7 @@ border-radius: 12px;
 </div>
 
 <div class="card" id="suspend_section" style="border: 2px solid var(--red);">
-<h3 style="margin:0 0 10px; color: var(--red);">🚫 會員停權與限制管理</h3>
+<h3 style="margin:0 0 10px; color: var(--red);">會員停權與限制管理</h3>
 <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
 <h4 style="margin:0 0 5px 0; color:var(--dark);">🛑 執行會員停權</h4>
 <p style="font-size:0.8em; color:#666; margin-top:0;">被停權的會員可正常開啟系統唯讀查詢，但無法執行任何訂單或修改操作。</p>
@@ -277,7 +422,7 @@ border-radius: 12px;
 </div>
 
 <div class="card" id="cs_section" style="border: 2px solid #8b5cf6;">
-<h3 style="margin:0 0 10px; color: #8b5cf6;">🎧 客服與推播中心</h3>
+<h3 style="margin:0 0 10px; color: #8b5cf6;">客服與推播中心</h3>
 <p style="font-size:0.85em; color:#666; margin-top:0;">處理會員通報的工單，或主動發送站內通知信。</p>
 
 <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
@@ -285,7 +430,7 @@ border-radius: 12px;
 <select id="nt_mode" onchange="updateNotificationMode()">
 <option value="personal">👤 發送個人通知</option>
 <option value="broadcast">📢 群發所有會員</option>
-<option value="announcement">📣 發布公告</option>
+<option value="announcement">發布公告</option>
 </select>
 <div id="nt_uid_wrap"><select id="nt_uid"></select></div>
 <div id="nt_mode_hint" class="folder-hint" style="margin-top:8px;">選擇會員後發送個人站內通知。</div>
@@ -301,7 +446,7 @@ border-radius: 12px;
 </div>
 
 <div>
-<h4 style="margin:0 0 5px 0; color:var(--dark);">💬 客服工單回覆</h4>
+<h4 style="margin:0 0 5px 0; color:var(--dark);">客服工單回覆</h4>
 <select id="cs_ticket_select" onchange="renderTicketPanel()"></select>
 <div id="cs_ticket_panel" style="display:none; margin-top:10px;">
 <div style="background:#fff; border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:10px; font-size:14px; line-height:1.5;">
@@ -345,7 +490,7 @@ border-radius: 12px;
 </div>
 
 <div class="card" id="invoice_section" style="border: 2px solid #3b82f6;">
-<h3 style="margin:0 0 10px; color: #3b82f6;">🧾 電子發票管理中心</h3>
+<h3 style="margin:0 0 10px; color: #3b82f6;">電子發票管理中心</h3>
 <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
 <h4 style="margin:0 0 5px 0; color:var(--dark);">🏆 標記電子發票中獎</h4>
 <select id="inv_won_oid"></select>
@@ -516,7 +661,7 @@ border-radius: 12px;
 </div>
 
 <div class="card" id="ldms_section" style="border: 2px solid #0f172a;">
-<h3 style="margin:0 0 5px; color:var(--dark);">📋 法律文件管理系統 (LDMS)</h3>
+<h3 style="margin:0 0 5px; color:var(--dark);">法律文件管理</h3>
 <p style="font-size:0.8em; color:#666; margin:0 0 12px 0;">管理前台「法律資訊中心」所有已發布的法律文件。新增文件後狀態為「草稿」，填寫完整後點擊「發布」才會顯示於前台。</p>
 <button onclick="addLegalDocForm()" style="background:var(--dark); margin-bottom:12px;">＋ 新增法律文件</button>
 <div id="legal_doc_list"><p style="text-align:center; opacity:0.4; font-size:0.9em;">資料載入中...</p></div>
@@ -530,10 +675,10 @@ border-radius: 12px;
 <div class="m-btn" onclick="openWiz('redeem')">🎟️ 優惠核銷</div>
 <button class="m-btn full-btn" style="background:var(--orange); font-size:16px;" onclick="scrollToSection('cancel_section')">⚠️ 處理訂單取消 / 不成立</button>
 <button class="m-btn full-btn" style="background:var(--red); font-size:16px;" onclick="scrollToSection('return_section')">🚨 退貨 / 退款 審核中心</button>
-<button class="m-btn full-btn" style="background:var(--blue); font-size:16px;" onclick="scrollToSection('invoice_section')">🧾 電子發票管理中心</button>
-<button class="m-btn full-btn" style="background:#8b5cf6; font-size:16px;" onclick="scrollToSection('cs_section')">🎧 線上客服與推播中心</button>
-<button class="m-btn full-btn" style="background:#111827; font-size:16px;" onclick="scrollToSection('suspend_section')">🚫 會員停權與限制管理</button>
-<button class="m-btn full-btn" style="background:#0f172a; font-size:16px;" onclick="scrollToSection('ldms_section')">📋 法律文件管理系統 (LDMS)</button>
+<button class="m-btn full-btn" style="background:var(--blue); font-size:16px;" onclick="scrollToSection('invoice_section')">電子發票管理中心</button>
+<button class="m-btn full-btn" style="background:#8b5cf6; font-size:16px;" onclick="scrollToSection('cs_section')">線上客服與推播中心</button>
+<button class="m-btn full-btn" style="background:#111827; font-size:16px;" onclick="scrollToSection('suspend_section')">會員停權與限制管理</button>
+<button class="m-btn full-btn" style="background:#0f172a; font-size:16px;" onclick="scrollToSection('ldms_section')">法律文件管理</button>
 </div>
 
 <!-- ✨ BNPL 2.0 管理總管區塊 (新增) ✨ -->
@@ -626,17 +771,17 @@ title:'💰 帳務管理', desc:'餘額調整與還款入帳', children:[
 ]
 },
 member: {
-title:'👤 會員管理', desc:'停權、解除停權與限制', children:[
+title:'會員管理', desc:'停權、解除停權與限制', children:[
 {title:'🚫 停權與限制', desc:'執行或解除會員停權', action:()=>openAdminSection('suspend_section')}
 ]
 },
 system: {
-title:'⚙️ 系統管理', desc:'發票、優惠券、客服、法律文件', children:[
-{title:'🧾 電子發票', desc:'中獎登錄與手動開立', action:()=>openAdminSection('invoice_section')},
-{title:'🎟️ 發送優惠券', desc:'發送實體優惠券給會員', action:()=>openAdminSection('coupon_section')},
-{title:'🎧 客服／推播', desc:'客服工單與站內通知', action:()=>openAdminSection('cs_section')},
-{title:'📣 發布公告', desc:'發布登入前後皆可看到的公開公告', action:()=>{ openAdminSection('cs_section'); setTimeout(()=>{ const m=document.getElementById('nt_mode'); if(m){m.value='announcement'; updateNotificationMode();} },0); }},
-{title:'📋 法律文件', desc:'新增、修改、發布法律文件', action:()=>openAdminSection('ldms_section')}
+title:'系統管理', desc:'發票、優惠券、客服、法律文件', children:[
+{title:'電子發票', desc:'中獎登錄與手動開立', action:()=>openAdminSection('invoice_section')},
+{title:'發送優惠券', desc:'發送實體優惠券給會員', action:()=>openAdminSection('coupon_section')},
+{title:'客服／推播', desc:'客服工單與站內通知', action:()=>openAdminSection('cs_section')},
+{title:'發布公告', desc:'發布登入前後皆可看到的公開公告', action:()=>{ openAdminSection('cs_section'); setTimeout(()=>{ const m=document.getElementById('nt_mode'); if(m){m.value='announcement'; updateNotificationMode();} },0); }},
+{title:'法律文件', desc:'新增、修改、發布法律文件', action:()=>openAdminSection('ldms_section')}
 ]
 },
 tools: {
@@ -1261,8 +1406,8 @@ if (mode === 'announcement') {
   if (!subTagEl.value || ['專屬訊息','全體通知'].includes(subTagEl.value)) subTagEl.value = '系統公告';
   msgEl.placeholder = '公告內容（必填）：發布後登入前與登入後首頁皆可看到...';
   if (hintEl) hintEl.textContent = '公告會發布給所有人，未登入訪客與已登入會員首頁都能看到。';
-  if (titleEl) titleEl.textContent = '📣 發布公告';
-  if (sendBtn) { sendBtn.textContent = '📣 發布公告'; sendBtn.style.background = '#db2777'; }
+  if (titleEl) titleEl.textContent = '發布公告';
+  if (sendBtn) { sendBtn.textContent = '發布公告'; sendBtn.style.background = '#db2777'; }
 } else if (mode === 'broadcast') {
   uidEl.value = 'ALL';
   if (uidWrap) uidWrap.style.display = 'none';
@@ -2497,7 +2642,7 @@ const container = document.getElementById('legal_doc_list'); if (!container) ret
 if (LEGAL_DB.length === 0) { container.innerHTML = '<p style="text-align:center; opacity:0.4; font-size:0.9em; padding:10px 0;">目前尚無法律文件，請點擊「新增法律文件」開始建立。</p>'; return; }
 const statusStyle = { '已發布': 'background:var(--green);', '草稿': 'background:var(--orange);', '已停用': 'background:#94a3b8;' };
 container.innerHTML = LEGAL_DB.map(doc => {
-let pubBtn = doc.status !== '已發布' ? `<button onclick="setLegalDocStatus('${doc.docId}','已發布')" style="flex:1; background:var(--green); padding:8px; font-size:0.8em; border-radius:8px;">🚀 發布</button>` : '';
+let pubBtn = doc.status !== '已發布' ? `<button onclick="setLegalDocStatus('${doc.docId}','已發布')" style="flex:1; background:var(--green); padding:8px; font-size:0.8em; border-radius:8px;">發布</button>` : '';
 let disableBtn = doc.status === '已發布' ? `<button onclick="setLegalDocStatus('${doc.docId}','已停用')" style="flex:1; background:#94a3b8; padding:8px; font-size:0.8em; border-radius:8px;">⏸ 停用</button>` : '';
 let draftBtn = doc.status === '已停用' ? `<button onclick="setLegalDocStatus('${doc.docId}','草稿')" style="flex:1; background:var(--orange); padding:8px; font-size:0.8em; border-radius:8px;">↩ 轉草稿</button>` : '';
 return `
