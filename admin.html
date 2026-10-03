@@ -303,6 +303,25 @@ button:hover{filter:brightness(.96);}
   color:var(--admin-muted) !important;
 }
 .brand-admin-footer a{color:var(--accent) !important;}
+
+button[style*="#8b5cf6"],
+button[style*="#3b82f6"],
+button[style*="#4f46e5"]{
+  background:var(--primary) !important;
+  color:#fff !important;
+}
+[style*="color: #8b5cf6"],
+[style*="color:#8b5cf6"],
+[style*="color: #3b82f6"],
+[style*="color:#3b82f6"]{
+  color:var(--accent) !important;
+}
+[style*="border: 2px solid #8b5cf6"],
+[style*="border:2px solid #8b5cf6"],
+[style*="border: 2px solid #3b82f6"],
+[style*="border:2px solid #3b82f6"]{
+  border-color:var(--accent) !important;
+}
 @media(max-width:560px){
   body{padding:10px !important;}
   .card{padding:15px !important;}
@@ -1416,7 +1435,7 @@ if (mode === 'announcement') {
   msgEl.placeholder = '通知內容（必填）：送出後所有會員會在通知中心收到...';
   if (hintEl) hintEl.textContent = '群發通知只會出現在已登入會員的通知中心，不會顯示在公開公告區。';
   if (titleEl) titleEl.textContent = '📢 群發所有會員';
-  if (sendBtn) { sendBtn.textContent = '📢 群發所有會員'; sendBtn.style.background = '#8b5cf6'; }
+  if (sendBtn) { sendBtn.textContent = '📢 群發所有會員'; sendBtn.style.background = 'var(--primary)'; }
 } else {
   if (uidWrap) uidWrap.style.display = 'block';
   if (uidEl.value === 'ALL' && uidEl.options.length > 1) uidEl.selectedIndex = 1;
@@ -1425,7 +1444,7 @@ if (mode === 'announcement') {
   msgEl.placeholder = '通知內容（必填）：送出後買家將在中心收到提醒...';
   if (hintEl) hintEl.textContent = '選擇會員後發送個人站內通知。';
   if (titleEl) titleEl.textContent = '📩 發送個人化站內推播';
-  if (sendBtn) { sendBtn.textContent = '發送推播給會員'; sendBtn.style.background = '#8b5cf6'; }
+  if (sendBtn) { sendBtn.textContent = '發送推播給會員'; sendBtn.style.background = 'var(--primary)'; }
 }
 }
 
