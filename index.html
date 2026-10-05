@@ -4317,17 +4317,21 @@ let itemName = decodeURIComponent(encodedItem);
 try { await silentSyncData({force:true}); } catch (e) {}
 
 let latestDue = Number(totalDue) || 0;
+let latestPenalty = 0;
+let latestPrincipalDue = latestDue;
 if (isInstallment) {
   const latestInst = Array.isArray(store && store.installments)
     ? store.installments.find(inst => String(inst.installmentId) === String(loanOrInstId))
     : null;
   if (latestInst) {
+    latestPenalty = Math.max(0, Number(latestInst.lateFee) || 0);
     latestDue = Math.max(
       0,
       (Number(latestInst.amount) || 0) +
-      (Number(latestInst.lateFee) || 0) -
+      latestPenalty -
       (Number(latestInst.paidAmount) || 0)
     );
+    latestPrincipalDue = Math.max(0, latestDue - latestPenalty);
   }
 } else {
   const latestLoan = Array.isArray(store && store.loans)
@@ -4335,6 +4339,8 @@ if (isInstallment) {
     : null;
   if (latestLoan && Number.isFinite(Number(latestLoan.totalDue))) {
     latestDue = Math.max(0, Number(latestLoan.totalDue));
+    latestPenalty = Math.max(0, Number(latestLoan.penalty) || 0);
+    latestPrincipalDue = Math.max(0, latestDue - latestPenalty);
   }
 }
 totalDue = latestDue;
@@ -4361,6 +4367,17 @@ preConfirm: () => {
 const v = parseFloat(document.getElementById('swal-pay-amt').value);
 if (!v || v <= 0) { Swal.showValidationMessage('請輸入有效金額'); return false; }
 if (v > totalDue) { Swal.showValidationMessage(`金額不可超過應繳總額 $${totalDue}`); return false; }
+if (
+  !isInstallment &&
+  latestPenalty > 0 &&
+  v > latestPrincipalDue &&
+  v < totalDue
+) {
+  Swal.showValidationMessage(
+    `逾期帳單若超過剩餘本金 $${latestPrincipalDue}，請直接繳清含罰金的全額 $${totalDue}`
+  );
+  return false;
+}
 return v;
 }
 });
