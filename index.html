@@ -5035,7 +5035,7 @@ function closeAppOverlay() {
   }
 
   window.scrollMemberFooterTop=function(btn){
-    const page=btn && btn.closest ? btn.closest('.page') : null;
+    const page=btn && btn.closest ? btn.closest('.page,#loginView') : null;
     if(page && typeof page.scrollTo==='function') page.scrollTo({top:0,behavior:'smooth'});
     else window.scrollTo({top:0,behavior:'smooth'});
   };
@@ -5045,6 +5045,8 @@ function closeAppOverlay() {
       const page=document.getElementById('p'+i);
       if(page && !page.querySelector('.site-footer')) page.insertAdjacentHTML('beforeend',footerHtml());
     }
+    const login=document.getElementById('loginView');
+    if(login && !login.querySelector('.site-footer')) login.insertAdjacentHTML('beforeend',footerHtml());
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
   else install();
