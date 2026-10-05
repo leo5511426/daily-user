@@ -2559,11 +2559,37 @@ const loan = L_DB.find(l => String(l.id) === loanId || String(l.row) === loanId)
 if (!user || !loan) return Swal.fire("查無資料", `找不到帳單 ${loanId} 或會員 ${uid}`, "error");
 if (loan.status === "PAID") return Swal.fire("提示", "此帳單已結清！", "warning");
 
-FORM = { uid: uid, loanRef: String(loan.row), amt: amt };
-CUR_MODE = "pay"; CUR_STEP = FLOWS.pay.length - 2; 
+const qrAmount = Math.max(0, Number(amt) || 0);
+const latestDue = Math.max(0, Number(loan.totalDue) || 0);
+const latestPenalty = Math.max(0, Number(loan.penalty) || 0);
+const latestPrincipalDue = Math.max(0, latestDue - latestPenalty);
+
+// 舊條碼若剛好是「逾期前剩餘本金」，自動更新為目前含罰金的全額。
+// 新條碼則已由會員端在產生前同步最新帳單資料。
+let resolvedAmount = qrAmount;
+if (
+  latestPenalty > 0 &&
+  latestDue > latestPrincipalDue &&
+  Math.abs(qrAmount - latestPrincipalDue) < 0.01
+) {
+  resolvedAmount = latestDue;
+}
+if (latestDue > 0 && resolvedAmount > latestDue) resolvedAmount = latestDue;
+
+FORM = {
+  uid: uid,
+  loanRef: String(loan.row),
+  amt: String(resolvedAmount),
+  scannedLoanId: String(loan.id || loanId),
+  scannedQrAmount: qrAmount
+};
+CUR_MODE = "pay"; CUR_STEP = FLOWS.pay.length - 2;
 document.getElementById('wizModal').style.display = 'flex';
 renderStep();
-setTimeout(() => { const el = document.getElementById('wiz_val'); if (el) el.value = amt; }, 50);
+setTimeout(() => {
+  const el = document.getElementById('wiz_val');
+  if (el) el.value = String(resolvedAmount);
+}, 50);
 return;
 }
 }
@@ -2651,7 +2677,29 @@ function closeModal() { document.getElementById('wizModal').style.display = 'non
 function renderStep() {
 const flow = FLOWS[CUR_MODE]; let stepInfo = flow[CUR_STEP]; if (CUR_STEP === 0 && FORM.uid && stepInfo.f === "uid") { CUR_STEP++; stepInfo = flow[CUR_STEP]; }
 let html = `<h3>${stepInfo.t}</h3>`;
-if (stepInfo.type === "user") html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`; else if (stepInfo.type === "number") html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`; else if (stepInfo.type === "loan") { const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "PAID" && l.loanType !== "INSTALLMENT"); if (userLoans.length === 0) html += `<p style="color:var(--red); font-weight:bold;">此會員目前無待繳的「一般」帳單 (分期請掃碼或讓買家自行繳納)</p><input type="hidden" id="wiz_val" value="">`; else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.totalDue})</option>`).join('')}</select>`; } else html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
+if (stepInfo.type === "user") {
+  html += `<select id="wiz_val">${U_DB.map(u => `<option value="${u.id}">${u.name} (餘:$${u.bal})</option>`).join('')}</select>`;
+} else if (stepInfo.type === "number") {
+  if (CUR_MODE === "pay" && stepInfo.f === "amt" && FORM.loanRef) {
+    const currentLoan = L_DB.find(l => String(l.row) === String(FORM.loanRef));
+    if (currentLoan) {
+      const due = Math.max(0, Number(currentLoan.totalDue) || 0);
+      const penalty = Math.max(0, Number(currentLoan.penalty) || 0);
+      const principalDue = Math.max(0, due - penalty);
+      html += `
+        <div style="margin:0 0 10px;padding:10px 12px;background:var(--admin-soft);border:1px solid var(--admin-border);border-radius:8px;font-size:13px;line-height:1.65;">
+          <div>目前應繳總額：<b style="color:var(--red);">$${due}</b></div>
+          <div>剩餘本金：$${principalDue}${penalty > 0 ? `｜逾期罰金：$${penalty}` : ''}</div>
+          ${penalty > 0 ? '<div style="margin-top:4px;color:var(--red);">全額結清時需一併繳清目前逾期罰金。</div>' : ''}
+        </div>`;
+    }
+  }
+  html += `<input type="number" id="wiz_val" placeholder="請輸入金額">`;
+} else if (stepInfo.type === "loan") {
+  const userLoans = L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "PAID" && l.loanType !== "INSTALLMENT");
+  if (userLoans.length === 0) html += `<p style="color:var(--red); font-weight:bold;">此會員目前無待繳的「一般」帳單 (分期請掃碼或讓買家自行繳納)</p><input type="hidden" id="wiz_val" value="">`;
+  else html += `<select id="wiz_val">${userLoans.map(l => `<option value="${l.row}">${l.item} (待還: $${l.totalDue})</option>`).join('')}</select>`;
+} else html += `<input type="text" id="wiz_val" placeholder="請輸入內容">`;
 document.getElementById('wizBody').innerHTML = html; const nextBtn = document.getElementById('nextBtn');
 if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.uid) && l.status !== "PAID" && l.loanType !== "INSTALLMENT").length === 0) nextBtn.style.display = 'none'; else { nextBtn.style.display = 'block'; nextBtn.innerText = (CUR_STEP === flow.length - 1) ? "確認送出" : "下一步"; }
 }
@@ -2659,6 +2707,22 @@ if (stepInfo.type === "loan" && L_DB.filter(l => String(l.uid) === String(FORM.u
 function wizNext() {
 const inputEl = document.getElementById('wiz_val'); const flow = FLOWS[CUR_MODE]; const field = flow[CUR_STEP].f;
 if (!inputEl.value.trim()) { if (flow[CUR_STEP].type === "loan") return Swal.fire("提示", "無帳單可還款", "warning"); return Swal.fire("提示", "欄位不可為空", "warning"); }
+
+if (CUR_MODE === "pay" && field === "amt" && FORM.loanRef) {
+  const currentLoan = L_DB.find(l => String(l.row) === String(FORM.loanRef));
+  if (currentLoan) {
+    const amount = Number(inputEl.value);
+    const totalDue = Math.max(0, Number(currentLoan.totalDue) || 0);
+    const penalty = Math.max(0, Number(currentLoan.penalty) || 0);
+    const principalDue = Math.max(0, totalDue - penalty);
+    if (!Number.isFinite(amount) || amount <= 0) return Swal.fire("提示", "請輸入有效的繳款金額", "warning");
+    if (amount > totalDue) return Swal.fire("提示", `繳款金額不得超過目前應繳總額 $${totalDue}`, "warning");
+    if (penalty > 0 && amount > principalDue && amount < totalDue) {
+      return Swal.fire("提示", `逾期帳單若超過剩餘本金 $${principalDue}，請直接繳清含罰金的全額 $${totalDue}。`, "warning");
+    }
+  }
+}
+
 FORM[field] = inputEl.value.trim(); if (CUR_STEP < flow.length - 1) { CUR_STEP++; renderStep(); } else submitWiz();
 }
 
@@ -2670,7 +2734,11 @@ if (!res.aborted) handlePostSuccess(res);
 } else {
 let notifyMode = await confirmActionWithPush('確認送出');
 if (!notifyMode) return;
-let res = await fetchWithQueue(GAS, { action: 'adminAction', type: CUR_MODE, notifyMode: notifyMode, ...FORM }, "提交中..."); 
+let submitPayload = { action: 'adminAction', type: CUR_MODE, notifyMode: notifyMode, ...FORM };
+if (CUR_MODE === 'pay' && FORM.scannedLoanId) submitPayload.loanId = FORM.scannedLoanId;
+delete submitPayload.scannedLoanId;
+delete submitPayload.scannedQrAmount;
+let res = await fetchWithQueue(GAS, submitPayload, "提交中..."); 
 if (!res.aborted) handlePostSuccess(res);
 }
 }
