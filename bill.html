@@ -2,169 +2,40 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>404無效的頁面</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>頁面無效｜小佑的日常生活</title>
 <style>
-/* 基礎排版設定 */
-body {
-font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-background-color: #f4f7f6;
-display: flex;
-justify-content: center;
-align-items: center;
-min-height: 100vh;
-margin: 0;
-padding: 20px;
-box-sizing: border-box;
-}
-
-/* 卡片設計 */
-.billing-card {
-background: #ffffff;
-padding: 30px 25px;
-border-radius: 16px;
-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-width: 100%;
-max-width: 400px;
-text-align: center;
-}
-
-/* 標題與提示訊息 */
-.title {
-color: #d9534f;
-font-size: 22px;
-font-weight: bold;
-margin-bottom: 10px;
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-}
-
-.subtitle {
-color: #666666;
-font-size: 14px;
-margin-bottom: 25px;
-line-height: 1.5;
-}
-
-/* 帳單資訊區塊 */
-.info-box {
-background: #f9f9f9;
-border-radius: 12px;
-padding: 20px;
-text-align: left;
-margin-bottom: 25px;
-}
-
-/* 條列式明細設計 */
-.detail-section-title {
-color: #333333;
-font-size: 15px;
-font-weight: bold;
-margin-bottom: 12px;
-padding-bottom: 8px;
-border-bottom: 2px solid #e0e0e0;
-}
-
-.detail-list {
-list-style: none;
-padding: 0;
-margin: 0 0 15px 0;
-border-bottom: 1px dashed #e0e0e0;
-padding-bottom: 15px;
-}
-
-.detail-item {
-display: flex;
-justify-content: space-between;
-font-size: 14px;
-color: #555555;
-margin-bottom: 8px;
-}
-
-.detail-item:last-child {
-margin-bottom: 0;
-}
-
-.detail-price {
-color: #333333;
-font-weight: 500;
-}
-
-/* 底部總計與日期 */
-.info-row {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 12px;
-}
-
-.info-row:last-child {
-margin-bottom: 0;
-}
-
-.label {
-color: #777777;
-font-size: 15px;
-}
-
-.value {
-color: #333333;
-font-size: 15px;
-font-weight: 600;
-}
-
-.highlight-date {
-color: #d9534f;
-}
-
-.amount-value {
-color: #d9534f;
-font-size: 22px;
-font-weight: bold;
-}
-
-/* 按鈕設計 */
-.action-btn {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-background: #007bff;
-color: #ffffff;
-text-decoration: none;
-padding: 16px;
-border-radius: 10px;
-font-size: 16px;
-font-weight: bold;
-transition: background 0.3s ease, transform 0.1s ease;
-}
-
-.action-btn:hover {
-background: #0056b3;
-}
-
-.action-btn:active {
-transform: scale(0.98);
-}
+:root{--bg:#fff8fa;--card:#fffdfd;--soft:#fff0f4;--line:#f0cbd7;--text:#4b3d42;--muted:#8c777e;--pink:#d982a0;--strong:#b85f7e}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","Noto Sans TC",sans-serif;display:flex;flex-direction:column}
+main{flex:1;width:min(640px,calc(100% - 32px));margin:auto;display:flex;align-items:center;justify-content:center;padding:48px 0}
+.box{width:100%;padding:34px 28px;background:var(--card);border:1px solid var(--line);border-radius:14px;text-align:center}
+.code{font-size:.75rem;font-weight:800;color:var(--strong);letter-spacing:.04em}
+h1{margin:8px 0 10px;font-size:1.8rem;letter-spacing:-.03em}
+p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.8}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+.actions a{padding:10px 16px;border-radius:9px;text-decoration:none;font-size:.85rem;font-weight:750}
+.primary{background:var(--pink);color:#fff}.secondary{border:1px solid var(--line);color:var(--strong);background:var(--soft)}
+footer{border-top:1px solid var(--line);padding:24px 16px 30px;text-align:center;color:var(--muted);font-size:.74rem;line-height:1.85}
+footer a{color:var(--strong);text-decoration:none}
 </style>
 </head>
 <body>
-
-<div class="billing-card">
-<!-- 頂部標題 -->
-<div class="title">
-<span>⚠️</span> 錯誤代碼：404 代碼說明：客戶請求無效。無效的頁面。請前往首頁。
-</div>
-<p class="subtitle"</p>
-
-<!-- 快速操作按鈕 -->
-<a href="https://daily-user.vercel.app/" target="_blank" class="action-btn">
-<span></span> 返回首頁
-</a>
-</div>
-
+<main>
+  <section class="box">
+    <div class="code">錯誤代碼 404</div>
+    <h1>這個頁面目前無法使用。</h1>
+    <p>網址可能已失效或不存在。請返回行動會員首頁，或由服務總覽重新選擇需要的服務。</p>
+    <div class="actions">
+      <a class="primary" href="/">返回行動會員首頁</a>
+      <a class="secondary" href="/services">前往服務總覽</a>
+    </div>
+  </section>
+</main>
+<footer>
+  <div><strong style="color:var(--strong)">小佑的日常生活</strong>｜讓日常生活，多一點便利。</div>
+  <div>客服時間：每日 09:00－22:00｜<a href="tel:+886966236830">0966-236-830</a>｜<a href="mailto:leo5511426@gmail.com">leo5511426@gmail.com</a></div>
+  <div>© 2026 小佑的日常生活</div>
+</footer>
 </body>
-</html>
 </html>
