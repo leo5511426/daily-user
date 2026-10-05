@@ -1143,6 +1143,88 @@ body .sync-indicator{
   #p0 .card{background:#fff9fb !important;}
   .page{background:#fff8fa;}
 }
+
+/* ============================================================
+   全站標準頁尾｜小佑的日常生活
+   ============================================================ */
+.brand-footer{display:none!important;}
+.site-footer{
+  margin:44px 0 4px;
+  padding:26px 0 8px;
+  border-top:1px solid #efccd7;
+  color:var(--text);
+  font-weight:500;
+}
+.site-footer-brand{
+  display:flex;
+  justify-content:space-between;
+  gap:24px;
+  align-items:flex-start;
+  padding-bottom:20px;
+}
+.site-footer-wordmark{font-size:1.2em;font-weight:850;color:var(--brand-strong);}
+.site-footer-tagline{margin-top:5px;color:var(--brand-muted);font-size:.8em;line-height:1.7;}
+.site-footer-grid{
+  display:grid;
+  grid-template-columns:1.05fr 1fr 1fr;
+  gap:24px;
+  padding:20px 0;
+  border-top:1px solid #f1d4dd;
+  border-bottom:1px solid #f1d4dd;
+}
+.site-footer-group h4{
+  margin:0 0 9px;
+  color:var(--brand-strong);
+  font-size:.75em;
+  letter-spacing:.03em;
+}
+.site-footer-link,.site-footer-text{
+  display:block;
+  width:max-content;
+  max-width:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--brand-muted)!important;
+  text-decoration:none;
+  font:inherit;
+  font-size:.76em!important;
+  font-weight:550!important;
+  line-height:1.95;
+  text-align:left;
+  cursor:default;
+}
+a.site-footer-link,button.site-footer-link{cursor:pointer;}
+a.site-footer-link:hover,button.site-footer-link:hover{color:var(--brand-strong)!important;}
+.site-footer-hot{margin-top:8px;color:#a98390;font-size:.7em;line-height:1.65;}
+.site-footer-bottom{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:center;
+  padding-top:14px;
+  color:#9a848c;
+  font-size:.68em;
+  line-height:1.7;
+}
+.site-footer-top{
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--brand-strong)!important;
+  width:auto!important;
+  padding:4px 0!important;
+  font-size:1em!important;
+  font-weight:700!important;
+}
+@media(max-width:620px){
+  .site-footer-brand{display:block;}
+  .site-footer-grid{grid-template-columns:1fr;gap:18px;}
+  .site-footer-bottom{display:block;}
+  .site-footer-top{margin-top:8px!important;}
+}
 </style>
 </head>
 <body data-theme="light">
@@ -1772,9 +1854,13 @@ document.addEventListener('DOMContentLoaded', async function(){
 
   startMaintenanceWatcher();
 
-  const supportHint = new URLSearchParams(location.search).get('support');
+  const queryParams = new URLSearchParams(location.search);
+  const supportHint = queryParams.get('support');
   if (supportHint && !maintenance.active) {
     setTimeout(() => openGuestTicketForm(supportHint), 650);
+  }
+  if (queryParams.get('legal') === '1' && !maintenance.active) {
+    setTimeout(() => openLegalCenter(), 700);
   }
 });
 
@@ -4227,6 +4313,36 @@ function switchLoanTab(tabIndex) { currentLoanTab = tabIndex; document.querySele
 window.showPaymentQR = async function(loanOrInstId, encodedItem, totalDue, isInstallment = false, isPayAll = false) {
 let itemName = decodeURIComponent(encodedItem);
 
+// 產生繳款條碼前強制同步一次，避免逾期罰金更新後仍沿用舊金額。
+try { await silentSyncData({force:true}); } catch (e) {}
+
+let latestDue = Number(totalDue) || 0;
+if (isInstallment) {
+  const latestInst = Array.isArray(store && store.installments)
+    ? store.installments.find(inst => String(inst.installmentId) === String(loanOrInstId))
+    : null;
+  if (latestInst) {
+    latestDue = Math.max(
+      0,
+      (Number(latestInst.amount) || 0) +
+      (Number(latestInst.lateFee) || 0) -
+      (Number(latestInst.paidAmount) || 0)
+    );
+  }
+} else {
+  const latestLoan = Array.isArray(store && store.loans)
+    ? store.loans.find(loan => String(loan.id) === String(loanOrInstId))
+    : null;
+  if (latestLoan && Number.isFinite(Number(latestLoan.totalDue))) {
+    latestDue = Math.max(0, Number(latestLoan.totalDue));
+  }
+}
+totalDue = latestDue;
+
+if (totalDue <= 0) {
+  return Swal.fire('提示', '目前沒有需要繳納的金額，請重新整理帳單資料。', 'info');
+}
+
 const { value: amt } = await Swal.fire({
 title: '📲 產生繳款條碼',
 html: `
@@ -4855,6 +4971,66 @@ function closeAppOverlay() {
       document.body.classList.add('performance-lite');
     }
   } catch(e) {}
+})();
+</script>
+
+<script>
+(function(){
+  function footerHtml(){
+    return `
+<footer class="site-footer" aria-label="網站頁尾">
+  <div class="site-footer-brand">
+    <div>
+      <div class="site-footer-wordmark">小佑的日常生活</div>
+      <div class="site-footer-tagline">讓日常生活，多一點便利。從會員服務到生活代繳，以清楚的資訊連結每一項日常需求。</div>
+    </div>
+  </div>
+  <div class="site-footer-grid">
+    <div class="site-footer-group">
+      <h4>服務與導覽</h4>
+      <a class="site-footer-link" href="/">行動會員首頁</a>
+      <a class="site-footer-link" href="/services">服務總覽</a>
+      <a class="site-footer-link" href="https://daily-pay-user.vercel.app/">生活代繳費</a>
+      <a class="site-footer-link" href="/sitemap">網站地圖</a>
+      <div class="site-footer-hot">熱門服務：會員服務、帳單、訂單、客服</div>
+    </div>
+    <div class="site-footer-group">
+      <h4>聯絡我們</h4>
+      <button type="button" class="site-footer-link" onclick="openUnifiedSupport('行動會員')">統一客服中心</button>
+      <a class="site-footer-link" href="tel:+886966236830">客服電話：0966-236-830</a>
+      <span class="site-footer-text">一般通話費依電信業者資費計收</span>
+      <a class="site-footer-link" href="mailto:leo5511426@gmail.com">電子郵件：leo5511426@gmail.com</a>
+      <span class="site-footer-text">客服時間：每日 09:00－22:00</span>
+    </div>
+    <div class="site-footer-group">
+      <h4>法律與安全</h4>
+      <button type="button" class="site-footer-link" onclick="openLegalCenter()">隱私權政策</button>
+      <button type="button" class="site-footer-link" onclick="openLegalCenter()">服務條款</button>
+      <button type="button" class="site-footer-link" onclick="openLegalCenter()">法律文件與相關說明</button>
+      <span class="site-footer-text">各項服務之法律文件依各平台公告為準</span>
+    </div>
+  </div>
+  <div class="site-footer-bottom">
+    <div>© 2026 小佑的日常生活｜各項服務的帳號、資料處理與使用規範，以各服務頁面公告為準。</div>
+    <button type="button" class="site-footer-top" onclick="window.scrollMemberFooterTop(this)">回到頂部 ↑</button>
+  </div>
+</footer>`;
+  }
+
+  window.scrollMemberFooterTop=function(btn){
+    const page=btn && btn.closest ? btn.closest('.page') : null;
+    if(page && typeof page.scrollTo==='function') page.scrollTo({top:0,behavior:'smooth'});
+    else window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  function install(){
+    for(let i=0;i<=7;i++){
+      const page=document.getElementById('p'+i);
+      if(page && !page.querySelector('.site-footer')) page.insertAdjacentHTML('beforeend',footerHtml());
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
+  else install();
 })();
 </script>
 </body>
