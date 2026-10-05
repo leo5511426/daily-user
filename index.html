@@ -979,6 +979,170 @@ body .sync-indicator{
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto !important;animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
 }
+
+/* ============================================================
+   2026-10-05｜柔和粉嫩版微調
+   在既有品牌介面上增加奶白、櫻花粉與柔霧粉層次
+   ============================================================ */
+:root{
+  --bg:#fff8fa;
+  --text:#4b3d42;
+  --pink:#d982a0;
+  --accent:#d982a0;
+  --card:#fffdfd;
+  --border:#f0cbd7;
+  --nav:#fff7fa;
+  --red:#bd7279;
+  --green:#78927f;
+  --orange:#b18b63;
+  --blue:#a18490;
+  --brand-soft:#fff0f4;
+  --brand-soft-2:#fce4ec;
+  --brand-muted:#8c777e;
+  --brand-strong:#b85f7e;
+  --primary:#d982a0;
+}
+[data-theme='dark']{
+  --bg:#21191d;
+  --text:#f8eef1;
+  --pink:#e5a0b7;
+  --accent:#d98da8;
+  --card:#2a2025;
+  --border:#563d47;
+  --nav:#251c21;
+  --red:#ca858b;
+  --green:#91a797;
+  --orange:#bea27b;
+  --blue:#b49aa4;
+  --brand-soft:#34252c;
+  --brand-soft-2:#3c2a32;
+  --brand-muted:#ceb8c0;
+  --brand-strong:#efb2c6;
+  --primary:#d98da8;
+}
+html{background:#f7edf1 !important;}
+[data-theme='dark'] html{background:#171215 !important;}
+body{background:transparent !important;}
+.app-container{
+  background:var(--bg) !important;
+  border-color:#f3d7e0 !important;
+  box-shadow:0 8px 30px rgba(128,79,96,.08) !important;
+}
+.page{background:var(--bg);}
+.glass-hero{
+  border-bottom-color:#f1cfd9 !important;
+}
+.glass-hero-title{color:var(--brand-strong) !important;}
+.glass-hero-subtitle{color:var(--brand-muted) !important;}
+.card{
+  background:#fffdfd !important;
+  border-color:#f0d2dc !important;
+}
+[data-theme='dark'] .card{background:var(--card) !important;border-color:var(--border) !important;}
+#p0 .card{
+  background:#fff9fb !important;
+}
+#p0 .card[style*="border-left"]{
+  background:#fff4f7 !important;
+}
+#hList .card,#ntList .card,#ntListPreview .card,#invList .card{
+  background:transparent !important;
+  border-bottom-color:#f1d4dd !important;
+}
+#orderListPreview .card{
+  background:#fff0f4 !important;
+  border-color:#f6d7e1 !important;
+}
+.btn{
+  background:#d982a0 !important;
+  color:#fff !important;
+}
+.btn:hover{background:#bf6f8c !important;}
+input,select,textarea,.sort-select{
+  background:#fffdfd !important;
+  border-color:#efccd7 !important;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:#d982a0 !important;
+  box-shadow:0 0 0 3px rgba(217,130,160,.12) !important;
+}
+.shortcut-item{
+  background:#fff7fa !important;
+  border-color:#f1d2dc !important;
+}
+.shortcut-item:hover{background:#ffedf3 !important;}
+.coupon-tabs,.loan-tabs{
+  border-bottom-color:#efcbd7 !important;
+}
+.coupon-tab.active,.loan-tab.active{
+  color:#b85f7e !important;
+  border-bottom-color:#d982a0 !important;
+}
+.pill-tab{
+  background:#fffafb !important;
+  border-color:#efced8 !important;
+}
+.pill-tab.active{
+  background:#fde7ee !important;
+  color:#a94f70 !important;
+  border-color:#df9cb3 !important;
+}
+.nav-bar{
+  background:#fff7fa !important;
+  border-top-color:#f0cfd9 !important;
+}
+.nav-item{color:#927b83 !important;}
+.nav-item.active{
+  color:#b15476 !important;
+  background:#fde9f0 !important;
+}
+.swal2-popup{
+  background:#fffafa !important;
+  border-color:#f0d1da !important;
+}
+.swal2-confirm{background:#d982a0 !important;}
+.swal2-cancel{background:#9a878e !important;}
+.chat-container{
+  background:#fff0f4 !important;
+  border-color:#f0ccd7 !important;
+}
+.chat-input-area{background:#fffafa !important;}
+.msg-user{background:#d982a0 !important;}
+.msg-admin{background:#fffdfd !important;border-color:#efcfd9 !important;}
+.legal-header{background:#fff8fa !important;border-color:#efccd7 !important;}
+.legal-doc-card,.legal-doc-meta,.legal-contact-box{
+  background:#fffafc !important;
+  border-color:#f0d2dc !important;
+}
+.brand-service-entry{
+  background:#fff0f4 !important;
+  border-color:#f5d4df !important;
+}
+.brand-service-entry a{color:#b85f7e !important;}
+.brand-footer{
+  background:transparent !important;
+  border-color:#efcbd7 !important;
+}
+.brand-footer-grid{border-color:#efd0da !important;}
+.brand-footer-kicker{color:#b85f7e !important;}
+body .sync-indicator{
+  background:#fffafa !important;
+  border-color:#f0d1db !important;
+}
+.track-glass-card{
+  background:#fff8fa !important;
+  border-color:#f0d1db !important;
+}
+.settings-section-title{color:#b85f7e !important;}
+.note-box{border-top-color:#efd0da !important;color:#8c777e !important;}
+.overdue-tag{background:#bd7279 !important;}
+.suspension-banner{background:#bd7279 !important;}
+#suspendedView{background:#fff3f5 !important;}
+[data-theme='dark'] #suspendedView{background:#2d1b20 !important;}
+@media(max-width:560px){
+  #p0 .card{background:#fff9fb !important;}
+  .page{background:#fff8fa;}
+}
 </style>
 </head>
 <body data-theme="light">
