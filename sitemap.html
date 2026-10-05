@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>網站地圖｜小佑的日常生活</title>
+<meta name="description" content="小佑的日常生活網站地圖與服務入口。">
+<style>
+:root{
+  --bg:#fff8fa;--card:#fffdfd;--soft:#fff0f4;--line:#f0cbd7;
+  --text:#4b3d42;--muted:#8c777e;--pink:#d982a0;--strong:#b85f7e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","Noto Sans TC",sans-serif;line-height:1.8}
+.wrap{width:min(1040px,calc(100% - 32px));margin:auto}
+header{border-bottom:1px solid var(--line);background:rgba(255,248,250,.96)}
+.nav{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-weight:850;color:var(--strong)}
+.nav a{font-size:.82rem;color:var(--muted);text-decoration:none}
+main{padding:64px 0 80px}
+.eyebrow{font-size:.72rem;color:var(--strong);font-weight:800}
+h1{margin:8px 0 14px;font-size:clamp(2.2rem,6vw,4.6rem);letter-spacing:-.045em;line-height:1.05}
+.lead{max-width:700px;color:var(--muted)}
+.map{margin-top:42px;border-top:1px solid var(--line)}
+.group{display:grid;grid-template-columns:190px 1fr;gap:30px;padding:30px 0;border-bottom:1px solid var(--line)}
+.group h2{margin:0;color:var(--strong);font-size:1.05rem}
+.links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 28px}
+.links a,.links span{color:var(--text);text-decoration:none;font-size:.9rem;padding:7px 0}
+.links a:hover{color:var(--strong)}
+.note{margin-top:36px;padding:18px 20px;background:var(--soft);border:1px solid #f2d6df;border-radius:10px;color:var(--muted);font-size:.83rem}
+footer{border-top:1px solid var(--line);padding:28px 0 36px;color:var(--muted);font-size:.76rem}
+.footer-row{display:flex;justify-content:space-between;gap:16px;align-items:center}
+.footer-row a{color:var(--strong);text-decoration:none}
+@media(max-width:640px){.group{grid-template-columns:1fr;gap:12px}.links{grid-template-columns:1fr}.footer-row{display:block}.footer-row a{display:inline-block;margin-top:8px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <div class="brand">小佑的日常生活</div>
+    <a href="/services">返回服務總覽</a>
+  </div>
+</header>
+<main class="wrap">
+  <div class="eyebrow">網站地圖</div>
+  <h1>快速找到需要的服務。</h1>
+  <p class="lead">以下整理目前「小佑的日常生活」公開服務與主要會員功能。登入後功能仍依各平台原本的操作方式使用，不會改變既有頁面流程。</p>
+
+  <div class="map">
+    <section class="group">
+      <h2>品牌與服務</h2>
+      <div class="links">
+        <a href="/services">服務總覽</a>
+        <a href="/">行動會員首頁</a>
+        <a href="https://daily-pay-user.vercel.app/">生活代繳費</a>
+        <a href="/?support=general">統一客服中心</a>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>行動會員</h2>
+      <div class="links">
+        <span>首頁</span><span>通知中心</span>
+        <span>交易紀錄</span><span>訂單狀態</span>
+        <span>待還帳單</span><span>我的優惠券</span>
+        <span>電子發票</span><span>會員中心與客服</span>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>生活代繳費</h2>
+      <div class="links">
+        <a href="https://daily-pay-user.vercel.app/">代繳費首頁</a>
+        <a href="https://daily-pay-user.vercel.app/">繳費項目</a>
+        <a href="https://daily-pay-user.vercel.app/">繳費時程</a>
+        <a href="https://daily-pay-user.vercel.app/">客戶登入</a>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>法律與支援</h2>
+      <div class="links">
+        <a href="/?legal=1">行動會員法律資訊</a>
+        <a href="/?support=membership">行動會員客服</a>
+        <a href="/?support=payment">生活代繳費客服</a>
+        <a href="mailto:leo5511426@gmail.com">電子郵件聯絡</a>
+      </div>
+    </section>
+  </div>
+
+  <div class="note">
+    客服時間：每日 09:00－22:00｜客服電話：0966-236-830（一般通話費依電信業者資費計收）｜電子郵件：leo5511426@gmail.com
+  </div>
+</main>
+<footer>
+  <div class="wrap footer-row">
+    <div>© 2026 小佑的日常生活</div>
+    <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">回到頂部 ↑</a>
+  </div>
+</footer>
+</body>
+</html>
