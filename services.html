@@ -98,6 +98,16 @@ header{background:rgba(255,248,250,.96);border-color:var(--line);}
 .secondary{background:#fffdfd;border-color:#efccd7;}
 .support-box{background:#fff0f4;border-color:#f3d2dd;}
 .footer-grid a,.footer-grid span,.footer-meta{color:#8c777e;}
+
+.footer-brand-copy{max-width:46rem;margin:.5rem 0 0;color:var(--muted);font-size:.84rem;line-height:1.8}
+.footer-grid-full{grid-template-columns:repeat(4,minmax(0,1fr))}
+.footer-note{margin-top:.4rem;font-size:.74rem!important;color:#a78993!important}
+.footer-top-btn{
+  border:0;background:transparent;color:#b85f7e;padding:0;cursor:pointer;
+  font:inherit;font-size:.74rem;font-weight:700;
+}
+@media(max-width:900px){.footer-grid-full{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.footer-grid-full{grid-template-columns:1fr}.footer-meta{display:block}.footer-top-btn{margin-top:.7rem}}
 </style>
 </head>
 <body>
@@ -111,5 +121,51 @@ header{background:rgba(255,248,250,.96);border-color:var(--line);}
 <section id="about" class="about"><div class="wrap copy-grid"><div><div class="section-kicker">二、關於我們</div><h2>關於小佑的日常生活</h2></div><p>我們希望透過清楚、便利的數位服務，協助使用者管理日常事務，並持續改善每一項服務的使用體驗。服務總覽只負責品牌介紹與導覽，不會合併各平台的會員帳號、交易資料或法律文件。</p></div></section>
 <section id="support" class="support"><div class="wrap"><div class="section-kicker">三、客服支援</div><div class="support-box"><div><h3>小佑的日常生活統一客服中心</h3><p>行動會員可在登入後使用既有會員客服；沒有行動會員帳號，也可以透過訪客客服表單提交行動會員或生活代繳費相關問題。</p></div><div class="support-actions"><a class="secondary" href="/">進入行動會員</a><a class="primary" href="/?support=general">使用訪客客服 →</a></div></div></div></section>
 </main>
-<footer><div class="wrap"><div class="section-kicker">小佑的日常生活</div><div class="footer-title">小佑的日常生活</div><div class="footer-grid"><div><b>品牌</b><span>讓日常生活，多一點便利。</span><span>服務總覽不儲存會員或代繳費帳務資料。</span></div><div><b>探索服務</b><a href="/">行動會員</a><a href="https://daily-pay-user.vercel.app/">生活代繳費</a></div><div><b>協助與政策</b><a href="/?support=general">統一客服中心</a><span>法律文件請於各服務平台查看</span></div></div><div class="footer-meta"><div>各平台帳號、資料與服務規範獨立</div><div>© 2026 小佑的日常生活</div></div></div></footer>
+<footer id="site-footer">
+  <div class="wrap">
+    <div class="section-kicker">小佑的日常生活</div>
+    <div class="footer-title">小佑的日常生活</div>
+    <p class="footer-brand-copy">讓日常生活，多一點便利。從會員服務到生活代繳，以清楚的資訊連結每一項日常需求。</p>
+
+    <div class="footer-grid footer-grid-full">
+      <div>
+        <b>服務與導覽</b>
+        <a href="/">行動會員首頁</a>
+        <a href="/services">服務總覽</a>
+        <a href="https://daily-pay-user.vercel.app/">生活代繳費</a>
+        <a href="/sitemap">完整網站地圖</a>
+        <span class="footer-note">熱門服務：會員、帳單、訂單、客服</span>
+      </div>
+
+      <div>
+        <b>聯絡我們</b>
+        <a href="/?support=general">統一客服中心</a>
+        <a href="tel:+886966236830">客服電話：0966-236-830</a>
+        <span>一般通話費依電信業者資費計收</span>
+        <a href="mailto:leo5511426@gmail.com">電子郵件：leo5511426@gmail.com</a>
+        <span>客服時間：每日 09:00－22:00</span>
+      </div>
+
+      <div>
+        <b>法律與安全</b>
+        <a href="/?legal=1">行動會員隱私權政策</a>
+        <a href="/?legal=1">行動會員服務條款</a>
+        <a href="/?legal=1">法律文件與相關說明</a>
+        <span>生活代繳費之法律文件依該平台公告為準</span>
+      </div>
+
+      <div>
+        <b>品牌資訊</b>
+        <span>品牌名稱：小佑的日常生活</span>
+        <span>目前尚未使用正式圖形 Logo</span>
+        <span>各平台帳號、資料與規範彼此獨立</span>
+      </div>
+    </div>
+
+    <div class="footer-meta">
+      <div>© 2026 小佑的日常生活｜各項服務的帳號、資料處理與使用規範，以各服務頁面公告為準。</div>
+      <button type="button" class="footer-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">回到頂部 ↑</button>
+    </div>
+  </div>
+</footer>
 </body></html>
