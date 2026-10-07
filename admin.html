@@ -768,6 +768,15 @@ const ADMIN_TOKEN = 'ADMIN_SEC_2026';
 let U_DB = [], L_DB = [], CP_DB = [], O_DB = [], INV_DB = [], TIC_DB = [], MSG_DB = [], SETTINGS = {}, LEGAL_DB = [], ACTIVE_SUSPENSIONS = [], INST_DB = [], CUR_MODE = "", CUR_STEP = 0, FORM = {};
 let html5QrCode, dragSrcEl = null;
 
+function escapeHTML(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 
 // ============================================================
 // 🗂️ 後台資料夾導覽（純 UI 層）
@@ -1513,7 +1522,7 @@ pnl.style.display = 'block';
 function openChatModal() {
 let tid = document.getElementById('cs_ticket_select').value;
 let msgs = MSG_DB.filter(x => x.tid === tid);
-let chatHtml = msgs.map(m => { let isAd = m.sender === 'Admin'; return `<div class="msg-bubble ${isAd?'msg-admin':'msg-user'}">${m.msg}<div class="msg-time">${m.time}</div></div>`; }).join('');
+let chatHtml = msgs.map(m => { let isAd = m.sender === 'Admin'; return `<div class="msg-bubble ${isAd?'msg-admin':'msg-user'}">${escapeHTML(m.msg)}<div class="msg-time">${escapeHTML(m.time)}</div></div>`; }).join('');
 Swal.fire({
 title: `工單交談室 (${tid})`,
 html: `<div class="chat-container"><div class="chat-box" id="admin_chat_box">${chatHtml}</div><div class="chat-input-area"><input type="text" id="admin_chat_input" placeholder="輸入回覆內容..."><button onclick="sendAdminChat('${tid}')" style="background:var(--primary); color:#fff; border:none;">傳送</button></div></div>`,
@@ -1524,7 +1533,7 @@ setTimeout(() => { let box = document.getElementById('admin_chat_box'); box.scro
 
 window.sendAdminChat = async function(tid) {
 let input = document.getElementById('admin_chat_input'); let msg = input.value.trim(); if(!msg) return; input.value = '';
-let box = document.getElementById('admin_chat_box'); box.innerHTML += `<div class="msg-bubble msg-admin">${msg}<div class="msg-time">傳送中...</div></div>`; box.scrollTop = box.scrollHeight;
+let box = document.getElementById('admin_chat_box'); box.innerHTML += `<div class="msg-bubble msg-admin">${escapeHTML(msg)}<div class="msg-time">傳送中...</div></div>`; box.scrollTop = box.scrollHeight;
 let res = await fetchWithQueue(
 GAS,
 {
