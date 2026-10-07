@@ -2085,7 +2085,7 @@ if (!hasBnpl) return;
 
 let checkRes;
 try {
-  const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL }) });
+  const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL, sessionId: currentSessionId }) });
   checkRes = await raw.json();
 } catch(e) { return; } 
 if (!checkRes || !checkRes.success || checkRes.allConsented) return;
@@ -2616,7 +2616,7 @@ async function doLogin() {
   try {
     const raw = await fetch(SCRIPT_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.MEMBER })
+      body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.MEMBER, sessionId: currentSessionId })
     });
     checkRes = await raw.json();
   } catch(e) {
