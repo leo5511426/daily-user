@@ -3566,7 +3566,7 @@ async function loadTrackTWStatus(oid, targetId) {
   if (!el) return;
   el.innerHTML = '📡 Track.TW：檢查連線中…';
   try {
-    const endpoints = [TRACK_TW_GAS_URL, SCRIPT_URL];
+    const endpoints = [SCRIPT_URL];
     let lastDetail = '';
     for (const endpoint of endpoints) {
       try {
@@ -3575,7 +3575,7 @@ async function loadTrackTWStatus(oid, targetId) {
           body:JSON.stringify({
             action:'trackGetStatus',
             uid:store?.userData?.id || '',
-            pw:savedPw
+            sessionId:currentSessionId
           })
         });
         const text = await res.text();
@@ -3652,7 +3652,7 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
   if (!el) return;
   el.innerHTML = '<div class="track-glass-card" style="margin-top:8px;text-align:center;">⏳ 正在取得第三方即時物流資訊…</div>';
   try {
-    const endpoints = [TRACK_TW_GAS_URL, SCRIPT_URL];
+    const endpoints = [SCRIPT_URL];
     let lastError = '';
     for (const endpoint of endpoints) {
       try {
@@ -3661,7 +3661,7 @@ async function loadTrackTWTracking(oid, packageType, trackingNumber, targetId) {
           body:JSON.stringify({
             action:'trackGetTracking',
             uid:store?.userData?.id || '',
-            pw:savedPw,
+            sessionId:currentSessionId,
             oid,
             packageType,
             trackingNumber
@@ -3907,8 +3907,8 @@ setTimeout(async () => {
         const targetEl = document.getElementById(target);
         try {
           if (targetEl) targetEl.innerHTML = '<div class="track-glass-card" style="margin-top:8px;text-align:center;opacity:.72;">📡 正在確認 Track.TW 包裹對應…</div>';
-          const ensurePayload = { action:'trackEnsurePackage', uid:store.userData.id, pw:savedPw, oid:o.id, packageType:pType, trackingNumber:pTrack };
-          const ensureEndpoints = [TRACK_TW_GAS_URL, SCRIPT_URL];
+          const ensurePayload = { action:'trackEnsurePackage', uid:store.userData.id, sessionId:currentSessionId, oid:o.id, packageType:pType, trackingNumber:pTrack };
+          const ensureEndpoints = [SCRIPT_URL];
           let ensureRes = null;
           let ensureLastError = '';
           let timedOut = false;
