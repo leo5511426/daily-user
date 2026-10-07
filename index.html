@@ -2068,6 +2068,10 @@ window.openSessionManager = async function(initialTab) {
   _securityEventCache = Array.isArray(res.securityEvents) ? res.securityEvents : [];
   _securityEventTypes = Array.isArray(res.securityEventTypes) ? res.securityEventTypes : [];
 
+  const sessionDiagnostics = (res && res.diagnostics && typeof res.diagnostics === 'object') ? res.diagnostics : {};
+  const loginApiVersion = String((store && store.apiVersion) || '未知');
+  const sessionsApiVersion = String((res && res.apiVersion) || '未知');
+
   const current = _securitySessionCache.find(function(x){ return x.sessionId === currentSessionId; });
   const overview = document.getElementById('securityOverview');
   if (overview) {
@@ -2093,7 +2097,13 @@ window.openSessionManager = async function(initialTab) {
           + '<div style="opacity:.48;font-size:.75em;margin-top:2px;">點擊查看詳細資訊</div>'
           + terminateBtn + '</div>';
       }).join('')
-    : '<div style="opacity:.55;padding:20px;text-align:center;">目前無登入記錄。</div>';
+    : '<div style="opacity:.65;padding:20px;text-align:center;line-height:1.7;">目前無登入記錄。'
+      + '<div style="margin-top:10px;font-size:.72em;opacity:.62;word-break:break-word;">'
+      + '診斷：登入 API ' + escapeHTML(loginApiVersion)
+      + ' ／ 裝置 API ' + escapeHTML(sessionsApiVersion)
+      + ' ／ S' + escapeHTML(String(sessionDiagnostics.sessionCount ?? '—'))
+      + ' ／ C' + escapeHTML(sessionDiagnostics.currentSessionPresent === true ? '1' : (sessionDiagnostics.currentSessionPresent === false ? '0' : '—'))
+      + '</div></div>';
 
   const eventHtml = _securityEventCache.length
     ? _securityEventCache.map(function(e, i) {
