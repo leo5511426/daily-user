@@ -2108,11 +2108,18 @@ window.openSessionManager = async function(initialTab) {
     ? '<div style="font-size:.72em;opacity:.45;margin-top:10px;">系統支援事件：' + escapeHTML(_securityEventTypes.map(securityEventLabel).join('、')) + '</div>'
     : '';
 
+  const otherActiveCount = _securitySessionCache.filter(function(x){
+    return x && x.isActive && x.sessionId !== currentSessionId;
+  }).length;
+
   const html = '<div style="text-align:left;">'
     + '<div style="display:flex;gap:8px;margin-bottom:12px;">'
-    + '<button id="secTabDevices" type="button" style="flex:1;padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:bold;background:' + (tab === 'devices' ? '#7c3aed' : '#e5e7eb') + ';color:' + (tab === 'devices' ? '#fff' : '#374151') + ';" onclick="openSessionManager(\'devices\')">登入裝置</button>'
-    + '<button id="secTabEvents" type="button" style="flex:1;padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:bold;background:' + (tab === 'events' ? '#7c3aed' : '#e5e7eb') + ';color:' + (tab === 'events' ? '#fff' : '#374151') + ';" onclick="openSessionManager(\'events\')">安全活動</button>'
+    + '<button id="secTabDevices" type="button" style="flex:1;padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:bold;background:' + (tab === 'devices' ? '#d982a0' : '#f7e7ed') + ';color:' + (tab === 'devices' ? '#fff' : '#6f5961') + ';" onclick="openSessionManager(\'devices\')">登入裝置</button>'
+    + '<button id="secTabEvents" type="button" style="flex:1;padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:bold;background:' + (tab === 'events' ? '#d982a0' : '#f7e7ed') + ';color:' + (tab === 'events' ? '#fff' : '#6f5961') + ';" onclick="openSessionManager(\'events\')">安全活動</button>'
     + '</div>'
+    + (tab === 'devices' && otherActiveCount > 0
+      ? '<button type="button" onclick="terminateOtherSessions()" style="width:100%;margin:0 0 12px;padding:10px 12px;border-radius:9px;border:1px solid #e7b4c4;background:#fff4f7;color:#a84f6d;font-weight:800;cursor:pointer;">終止其他所有登入裝置（' + otherActiveCount + '）</button>'
+      : '')
     + '<div style="max-height:58vh;overflow-y:auto;padding-right:3px;">' + (tab === 'devices' ? deviceHtml : eventHtml + eventTypeNote) + '</div>'
     + '</div>';
 
@@ -2123,6 +2130,46 @@ window.openSessionManager = async function(initialTab) {
     confirmButtonText:'關閉',
     width:'min(94vw,760px)'
   });
+};
+
+window.terminateOtherSessions = async function() {
+  const activeOthers = _securitySessionCache.filter(function(x){
+    return x && x.isActive && x.sessionId && x.sessionId !== currentSessionId;
+  });
+  if (!activeOthers.length) {
+    return Swal.fire('提示','目前沒有其他登入中的裝置。','info').then(function(){ openSessionManager('devices'); });
+  }
+
+  const { isConfirmed } = await Swal.fire({
+    title:'終止其他所有裝置？',
+    text:'其他登入中的裝置將被強制登出，目前這台裝置會保留登入。',
+    icon:'warning',
+    showCancelButton:true,
+    confirmButtonColor:'var(--red)',
+    cancelButtonColor:'#94a3b8',
+    confirmButtonText:'終止其他裝置',
+    cancelButtonText:'取消'
+  });
+  if (!isConfirmed) return openSessionManager('devices');
+
+  try {
+    const raw = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body:JSON.stringify({
+        action:'terminateOtherSessions',
+        uid:store.userData.id,
+        currentSessionId:currentSessionId
+      })
+    });
+    const res = await raw.json();
+    if (res && res.success) {
+      Swal.fire('已完成', res.message || '其他裝置已終止。', 'success').then(function(){ openSessionManager('devices'); });
+    } else {
+      Swal.fire('錯誤', (res && res.message) || '操作失敗', 'error').then(function(){ openSessionManager('devices'); });
+    }
+  } catch(e) {
+    Swal.fire('錯誤','網路異常，請稍後再試。','error').then(function(){ openSessionManager('devices'); });
+  }
 };
 
 window.terminateSessionById = async function(sessionId) {
@@ -2833,12 +2880,54 @@ async function submitSuspensionAppeal() {
 }
 
 let _sessionHeartbeatTimer = null;
+function forceLocalSessionExpired(message) {
+  if (_sessionHeartbeatTimer) {
+    clearInterval(_sessionHeartbeatTimer);
+    _sessionHeartbeatTimer = null;
+  }
+  currentSessionId = '';
+  savedPw = '';
+  store = null;
+  setMemberNavVisible(false);
+  const appView = document.getElementById('appView');
+  const loginView = document.getElementById('loginView');
+  if (appView) appView.style.display = 'none';
+  if (loginView) loginView.style.display = 'flex';
+  Swal.fire({
+    title:'登入已結束',
+    text:message || '這個登入工作階段已失效，請重新登入。',
+    icon:'info',
+    confirmButtonColor:'var(--pink)',
+    confirmButtonText:'重新登入'
+  });
+}
+
+async function sendSessionHeartbeat() {
+  if (!currentSessionId || !store || !store.userData) return;
+  try {
+    const raw = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body:JSON.stringify({
+        action:'updateSessionActivity',
+        uid:store.userData.id,
+        sessionId:currentSessionId
+      })
+    });
+    const res = await raw.json();
+    if (!res || !res.success) {
+      const code = String((res && res.errorCode) || '');
+      if (code.indexOf('SESSION_') === 0) {
+        forceLocalSessionExpired('這個裝置的登入已被終止或逾期，請重新登入。');
+      }
+    }
+  } catch(e) {
+    // 暫時的網路錯誤不應直接把會員登出。
+  }
+}
+
 function startSessionHeartbeat() {
   if (_sessionHeartbeatTimer) clearInterval(_sessionHeartbeatTimer);
-  _sessionHeartbeatTimer = setInterval(function() {
-    if (!currentSessionId || !store || !store.userData) return;
-    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSessionActivity', uid: store.userData.id, sessionId: currentSessionId }) }).catch(function(){});
-  }, 5 * 60 * 1000);
+  _sessionHeartbeatTimer = setInterval(sendSessionHeartbeat, 60 * 1000);
 }
 
 function customizeShortcuts() {
