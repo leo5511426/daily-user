@@ -2085,7 +2085,7 @@ if (!hasBnpl) return;
 
 let checkRes;
 try {
-  const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL }) });
+  const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL, sessionId: currentSessionId }) });
   checkRes = await raw.json();
 } catch(e) { return; } 
 if (!checkRes || !checkRes.success || checkRes.allConsented) return;
@@ -2616,7 +2616,7 @@ async function doLogin() {
   try {
     const raw = await fetch(SCRIPT_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.MEMBER })
+      body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.MEMBER, sessionId: currentSessionId })
     });
     checkRes = await raw.json();
   } catch(e) {
@@ -2940,7 +2940,7 @@ async function submitSuspensionAppeal() {
     {
         action: 'submitTicket',
         uid: store.userData.id,
-        pw: savedPw,
+        sessionId: currentSessionId,
         category: '帳號問題',
         subCategory: '停權申訴',
         subject: '會員停權申訴',
@@ -4702,7 +4702,7 @@ preConfirm:()=>{
 if(res.isConfirmed){
 const fullDesc="【統一客服／訪客案件】\n所屬服務: "+res.value.service+"\n回覆聯絡方式: "+res.value.contact+"\n問題描述: "+res.value.desc;
 const fetchRes=await fetchWithQueue(SCRIPT_URL,{
-  action:'submitTicket',uid:'訪客_'+res.value.name,category:res.value.service,
+  action:'submitTicket',guest:true,guestName:res.value.name,category:res.value.service,
   subCategory:res.value.category,subject:res.value.subject,message:fullDesc
 },"客服案件送出中...");
 if(fetchRes&&fetchRes.success) Swal.fire('案件已送出','客服將依您留下的聯絡方式回覆。涉及帳務或個人資料時，可能需要另外進行身分核對。','success');
@@ -4779,7 +4779,7 @@ preConfirm: () => {
 }
 }).then(async (res) => {
 if (res.isConfirmed) {
-let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: store.userData.id, pw: savedPw, ...res.value }, "通報建檔中...");
+let fetchRes = await fetchWithQueue(SCRIPT_URL, { action: 'submitTicket', uid: store.userData.id, sessionId: currentSessionId, ...res.value }, "通報建檔中...");
 if(fetchRes && fetchRes.success) { Swal.fire('通報成功', fetchRes.message, 'success').then(()=>silentSyncData()); }
 else if (fetchRes) { Swal.fire('錯誤', fetchRes.message || '發生異常', 'error'); }
 } else { setTimeout(()=>openCustomerServiceModal(), 300); }
@@ -4827,7 +4827,8 @@ let res = await fetchWithQueue(
     {
         action: 'sendChat',
         tid: tid,
-        sender: store.userData.id,
+        uid: store.userData.id,
+        sessionId: currentSessionId,
         message: msg
     },
     "發送中..."
