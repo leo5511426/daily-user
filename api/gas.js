@@ -30,14 +30,23 @@ export default async function handler(req, res) {
     // 將前端送來的資料轉送給 Google Apps Script
     // ========================================================
 
-    console.log(
-      "Proxy request body:",
-      JSON.stringify(req.body || {})
-    );
+    let proxyAction = "";
+    try {
+      const parsedBody =
+        typeof req.body === "string"
+          ? JSON.parse(req.body || "{}")
+          : (req.body || {});
+      proxyAction = String(parsedBody.action || "");
+    } catch (_) {
+      proxyAction = "";
+    }
 
     console.log(
-      "Proxy GAS URL:",
-      GAS_URL
+      "Proxy request:",
+      JSON.stringify({
+        action: proxyAction || "unknown",
+        method: req.method
+      })
     );
 
     const gasResponse =
@@ -65,11 +74,6 @@ export default async function handler(req, res) {
       await gasResponse.text();
 
     console.log(
-      "GAS final URL:",
-      gasResponse.url
-    );
-
-    console.log(
       "GAS HTTP status:",
       gasResponse.status
     );
@@ -86,8 +90,11 @@ export default async function handler(req, res) {
 
     } catch (jsonError) {
       console.error(
-        "GAS 回傳非 JSON：",
-        text
+        "GAS 回傳非 JSON",
+        JSON.stringify({
+          action: proxyAction || "unknown",
+          status: gasResponse.status
+        })
       );
 
       return res.status(502).json({
