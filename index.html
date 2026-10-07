@@ -2361,6 +2361,33 @@ function showAboutSystem() { Swal.fire({ title: '關於本系統', html: `<div s
 function togglePasswordVisibility() { document.getElementById('pw').type = document.getElementById('showPwdCheck').checked ? 'text' : 'password'; }
 
 let _loginInProgress = false;
+let _loginHintTimers = [];
+
+function clearLoginHintTimers() {
+  _loginHintTimers.forEach(function(t){ clearTimeout(t); });
+  _loginHintTimers = [];
+}
+
+function scheduleLoginSlowHints() {
+  clearLoginHintTimers();
+  _loginHintTimers.push(setTimeout(function(){
+    if (!_loginInProgress) return;
+    const overlay = document.getElementById('loginProgressOverlay');
+    const sub = document.getElementById('lp-sub-title');
+    if (overlay && overlay.style.display !== 'none' && !overlay.classList.contains('is-error') && sub) {
+      sub.textContent = '資料較多時可能需要幾秒，請稍候';
+    }
+  }, 3500));
+  _loginHintTimers.push(setTimeout(function(){
+    if (!_loginInProgress) return;
+    const overlay = document.getElementById('loginProgressOverlay');
+    const sub = document.getElementById('lp-sub-title');
+    if (overlay && overlay.style.display !== 'none' && !overlay.classList.contains('is-error') && sub) {
+      sub.textContent = '仍在安全連線中，請勿重複點擊登入';
+    }
+  }, 8000));
+}
+
 
 const LOGIN_STEPS = [
   { id:'ls_auth',    status:'正在安全確認會員資料' },
@@ -2441,6 +2468,7 @@ function showLoginOverlay() {
   if (err) { err.textContent = ''; err.style.display = 'none'; }
   if (retry) retry.style.display = 'none';
   overlay.style.display = 'flex';
+  scheduleLoginSlowHints();
 }
 
 function setLoginOverlayVisible(visible) {
@@ -2449,6 +2477,7 @@ function setLoginOverlayVisible(visible) {
 }
 
 function hideLoginOverlay() {
+  clearLoginHintTimers();
   const overlay = document.getElementById('loginProgressOverlay');
   if (overlay) {
     overlay.style.display = 'none';
@@ -2475,6 +2504,7 @@ function finishLoginOverlay() {
 }
 
 function showLoginError(msg) {
+  clearLoginHintTimers();
   const overlay = document.getElementById('loginProgressOverlay');
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
@@ -2552,22 +2582,27 @@ async function doLogin() {
   setLoginStep('ls_session','running');
 
   setLoginStep('ls_perm','running');
-  let checkRes;
-  try {
-    const raw = await fetch(SCRIPT_URL, {
-      method:'POST',
-      body:JSON.stringify({
-        action:'checkConsents',
-        uid:store.userData.id,
-        feature:FEATURES.MEMBER,
-        sessionId:currentSessionId
-      })
-    });
-    checkRes = await raw.json();
-  } catch(e) {
-    console.error('Consent check failed:', e);
-    showLoginError('目前無法確認會員使用設定，請稍後再試。');
-    return;
+  let checkRes = res.memberConsentStatus || null;
+
+  // 新版 GAS 會在登入回應中直接附上 MEMBER 同意狀態，
+  // 避免登入成功後再多跑一次 GAS。保留舊版 fallback，方便部署切換期間使用。
+  if (!checkRes) {
+    try {
+      const raw = await fetch(SCRIPT_URL, {
+        method:'POST',
+        body:JSON.stringify({
+          action:'checkConsents',
+          uid:store.userData.id,
+          feature:FEATURES.MEMBER,
+          sessionId:currentSessionId
+        })
+      });
+      checkRes = await raw.json();
+    } catch(e) {
+      console.error('Consent check failed:', e);
+      showLoginError('目前無法確認會員使用設定，請稍後再試。');
+      return;
+    }
   }
 
   if (!checkRes || !checkRes.success) {
