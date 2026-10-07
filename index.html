@@ -2375,7 +2375,7 @@ function scheduleLoginSlowHints() {
     const overlay = document.getElementById('loginProgressOverlay');
     const sub = document.getElementById('lp-sub-title');
     if (overlay && overlay.style.display !== 'none' && !overlay.classList.contains('is-error') && sub) {
-      sub.textContent = '資料較多時可能需要幾秒，請稍候';
+      sub.textContent = '目前連線伺服器人數較多，請稍候，並避免進行其他操作。';
     }
   }, 3500));
   _loginHintTimers.push(setTimeout(function(){
@@ -2383,7 +2383,7 @@ function scheduleLoginSlowHints() {
     const overlay = document.getElementById('loginProgressOverlay');
     const sub = document.getElementById('lp-sub-title');
     if (overlay && overlay.style.display !== 'none' && !overlay.classList.contains('is-error') && sub) {
-      sub.textContent = '仍在安全連線中，請勿重複點擊登入';
+      sub.textContent = '系統仍在處理您的登入請求中，請勿進行其他操作。';
     }
   }, 8000));
 }
