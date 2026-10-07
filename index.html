@@ -1225,6 +1225,18 @@ a.site-footer-link:hover,button.site-footer-link:hover{color:var(--brand-strong)
   .site-footer-bottom{display:block;}
   .site-footer-top{margin-top:8px!important;}
 }
+
+/* 2026-10-07｜修正登入頁加入 Footer 後的 Flex overflow 上方裁切 */
+#loginView{
+  min-height:100vh !important;
+  height:auto !important;
+  justify-content:flex-start !important;
+}
+#loginView>h1{margin-top:20px !important;}
+@media(max-width:560px){
+  #loginView{padding:30px 18px !important;}
+  #loginView>h1{margin-top:14px !important;}
+}
 </style>
 </head>
 <body data-theme="light">
@@ -1269,7 +1281,7 @@ a.site-footer-link:hover,button.site-footer-link:hover{color:var(--brand-strong)
 </div>
 
 <!-- 🔐 登入畫面 -->
-<div id="loginView" style="display:flex; height:100vh; flex-direction:column; justify-content:center; padding:40px; box-sizing: border-box; overflow-y: auto;">
+<div id="loginView" style="display:flex; min-height:100vh; height:auto; flex-direction:column; justify-content:flex-start; padding:40px; box-sizing:border-box; overflow-y:auto;">
 <button type="button" class="ui-pref-gear" aria-label="介面設定" onclick="openInterfaceSettings(false)">⚙️</button>
 <h1 style="color:var(--pink); text-align:center;">小佑的日常生活行動會員</h1>
 <div id="guestAnnouncementSection" style="display:none; width:100%; margin:0 0 14px 0;">
