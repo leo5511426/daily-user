@@ -1268,6 +1268,7 @@ a.site-footer-link:hover,button.site-footer-link:hover{color:var(--brand-strong)
 .login-progress-overlay.is-leaving{opacity:0;pointer-events:none;}
 .login-progress-title{font-size:1.18em;font-weight:850;color:var(--brand-strong);letter-spacing:-.02em;}
 .login-progress-sub{margin-top:7px;color:var(--brand-muted);font-size:.84em;font-weight:550;min-height:1.4em;line-height:1.6;}
+.login-progress-note{margin-top:5px;color:var(--brand-muted);font-size:.76em;font-weight:500;min-height:1.2em;line-height:1.55;opacity:.82;}
 .login-progress-error{
   display:none;margin-top:16px;padding:12px 14px;border-radius:10px;
   background:#fff0f2;border:1px solid #f0cbd7;color:#9b4f61;font-size:.83em;line-height:1.65;
@@ -2374,16 +2375,20 @@ function scheduleLoginSlowHints() {
     if (!_loginInProgress) return;
     const overlay = document.getElementById('loginProgressOverlay');
     const sub = document.getElementById('lp-sub-title');
+    const note = document.getElementById('lp-sub-note');
     if (overlay && overlay.style.display !== 'none' && !overlay.classList.contains('is-error') && sub) {
-      sub.textContent = '目前連線伺服器人數較多，請稍候，並避免進行其他操作。';
+      sub.textContent = '目前連線伺服器人數較多，請稍候';
+      if (note) note.textContent = '並避免進行其他操作。';
     }
   }, 3500));
   _loginHintTimers.push(setTimeout(function(){
     if (!_loginInProgress) return;
     const overlay = document.getElementById('loginProgressOverlay');
     const sub = document.getElementById('lp-sub-title');
+    const note = document.getElementById('lp-sub-note');
     if (overlay && overlay.style.display !== 'none' && !overlay.classList.contains('is-error') && sub) {
-      sub.textContent = '系統仍在處理您的登入請求中，請勿進行其他操作。';
+      sub.textContent = '系統仍在處理您的登入請求中';
+      if (note) note.textContent = '請勿進行其他操作';
     }
   }, 8000));
 }
@@ -2435,10 +2440,17 @@ function getLoginDeviceInfo() {
 
 function setLoginStep(stepId, state, extraLabel) {
   const sub = document.getElementById('lp-sub-title');
+  const note = document.getElementById('lp-sub-note');
   if (!sub) return;
   const def = LOGIN_STEPS.find(x => x.id === stepId);
-  if (state === 'running') sub.textContent = extraLabel || (def && def.status) || '正在登入';
-  if (state === 'warn') sub.textContent = extraLabel || '需要確認會員設定';
+  if (state === 'running') {
+    sub.textContent = extraLabel || (def && def.status) || '正在登入';
+    if (note) note.textContent = '';
+  }
+  if (state === 'warn') {
+    sub.textContent = extraLabel || '需要確認會員設定';
+    if (note) note.textContent = '';
+  }
 }
 
 function showLoginOverlay() {
@@ -2452,6 +2464,7 @@ function showLoginOverlay() {
         <div class="login-win11-ring" aria-hidden="true"><div class="login-win11-check">✓</div></div>
         <div id="lp-main-title" class="login-progress-title">正在登入</div>
         <div id="lp-sub-title" class="login-progress-sub">正在安全確認會員資料</div>
+        <div id="lp-sub-note" class="login-progress-note"></div>
         <div id="loginErrorMsg" class="login-progress-error"></div>
         <button id="loginRetryBtn" type="button" class="login-progress-retry" onclick="hideLoginOverlay()">返回登入</button>
       </div>`;
@@ -2461,10 +2474,12 @@ function showLoginOverlay() {
   overlay.classList.remove('is-success','is-error','is-leaving');
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
+  const note = document.getElementById('lp-sub-note');
   const err = document.getElementById('loginErrorMsg');
   const retry = document.getElementById('loginRetryBtn');
   if (title) title.textContent = '正在登入';
   if (sub) sub.textContent = '正在安全確認會員資料';
+  if (note) note.textContent = '';
   if (err) { err.textContent = ''; err.style.display = 'none'; }
   if (retry) retry.style.display = 'none';
   overlay.style.display = 'flex';
@@ -2508,6 +2523,7 @@ function showLoginError(msg) {
   const overlay = document.getElementById('loginProgressOverlay');
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
+  const note = document.getElementById('lp-sub-note');
   const err = document.getElementById('loginErrorMsg');
   const retry = document.getElementById('loginRetryBtn');
 
@@ -2518,6 +2534,7 @@ function showLoginError(msg) {
   }
   if (title) title.textContent = '無法登入';
   if (sub) sub.textContent = '請確認後再試一次';
+  if (note) note.textContent = '';
   if (err) {
     err.textContent = String(msg || '登入過程發生問題，請稍後再試。');
     err.style.display = 'block';
