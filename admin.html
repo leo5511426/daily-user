@@ -1255,7 +1255,7 @@ console.error("🔴 後端崩潰，回傳內容：", textData);
 Swal.fire({
 title: "後端程式錯誤 (GAS)",
 html: `HTTP：${response.status}<br>Content-Type：${response.headers.get('content-type') || '未提供'}<br><br>
-     <div style="font-size:12px;color:red;text-align:left;background:#fee2e2;padding:5px;max-height:120px;overflow:auto;">${String(textData || '').substring(0,500)}</div>`,
+     <div style="font-size:12px;color:red;text-align:left;background:#fee2e2;padding:5px;max-height:120px;overflow:auto;">${escapeHTML(String(textData || '').substring(0,500))}</div>`,
 icon: "error"
 });
 return { success:false, aborted:true };
@@ -1325,9 +1325,6 @@ document.getElementById('bnpl_uid').innerHTML = '<option value="">--請選擇要
 document.getElementById('bnpl_manage_uid').innerHTML = '<option value="">--請選擇會員查看明細--</option>' + uOpts;
 
 let suspOpts = '<option value="">--請選擇目前停權中的會員--</option>';
-if (ACTIVE_SUSPENSIONS.length > 0) {
-suspOpts += ACTIVE_SUSPENSIONS.map(s => `<option value="${s.uid}">${s.uid} (至: ${s.endTime || '永久'})</option>`).join('');
-}
 const seenSusp = new Set();
 const backendSusp = Array.isArray(ACTIVE_SUSPENSIONS) ? ACTIVE_SUSPENSIONS : [];
 backendSusp.forEach(s => {
@@ -3095,3 +3092,4 @@ closeAppOverlay();
 </div>
 </body>
 </html>
+

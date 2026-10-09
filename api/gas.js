@@ -30,16 +30,18 @@ export default async function handler(req, res) {
     // 將前端送來的資料轉送給 Google Apps Script
     // ========================================================
 
-    let proxyAction = "";
+    let parsedBody;
     try {
-      const parsedBody =
-        typeof req.body === "string"
-          ? JSON.parse(req.body || "{}")
-          : (req.body || {});
-      proxyAction = String(parsedBody.action || "");
+      parsedBody = typeof req.body === "string"
+        ? JSON.parse(req.body || "{}")
+        : req.body;
     } catch (_) {
-      proxyAction = "";
+      return res.status(400).json({success:false,message:"請求資料格式不正確"});
     }
+    if (!parsedBody || typeof parsedBody !== "object" || Array.isArray(parsedBody)) {
+      return res.status(400).json({success:false,message:"請求資料必須是物件"});
+    }
+    const proxyAction = String(parsedBody.action || "");
 
     console.log(
       "Proxy request:",
@@ -59,9 +61,7 @@ export default async function handler(req, res) {
         },
 
         body:
-          typeof req.body === "string"
-            ? req.body
-            : JSON.stringify(req.body || {}),
+          JSON.stringify(parsedBody),
 
         redirect: "follow"
       });
@@ -135,3 +135,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
