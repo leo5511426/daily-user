@@ -34,6 +34,8 @@
     document.documentElement.style.setProperty('--fs', fontPx + 'px');
     document.documentElement.style.setProperty('--ui-font-size', fontPx + 'px');
 
+    if (!document.body) return;
+
     const theme = pref.theme === 'system'
       ? ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light')
       : pref.theme;
@@ -177,6 +179,9 @@
 
   // Apply early so the login page reflects saved preferences immediately.
   try { apply(readStored()); } catch(e) {}
+  document.addEventListener('DOMContentLoaded', function(){
+    apply(window.__interfacePreferenceDraft || readStored());
+  }, {once:true});
 })();
 </script>
 <script>
@@ -2081,6 +2086,9 @@ window.openSessionManager = async function(initialTab) {
   }
 
   const tab = initialTab === 'events' ? 'events' : 'devices';
+  const incompleteSessionNotice = current && !current.logId && !current.loginTime
+    ? '<div style="padding:10px;margin-bottom:10px;border:1px solid var(--orange);border-radius:10px;">目前登入有效，但裝置詳細紀錄暫時無法取得，請稍後重新查詢。</div>'
+    : '';
   const deviceHtml = _securitySessionCache.length
     ? _securitySessionCache.map(function(s, i) {
         const isCurrent = s.sessionId === currentSessionId;
@@ -2124,6 +2132,7 @@ window.openSessionManager = async function(initialTab) {
   }).length;
 
   const html = '<div style="text-align:left;">'
+    + incompleteSessionNotice
     + '<div style="display:flex;gap:8px;margin-bottom:12px;">'
     + '<button id="secTabDevices" type="button" style="flex:1;padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:bold;background:' + (tab === 'devices' ? '#d982a0' : '#f7e7ed') + ';color:' + (tab === 'devices' ? '#fff' : '#6f5961') + ';" onclick="openSessionManager(\'devices\')">登入裝置</button>'
     + '<button id="secTabEvents" type="button" style="flex:1;padding:10px;border-radius:10px;border:0;cursor:pointer;font-weight:bold;background:' + (tab === 'events' ? '#d982a0' : '#f7e7ed') + ';color:' + (tab === 'events' ? '#fff' : '#6f5961') + ';" onclick="openSessionManager(\'events\')">安全活動</button>'
@@ -2194,24 +2203,40 @@ window.terminateSessionById = async function(sessionId) {
   } catch(e) { Swal.fire('錯誤', '網路異常，請稍後再試。', 'error').then(openSessionManager); }
 };
 
-async function checkBnplConsentAndShow() {
+let _bnplConsentPromise = null;
+function checkBnplConsentAndShow() {
+  if (_bnplConsentPromise) return _bnplConsentPromise;
+  _bnplConsentPromise = runBnplConsentCheck().finally(() => { _bnplConsentPromise = null; });
+  return _bnplConsentPromise;
+}
+
+async function runBnplConsentCheck() {
 if (!store || !store.userData) return;
-const hasBnpl = (store.loans || []).some(l => String(l.item).includes('先享後付'));
+const hasBnpl = (store.loans || []).some(l => l.loanType === 'INSTALLMENT' || String(l.item || '').includes('先享後付'));
 if (!hasBnpl) return;
 
 let checkRes;
 try {
   const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkConsents', uid: store.userData.id, feature: FEATURES.BNPL, sessionId: currentSessionId }) });
   checkRes = await raw.json();
-} catch(e) { return; } 
-if (!checkRes || !checkRes.success || checkRes.allConsented) return;
+} catch(e) {
+  openTab(0);
+  Swal.fire('無法確認條款', '目前無法連線，請稍後再試。', 'error');
+  return;
+}
+if (!checkRes || !checkRes.success) {
+  openTab(0);
+  Swal.fire('無法確認條款', (checkRes && checkRes.message) || '請稍後再試。', 'error');
+  return;
+}
+if (checkRes.allConsented) return;
 
 await fetchLegalDocsIfNeeded();
 const missingDocs = checkRes.missing || [];
 const links = missingDocs.map(function(doc) {
-  return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--blue);font-weight:bold;text-decoration:underline;">《' + doc.title + '》</a>';
+  return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(decodeURIComponent(\'' + encodeURIComponent(String(doc.docId || '')).replace(/'/g, '%27') + '\'))" style="color:var(--blue);font-weight:bold;text-decoration:underline;">《' + escapeHTML(doc.title) + '》</a>';
 }).join('、');
-const checkboxLabel = missingDocs.map(function(doc) { return '《' + doc.title + '》'; }).join('、');
+const checkboxLabel = missingDocs.map(function(doc) { return '《' + escapeHTML(doc.title) + '》'; }).join('、');
 
 const { isConfirmed } = await Swal.fire({
 title: '💳 先享後付服務同意書',
@@ -2232,9 +2257,15 @@ preConfirm: function() {
 
 if (isConfirmed) {
   try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.BNPL, consentMethod: '線上勾選同意', sessionId: currentSessionId }) });
-  } catch(e) {}
-  localStorage.setItem('bnplConsent_v1_' + store.userData.id, new Date().toISOString());
+    const raw = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'recordConsents', uid: store.userData.id, feature: FEATURES.BNPL, consentMethod: '線上勾選同意', sessionId: currentSessionId }) });
+    const recordRes = await raw.json();
+    if (!raw.ok || !recordRes || !recordRes.success) {
+      throw new Error((recordRes && recordRes.message) || '同意紀錄未儲存成功，請稍後再試。');
+    }
+  } catch(e) {
+    openTab(0);
+    Swal.fire('無法儲存同意紀錄', e.message || '請稍後再試。', 'error');
+  }
 } else {
   openTab(0);
   Swal.fire({ title: '提示', text: '您尚未同意先享後付條款。若需使用此功能，請同意相關條款後再進入。', icon: 'info', confirmButtonColor: 'var(--pink)', timer: 3000, showConfirmButton: false });
@@ -2646,7 +2677,7 @@ async function doLogin() {
     await fetchLegalDocsIfNeeded();
     const missingDocs = checkRes.missing || [];
     const links = missingDocs.map(function(doc) {
-      return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(\'' + doc.docId + '\')" style="color:var(--pink);font-weight:bold;text-decoration:underline;">《' + escapeHTML(doc.title) + '》</a>';
+      return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(decodeURIComponent(\'' + encodeURIComponent(String(doc.docId || '')).replace(/'/g, '%27') + '\'))" style="color:var(--pink);font-weight:bold;text-decoration:underline;">《' + escapeHTML(doc.title) + '》</a>';
     }).join('、');
     const checkboxLabel = missingDocs.map(function(doc) { return '《' + escapeHTML(doc.title) + '》'; }).join('、');
 
@@ -2709,7 +2740,6 @@ async function doLogin() {
     }
   }
 
-  localStorage.setItem('legalConsent_v1_' + store.userData.id, new Date().toISOString());
 
   setLoginStep('ls_load','running');
   updateSuspensionUI();
@@ -2829,6 +2859,11 @@ function blockIfSuspended(actionName = '此功能') {
         );
     }
 }
+const MEMBER_SYNC_MIN_INTERVAL = 15000;
+let _memberSyncPromise = null;
+let _memberSyncSeq = 0;
+let _lastMemberSyncAt = 0;
+
 async function silentSyncData(options) {
     options = options || {};
     const force = !!options.force;
@@ -3244,32 +3279,38 @@ return `
 }).join('') || '<p style="text-align:center; opacity:0.3; margin-top:40px;">目前無任何通知</p>';
 }
 
-function checkAutoCompleteOrders() {
-if (!store || !Array.isArray(store.orders) || !store.userData || store.userData.isSuspended) return; 
-const nowTime = Date.now(); 
-let deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
-
-store.orders.forEach(o => {
-let statusStr = String(o.status || '');
-let isCompleted = statusStr === "訂單已完成";
-let isReturning = statusStr.includes("退貨") || statusStr.includes("退款");
-let isCanceled = statusStr.includes("不成立") || statusStr.includes("取消");
-let isDelivered = deliveredStatuses.some(s => statusStr.includes(s));
-
-if (isDelivered && !isCompleted && !isReturning && !isCanceled) {
-let deliveredNode = (o.timeline||[]).find(n => deliveredStatuses.some(s => String(n.status||'').includes(s)));
-if (deliveredNode && deliveredNode.time) {
-let dDate = new Date(String(deliveredNode.time).replace(/-/g, '/'));
-if (!isNaN(dDate.getTime())) {
-let limitTime = dDate.getTime() + (7 * 24 * 60 * 60 * 1000); 
-if (nowTime > limitTime) { 
-fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'buyerCompleteOrder', oid: o.id, uid: store.userData.id, pw: savedPw }) }); 
-o.status = "訂單已完成"; 
-}
-}
-}
-}
-});
+const _autoCompletePending = new Set();
+const _autoCompleteLastAttempt = new Map();
+async function checkAutoCompleteOrders() {
+  if (!store || !Array.isArray(store.orders) || !store.userData || store.userData.isSuspended) return;
+  const requestUid = store.userData.id;
+  const requestSession = currentSessionId;
+  const deliveredStatuses = ["已取件", "取件成功", "已配達", "已到貨"];
+  const tasks = store.orders.map(async o => {
+    const status = String(o.status || '');
+    if (!deliveredStatuses.some(s => status.includes(s)) || /完成|退貨|退款|不成立|取消/.test(status)) return;
+    const timeline = Array.isArray(o.timeline) ? o.timeline : [];
+    const deliveredNode = timeline.find(n => deliveredStatuses.some(s => String(n.status || '').includes(s)));
+    const time = deliveredNode && new Date(String(deliveredNode.time || '').replace(/-/g, '/')).getTime();
+    if (!time || Date.now() <= time + 7 * 24 * 60 * 60 * 1000) return;
+    const key = requestUid + ':' + o.id;
+    if (_autoCompletePending.has(key) || Date.now() - (_autoCompleteLastAttempt.get(key) || 0) < 60000) return;
+    _autoCompletePending.add(key);
+    _autoCompleteLastAttempt.set(key, Date.now());
+    try {
+      const response = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'buyerCompleteOrder', oid:o.id, uid:requestUid, pw:savedPw, sessionId:requestSession }) });
+      const res = await response.json();
+      if (response.ok && res && res.success && store && store.userData.id === requestUid && currentSessionId === requestSession) {
+        const current = store.orders.find(x => x.id === o.id);
+        if (current && current.status === status) {
+          current.status = '訂單已完成';
+          renderOrders();
+        }
+      }
+    } catch (e) { console.warn('訂單自動完成暫時失敗：', e); }
+    finally { _autoCompletePending.delete(key); }
+  });
+  await Promise.all(tasks);
 }
 
 function render() {
@@ -3507,7 +3548,7 @@ if (store.userData && store.userData.isSuspended) {
                     let dd = String(limitObj.getDate()).padStart(2, '0');
                     deadlineHtml = `<p style="font-size:0.85em; color:var(--red); text-align:center; margin-top:15px; font-weight:bold;">⚠️ 鑑賞期退貨/退款期限：可於 ${yyyy}/${mm}/${dd} 前提出<br><span style="font-size:0.85em; color:#666; font-weight:normal;">(若未自行點按，系統將於到期後自動完成訂單)</span></p>`;
                 } else {
-                    deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">✅ 已過7日鑑賞期，系統已自動完成訂單</p>`;
+                    deadlineHtml = `<p style="font-size:0.85em; color:#94a3b8; text-align:center; margin-top:15px; font-weight:bold;">已過7日鑑賞期，正在確認訂單完成狀態</p>`;
                 }
             }
         }
@@ -5085,3 +5126,4 @@ function closeAppOverlay() {
 </script>
 </body>
 </html>
+
