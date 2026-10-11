@@ -1289,13 +1289,30 @@ a.site-footer-link:hover,button.site-footer-link:hover{color:var(--brand-strong)
 }
 body.ui-dynamic-off .login-win11-ring::before,
 body.ui-dynamic-reduced .login-win11-ring::before{animation-duration:2.2s;}
+
+/* 統一等待圓環 */
+.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring::before{
+ box-sizing:border-box!important;width:44px!important;height:44px!important;border:3px solid rgba(217,130,160,.2)!important;
+ border-top-color:#d982a0!important;border-right-color:#d982a0!important;border-radius:50%!important;background:transparent!important;
+ mask:none!important;-webkit-mask:none!important;animation:unified-spin .85s linear infinite!important;
+}
+.unified-spinner{margin:0 auto 16px}
+.sync-spinner{width:14px!important;height:14px!important;border-width:2px!important}
+@keyframes unified-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring::before{animation-duration:2.4s!important}}
+
+.login-progress-panel{width:min(92vw,640px);max-height:92dvh;overflow:auto}
+.login-progress-title,.login-progress-sub,.login-progress-note,.login-wait-prompt,.login-wait-prompt button{font-size:30px!important;font-weight:700!important;line-height:1.45;overflow-wrap:anywhere}
+.login-wait-prompt[hidden]{display:none!important}
+.login-wait-prompt button{width:100%;padding:12px;margin-top:12px;border:1px solid #d982a0;border-radius:10px;background:var(--card,#fff);color:var(--text)}
+.login-wait-prompt p{margin:20px 0 8px}
 </style>
 </head>
 <body data-theme="light">
 
 <div class="app-container" id="appContainer">
 
-<div id="loading" class="mask"><p>資料同步中...</p></div>
+<div id="loading" class="mask"><div class="unified-spinner" aria-hidden="true"></div><p>資料同步中...</p></div>
 
 <!-- 🔧 Vercel 靜態維護閘門（不依賴 GAS）／獨立全頁 -->
 <div id="maintenanceView" style="display:none; min-height:100vh; flex-direction:column; box-sizing:border-box; overflow-y:auto; padding:0 0 32px;">
@@ -2312,88 +2329,10 @@ document.getElementById('rand_code_btn').style.display = 'none';
 }
 }
 
-async function fetchWithQueue(url, payload, loadingTitle = "處理中...") {
-let currentAbortController = new AbortController(); const signal = currentAbortController.signal;
-let queuePos = Math.floor(Math.random() * 9), queueInterval, queueTimeout, isPrompting = false, isFinished = false;
-
-const startStandardUI = () => { if (isFinished) return; Swal.fire({ title: loadingTitle, text: '正在同步資料，請稍候...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }}); };
-
-const renderQueueHtml = (pos, title) => {
-let estMins = Math.max(1, Math.ceil(pos / 2)); 
-return `
-               <div style="display:flex; flex-direction:column; align-items:center; gap:20px; margin: 10px 0;">
-                   <div style="display:flex; align-items:center; gap:12px;">
-                       <div style="width:24px; height:24px; border:3px solid #e0e0e0; border-top:3px solid var(--pink); border-radius:50%; animation:sync-spin 0.8s linear infinite;"></div>
-                       <div style="font-weight:bold; color:#333; font-size:1.1em;">${title}</div>
-                   </div>
-                   <div style="font-weight:bold; color:var(--pink); font-size:1.1em; text-align:center;">目前系統較為繁忙，請耐心等候...</div>
-                   <div style="display:flex; align-items:center; justify-content:center; gap:15px; background:#f8fafc; padding:15px; border-radius:15px; width:100%; box-sizing:border-box; border:1px solid #e2e8f0;">
-                       <span style="font-size:30px; animation: queue-bounce 0.8s infinite alternate;">🚶</span>
-                       <div style="text-align:center; min-width:80px;">
-                           <div style="font-size:0.85em; color:#64748b; font-weight:bold;">前方還有</div>
-                           <div style="font-size:1.8em; font-weight:bold; color:var(--red); line-height:1.2;">${pos} <span style="font-size:0.5em; color:#64748b;">人</span></div>
-                           <div style="font-size:0.8em; color:#64748b; font-weight:bold; margin-top:5px;">預估時間 <span style="color:var(--orange);">${estMins}</span> 分鐘</div>
-                       </div>
-                       <span style="font-size:30px; animation: queue-bounce 0.8s infinite alternate 0.4s;">🚶‍♀️</span>
-                   </div>
-               </div>`;
-};
-
-const startQueueUI = () => { 
-if (isFinished) return; 
-Swal.fire({ 
-title: '系統排隊中', 
-html: renderQueueHtml(queuePos, loadingTitle), 
-allowOutsideClick: false, 
-showConfirmButton: false, 
-didOpen: () => { 
-queueInterval = setInterval(() => { 
-if (queuePos > 1) { 
-queuePos--; 
-const content = Swal.getHtmlContainer(); 
-if (content) content.innerHTML = renderQueueHtml(queuePos, loadingTitle); 
-} 
-}, Math.floor(Math.random() * 1500) + 1500); 
-} 
-}); 
-};
-
-const isQueueMode = queuePos >= 3;
-if (isQueueMode) {
-startQueueUI();
-queueTimeout = setTimeout(() => {
-if (isFinished) return; isPrompting = true; clearInterval(queueInterval);
-Swal.fire({ title: '⏳ 等候時間較長', text: '系統目前連線量較大，是否繼續等待？', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--green, #10b981)', cancelButtonColor: '#94a3b8', confirmButtonText: '✅ 是，繼續等待', cancelButtonText: '❌ 否，退出等待', allowOutsideClick: false }).then((res) => {
-if (isFinished) { Swal.close(); return; }
-if (res.isConfirmed) { isPrompting = false; startQueueUI(); } else {
-Swal.fire({ title: '⚠️ 確定離開？', html: '<span style="color:var(--red, #ff5252); font-weight:bold;">若您選擇離開排隊序列，<br>再次進入時等待時間可能會加長。</span><br><br>確定要放棄當前進度並離開嗎？', icon: 'error', showCancelButton: true, confirmButtonColor: '#94a3b8', cancelButtonColor: 'var(--red, #ff5252)', confirmButtonText: '取消，繼續等待', cancelButtonText: '確定離開', allowOutsideClick: false }).then((exitRes) => {
-if (isFinished) { Swal.close(); return; }
-if (exitRes.dismiss === Swal.DismissReason.cancel) { isFinished = true; currentAbortController.abort(); Swal.fire({ title: '已取消', text: '您已退出排隊序列。', icon: 'info', timer: 1500, showConfirmButton: false}); } else { isPrompting = false; startQueueUI(); }
-});
-}
-});
-}, 10000); 
-} else { startStandardUI(); }
-
-try {
-const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload), signal: signal });
-const textData = await response.text(); 
-let data;
-try { 
-data = JSON.parse(textData); 
-} catch(e) {
-isFinished = true; if (isQueueMode) { clearInterval(queueInterval); clearTimeout(queueTimeout); } Swal.close();
-console.error("JSON 解析失敗:", textData);
-Swal.fire("伺服器端錯誤", "請確認您的 Google Apps Script 網址是否正確，且已部署為「最新版本」。\n\n系統回傳內容：\n" + textData.substring(0, 150), "error"); 
-return { success: false, aborted: true }; 
-}
-isFinished = true; if (isQueueMode) { clearInterval(queueInterval); clearTimeout(queueTimeout); }
-if (!isPrompting) Swal.close(); return data;
-} catch (err) {
-isFinished = true; if (isQueueMode) { clearInterval(queueInterval); clearTimeout(queueTimeout); }
-if (err.name === 'AbortError') return { success: false, aborted: true };
-if (!isPrompting) Swal.close(); throw err;
-}
+async function fetchWithQueue(url,payload,loadingTitle="處理中..."){
+  Swal.fire({title:loadingTitle,text:'正在同步資料，請稍候...',allowOutsideClick:false,allowEscapeKey:false,didOpen:()=>Swal.showLoading()});
+  try{const response=await fetch(url,{method:'POST',body:JSON.stringify(payload)});const data=await response.json();Swal.close();return data;}
+  catch(error){Swal.close();throw error;}
 }
 
 function showCustomerServiceAlert(title, text) { Swal.fire({ title: title, html: `<div style="text-align: center; margin-bottom: 10px;">${text}</div><div style="font-weight: bold; color: #ff5252; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 10px;">仍無法解決問題嗎？建議您與客服中心聯絡</div>`, icon: 'error', showCancelButton: true, confirmButtonColor: 'var(--pink)', cancelButtonColor: '#7f8c8d', confirmButtonText: '聯絡線上客服', cancelButtonText: '關閉' }).then((result) => { if (result.isConfirmed) openCustomerServiceModal(); }); }
@@ -2404,6 +2343,9 @@ function togglePasswordVisibility() { document.getElementById('pw').type = docum
 
 let _loginInProgress = false;
 let _loginHintTimers = [];
+let _loginAttempt = 0;
+let _loginAbortController = null;
+let _loginHintStage = 0;
 
 function clearLoginHintTimers() {
   _loginHintTimers.forEach(function(t){ clearTimeout(t); });
@@ -2411,29 +2353,37 @@ function clearLoginHintTimers() {
 }
 
 function scheduleLoginSlowHints() {
-  clearLoginHintTimers();
-  _loginHintTimers.push(setTimeout(function(){
-    if (!_loginInProgress) return;
-    const overlay = document.getElementById('loginProgressOverlay');
-    const sub = document.getElementById('lp-sub-title');
-    const note = document.getElementById('lp-sub-note');
-    if (overlay && overlay.style.display !== 'none' && !overlay.classList.contains('is-error') && sub) {
-      sub.textContent = '目前連線伺服器人數較多，請稍候';
-      if (note) note.textContent = '並避免進行其他操作。';
-    }
-  }, 3500));
-  _loginHintTimers.push(setTimeout(function(){
-    if (!_loginInProgress) return;
-    const overlay = document.getElementById('loginProgressOverlay');
-    const sub = document.getElementById('lp-sub-title');
-    const note = document.getElementById('lp-sub-note');
-    if (overlay && overlay.style.display !== 'none' && !overlay.classList.contains('is-error') && sub) {
-      sub.textContent = '系統仍在處理您的登入請求中';
-      if (note) note.textContent = '請勿進行其他操作';
-    }
-  }, 8000));
+  clearLoginHintTimers();_loginHintStage=0;
+  const prompt=document.getElementById('loginWaitPrompt');
+  if(prompt)prompt.hidden=true;
+  const sub=document.getElementById('lp-sub-title'),note=document.getElementById('lp-sub-note');
+  if(sub)sub.textContent='正在處理您的登入請求';
+  if(note)note.textContent='請稍候';
+  const active=()=>_loginInProgress&&document.getElementById('loginProgressOverlay')?.style.display!=='none';
+  _loginHintTimers.push(setTimeout(()=>{
+    if(!active())return;_loginHintStage=1;
+    if(sub)sub.textContent='目前連線較慢，請稍候';
+    if(note)note.textContent='並避免進行其他操作。';
+  },3500));
+  _loginHintTimers.push(setTimeout(()=>{
+    if(!active())return;_loginHintStage=2;
+    if(sub)sub.textContent='系統仍在處理您的登入請求中';
+    if(note)note.textContent='請勿進行其他操作';
+  },8000));
+  _loginHintTimers.push(setTimeout(()=>{
+    if(!active())return;_loginHintStage=3;
+    if(prompt)prompt.hidden=false;
+    document.getElementById('loginContinueWait')?.focus();
+  },10000));
 }
-
+function continueLoginWaiting(){if(_loginInProgress)scheduleLoginSlowHints();}
+function cancelLoginWaiting(){
+  _loginAttempt++;_loginAbortController?.abort();_loginAbortController=null;
+  store=null;savedPw='';currentSessionId='';hideLoginOverlay();
+  document.getElementById('appView').style.display='none';
+  document.getElementById('loginView').style.display='flex';setMemberNavVisible(false);
+  document.getElementById('acc').focus();
+}
 
 const LOGIN_STEPS = [
   { id:'ls_auth',    status:'正在安全確認會員資料' },
@@ -2484,6 +2434,7 @@ function setLoginStep(stepId, state, extraLabel) {
   const note = document.getElementById('lp-sub-note');
   if (!sub) return;
   const def = LOGIN_STEPS.find(x => x.id === stepId);
+  if (_loginHintStage > 0) return;
   if (state === 'running') {
     sub.textContent = extraLabel || (def && def.status) || '正在登入';
     if (note) note.textContent = '';
@@ -2504,8 +2455,9 @@ function showLoginOverlay() {
       <div class="login-progress-panel">
         <div class="login-win11-ring" aria-hidden="true"><div class="login-win11-check">✓</div></div>
         <div id="lp-main-title" class="login-progress-title">正在登入</div>
-        <div id="lp-sub-title" class="login-progress-sub">正在安全確認會員資料</div>
+        <div id="lp-sub-title" class="login-progress-sub" aria-live="polite">正在安全確認會員資料</div>
         <div id="lp-sub-note" class="login-progress-note"></div>
+        <div id="loginWaitPrompt" class="login-wait-prompt" hidden role="group" aria-label="是否繼續等待登入"><p>是否繼續等待？</p><button id="loginContinueWait" type="button" onclick="continueLoginWaiting()">是，繼續等待</button><button type="button" onclick="cancelLoginWaiting()">否，返回主畫面</button></div>
         <div id="loginErrorMsg" class="login-progress-error"></div>
         <button id="loginRetryBtn" type="button" class="login-progress-retry" onclick="hideLoginOverlay()">返回登入</button>
       </div>`;
@@ -2524,16 +2476,22 @@ function showLoginOverlay() {
   if (err) { err.textContent = ''; err.style.display = 'none'; }
   if (retry) retry.style.display = 'none';
   overlay.style.display = 'flex';
+  document.getElementById('loginView').inert = true;
   scheduleLoginSlowHints();
 }
 
 function setLoginOverlayVisible(visible) {
   const overlay = document.getElementById('loginProgressOverlay');
   if (overlay) overlay.style.display = visible ? 'flex' : 'none';
+  document.getElementById('loginView').inert = visible;
+  if (!visible) clearLoginHintTimers();
+  else if (_loginInProgress) scheduleLoginSlowHints();
 }
 
 function hideLoginOverlay() {
-  clearLoginHintTimers();
+  document.getElementById('loginView').inert = false;
+  clearLoginHintTimers();_loginAttempt++;
+  const prompt=document.getElementById('loginWaitPrompt');if(prompt)prompt.hidden=true;
   const overlay = document.getElementById('loginProgressOverlay');
   if (overlay) {
     overlay.style.display = 'none';
@@ -2543,6 +2501,7 @@ function hideLoginOverlay() {
 }
 
 function finishLoginOverlay() {
+  clearLoginHintTimers();const prompt=document.getElementById('loginWaitPrompt');if(prompt)prompt.hidden=true;
   const overlay = document.getElementById('loginProgressOverlay');
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
@@ -2560,7 +2519,7 @@ function finishLoginOverlay() {
 }
 
 function showLoginError(msg) {
-  clearLoginHintTimers();
+  clearLoginHintTimers();const prompt=document.getElementById('loginWaitPrompt');if(prompt)prompt.hidden=true;
   const overlay = document.getElementById('loginProgressOverlay');
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
@@ -2598,6 +2557,9 @@ async function doLogin() {
     return Swal.fire({ title:'提示', text:'請輸入完整資料', icon:'warning', confirmButtonColor:'var(--pink)' });
   }
 
+  const loginAttempt=++_loginAttempt;
+  const controller=new AbortController();_loginAbortController=controller;
+  const isCurrentLogin=()=>loginAttempt===_loginAttempt&&!controller.signal.aborted;
   showLoginOverlay();
   setLoginStep('ls_auth','running');
 
@@ -2606,6 +2568,7 @@ async function doLogin() {
     const deviceInfo = getLoginDeviceInfo();
     const raw = await fetch(SCRIPT_URL, {
       method:'POST',
+      signal:controller.signal,
       body:JSON.stringify({
         action:'login',
         uid:uid,
@@ -2617,7 +2580,9 @@ async function doLogin() {
       })
     });
     res = await raw.json();
+    if (!isCurrentLogin()) return;
   } catch(e) {
+    if (!isCurrentLogin()) return;
     console.error('Login request failed:', e);
     showLoginError('目前無法連線至會員系統，請稍後再試。');
     return;
@@ -2648,6 +2613,7 @@ async function doLogin() {
     try {
       const raw = await fetch(SCRIPT_URL, {
         method:'POST',
+        signal:controller.signal,
         body:JSON.stringify({
           action:'checkConsents',
           uid:store.userData.id,
@@ -2656,7 +2622,9 @@ async function doLogin() {
         })
       });
       checkRes = await raw.json();
+      if (!isCurrentLogin()) return;
     } catch(e) {
+      if (!isCurrentLogin()) return;
       console.error('Consent check failed:', e);
       showLoginError('目前無法確認會員使用設定，請稍後再試。');
       return;
@@ -2672,9 +2640,9 @@ async function doLogin() {
 
   if (!checkRes.allConsented) {
     // 法律文件需要使用者閱讀時，暫時收起等待層，避免遮住正式同意視窗。
+    await fetchLegalDocsIfNeeded(controller.signal);
+    if (!isCurrentLogin()) return;
     setLoginOverlayVisible(false);
-
-    await fetchLegalDocsIfNeeded();
     const missingDocs = checkRes.missing || [];
     const links = missingDocs.map(function(doc) {
       return '<a href="javascript:void(0)" onclick="openLegalDocFromConsent(decodeURIComponent(\'' + encodeURIComponent(String(doc.docId || '')).replace(/'/g, '%27') + '\'))" style="color:var(--pink);font-weight:bold;text-decoration:underline;">《' + escapeHTML(doc.title) + '》</a>';
@@ -2706,6 +2674,7 @@ async function doLogin() {
       }
     });
 
+    if (!isCurrentLogin()) return;
     if (!isConfirmed) {
       _loginInProgress = false;
       location.reload();
@@ -2719,6 +2688,7 @@ async function doLogin() {
     try {
       const raw = await fetch(SCRIPT_URL, {
         method:'POST',
+        signal:controller.signal,
         body:JSON.stringify({
           action:'recordConsents',
           uid:store.userData.id,
@@ -2728,7 +2698,9 @@ async function doLogin() {
         })
       });
       recordRes = await raw.json();
+      if (!isCurrentLogin()) return;
     } catch(e) {
+      if (!isCurrentLogin()) return;
       console.error('Consent record failed:', e);
       showLoginError('目前無法儲存會員設定，請稍後重新登入。');
       return;
@@ -2741,6 +2713,7 @@ async function doLogin() {
   }
 
 
+  if (!isCurrentLogin()) return;
   setLoginStep('ls_load','running');
   updateSuspensionUI();
   render();
@@ -4912,13 +4885,14 @@ if(res && res.success) { silentSyncData(); setTimeout(()=>openChatWindow(tid), 5
 // ==========================================
 let legalDocs = null; 
 
-async function fetchLegalDocsIfNeeded() {
+async function fetchLegalDocsIfNeeded(signal) {
     if (legalDocs !== null) return;
     try {
-        let r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchLegalDocs' }) });
+        let r = await fetch(SCRIPT_URL, { method: 'POST', signal, body: JSON.stringify({ action: 'fetchLegalDocs' }) });
         let j = await r.json();
+        if (signal && signal.aborted) return;
         legalDocs = (j.success && Array.isArray(j.docs)) ? j.docs : [];
-    } catch(e) { legalDocs = []; }
+    } catch(e) { if (e.name !== 'AbortError') legalDocs = []; }
 }
 
 window.openLegalCenter = async function() {
