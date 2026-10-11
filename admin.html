@@ -361,6 +361,17 @@ input:focus,select:focus,textarea:focus{border-color:#d982a0!important;box-shado
 .msg-admin{background:#d982a0!important;}
 .brand-admin-footer{border-color:#efd0da!important;color:#8c777e!important;}
 .brand-admin-footer a{color:#b85f7e!important;}
+
+/* 統一等待圓環 */
+.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring::before{
+ box-sizing:border-box!important;width:44px!important;height:44px!important;border:3px solid rgba(217,130,160,.2)!important;
+ border-top-color:#d982a0!important;border-right-color:#d982a0!important;border-radius:50%!important;background:transparent!important;
+ mask:none!important;-webkit-mask:none!important;animation:unified-spin .85s linear infinite!important;
+}
+.unified-spinner{margin:0 auto 16px}
+.sync-spinner{width:14px!important;height:14px!important;border-width:2px!important}
+@keyframes unified-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring::before{animation-duration:2.4s!important}}
 </style></head>
 <body>
 
