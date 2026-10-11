@@ -1291,7 +1291,7 @@ body.ui-dynamic-off .login-win11-ring::before,
 body.ui-dynamic-reduced .login-win11-ring::before{animation-duration:2.2s;}
 
 /* 統一等待圓環 */
-.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring::before{
+.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring{
  box-sizing:border-box!important;width:44px!important;height:44px!important;border:3px solid rgba(217,130,160,.2)!important;
  border-top-color:#d982a0!important;border-right-color:#d982a0!important;border-radius:50%!important;background:transparent!important;
  mask:none!important;-webkit-mask:none!important;animation:unified-spin .85s linear infinite!important;
@@ -1299,13 +1299,21 @@ body.ui-dynamic-reduced .login-win11-ring::before{animation-duration:2.2s;}
 .unified-spinner{margin:0 auto 16px}
 .sync-spinner{width:14px!important;height:14px!important;border-width:2px!important}
 @keyframes unified-spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring::before{animation-duration:2.4s!important}}
+@media(prefers-reduced-motion:reduce){.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring{animation-duration:2.4s!important}}
 
 .login-progress-panel{width:min(92vw,640px);max-height:92dvh;overflow:auto}
 .login-progress-title,.login-progress-sub,.login-progress-note,.login-wait-prompt,.login-wait-prompt button{font-size:30px!important;font-weight:700!important;line-height:1.45;overflow-wrap:anywhere}
 .login-wait-prompt[hidden]{display:none!important}
 .login-wait-prompt button{width:100%;padding:12px;margin-top:12px;border:1px solid #d982a0;border-radius:10px;background:var(--card,#fff);color:var(--text)}
 .login-wait-prompt p{margin:20px 0 8px}
+
+/* 登入圓環使用實體元素；重試時重新建立，避免沿用隱藏過的動畫。 */
+.login-win11-ring::before{content:none!important;display:none!important}
+.login-progress-overlay.is-success .login-win11-ring{
+ animation:none!important;border-color:transparent!important;
+}
+body.ui-dynamic-reduced .login-win11-ring{animation-duration:2.4s!important}
+body.ui-dynamic-off .login-win11-ring{animation:none!important}
 </style>
 </head>
 <body data-theme="light">
@@ -2465,6 +2473,18 @@ function showLoginOverlay() {
   }
 
   overlay.classList.remove('is-success','is-error','is-leaving');
+  // 每次登入建立新的動畫元素，不沿用上一次失敗／隱藏的動畫狀態。
+  const oldRing = overlay.querySelector('.login-win11-ring');
+  if (oldRing) {
+    const ring = document.createElement('div');
+    ring.className = 'login-win11-ring';
+    ring.setAttribute('aria-hidden','true');
+    const check = document.createElement('div');
+    check.className = 'login-win11-check';
+    check.textContent = '✓';
+    ring.appendChild(check);
+    oldRing.replaceWith(ring);
+  }
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
   const note = document.getElementById('lp-sub-note');
