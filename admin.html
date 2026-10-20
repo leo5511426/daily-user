@@ -2381,7 +2381,10 @@ sel.innerHTML = '<option value="">請先取得物流商</option>';
 return;
 }
 sel.innerHTML = '<option value="">請選擇物流商</option>' + TRACKTW_CARRIERS.map(c => `<option value="${escapeHTML(String(c.id || ''))}">${escapeHTML(String(c.name || c.id || '未命名物流商'))}</option>`).join('');
+const selected = getTrackTWSelectedPackage();
+if (selected && selected.existing) sel.value = String(selected.existing.carrierId || '');
 sel.onchange = renderTrackTWRequirements;
+renderTrackTWRequirements();
 }
 
 function getTrackTWSelectedPackage() {
@@ -2393,7 +2396,7 @@ const parts = key.split('|');
 const packageType = parts.shift();
 const trackingNumber = parts.join('|');
 const mappings = Array.isArray(order.trackTWPackages) ? order.trackTWPackages : [];
-const existing = mappings.find(x => String(x.packageType || '').toUpperCase() === packageType && String(x.trackingNumber || '') === trackingNumber);
+const existing = mappings.find(x => String(x.packageType || '').toUpperCase() === packageType && String(x.trackingNumber || '').trim().toUpperCase() === trackingNumber.trim().toUpperCase());
 return { order, packageType, trackingNumber, existing };
 }
 
@@ -2449,7 +2452,9 @@ return;
 if (form) form.style.display='block';
 const done = !!(selected.existing && selected.existing.userPackageId);
 if (summary) summary.innerHTML = `${selected.packageType === 'RETURN' ? '↩️' : '📦'} ${escapeHTML(selected.trackingNumber)} ${done ? '<span style="color:#059669;">✓ 已啟用</span>' : ''}`;
-if (status && done) status.innerText = '此包裹已建立 Track.TW 對應；可手動同步最新物流，會員查詢時也會自動同步。';
+if (status && done) status.innerText = '此包裹已建立 Track.TW 對應。若物流商或必要資料有誤，可在此修正後重新查詢。';
+const carrierSelect = document.getElementById('tt_carrier_id');
+if (carrierSelect) carrierSelect.value = done ? String(selected.existing.carrierId || '') : '';
 const actions = document.getElementById('tt_sync_actions');
 const importBtn = form ? form.querySelector('button[onclick^="importSelectedTrackTWPackage"]') : null;
 if (actions) {
@@ -2457,7 +2462,10 @@ actions.innerHTML = done
 ? '<button type="button" onclick="syncSelectedTrackTWPackage()" style="background:#0ea5e9;flex:1;">↻ 手動同步最新物流</button>'
 : '';
 }
-if (importBtn) importBtn.style.display = done ? 'none' : 'block';
+if (importBtn) {
+importBtn.style.display = 'block';
+importBtn.textContent = done ? '修正物流商／必要資料' : '📡 啟用 Track.TW 查詢';
+}
 renderTrackTWRequirements();
 }
 
@@ -2475,15 +2483,16 @@ wrap.innerHTML = TRACKTW_REQUIREMENTS.map((r, i) => {
 const key = String(r.key || '').trim();
 const label = String(r.desc || r.key || '額外欄位');
 const ph = String(r.placeholder || '');
-const type = String(r.keyboardType || '').toLowerCase() === 'number' ? 'number' : 'text';
-return `<div style="margin-top:8px;"><label style="font-size:12px;font-weight:bold;">${escapeHTML(label)}${r.required === false ? '（選填）' : '（必填）'}</label><input type="${type}" id="tt_req_${i}" data-tt-key="${escapeHTML(key)}" placeholder="${escapeHTML(ph)}" style="width:100%;box-sizing:border-box;margin-top:4px;"></div>`;
+const keyboard = String(r.keyboard_type || r.keyboardType || '').toLowerCase();
+const inputMode = keyboard === 'number' ? 'numeric' : (keyboard === 'tel' ? 'tel' : 'text');
+return `<div style="margin-top:8px;"><label style="font-size:12px;font-weight:bold;">${escapeHTML(label)}${r.required === false ? '（選填）' : '（必填）'}</label><input type="text" inputmode="${inputMode}" id="tt_req_${i}" data-tt-key="${escapeHTML(key)}" placeholder="${escapeHTML(ph)}" style="width:100%;box-sizing:border-box;margin-top:4px;"></div>`;
 }).join('');
 }
 
 async function importSelectedTrackTWPackage() {
 const selected = getTrackTWSelectedPackage();
 if (!selected) return Swal.fire('提示','請先選擇包裹。','warning');
-if (selected.existing && selected.existing.userPackageId) return Swal.fire('提示','此包裹已經啟用 Track.TW。','info');
+const replaceExisting = !!(selected.existing && selected.existing.userPackageId);
 const carrierId = document.getElementById('tt_carrier_id')?.value || '';
 if (!carrierId) return Swal.fire('提示','請先選擇物流商。','warning');
 const extraFields = {};
@@ -2496,12 +2505,19 @@ if (r.required !== false && !value) invalid = true;
 if (key && value) extraFields[key] = value;
 });
 if (invalid) return Swal.fire('提示','請完成物流商要求的必填欄位。','warning');
+if (replaceExisting) {
+const carrier = TRACKTW_CARRIERS.find(c => String(c.id) === String(carrierId));
+const answer = await Swal.fire({title:'修正此包裹的物流對應？',text:`單號：${selected.trackingNumber}；物流商：${carrier && carrier.name || carrierId}`,icon:'question',showCancelButton:true,confirmButtonText:'確認修正',cancelButtonText:'取消'});
+if (!answer.isConfirmed) return;
+}
 const res = await fetchWithQueue(GAS, {
 action:'adminAction', type:'trackImportPackage',
 oid:selected.order.id, packageType:selected.packageType,
-trackingNumber:selected.trackingNumber, carrierId, extraFields
+trackingNumber:selected.trackingNumber, carrierId, extraFields,
+replaceExisting, expectedUserPackageId:replaceExisting ? selected.existing.userPackageId : ''
 }, '啟用 Track.TW 中...');
 if (!res || res.aborted) return;
+if (replaceExisting && res.alreadyImported) return Swal.fire('後端尚未更新','請先部署會員 GAS r5，再修正既有包裹對應。','warning');
 if (res.success) {
 Swal.fire('完成', res.message || 'Track.TW 已啟用。', 'success').then(()=>refresh());
 } else {
