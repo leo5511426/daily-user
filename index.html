@@ -3664,7 +3664,10 @@ function renderTrackTWResult(targetId, data) {
   const payload = data && data.data ? data.data : data;
   const history = payload && Array.isArray(payload.package_history) ? payload.package_history : (payload && Array.isArray(payload.history) ? payload.history : []);
   if (!history.length) {
-    el.innerHTML = '<div style="padding:10px;border-radius:14px;background:rgba(255,255,255,.45);font-size:.82em;opacity:.7;">Track.TW 尚未提供物流歷程。</div><div class="track-source">物流資料來源：Track.TW</div>';
+    const carrierName = escapeHTML(String(payload && payload.carrier && payload.carrier.name || '未提供'));
+    const identifier = String(payload && payload.short_url && payload.short_url.identifier || '');
+    const officialLink = /^[A-Za-z0-9_-]+$/.test(identifier) ? `<div style="margin-top:7px;"><a href="https://track.tw/u/${encodeURIComponent(identifier)}" target="_blank" rel="noopener noreferrer">至 Track.TW 查看此包裹</a></div>` : '';
+    el.innerHTML = `<div style="padding:10px;border-radius:14px;background:rgba(255,255,255,.45);font-size:.82em;">本次 Track.TW 回應未包含物流歷程。<div style="margin-top:5px;">查詢物流商：${carrierName}</div><div style="margin-top:5px;opacity:.7;">若 Track.TW 頁面已有資料，請將此物流商與單號提供給管理員核對。</div>${officialLink}</div><div class="track-source">物流資料來源：Track.TW</div>`;
     return;
   }
   const sorted = history.slice().sort((a,b)=>{
@@ -3686,7 +3689,7 @@ function renderTrackTWResult(targetId, data) {
     const time = trackTWFormatTime(Number(h.time) > 0 ? Number(h.time) : h.created_at);
     return `<div style="display:flex;gap:10px;position:relative;padding-bottom:${i===sorted.length-1?'0':'12px'};"><div style="width:10px;flex:0 0 10px;position:relative;"><span style="display:block;width:10px;height:10px;border-radius:50%;background:${i===0?'#22c55e':'#94a3b8'};margin-top:5px;"></span>${i===sorted.length-1?'':'<span style="position:absolute;left:4px;top:15px;width:2px;height:calc(100% + 2px);background:rgba(148,163,184,.35);"></span>'}</div><div style="flex:1;"><div style="font-weight:800;font-size:.82em;">${hi} ${text}</div><div style="font-size:.7em;opacity:.55;margin-top:2px;">${escapeHTML(time)}</div></div></div>`;
   }).join('');
-  el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;"><div class="track-glass-head"><div class="track-glass-title">${icon} ${escapeHTML(label)}</div><span class="track-status-pill">Track.TW</span></div>${syncText ? `<div style="margin-top:8px;font-size:.76em;color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:7px 9px;">${syncText}</div>` : ''}<div style="margin-top:10px;">${timeline}</div><div class="track-source">物流資料來源：Track.TW</div></div>`;
+  el.innerHTML = `<div class="track-glass-card" style="margin-top:8px;"><div class="track-glass-head"><div class="track-glass-title">${icon} ${escapeHTML(label)}</div><span class="track-status-pill">${escapeHTML(String(payload && payload.carrier && payload.carrier.name || 'Track.TW'))}</span></div>${syncText ? `<div style="margin-top:8px;font-size:.76em;color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:7px 9px;">${syncText}</div>` : ''}<div style="margin-top:10px;">${timeline}</div><div class="track-source">物流資料來源：Track.TW</div></div>`;
 }
 
 async function renderTrackTWResultWithRetry(targetId, data) {
@@ -3853,9 +3856,9 @@ let trackTWHtml = '';
 const existingTrackMappings = Array.isArray(o.trackTWPackages) ? o.trackTWPackages : [];
 const outboundTrackNumbers = String(o.track || '').split(/[,，\n]+/).map(t => t.trim()).filter(Boolean);
 const trackPackagesByKey = {};
-existingTrackMappings.forEach(pkg => { const k = String(pkg.packageType || 'OUTBOUND').toUpperCase() + '|' + String(pkg.trackingNumber || ''); trackPackagesByKey[k] = pkg; });
-const trackPackages = outboundTrackNumbers.map(t => trackPackagesByKey['OUTBOUND|' + t] || { packageType:'OUTBOUND', trackingNumber:t, pendingMapping:true });
-if (returnTrack && !trackPackagesByKey['RETURN|' + returnTrack]) trackPackages.push({ packageType:'RETURN', trackingNumber:returnTrack, pendingMapping:true });
+existingTrackMappings.forEach(pkg => { const k = String(pkg.packageType || 'OUTBOUND').toUpperCase() + '|' + String(pkg.trackingNumber || '').trim().toUpperCase(); trackPackagesByKey[k] = pkg; });
+const trackPackages = outboundTrackNumbers.filter((t,i,all) => all.findIndex(x => x.toUpperCase() === t.toUpperCase()) === i).map(t => trackPackagesByKey['OUTBOUND|' + t.toUpperCase()] || { packageType:'OUTBOUND', trackingNumber:t, pendingMapping:true });
+if (returnTrack) trackPackages.push(trackPackagesByKey['RETURN|' + returnTrack.toUpperCase()] || { packageType:'RETURN', trackingNumber:returnTrack, pendingMapping:true });
 if (trackPackages.length) {
   const trackStatusId = trackTWStatusDomId(o.id);
   trackTWHtml += '<div style="margin:15px 0;">';
@@ -3910,7 +3913,7 @@ let htmlContent = `
                </div>
            `;
 Swal.fire({title:'📦 訂單詳細資訊',html:`<div style="text-align:left;"><div class="track-glass-card" style="margin-top:0;"><div class="track-glass-head"><div class="track-glass-title">🫧 智慧物流</div><span class="track-status-pill" data-track-order-status="${escapeHTML(String(o.id))}">● ${escapeHTML(currentStatus)}</span></div><div class="track-meta"><span class="track-meta-chip">🚚 ${escapeHTML(o.ship)||'物流方式未提供'}</span><span class="track-meta-chip">📦 ${escapeHTML(outboundTracks.join(', '))||'尚無出貨單號'}</span></div><div class="track-source">Track.TW 為主要即時物流來源；系統時間線保留管理／訂單操作紀錄。</div></div>${htmlContent}</div>`,confirmButtonColor:'var(--pink)',confirmButtonText:'完成'});
-const TRACK_TW_MAP_REQUEST_TIMEOUT_MS = 10000;
+const TRACK_TW_MAP_REQUEST_TIMEOUT_MS = 45000;
 const TRACK_TW_PACKAGE_GAP_MS = 1500;
 
 function trackTWWait(ms) {
@@ -3987,7 +3990,8 @@ setTimeout(async () => {
           }
 
           if (ensureRes && ensureRes.success) {
-            await loadTrackTWTracking(o.id, pType, pTrack, target);
+            if (ensureRes.data) renderTrackTWResult(target, ensureRes);
+            else await loadTrackTWTracking(o.id, pType, pTrack, target);
           } else if (targetEl) {
             const msg = escapeHTML((ensureRes && ensureRes.message) || '目前無法自動建立 Track.TW 對應。');
             const code = ensureRes && ensureRes.errorCode ? `<div style="font-size:.68em;opacity:.55;margin-top:5px;">診斷碼：${escapeHTML(String(ensureRes.errorCode))}</div>` : '';
@@ -5122,4 +5126,5 @@ function closeAppOverlay() {
 </script>
 </body>
 </html>
+
 
