@@ -372,8 +372,13 @@ input:focus,select:focus,textarea:focus{border-color:#d982a0!important;box-shado
 .sync-spinner{width:14px!important;height:14px!important;border-width:2px!important}
 @keyframes unified-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring::before{animation-duration:2.4s!important}}
-</style></head>
+</style><style>
+.ns1-test-banner{padding:12px 16px;background:#fff0d6;color:#68401d;text-align:center;font-weight:bold;line-height:1.6;border-bottom:1px solid #edcc96}.ns1-form{text-align:left;line-height:1.7}.ns1-form label{display:block;font-weight:bold}.ns1-form select,.ns1-form input:not([type=checkbox]){box-sizing:border-box;width:100%;padding:12px;border:1px solid #e6c9d6;border-radius:12px;font:inherit;background:#fff;color:#44343d}.ns1-form fieldset{border:1px solid #e6c9d6;border-radius:12px;margin-top:16px;padding:12px}.ns1-check{display:flex!important;align-items:center;gap:10px;padding:7px 0}.ns1-check input[type=checkbox]{width:20px!important;height:20px!important;flex:0 0 20px;accent-color:#b54c78}.ns1-test-note{background:#fff2dd;border-radius:10px;padding:10px}.ns1-contact-card{background:#fffafd;border:1px solid #e6c9d6;border-radius:14px;padding:14px;margin:12px 0;overflow-wrap:anywhere}.ns1-contact-card h4{margin:0}.ns1-contact-card p{line-height:1.7}.ns1-form :disabled{opacity:.55}
+
+</style>
+</head>
 <body>
+<div class="ns1-test-banner" role="status">隔離測試版｜通知設定第一階段｜請只使用測試帳號</div>
 
 <div id="reader-modal"><div id="reader"></div><button onclick="stopScan()" style="background:var(--red); border-radius:0; margin:0; height:80px; font-size:20px; color:white; border:none; width:100%;">關閉相機</button></div>
 
@@ -418,6 +423,7 @@ input:focus,select:focus,textarea:focus{border-color:#d982a0!important;box-shado
 <div id="folderGrandchildren" class="folder-view"></div>
 </div>
 <div id="folderContent" class="folder-content">
+<div id="notification_settings_section" class="card ns1-form"><h3>通知偏好與聯絡確認（測試）</h3><p>只測試會員設定與身分核對，尚未連接社交通知發送清單。這裡的確認按鈕不會發送任何訊息。</p><label for="ns1-filter">顯示設定</label><select id="ns1-filter" onchange="ns1RenderContacts()"><option value="pending">待確認聯絡資料</option><option value="verified">已確認聯絡資料</option><option value="site">只收會員網通知</option><option value="all">全部設定</option></select><button type="button" onclick="ns1LoadContacts()">重新載入</button><div id="ns1-contacts" aria-live="polite">請載入會員通知偏好。</div></div>
 <div class="card" id="bnpl_manage_section" style="border: 2px solid var(--blue);">
 <h3 style="margin:0 0 10px; color: var(--blue);">💼 先享後付 (BNPL) 總管</h3>
 <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
@@ -773,7 +779,7 @@ input:focus,select:focus,textarea:focus{border-color:#d982a0!important;box-shado
 <script>
 // ⚠️ 替換為您的最新 GAS 部署網址
 const GAS = "/api/gas";
-const GAS_DIRECT = "https://script.google.com/macros/s/AKfycbyK4gS3KL-Qnn6C58whcyWeIO5nCXXex4BsO5zXNH0gCyxWibe908PzXB0hsqMijlTH/exec";
+const GAS_DIRECT = ''; // No direct fallback from the isolated preview.
 const ADMIN_SESSION_KEY = 'daily_user_admin_session';
 let ADMIN_SESSION = sessionStorage.getItem(ADMIN_SESSION_KEY) || '';
 
@@ -848,6 +854,7 @@ system: {
 title:'系統管理', desc:'發票、優惠券、客服、法律文件', children:[
 {title:'電子發票', desc:'中獎登錄與手動開立', action:()=>openAdminSection('invoice_section')},
 {title:'發送優惠券', desc:'發送實體優惠券給會員', action:()=>openAdminSection('coupon_section')},
+{title:'通知偏好與聯絡確認（測試）', desc:'查看會員選擇的管道並確認聯絡身分', action:()=>ns1OpenContacts()},
 {title:'客服／推播', desc:'客服工單與站內通知', action:()=>openAdminSection('cs_section')},
 {title:'發布公告', desc:'發布登入前後皆可看到的公開公告', action:()=>{ openAdminSection('cs_section'); setTimeout(()=>{ const m=document.getElementById('nt_mode'); if(m){m.value='announcement'; updateNotificationMode();} },0); }},
 {title:'法律文件', desc:'新增、修改、發布法律文件', action:()=>openAdminSection('ldms_section')}
@@ -3117,6 +3124,39 @@ closeAppOverlay();
     <a href="#" onclick="event.preventDefault();adminLogout();" style="color:var(--red)!important;">安全登出後台</a>
   </div>
 </div>
+<script>
+let ns1Contacts=[],ns1AdminBusy=false,ns1LoadedSession='';
+const ns1Channels={site:'會員網',line:'LINE',facebook:'Facebook Messenger',instagram:'Instagram 私訊'};
+async function ns1OpenContacts(){openAdminSection('notification_settings_section');await ns1LoadContacts();}
+async function ns1LoadContacts(){
+  if(ns1AdminBusy)return;ns1AdminBusy=true;const session=ADMIN_SESSION;
+  try{
+    const result=await fetchWithQueue(GAS,{action:'adminNotificationContactsV1'},'載入會員通知偏好');
+    if(!ADMIN_SESSION || (session && ADMIN_SESSION!==session)){ns1Contacts=[];document.getElementById('ns1-contacts').textContent='登入狀態已變更，請重新載入。';return;}
+    if(!result.success||result.notificationSettingsVersion!==1){document.getElementById('ns1-contacts').textContent=result.message||'隔離測試後端尚未設定。';return;}
+    ns1LoadedSession=ADMIN_SESSION;ns1Contacts=result.contacts;ns1RenderContacts();
+  }finally{ns1AdminBusy=false;}
+}
+function ns1RenderContacts(){
+  const filter=document.getElementById('ns1-filter').value;
+  const list=ns1Contacts.filter(p=>filter==='all'||filter==='pending'&&p.channel!=='site'&&!p.verified||filter==='verified'&&p.channel!=='site'&&p.verified||filter==='site'&&p.channel==='site');
+  document.getElementById('ns1-contacts').innerHTML=list.length?list.map(p=>`<article class="ns1-contact-card"><h4>${escapeHTML(p.name)}（${escapeHTML(p.uid)}）</h4><p>管道：${escapeHTML(ns1Channels[p.channel]||p.channel)}</p><p>聯絡資料：${escapeHTML(p.contact||'不使用社交通知')}</p><p>狀態：<strong>${p.channel==='site'?'只收會員網通知':p.verified?'已確認':'待確認'}</strong></p><p>社交提醒：${escapeHTML(Object.keys(p.categories).filter(k=>p.categories[k]).join('、')||'全部關閉')}</p><p>最後更新：${escapeHTML(p.updatedAt)}</p>${p.channel!=='site'?`<button type="button" data-ns1-confirm="${ns1Contacts.indexOf(p)}">${p.verified?'撤銷聯絡確認':'確認可聯絡本人'}</button>`:''}</article>`).join(''):'<p>目前沒有符合條件的會員設定。</p>';
+}
+async function ns1ConfirmContact(index){
+  if(ns1AdminBusy||!ADMIN_SESSION||ADMIN_SESSION!==ns1LoadedSession)return;
+  const p=ns1Contacts[index];if(!p)return;
+  const confirm=await Swal.fire({title:p.verified?'撤銷這筆聯絡確認？':'確認可聯絡這位會員本人？',text:`會員：${p.name}（${p.uid}）\n管道：${ns1Channels[p.channel]}\n聯絡資料：${p.contact}\n請先自行核對對話身分；按確認不會發送訊息。`,showCancelButton:true,confirmButtonText:'確認登記',cancelButtonText:'取消'});
+  if(!confirm.isConfirmed||ADMIN_SESSION!==ns1LoadedSession)return;
+  ns1AdminBusy=true;
+  try{
+    const id='ns1_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'_'+Math.random().toString(36).slice(2));
+    const result=await fetchWithQueue(GAS,{action:'adminVerifyNotificationContactV1',uid:p.uid,revision:p.revision,verified:!p.verified,requestId:id},'儲存聯絡確認');
+    await Swal.fire(result.success?'已登記':'未能完成',result.success?'聯絡確認狀態已更新。':result.message||'請重新載入，核對最新狀態。',result.success?'success':'warning');
+  }finally{ns1AdminBusy=false;await ns1LoadContacts();}
+}
+document.addEventListener('click',e=>{const button=e.target.closest('[data-ns1-confirm]');if(button)ns1ConfirmContact(Number(button.dataset.ns1Confirm));});
+
+</script>
 </body>
 </html>
 
