@@ -1315,6 +1315,10 @@ body.ui-dynamic-reduced .login-win11-ring::before{animation-duration:2.2s;}
 body.ui-dynamic-reduced .login-win11-ring{animation-duration:2.4s!important}
 body.ui-dynamic-off .login-win11-ring{animation:none!important}
 </style>
+<style>
+.nc-settings{text-align:left;line-height:1.7}.nc-settings label{display:block;font-weight:bold}.nc-settings select,.nc-settings input:not([type=checkbox]),.nc-settings textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #e7cbd8;border-radius:12px;background:#fff;color:#44383f;font:inherit}.nc-settings fieldset{border:1px solid #e7cbd8;border-radius:12px;padding:12px}.nc-check{display:flex!important;align-items:center;gap:10px;padding:8px 0}.nc-check input[type=checkbox]{width:20px!important;height:20px!important;flex:0 0 20px;accent-color:#b84775}.nc-notice{border:1px solid #ead4de;border-radius:14px;padding:14px;margin:12px 0;background:#fffafd;overflow-wrap:anywhere}.nc-content{white-space:pre-wrap}.nc-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.nc-toolbar button{width:auto!important;margin:0!important;flex:1 1 140px}.nc-settings p,.nc-notice p{line-height:1.7}.nc-settings [hidden]{display:none!important}
+
+</style>
 </head>
 <body data-theme="light">
 
@@ -1453,6 +1457,7 @@ body.ui-dynamic-off .login-win11-ring{animation:none!important}
 <div id="syncIndicator" class="sync-indicator"><div class="sync-spinner"></div><div class="sync-text">同步中...</div></div>
 
 <div id="p0" class="page" style="display:block;">
+<button type="button" onclick="openNotificationSettings()" style="float:right;">通知設定</button>
 <div class="glass-hero"><div class="glass-kicker">小佑的日常生活行動會員</div><div class="glass-hero-title">會員首頁</div><p class="glass-hero-subtitle">快速查看近期通知、帳務、訂單與常用服務。</p></div>
 <div id="homeAnnouncementSection" style="display:none; margin-bottom:18px;">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
@@ -1691,6 +1696,7 @@ body.ui-dynamic-off .login-win11-ring{animation:none!important}
 <h2 style="color:var(--pink); display:flex; align-items:center; gap:6px;">通知中心</h2>
 <select id="sortNt" class="sort-select" onchange="renderNotifications()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select>
 </div>
+<button type="button" onclick="openNotificationSettings()" style="margin-bottom:14px;">通知設定</button>
 <div id="ntTabBarCenter" class="tab-bar-scroll"></div>
 <div id="ntList"></div>
 </div>
@@ -5123,6 +5129,45 @@ function closeAppOverlay() {
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
   else install();
 })();
+</script>
+<script>
+// Member notification preferences. Contact data never stored in browser storage.
+let ncMemberRequest = 0;
+async function openNotificationSettings() {
+  if (!store?.userData?.id || !currentSessionId) return;
+  const uid = String(store.userData.id), sessionId = currentSessionId, request = ++ncMemberRequest;
+  const active = () => request === ncMemberRequest && String(store?.userData?.id || '') === uid && currentSessionId === sessionId;
+  try {
+    const data = await fetchWithQueue(SCRIPT_URL, {action:'notificationGetPreferences',uid,sessionId}, '載入通知設定');
+    if (!active()) return;
+    if (!data.success || data.version !== 1) return Swal.fire('暫時無法開啟', data.message || '請先更新行動會員 GAS，通知設定才能使用。', 'info');
+    const p = data.preferences, labels = {site:'只收會員網通知',line:'LINE',facebook:'Facebook Messenger',instagram:'Instagram 私訊'};
+    const {value} = await Swal.fire({
+      title:'通知設定', width:640, showCancelButton:true, confirmButtonText:'儲存設定', cancelButtonText:'取消',
+      html:`<div class="nc-settings"><p>會員網會保留完整通知。選擇社交管道後，由管理員人工發送你勾選的提醒。</p>
+        <label for="nc-channel">主要社交通知管道</label><select id="nc-channel">${Object.entries(labels).map(([k,v])=>`<option value="${k}" ${p.channel===k?'selected':''}>${v}</option>`).join('')}</select>
+        <label for="nc-contact">聯絡資料</label><input id="nc-contact" maxlength="250" value="${escapeHTML(p.contact)}"><p id="nc-contact-hint"></p>
+        <p>目前聯絡資料：<b>${p.channel==='site'?'未使用社交通知':p.verified?'已確認':'待管理員確認'}</b>。更換管道或聯絡資料後須重新確認。</p>
+        <fieldset><legend>希望收到哪些社交提醒？</legend>${data.categories.map((k,i)=>`<label class="nc-check"><input type="checkbox" id="nc-category-${i}" ${p.categories[k]?'checked':''}>${escapeHTML(k)}</label>`).join('')}</fieldset>
+        <p>一般運輸中動態僅留會員網。關閉提醒後，重要到期或取件案件仍可能由管理員判斷是否需要聯絡。</p></div>`,
+      didOpen:()=>{
+        const channel=document.getElementById('nc-channel'),contact=document.getElementById('nc-contact');
+        const update=()=>{contact.disabled=channel.value==='site';document.getElementById('nc-contact-hint').textContent=({site:'不需要填寫聯絡資料',line:'填寫 LINE ID 或顯示名稱；由管理員確認可聯絡本人',facebook:'填寫 https://facebook.com/ 開頭的個人檔案連結',instagram:'填寫 Instagram 使用者名稱，例如 daily_user'})[channel.value];};
+        channel.addEventListener('change',update);update();
+      },
+      preConfirm:()=>{
+        const channel=document.getElementById('nc-channel').value, contact=document.getElementById('nc-contact').value.trim();
+        if(channel!=='site' && !contact){Swal.showValidationMessage('請填寫聯絡資料');return false;}
+        const categories={};data.categories.forEach((k,i)=>categories[k]=document.getElementById('nc-category-'+i).checked);
+        return {channel,contact,categories};
+      }
+    });
+    if(!value || !active())return;
+    const res=await fetchWithQueue(SCRIPT_URL,{action:'notificationSavePreferences',uid,sessionId,version:p.version,...value},'儲存通知設定');
+    if(active())await Swal.fire(res.success?'已儲存':'未能儲存',res.success?'通知偏好已更新。新增或變更的聯絡資料會交由管理員確認。':res.message||'請重新開啟設定後再試。',res.success?'success':'error');
+  } catch(e) {if(active())Swal.fire('連線失敗','無法確認儲存結果，請重新開啟通知設定核對。','error');}
+}
+
 </script>
 </body>
 </html>
