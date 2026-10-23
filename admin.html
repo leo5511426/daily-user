@@ -372,7 +372,11 @@ input:focus,select:focus,textarea:focus{border-color:#d982a0!important;box-shado
 .sync-spinner{width:14px!important;height:14px!important;border-width:2px!important}
 @keyframes unified-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.unified-spinner,.spinner,.swal2-loader,.sync-spinner,.login-win11-ring::before{animation-duration:2.4s!important}}
-</style></head>
+</style><style>
+.nc-settings{text-align:left;line-height:1.7}.nc-settings label{display:block;font-weight:bold}.nc-settings select,.nc-settings input:not([type=checkbox]),.nc-settings textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #e7cbd8;border-radius:12px;background:#fff;color:#44383f;font:inherit}.nc-settings fieldset{border:1px solid #e7cbd8;border-radius:12px;padding:12px}.nc-check{display:flex!important;align-items:center;gap:10px;padding:8px 0}.nc-check input[type=checkbox]{width:20px!important;height:20px!important;flex:0 0 20px;accent-color:#b84775}.nc-notice{border:1px solid #ead4de;border-radius:14px;padding:14px;margin:12px 0;background:#fffafd;overflow-wrap:anywhere}.nc-content{white-space:pre-wrap}.nc-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.nc-toolbar button{width:auto!important;margin:0!important;flex:1 1 140px}.nc-settings p,.nc-notice p{line-height:1.7}.nc-settings [hidden]{display:none!important}
+
+</style>
+</head>
 <body>
 
 <div id="reader-modal"><div id="reader"></div><button onclick="stopScan()" style="background:var(--red); border-radius:0; margin:0; height:80px; font-size:20px; color:white; border:none; width:100%;">關閉相機</button></div>
@@ -418,6 +422,18 @@ input:focus,select:focus,textarea:focus{border-color:#d982a0!important;box-shado
 <div id="folderGrandchildren" class="folder-view"></div>
 </div>
 <div id="folderContent" class="folder-content">
+<div class="card nc-settings" id="notification_channels_section">
+<h3>通知管道與發送管理</h3>
+<p>本站保留完整通知；社交通知由管理員自行發送。複製文案不會標記已發送。「已發送」也不代表會員已讀。</p>
+<p>此功能啟用前的歷史通知不會重新列入待發送。待發送清單會在開啟或重新載入時整理；帳單、取件提醒須先由原有業務流程建立通知。</p>
+<label for="nc-admin-member">會員</label><select id="nc-admin-member" onchange="ncAdminRender()"><option value="">全部會員</option></select>
+<label for="nc-admin-status">處理狀態</label><select id="nc-admin-status" onchange="ncAdminRender()">
+<option value="pending">待發送</option><option value="review">需人工判斷是否聯絡</option><option value="unverified">聯絡資料待確認</option><option value="sent">已發送</option><option value="skipped">已略過</option><option value="site">僅留會員網</option><option value="">全部狀態</option></select>
+<div class="nc-toolbar"><button type="button" onclick="ncAdminLoad()">重新載入</button><button type="button" onclick="ncCompose()">合併複製文案</button><button type="button" onclick="ncMark('sent')">標記已發送</button><button type="button" onclick="ncMark('skipped')">略過／暫不聯絡</button></div>
+<p>勾選一則即可單筆處理；勾選多則可批次登記。同一位會員才可合併複製文案。人工判斷案件仍須填寫聯絡原因。</p>
+<div id="nc-admin-list" aria-live="polite">請重新載入通知清單。</div>
+<details><summary>會員聯絡資料與通知偏好</summary><p>請先核對身分並確認能聯絡本人，再按「確認可聯絡本人」。LINE 顯示名稱無法可靠產生個人連結，請使用既有對話核對。</p><div id="nc-admin-contacts"></div></details>
+</div>
 <div class="card" id="bnpl_manage_section" style="border: 2px solid var(--blue);">
 <h3 style="margin:0 0 10px; color: var(--blue);">💼 先享後付 (BNPL) 總管</h3>
 <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
@@ -495,11 +511,12 @@ input:focus,select:focus,textarea:focus{border-color:#d982a0!important;box-shado
 <div id="nt_mode_hint" class="folder-hint" style="margin-top:8px;">選擇會員後發送個人站內通知。</div>
 
 <div style="display:flex; gap:10px; margin-top:8px;">
-<input type="text" id="nt_mainCat" placeholder="主分類 (例: 個人通知)" value="個人通知" style="margin:0; flex:1;">
+<input type="text" id="nt_mainCat" list="nc-notification-categories" placeholder="通知類別" value="個人通知" style="margin:0; flex:1;">
 <input type="text" id="nt_subTag" placeholder="子標籤 (例: 專屬訊息)" value="專屬訊息" style="margin:0; flex:1;">
 <input type="color" id="nt_color" value="#db2777" style="margin:0; flex:0.5; height: 48px; padding: 2px; cursor:pointer;" title="標籤顏色">
 </div>
 
+<datalist id="nc-notification-categories"><option value="帳號與安全"></option><option value="訂單進度"></option><option value="包裹物流"></option><option value="帳單與繳款"></option><option value="退款與售後"></option><option value="電子發票"></option><option value="客服訊息"></option><option value="優惠與活動"></option><option value="系統公告"></option></datalist><p>請在主分類選擇通知類別；需要會員處理的案件，子標籤可註明「需會員處理」。</p>
 <textarea id="nt_msg" rows="7" placeholder="通知內容（必填）：送出後買家將在中心收到提醒..." style="min-height:180px; resize:vertical; line-height:1.6;"></textarea>
 <button id="nt_send_btn" onclick="sendCustomNotification()" style="background:#8b5cf6; margin-top:10px;">發送推播給會員</button>
 </div>
@@ -848,6 +865,7 @@ system: {
 title:'系統管理', desc:'發票、優惠券、客服、法律文件', children:[
 {title:'電子發票', desc:'中獎登錄與手動開立', action:()=>openAdminSection('invoice_section')},
 {title:'發送優惠券', desc:'發送實體優惠券給會員', action:()=>openAdminSection('coupon_section')},
+{title:'通知管道與發送管理', desc:'會員偏好、聯絡確認、待發送與人工判斷', action:()=>openNotificationManagement()},
 {title:'客服／推播', desc:'客服工單與站內通知', action:()=>openAdminSection('cs_section')},
 {title:'發布公告', desc:'發布登入前後皆可看到的公開公告', action:()=>{ openAdminSection('cs_section'); setTimeout(()=>{ const m=document.getElementById('nt_mode'); if(m){m.value='announcement'; updateNotificationMode();} },0); }},
 {title:'法律文件', desc:'新增、修改、發布法律文件', action:()=>openAdminSection('ldms_section')}
@@ -1084,10 +1102,9 @@ title: title || '確認執行',
 html: '<div style="font-size:14px; text-align:left; font-weight:bold; color:var(--dark); margin-bottom:10px;">請選擇本次操作的通知方式：</div>',
 input: 'radio',
 inputOptions: {
-'both': '📢 雙重通知 (寫入會員中心 + 產出 LINE 文案)',
-'line_only': '📝 僅產出 LINE 文案 (不寫入會員中心)',
-'app_only': '🔔 僅寫入會員中心 (不產出 LINE 文案)',
-'none': '🔕 完全靜默執行 (不寫入、不產出文案)'
+'both': '會員網通知＋產出既有 LINE 文案（發送前須核對偏好）',
+'app_only': '會員網通知（社交提醒依會員偏好列入通知管理）',
+
 },
 inputValue: 'both',
 showCancelButton: true,
@@ -1282,7 +1299,7 @@ function handlePostSuccess(res) {
 if(res.success && res.notifyText) {
 Swal.fire({
 title: '🎉 操作成功！',
-html: `<p style="font-size:0.85em; text-align:left; color:#666;">您可以點擊下方按鈕複製對話文案，直接貼到 LINE 社群通知買家：</p><textarea id="copy_area" style="width:100%; height:120px; font-size:13px; font-weight:bold; padding:8px;" readonly>${res.notifyText}</textarea>`,
+html: `<p style="font-size:0.85em; text-align:left; color:#666;">請先至「通知管道與發送管理」核對會員偏好及收件人，再使用既有 LINE 文案；發送後請回通知管理登記，避免重複提醒：</p><textarea id="copy_area" style="width:100%; height:120px; font-size:13px; font-weight:bold; padding:8px;" readonly>${escapeHTML(res.notifyText)}</textarea>`,
 icon: 'success', showCancelButton: true, confirmButtonColor: 'var(--primary)', cancelButtonText: '關閉', confirmButtonText: '📋 一鍵複製文案'
 }).then((choice) => {
 if(choice.isConfirmed) {
@@ -3117,6 +3134,77 @@ closeAppOverlay();
     <a href="#" onclick="event.preventDefault();adminLogout();" style="color:var(--red)!important;">安全登出後台</a>
   </div>
 </div>
+<script>
+let ncAdminData={contacts:[],deliveries:[]},ncAdminBusy=false,ncAdminUid='';
+const ncChannelNames={site:'會員網',line:'LINE',facebook:'Facebook Messenger',instagram:'Instagram 私訊'};
+const ncStateNames={pending:'待發送',unverified:'聯絡資料待確認',review:'需人工判斷是否聯絡',site:'僅留會員網',sent:'已發送',skipped:'已略過'};
+async function openNotificationManagement(){openAdminSection('notification_channels_section');await ncAdminLoad();}
+async function ncAdminLoad(){
+  if(ncAdminBusy)return;ncAdminBusy=true;
+  try {
+    const res=await fetchWithQueue(GAS,{action:'notificationAdminList'},'載入通知管理');
+    if(!res.success||res.version!==1){document.getElementById('nc-admin-list').textContent=res.message||'請先部署新版行動會員 GAS，才能使用通知管理。';return;}
+    ncAdminData=res;ncAdminRender();
+  } finally {ncAdminBusy=false;}
+}
+function ncAdminRender(){
+  const status=document.getElementById('nc-admin-status').value,uid=document.getElementById('nc-admin-member').value;
+  ncAdminUid=uid;
+  const list=ncAdminData.deliveries.filter(r=>(!uid||r.uid===uid)&&(!status||r.state===status));
+  const container=document.getElementById('nc-admin-list');
+  container.innerHTML=list.length?list.map(r=>{
+    const i=ncAdminData.deliveries.indexOf(r),name=(U_DB.find(u=>String(u.id)===r.uid)||{}).name||r.uid;
+    return `<article class="nc-notice"><label class="nc-check"><input type="checkbox" class="nc-delivery" data-index="${i}" ${['sent','skipped','site'].includes(r.state)?'disabled':''}><b>${escapeHTML(name)} · ${escapeHTML(r.category)}</b></label><p>${escapeHTML(ncStateNames[r.state]||r.state)} ｜ ${escapeHTML(r.createdAt||'')}</p><p>管道：${escapeHTML(ncChannelNames[r.channel]||r.channel)}　${escapeHTML(r.contact||'尚無聯絡資料')}</p><p class="nc-content">${escapeHTML(r.content)}</p>${r.reason?`<p>備註：${escapeHTML(r.reason)}</p>`:''}${r.actor?`<p>${escapeHTML(r.actor)} · ${escapeHTML(r.sentAt)}</p>`:''}</article>`;
+  }).join(''):'<p>目前沒有符合條件的通知。</p>';
+  const members=new Map(U_DB.map(u=>[String(u.id),u.name]));
+  const picker=document.getElementById('nc-admin-member');
+  picker.innerHTML='<option value="">全部會員</option>'+Array.from(members).map(([id,name])=>`<option value="${escapeHTML(id)}">${escapeHTML(name)} (${escapeHTML(id)})</option>`).join('');picker.value=uid;
+  document.getElementById('nc-admin-contacts').innerHTML=ncAdminData.contacts.filter(p=>!uid||p.uid===uid).map((p)=>{
+    const i=ncAdminData.contacts.indexOf(p);
+    return `<article class="nc-notice"><b>${escapeHTML(members.get(p.uid)||p.uid)}</b><p>${escapeHTML(ncChannelNames[p.channel])}：${escapeHTML(p.contact||'不使用社交通知')} · ${p.verified?'已確認':'待確認'}</p><p>社交提醒：${escapeHTML(Object.keys(p.categories).filter(k=>p.categories[k]).join('、')||'全部關閉')}</p>${p.channel!=='site'?`<button type="button" data-nc-verify="${i}">${p.verified?'撤銷聯絡確認':'確認可聯絡本人'}</button>`:''}</article>`;
+  }).join('')||'<p>尚無會員設定聯絡資料。</p>';
+}
+function ncSelected(){return Array.from(document.querySelectorAll('.nc-delivery:checked')).map(e=>ncAdminData.deliveries[Number(e.dataset.index)]).filter(Boolean);}
+async function ncVerify(i){
+  if(ncAdminBusy)return;const p=ncAdminData.contacts[i];if(!p)return;
+  const result=await Swal.fire({title:p.verified?'撤銷聯絡確認？':'已確認可聯絡本人？',text:`${ncChannelNames[p.channel]}：${p.contact}`,showCancelButton:true,confirmButtonText:'確認',cancelButtonText:'取消'});if(!result.isConfirmed)return;
+  ncAdminBusy=true;try{const r=await fetchWithQueue(GAS,{action:'notificationVerifyContact',uid:p.uid,version:p.version,verified:!p.verified},'更新聯絡確認');if(!r.success)await Swal.fire('未能更新',r.message||'請重新載入核對','error');}finally{ncAdminBusy=false;await ncAdminLoad();}
+}
+function ncContactUrl(r){
+  if(r.channel==='facebook'&&/^https:\/\/(www\.|m\.)?facebook\.com\/[^\s]+$/i.test(r.contact))return r.contact;
+  if(r.channel==='instagram'&&/^[a-zA-Z0-9._]{1,30}$/.test(r.contact))return 'https://www.instagram.com/'+encodeURIComponent(r.contact)+'/';
+  return ''; // LINE display names are not reliable profile URLs.
+}
+async function ncCompose(){
+  if(ncAdminBusy)return;const rows=ncSelected();if(!rows.length)return Swal.fire('請先選擇通知','可一次選擇同一位會員的多則通知。','info');
+  if(new Set(rows.map(r=>r.uid)).size!==1)return Swal.fire('請選擇同一位會員','合併文案只供同一位會員使用，避免誤傳他人的資料。','warning');
+  ncAdminBusy=true;
+  try {
+    const fresh=await fetchWithQueue(GAS,{action:'notificationAdminList'},'核對最新通知偏好');
+    if(!fresh.success||fresh.version!==1)return Swal.fire('無法核對',fresh.message||'請重新載入後再試。','warning');
+    const changed=rows.some(r=>{const n=fresh.deliveries.find(n=>n.id===r.id);return !n||n.version!==r.version||n.state!==r.state;});
+    ncAdminData=fresh;ncAdminRender();
+    if(changed)return Swal.fire('資料已變更','會員設定或處理狀態已更新，請重新選擇並核對。','info');
+    document.querySelectorAll('.nc-delivery').forEach(e=>{e.checked=rows.some(r=>r.id===ncAdminData.deliveries[Number(e.dataset.index)]?.id);});
+  } finally {ncAdminBusy=false;}
+  if(rows.some(r=>r.state==='unverified'))return Swal.fire('請先確認聯絡資料','確認聯絡資料後，重新載入再產生文案。','warning');
+  const p=ncAdminData.contacts.find(p=>p.uid===rows[0].uid);if(!p?.verified||p.channel==='site')return Swal.fire('尚無可用的社交管道','請會員先設定，再由管理員確認可聯絡本人。','info');
+  const text='【小佑的日常生活｜會員通知】\n\n'+rows.map((r,i)=>`${i+1}. ${r.category}\n${r.content}`).join('\n\n')+'\n\n詳細資料請登入會員網查看。';
+  const url=ncContactUrl(p),name=(U_DB.find(u=>String(u.id)===p.uid)||{}).name||p.uid;
+  await Swal.fire({title:'合併通知文案',html:`<div class="nc-settings"><p>收件會員：${escapeHTML(name)}<br>管道：${escapeHTML(ncChannelNames[p.channel])}<br>聯絡資料：${escapeHTML(p.contact)}</p>${rows.some(r=>r.state==='review')?'<p><b>包含會員已關閉的提醒，請先判斷是否確實需要聯絡。</b></p>':''}<textarea id="nc-copy-text" rows="10" readonly>${escapeHTML(text)}</textarea>${url?`<a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">開啟會員個人檔案（請核對收件人）</a>`:''}<p>複製後請自行貼上並發送，完成後返回本頁標記「已發送」。</p></div>`,showCancelButton:true,confirmButtonText:'複製文案',cancelButtonText:'關閉',preConfirm:async()=>{
+    try {await navigator.clipboard.writeText(text);return true;}catch(e){const field=document.getElementById('nc-copy-text');field.focus();field.select();if(!document.execCommand('copy')){Swal.showValidationMessage('無法自動複製，請長按文字手動複製。');return false;}return true;}
+  }});
+}
+async function ncMark(state){
+  if(ncAdminBusy)return;const rows=ncSelected();if(!rows.length)return Swal.fire('請先選擇通知','','info');
+  if(rows.length>100)return Swal.fire('每批最多 100 則','','info');
+  const {value,isConfirmed}=await Swal.fire({title:state==='sent'?`確認已自行發送 ${rows.length} 則通知？`:`略過 ${rows.length} 則通知？`,text:state==='sent'?'這個動作只登記發送紀錄，不會代你發送訊息，也不代表會員已讀。':'本站通知仍會保留。',input:'text',inputLabel:'處理原因（略過或人工判斷案件必填）',inputAttributes:{maxlength:500},showCancelButton:true,confirmButtonText:'確認登記',cancelButtonText:'取消',inputValidator:v=>(state==='skipped'||rows.some(r=>r.state==='review'))&&!v.trim()?'請填寫原因':undefined});
+  if(!isConfirmed)return;ncAdminBusy=true;
+  try{const r=await fetchWithQueue(GAS,{action:'notificationMark',state,items:rows.map(r=>({id:r.id,version:r.version})),reason:value||''},'登記通知處理結果');await Swal.fire(r.success?'已登記':'請核對處理結果',r.success?'處理紀錄已保存。':r.message||'連線中斷，請重新載入確認，無須再次發送訊息。',r.success?'success':'warning');}finally{ncAdminBusy=false;await ncAdminLoad();}
+}
+document.addEventListener('click',e=>{const button=e.target.closest('[data-nc-verify]');if(button)ncVerify(Number(button.dataset.ncVerify));});
+
+</script>
 </body>
 </html>
 
