@@ -3127,6 +3127,14 @@ closeAppOverlay();
 <script>
 let ns1Contacts=[],ns1AdminBusy=false,ns1LoadedSession='';
 const ns1Channels={site:'會員網',line:'LINE',facebook:'Facebook Messenger',instagram:'Instagram 私訊'};
+function ns1FormatUpdatedAt(value){
+  if(!value)return '尚無更新紀錄';
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime()))return '時間資料無法辨識';
+  const parts=new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(date);
+  const fields=Object.fromEntries(parts.map(part=>[part.type,part.value]));
+  return fields.year+'/'+fields.month+'/'+fields.day+' '+fields.hour+':'+fields.minute+':'+fields.second+'（臺灣時間）';
+}
 async function ns1OpenContacts(){openAdminSection('notification_settings_section');await ns1LoadContacts();}
 async function ns1LoadContacts(){
   if(ns1AdminBusy)return;ns1AdminBusy=true;const session=ADMIN_SESSION;
@@ -3140,7 +3148,7 @@ async function ns1LoadContacts(){
 function ns1RenderContacts(){
   const filter=document.getElementById('ns1-filter').value;
   const list=ns1Contacts.filter(p=>filter==='all'||filter==='pending'&&p.channel!=='site'&&!p.verified||filter==='verified'&&p.channel!=='site'&&p.verified||filter==='site'&&p.channel==='site');
-  document.getElementById('ns1-contacts').innerHTML=list.length?list.map(p=>`<article class="ns1-contact-card"><h4>${escapeHTML(p.name)}（${escapeHTML(p.uid)}）</h4><p>管道：${escapeHTML(ns1Channels[p.channel]||p.channel)}</p><p>聯絡資料：${escapeHTML(p.contact||'不使用社交通知')}</p><p>狀態：<strong>${p.channel==='site'?'只收會員網通知':p.verified?'已確認':'待確認'}</strong></p><p>社交提醒：${escapeHTML(Object.keys(p.categories).filter(k=>p.categories[k]).join('、')||'全部關閉')}</p><p>最後更新：${escapeHTML(p.updatedAt)}</p>${p.channel!=='site'?`<button type="button" data-ns1-confirm="${ns1Contacts.indexOf(p)}">${p.verified?'撤銷聯絡確認':'確認可聯絡本人'}</button>`:''}</article>`).join(''):'<p>目前沒有符合條件的會員設定。</p>';
+  document.getElementById('ns1-contacts').innerHTML=list.length?list.map(p=>`<article class="ns1-contact-card"><h4>${escapeHTML(p.name)}（${escapeHTML(p.uid)}）</h4><p>管道：${escapeHTML(ns1Channels[p.channel]||p.channel)}</p><p>聯絡資料：${escapeHTML(p.contact||'不使用社交通知')}</p><p>狀態：<strong>${p.channel==='site'?'只收會員網通知':p.verified?'已確認':'待確認'}</strong></p><p>社交提醒：${escapeHTML(Object.keys(p.categories).filter(k=>p.categories[k]).join('、')||'全部關閉')}</p><p>最後更新：${escapeHTML(ns1FormatUpdatedAt(p.updatedAt))}</p>${p.channel!=='site'?`<button type="button" data-ns1-confirm="${ns1Contacts.indexOf(p)}">${p.verified?'撤銷聯絡確認':'確認可聯絡本人'}</button>`:''}</article>`).join(''):'<p>目前沒有符合條件的會員設定。</p>';
 }
 async function ns1ConfirmContact(index){
   if(ns1AdminBusy||!ADMIN_SESSION||ADMIN_SESSION!==ns1LoadedSession)return;
