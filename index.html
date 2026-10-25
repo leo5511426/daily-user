@@ -1315,6 +1315,10 @@ body.ui-dynamic-reduced .login-win11-ring::before{animation-duration:2.2s;}
 body.ui-dynamic-reduced .login-win11-ring{animation-duration:2.4s!important}
 body.ui-dynamic-off .login-win11-ring{animation:none!important}
 </style>
+<style>
+.ns1-test-banner{padding:12px 16px;background:#fff0d6;color:#68401d;text-align:center;font-weight:bold;line-height:1.6;border-bottom:1px solid #edcc96}.ns1-form{text-align:left;line-height:1.7}.ns1-form label{display:block;font-weight:bold}.ns1-form select,.ns1-form input:not([type=checkbox]){box-sizing:border-box;width:100%;padding:12px;border:1px solid #e6c9d6;border-radius:12px;font:inherit;background:#fff;color:#44343d}.ns1-form fieldset{border:1px solid #e6c9d6;border-radius:12px;margin-top:16px;padding:12px}.ns1-check{display:flex!important;align-items:center;gap:10px;padding:7px 0}.ns1-check input[type=checkbox]{width:20px!important;height:20px!important;flex:0 0 20px;accent-color:#b54c78}.ns1-test-note{background:#fff2dd;border-radius:10px;padding:10px}.ns1-contact-card{background:#fffafd;border:1px solid #e6c9d6;border-radius:14px;padding:14px;margin:12px 0;overflow-wrap:anywhere}.ns1-contact-card h4{margin:0}.ns1-contact-card p{line-height:1.7}.ns1-form :disabled{opacity:.55}
+
+</style>
 </head>
 <body data-theme="light">
 
@@ -1691,6 +1695,7 @@ body.ui-dynamic-off .login-win11-ring{animation:none!important}
 <h2 style="color:var(--pink); display:flex; align-items:center; gap:6px;">通知中心</h2>
 <select id="sortNt" class="sort-select" onchange="renderNotifications()"><option value="desc">新到舊</option><option value="asc">舊到新</option></select>
 </div>
+<button type="button" onclick="ns1OpenSettings()" style="margin-bottom:14px;">通知設定</button>
 <div id="ntTabBarCenter" class="tab-bar-scroll"></div>
 <div id="ntList"></div>
 </div>
@@ -5123,6 +5128,42 @@ function closeAppOverlay() {
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
   else install();
 })();
+</script>
+<script>
+// Phase 1 only: settings, no social sends and no changes to the login workflow.
+let ns1MemberSequence=0;
+function ns1RequestId(){return 'ns1_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'_'+Math.random().toString(36).slice(2));}
+async function ns1OpenSettings(){
+  if(!store?.userData?.id||!currentSessionId)return;
+  const uid=String(store.userData.id),sessionId=currentSessionId,sequence=++ns1MemberSequence;
+  const active=()=>sequence===ns1MemberSequence&&String(store?.userData?.id||'')===uid&&currentSessionId===sessionId;
+  try{
+    const result=await fetchWithQueue(SCRIPT_URL,{action:'memberNotificationPreferencesV1',uid,sessionId},'載入通知設定');
+    if(!active())return;
+    if(!result.success||result.notificationSettingsVersion!==1)return Swal.fire('暫時無法開啟',result.message||'隔離測試後端尚未準備完成。','info');
+    const p=result.preferences,names={site:'只收會員網通知',line:'LINE',facebook:'Facebook Messenger',instagram:'Instagram 私訊'};
+    const status=p.channel==='site'?'只收會員網通知':p.verified?'聯絡資料已確認':'聯絡資料待管理員確認';
+    const form=await Swal.fire({title:'通知設定',width:640,showCancelButton:true,confirmButtonText:'儲存設定',cancelButtonText:'取消',html:`<div class="ns1-form"><p>會員網會保留通知。你可選擇一個主要社交通知管道，由管理員人工發送提醒。</p><p><strong>${status}</strong></p>
+      <label for="ns1-channel">主要社交通知管道</label><select id="ns1-channel">${Object.entries(names).map(([key,name])=>`<option value="${key}" ${p.channel===key?'selected':''}>${name}</option>`).join('')}</select>
+      <label for="ns1-contact">聯絡資料</label><input id="ns1-contact" maxlength="250" value="${escapeHTML(p.contact)}"><p id="ns1-help"></p>
+      <fieldset><legend>社交通知類別</legend>${result.categories.map((key,i)=>`<label class="ns1-check"><input type="checkbox" id="ns1-cat-${i}" ${p.categories[key]?'checked':''}>${escapeHTML(key)}</label>`).join('')}</fieldset>
+      <p>變更管道或聯絡資料後須重新確認。關閉提醒後，重要到期或取件案件仍可能由管理員判斷是否聯絡。</p><p class="ns1-test-note">目前僅測試偏好儲存與聯絡確認，尚未連接發送清單。</p></div>`,didOpen:()=>{
+        const channel=document.getElementById('ns1-channel'),contact=document.getElementById('ns1-contact');
+        const update=()=>{const site=channel.value==='site';contact.disabled=site;document.getElementById('ns1-help').textContent=({site:'不需要填寫聯絡資料',line:'請填寫 LINE ID 或顯示名稱；管理員會核對是否能聯絡本人。',facebook:'請填寫 https://facebook.com/ 開頭的個人檔案連結。',instagram:'請填寫 Instagram 使用者名稱，不必填完整網址。'})[channel.value];document.querySelectorAll('[id^="ns1-cat-"]').forEach(el=>el.disabled=site);};channel.addEventListener('change',update);update();
+      },preConfirm:()=>{
+        const channel=document.getElementById('ns1-channel').value,contact=document.getElementById('ns1-contact').value.trim();
+        if(channel!=='site'&&!contact){Swal.showValidationMessage('請填寫聯絡資料');return false;}
+        if(channel==='facebook'&&!/^https:\/\/(www\.|m\.)?facebook\.com\//i.test(contact)){Swal.showValidationMessage('請填寫 Facebook 個人檔案的完整 https 連結');return false;}
+        if(channel==='instagram'&&!/^@?[a-zA-Z0-9._]{1,30}$/.test(contact)){Swal.showValidationMessage('請填寫 Instagram 使用者名稱');return false;}
+        const categories={};result.categories.forEach((key,i)=>categories[key]=document.getElementById('ns1-cat-'+i).checked);return {channel,contact,categories};
+      }});
+    if(!form.isConfirmed||!form.value||!active())return;
+    const saved=await fetchWithQueue(SCRIPT_URL,{action:'saveMemberNotificationPreferencesV1',uid,sessionId,revision:p.revision,requestId:ns1RequestId(),...form.value},'儲存通知設定');
+    if(!active())return;
+    await Swal.fire(saved.success?'設定已儲存':'儲存未完成',saved.success?'可重新開啟設定，核對剛才儲存的內容。':saved.message||'請重新開啟設定核對，避免重複送出。',saved.success?'success':'warning');
+  }catch(e){if(active())Swal.fire('請重新核對設定','連線中斷，尚無法確認儲存結果。請重新開啟設定確認內容。','warning');}
+}
+
 </script>
 </body>
 </html>
