@@ -5147,7 +5147,7 @@ async function ns1OpenSettings(){
       <label for="ns1-channel">主要社交通知管道</label><select id="ns1-channel">${Object.entries(names).map(([key,name])=>`<option value="${key}" ${p.channel===key?'selected':''}>${name}</option>`).join('')}</select>
       <label for="ns1-contact">聯絡資料</label><input id="ns1-contact" maxlength="250" value="${escapeHTML(p.contact)}"><p id="ns1-help"></p>
       <fieldset><legend>社交通知類別</legend>${result.categories.map((key,i)=>`<label class="ns1-check"><input type="checkbox" id="ns1-cat-${i}" ${p.categories[key]?'checked':''}>${escapeHTML(key)}</label>`).join('')}</fieldset>
-      <p>變更管道或聯絡資料後須重新確認。關閉提醒後，重要到期或取件案件仍可能由管理員判斷是否聯絡。</p><p class="ns1-test-note">目前僅測試偏好儲存與聯絡確認，尚未連接發送清單。</p></div>`,didOpen:()=>{
+      <p>變更管道或聯絡資料後須重新確認。關閉提醒後，重要到期或取件案件仍可能由管理員判斷是否聯絡。</p><p class="ns1-test-note">目前提供通知偏好設定與聯絡資料確認；社交通知由管理員人工發送。</p></div>`,didOpen:()=>{
         const channel=document.getElementById('ns1-channel'),contact=document.getElementById('ns1-contact');
         const update=()=>{const site=channel.value==='site';contact.disabled=site;document.getElementById('ns1-help').textContent=({site:'不需要填寫聯絡資料',line:'請填寫 LINE ID 或顯示名稱；管理員會核對是否能聯絡本人。',facebook:'請填寫 https://facebook.com/ 開頭的個人檔案連結。',instagram:'請填寫 Instagram 使用者名稱，不必填完整網址。'})[channel.value];document.querySelectorAll('[id^="ns1-cat-"]').forEach(el=>el.disabled=site);};channel.addEventListener('change',update);update();
       },preConfirm:()=>{
