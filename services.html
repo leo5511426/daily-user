@@ -108,6 +108,60 @@ header{background:rgba(255,248,250,.96);border-color:var(--line);}
 }
 @media(max-width:900px){.footer-grid-full{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.footer-grid-full{grid-template-columns:1fr}.footer-meta{display:block}.footer-top-btn{margin-top:.7rem}}
+
+/* 2026-10-31｜修正手機版服務總覽跑版
+   此區塊放在所有既有樣式之後，確保手機版規則不再被前面的品牌樣式覆蓋。 */
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding-top: 56px;
+  }
+  .hero > div {
+    min-width: 0;
+  }
+  .section-head {
+    align-items: flex-start;
+  }
+  .service {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .service-actions {
+    grid-column: 1;
+  }
+}
+@media (max-width: 460px) {
+  .wrap {
+    width: calc(100% - 28px);
+    max-width: 1120px;
+  }
+  .service {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .service > *,
+  .service-actions,
+  .service h3 {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .service h3 {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .service-actions {
+    grid-column: 1;
+    width: 100%;
+  }
+  .service-actions a {
+    max-width: 100%;
+    white-space: normal;
+  }
+  .footer-grid-full {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 </style>
 </head>
 <body>
