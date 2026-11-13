@@ -1406,8 +1406,14 @@ let insts = INST_DB.filter(i => i.loanId === l.id);
 insts.sort((a,b) => a.installmentNo - b.installmentNo);
 
 let instHtml = insts.map(i => {
-let rem = Math.max(0, i.amount + i.lateFee - i.paidAmount);
-let waiveBtn = (i.lateFee > 0 && i.status !== 'WAIVED' && i.status !== 'PAID') 
+let rem = Math.max(0, Number(i.amount) + Number(i.lateFee || 0) - Number(i.paidAmount || 0));
+let dueDateRaw = String(i.dueDate || '').trim();
+let dueDateText = dueDateRaw ? dueDateRaw.slice(0, 10).replace(/-/g, '/') : '未設定';
+let dueDateTime = dueDateRaw ? new Date(dueDateRaw + (dueDateRaw.length === 10 ? 'T23:59:59' : '')) : null;
+let isOverdue = i.status !== 'PAID' && dueDateTime && !Number.isNaN(dueDateTime.getTime()) && dueDateTime.getTime() < Date.now();
+let dueDateStyle = i.status === 'PAID' ? 'color:var(--green);' : (isOverdue ? 'color:var(--red);' : 'color:#555;');
+let dueDateStatus = i.status === 'PAID' ? '（已繳清）' : (isOverdue ? '（已逾期）' : '');
+let waiveBtn = (Number(i.lateFee || 0) > 0 && i.status !== 'WAIVED' && i.status !== 'PAID') 
 ? `<button onclick="adminWaiveInstallment('${i.installmentId}')" style="padding:4px 8px; font-size:11px; background:var(--orange);">減免滯納金</button>` : '';
 let payBtn = (i.status !== 'PAID' && rem > 0)
 ? `<button onclick="adminPayInstallment('${i.installmentId}', ${rem})" style="padding:4px 8px; font-size:11px; background:var(--green);">單期/部分繳款</button>` : '';
@@ -1418,9 +1424,10 @@ return `
                       <b>第 ${i.installmentNo}/${i.totalInstallments} 期</b>
                       <span style="color:${i.status==='PAID'?'var(--green)':'var(--red)'}; font-weight:bold;">${i.status}</span>
                   </div>
-                  <div style="color:#666; margin:3px 0;">應繳本金: $${i.amount} | 已繳: $${i.paidAmount} | 滯納金: $${i.lateFee}</div>
-                  <div style="color:var(--red); font-weight:bold; margin-bottom:8px;">本期剩餘應繳: $${rem}</div>
-                  <div style="display:flex; gap:8px;">${payBtn}${waiveBtn}</div>
+                  <div style="${dueDateStyle} font-weight:bold; margin:3px 0;">📅 繳款期限：${dueDateText} ${dueDateStatus}</div>
+                  <div style="color:#666; margin:3px 0;">應繳本金: ${Number(i.amount) || 0} | 已繳: ${Number(i.paidAmount) || 0} | 滯納金: ${Number(i.lateFee) || 0}</div>
+                  <div style="color:var(--red); font-weight:bold; margin-bottom:8px;">本期剩餘應繳: ${rem}</div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">${payBtn}${waiveBtn}</div>
               </div>`;
 }).join('');
 
