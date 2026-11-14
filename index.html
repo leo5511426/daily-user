@@ -1319,6 +1319,29 @@ body.ui-dynamic-off .login-win11-ring{animation:none!important}
 .ns1-test-banner{padding:12px 16px;background:#fff0d6;color:#68401d;text-align:center;font-weight:bold;line-height:1.6;border-bottom:1px solid #edcc96}.ns1-form{text-align:left;line-height:1.7}.ns1-form label{display:block;font-weight:bold}.ns1-form select,.ns1-form input:not([type=checkbox]){box-sizing:border-box;width:100%;padding:12px;border:1px solid #e6c9d6;border-radius:12px;font:inherit;background:#fff;color:#44343d}.ns1-form fieldset{border:1px solid #e6c9d6;border-radius:12px;margin-top:16px;padding:12px}.ns1-check{display:flex!important;align-items:center;gap:10px;padding:7px 0}.ns1-check input[type=checkbox]{width:20px!important;height:20px!important;flex:0 0 20px;accent-color:#b54c78}.ns1-test-note{background:#fff2dd;border-radius:10px;padding:10px}.ns1-contact-card{background:#fffafd;border:1px solid #e6c9d6;border-radius:14px;padding:14px;margin:12px 0;overflow-wrap:anywhere}.ns1-contact-card h4{margin:0}.ns1-contact-card p{line-height:1.7}.ns1-form :disabled{opacity:.55}
 
 </style>
+
+/* ============================================================
+   小佑的日常生活｜三平台共用頁尾
+   ============================================================ */
+.site-footer{
+  margin-top:56px;padding:34px 0 28px;border-top:1px solid var(--border,#ead5dc);
+  color:var(--text,#40363a);
+}
+.site-footer-brand{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+.site-footer-wordmark{font-family:var(--serif,inherit);font-size:1.35rem;font-weight:800}
+.site-footer-tagline{max-width:720px;margin-top:7px;font-size:.82rem;line-height:1.8;opacity:.68;font-weight:500}
+.site-footer-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:28px;padding:22px 0;border-top:1px solid var(--border,#ead5dc);border-bottom:1px solid var(--border,#ead5dc)}
+.site-footer-group h4{margin:0 0 10px;color:var(--accent,var(--pink,#b95878));font-size:.72rem;letter-spacing:.08em}
+.site-footer-link,.site-footer-text{display:block;width:max-content;max-width:100%;margin:0;padding:2px 0;border:0;background:transparent;color:inherit;text-decoration:none;font-size:.78rem;line-height:1.9;font-weight:500;cursor:pointer}
+.site-footer-link:hover{color:var(--accent,var(--pink,#b95878));text-decoration:underline;text-underline-offset:3px}
+.site-footer-text{opacity:.58;cursor:default}
+.site-footer-hot{margin-top:10px;font-size:.7rem;line-height:1.7;opacity:.48}
+.site-footer-bottom{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-top:18px;font-size:.7rem;line-height:1.7;opacity:.55}
+.site-footer-top{border:0;background:transparent;color:inherit;cursor:pointer;padding:2px 0;font:inherit}
+.site-footer-top:hover{color:var(--accent,var(--pink,#b95878));opacity:1}
+@media(max-width:640px){.site-footer-grid{grid-template-columns:1fr 1fr}.site-footer-bottom{display:block}.site-footer-top{margin-top:8px}}
+@media(max-width:420px){.site-footer-grid{grid-template-columns:1fr}}
+
 </head>
 <body data-theme="light">
 
@@ -5067,66 +5090,56 @@ function closeAppOverlay() {
 })();
 </script>
 
-<script>
+<script id="xiaoyou-common-footer">
 (function(){
   function footerHtml(){
     return `
 <footer class="site-footer" aria-label="網站頁尾">
-  <div class="site-footer-brand">
-    <div>
-      <div class="site-footer-wordmark">小佑的日常生活</div>
-      <div class="site-footer-tagline">讓日常生活，多一點便利。從會員服務到生活代繳，以清楚的資訊連結每一項日常需求。</div>
-    </div>
-  </div>
+  <div class="site-footer-brand"><div>
+    <div class="site-footer-wordmark">小佑的日常生活</div>
+    <div class="site-footer-tagline">讓日常生活，多一點便利。以清楚的資訊連結會員、代繳費與預約服務。</div>
+  </div></div>
   <div class="site-footer-grid">
-    <div class="site-footer-group">
-      <h4>服務與導覽</h4>
-      <a class="site-footer-link" href="/">行動會員首頁</a>
-      <a class="site-footer-link" href="/services">服務總覽</a>
+    <div class="site-footer-group"><h4>服務與導覽</h4>
+      <a class="site-footer-link" href="https://daily-user.vercel.app/">行動會員</a>
       <a class="site-footer-link" href="https://daily-pay-user.vercel.app/">生活代繳費</a>
-      <a class="site-footer-link" href="https://daily-weather-user.vercel.app/">災害即時通知</a>
-      <a class="site-footer-link" href="/sitemap">網站地圖</a>
-      <div class="site-footer-hot">熱門服務：會員服務、帳單、訂單、客服</div>
+      <a class="site-footer-link" href="https://daily-reserve-user.vercel.app/">預約管理</a>
+      <a class="site-footer-link" href="https://daily-user.vercel.app/services">服務總覽</a>
+      <a class="site-footer-link" href="https://daily-user.vercel.app/sitemap">網站地圖</a>
     </div>
-    <div class="site-footer-group">
-      <h4>聯絡我們</h4>
-      <button type="button" class="site-footer-link" onclick="openUnifiedSupport('行動會員')">統一客服中心</button>
+    <div class="site-footer-group"><h4>協助與支援</h4>
+      <a class="site-footer-link" href="https://daily-user.vercel.app/?support=general">統一客服中心</a>
       <a class="site-footer-link" href="tel:+886966236830">客服電話：0966-236-830</a>
-      <span class="site-footer-text">一般通話費依電信業者資費計收</span>
       <a class="site-footer-link" href="mailto:leo5511426@gmail.com">電子郵件：leo5511426@gmail.com</a>
       <span class="site-footer-text">客服時間：每日 09:00－22:00</span>
     </div>
-    <div class="site-footer-group">
-      <h4>法律與安全</h4>
-      <button type="button" class="site-footer-link" onclick="openLegalCenter()">隱私權政策</button>
-      <button type="button" class="site-footer-link" onclick="openLegalCenter()">服務條款</button>
-      <button type="button" class="site-footer-link" onclick="openLegalCenter()">法律文件與相關說明</button>
-      <span class="site-footer-text">各項服務之法律文件依各平台公告為準</span>
+    <div class="site-footer-group"><h4>法律與政策</h4>
+      <a class="site-footer-link" href="https://daily-user.vercel.app/?legal=1">法律資訊中心</a>
+      <a class="site-footer-link" href="https://daily-pay-user.vercel.app/service-info">代繳費服務資訊</a>
+      <span class="site-footer-text">各服務仍依各平台公告及適用文件為準</span>
     </div>
   </div>
   <div class="site-footer-bottom">
-    <div>© 2026 小佑的日常生活｜各項服務的帳號、資料處理與使用規範，以各服務頁面公告為準。</div>
-    <button type="button" class="site-footer-top" onclick="window.scrollMemberFooterTop(this)">回到頂部 ↑</button>
+    <div>© 2026 小佑的日常生活｜目前所在服務：行動會員</div>
+    <button type="button" class="site-footer-top" onclick="window.xiaoyouFooterTop(this)">回到頂部 ↑</button>
   </div>
 </footer>`;
   }
-
-  window.scrollMemberFooterTop=function(btn){
-    const page=btn && btn.closest ? btn.closest('.page,#loginView') : null;
-    if(page && typeof page.scrollTo==='function') page.scrollTo({top:0,behavior:'smooth'});
+  window.xiaoyouFooterTop=function(btn){
+    var scroller=btn&&btn.closest?btn.closest('.page-scroller'):null;
+    var page=btn&&btn.closest?btn.closest('.page,.public-page,.app-page,#loginView'):null;
+    if(scroller&&typeof scroller.scrollTo==='function') scroller.scrollTo({top:0,behavior:'smooth'});
+    else if(page&&typeof page.scrollTo==='function') page.scrollTo({top:0,behavior:'smooth'});
     else window.scrollTo({top:0,behavior:'smooth'});
   };
-
   function install(){
-    for(let i=0;i<=7;i++){
-      const page=document.getElementById('p'+i);
-      if(page && !page.querySelector('.site-footer')) page.insertAdjacentHTML('beforeend',footerHtml());
-    }
-    const login=document.getElementById('loginView');
-    if(login && !login.querySelector('.site-footer')) login.insertAdjacentHTML('beforeend',footerHtml());
+    var ids=["p0","p1","p2","p3","p4","p5","p6","p7","loginView"];
+    ids.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&!el.querySelector('.site-footer')) el.insertAdjacentHTML('beforeend',footerHtml());
+    });
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
-  else install();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
 </script>
 <script>
