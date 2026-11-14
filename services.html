@@ -3,225 +3,30 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>服務總覽｜小佑的日常生活</title>
-<meta name="description" content="探索小佑的日常生活行動會員、生活代繳費與災害即時通知服務。">
+<meta name="description" content="小佑的日常生活各項公開服務總覽。">
 <style>
-:root{--pink:#e84a8a;--ink:#17131a;--muted:#716a73;--line:#eadfe5;--paper:#fffafd;--soft:#fff0f6}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;background:var(--paper);color:var(--ink)}a{color:inherit}.wrap{width:min(1120px,calc(100% - 40px));margin:auto}
-header{position:sticky;top:0;z-index:20;background:rgba(255,250,253,.88);backdrop-filter:blur(18px);border-bottom:1px solid rgba(234,223,229,.78)}.nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-weight:900}.nav-links{display:flex;gap:18px;font-size:.82rem}.nav-links a{text-decoration:none;color:var(--muted)}.nav-links a:hover{color:var(--pink)}
-.hero{padding:96px 0 76px;display:grid;grid-template-columns:1.25fr .75fr;gap:56px;align-items:end}.kicker,.section-kicker{font-size:.72rem;letter-spacing:.2em;color:var(--pink);font-weight:900}h1{font-size:clamp(2.8rem,7vw,6.2rem);line-height:.98;letter-spacing:-.055em;margin:18px 0 24px;max-width:760px}.hero p{font-size:1.05rem;line-height:1.9;color:var(--muted);max-width:620px}.hero-note{border-left:1px solid var(--line);padding-left:28px;color:var(--muted);line-height:1.9;font-size:.88rem}.cta{display:inline-block;margin-top:22px;color:var(--pink);font-weight:900;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:4px}
-.services{border-top:1px solid var(--line);padding:74px 0}.section-head{display:flex;justify-content:space-between;gap:30px;align-items:end;margin-bottom:36px}.section-head h2{font-size:clamp(2rem,5vw,3.6rem);letter-spacing:-.04em;margin:8px 0 0}.section-head p{max-width:420px;color:var(--muted);line-height:1.75;font-size:.9rem}.service{display:grid;grid-template-columns:90px 1fr minmax(280px,.65fr);gap:30px;padding:42px 0;border-top:1px solid var(--line);align-items:start}.no{font-size:.72rem;color:var(--pink);font-weight:900;letter-spacing:.16em}.service h3{font-size:clamp(1.55rem,3vw,2.4rem);margin:0 0 12px;letter-spacing:-.035em}.service p{margin:0;color:var(--muted);line-height:1.8}.service-actions{display:flex;flex-direction:column;align-items:flex-start;gap:10px}.primary,.secondary{display:inline-block;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:850;font-size:.86rem}.primary{background:var(--pink);color:#fff}.secondary{border:1px solid var(--line);background:#fff}
-.about,.support{padding:76px 0;border-top:1px solid var(--line)}.copy-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:60px}.copy-grid h2{font-size:clamp(2rem,4vw,3.2rem);margin:8px 0}.copy-grid p{color:var(--muted);line-height:2;margin:0}.support-box{margin-top:30px;background:var(--soft);border:1px solid #f6d4e3;border-radius:28px;padding:34px;display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center}.support-box h3{margin:0 0 8px;font-size:1.35rem}.support-box p{margin:0;color:var(--muted);line-height:1.7}.support-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-footer{border-top:1px solid var(--line);padding:44px 0 36px}.footer-title{font-size:1.2rem;font-weight:900}.footer-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:30px;margin-top:24px}.footer-grid b{display:block;color:var(--pink);font-size:.72rem;letter-spacing:.08em;margin-bottom:8px}.footer-grid a,.footer-grid span{display:block;text-decoration:none;color:var(--muted);font-size:.82rem;line-height:2}.footer-meta{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:.74rem}
-@media(max-width:760px){.nav-links{display:none}.hero{grid-template-columns:1fr;padding:70px 0 54px;gap:28px}.hero-note{border-left:0;border-top:1px solid var(--line);padding:22px 0 0}.section-head,.copy-grid{display:block}.section-head p{margin-top:16px}.service{grid-template-columns:46px 1fr}.service-actions{grid-column:2}.support-box{grid-template-columns:1fr}.support-actions{justify-content:flex-start}.footer-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:460px){.wrap{width:min(100% - 28px,1120px)}.service{grid-template-columns:1fr;gap:14px}.service-actions{grid-column:1}.footer-grid{grid-template-columns:1fr}.footer-meta{display:block}.footer-meta div+div{margin-top:8px}}
-
-/* 2026 品牌介面統一：成熟柔和粉色、減少模板感 */
-:root{
-  --pink:#b95878;
-  --ink:#40363a;
-  --muted:#7c6d72;
-  --line:#ead5dc;
-  --paper:#fffafa;
-  --soft:#f8e9ee;
-}
-body{background:var(--paper);color:var(--ink);}
-header{
-  background:rgba(255,250,250,.96);
-  backdrop-filter:none;
-  border-color:var(--line);
-}
-.brand{color:#8f3f5b;}
-.nav-links a:hover{color:var(--pink);}
-.hero{
-  padding-top:76px;
-  padding-bottom:62px;
-  grid-template-columns:1.15fr .85fr;
-}
-.kicker,.section-kicker{
-  letter-spacing:.04em;
-  color:#8f3f5b;
-  font-weight:800;
-}
-h1{
-  max-width:680px;
-  font-size:clamp(2.6rem,6vw,5.2rem);
-  line-height:1.04;
-  letter-spacing:-.045em;
-}
-.hero p,.hero-note,.section-head p,.service p,.copy-grid p,.support-box p{color:var(--muted);}
-.hero-note{border-color:var(--line);}
-.services,.about,.support,footer{border-color:var(--line);}
-.service{
-  grid-template-columns:72px 1fr minmax(240px,.55fr);
-  border-color:var(--line);
-}
-.primary{
-  background:var(--pink);
-  border-radius:9px;
-}
-.secondary{
-  border-color:var(--line);
-  border-radius:9px;
-  background:#fffefe;
-}
-.support-box{
-  background:var(--soft);
-  border-color:#efd7df;
-  border-radius:14px;
-}
-.footer-grid a,.footer-grid span,.footer-meta{color:var(--muted);}
-@media(max-width:760px){
-  .hero{padding-top:56px;}
-}
-
-/* 2026-10-05｜服務總覽柔和粉嫩版 */
-:root{
-  --pink:#d982a0;
-  --ink:#4b3d42;
-  --muted:#8c777e;
-  --line:#f0cbd7;
-  --paper:#fff8fa;
-  --soft:#fff0f4;
-}
-body{background:var(--paper);color:var(--ink);}
-header{background:rgba(255,248,250,.96);border-color:var(--line);}
-.brand{color:#b85f7e;}
-.nav-links a{color:#8c777e;}
-.nav-links a:hover{color:#b85f7e;}
-.kicker,.section-kicker{color:#b85f7e;}
-.hero-note{border-color:#efccd7;color:var(--muted);}
-.services,.about,.support,footer{border-color:#efccd7;}
-.service{border-color:#efd0da;}
-.no{color:#c36f8e;}
-.primary{background:#d982a0;color:#fff;}
-.primary:hover{background:#bd6e8b;}
-.secondary{background:#fffdfd;border-color:#efccd7;}
-.support-box{background:#fff0f4;border-color:#f3d2dd;}
-.footer-grid a,.footer-grid span,.footer-meta{color:#8c777e;}
-
-.footer-brand-copy{max-width:46rem;margin:.5rem 0 0;color:var(--muted);font-size:.84rem;line-height:1.8}
-.footer-grid-full{grid-template-columns:repeat(4,minmax(0,1fr))}
-.footer-note{margin-top:.4rem;font-size:.74rem!important;color:#a78993!important}
-.footer-top-btn{
-  border:0;background:transparent;color:#b85f7e;padding:0;cursor:pointer;
-  font:inherit;font-size:.74rem;font-weight:700;
-}
-@media(max-width:900px){.footer-grid-full{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:520px){.footer-grid-full{grid-template-columns:1fr}.footer-meta{display:block}.footer-top-btn{margin-top:.7rem}}
-
-/* 2026-10-31｜修正手機版服務總覽跑版
-   此區塊放在所有既有樣式之後，確保手機版規則不再被前面的品牌樣式覆蓋。 */
-@media (max-width: 760px) {
-  .hero {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-    padding-top: 56px;
-  }
-  .hero > div {
-    min-width: 0;
-  }
-  .section-head {
-    align-items: flex-start;
-  }
-  .service {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .service-actions {
-    grid-column: 1;
-  }
-}
-@media (max-width: 460px) {
-  .wrap {
-    width: calc(100% - 28px);
-    max-width: 1120px;
-  }
-  .service {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-  }
-  .service > *,
-  .service-actions,
-  .service h3 {
-    min-width: 0;
-    max-width: 100%;
-  }
-  .service h3 {
-    overflow-wrap: anywhere;
-    word-break: normal;
-  }
-  .service-actions {
-    grid-column: 1;
-    width: 100%;
-  }
-  .service-actions a {
-    max-width: 100%;
-    white-space: normal;
-  }
-  .footer-grid-full {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
+:root{--bg:#fffafa;--text:#40363a;--muted:#7c6d72;--accent:#b95878;--line:#ead5dc;--soft:#f8e9ee}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;line-height:1.8}a{color:inherit}.wrap{width:min(1120px,calc(100% - 32px));margin:auto}
+header{border-bottom:1px solid var(--line);background:var(--bg)}.nav{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-weight:850;color:var(--accent)}.nav a{font-size:.82rem;color:var(--muted);text-decoration:none}
+main{padding:68px 0 80px}.eyebrow{font-size:.72rem;color:var(--accent);font-weight:800;letter-spacing:.12em}h1{margin:8px 0 14px;font-size:clamp(2.4rem,6vw,5rem);line-height:1.02;letter-spacing:-.045em}.lead{max-width:720px;color:var(--muted)}
+.services{margin-top:44px;border-top:1px solid var(--line)}.service{display:grid;grid-template-columns:64px 1fr minmax(250px,.7fr);gap:28px;padding:34px 0;border-bottom:1px solid var(--line)}.no{color:var(--accent);font-weight:800}.service h2{margin:0 0 8px;font-size:clamp(1.4rem,3vw,2.2rem)}.service p{margin:0;color:var(--muted);font-size:.9rem}.actions{display:flex;flex-wrap:wrap;gap:8px;align-content:start}.btn{display:inline-block;padding:9px 15px;border-radius:999px;border:1px solid var(--line);text-decoration:none;font-size:.8rem;font-weight:800}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.support{margin-top:40px;padding:26px;background:var(--soft);border:1px solid var(--line);border-radius:20px}.support b{display:block;margin-bottom:5px}.support span{color:var(--muted);font-size:.82rem}
+footer{border-top:1px solid var(--line);padding:26px 0 34px;color:var(--muted);font-size:.75rem}.foot{display:flex;justify-content:space-between;gap:14px}.foot a{color:var(--accent);text-decoration:none}
+@media(max-width:700px){.service{grid-template-columns:44px 1fr}.actions{grid-column:2}}@media(max-width:480px){.service{grid-template-columns:1fr}.actions{grid-column:1}.foot{display:block}.foot a{display:inline-block;margin-top:8px}}
 </style>
 </head>
 <body>
-<header><div class="wrap nav"><div class="brand">小佑的日常生活</div><nav class="nav-links"><a href="#services">服務</a><a href="#about">關於我們</a><a href="#support">客服</a><a href="/">行動會員</a></nav></div></header>
-<main>
-<section class="wrap hero"><div><div class="kicker">歡迎使用小佑的日常生活</div><h1>讓日常生活，<br>多一點便利。</h1><p>從日常消費到生活代繳，探索小佑的日常生活目前提供的服務，讓資訊更清楚、日常事務更容易管理。</p><a class="cta" href="#services">探索我們的服務 →</a></div><div class="hero-note">這裡是「小佑的日常生活」公開服務總覽。各項服務使用獨立帳號、資料紀錄及服務規範；進入服務後，請依各平台的實際說明使用。</div></section>
-<section id="services" class="services"><div class="wrap"><div class="section-head"><div><div class="section-kicker">一、服務項目</div><h2>探索我們的服務</h2></div><p>不同服務各自維持原有系統與資料，只透過品牌導覽與統一客服互相連結。</p></div>
-<article class="service"><div class="no">行動會員</div><div><h3>小佑的日常生活行動會員</h3><p>整合會員餘額、交易紀錄、訂單、帳單、優惠、發票與客服等功能，方便集中查看會員資訊。</p></div><div class="service-actions"><a class="primary" href="/">進入行動會員 →</a><a class="secondary" href="/?support=membership">會員服務客服</a></div></article>
-<article class="service"><div class="no">生活代繳費</div><div><h3>小佑的日常生活代繳費平台</h3><p>提供預定代繳、處理進度與歷史繳費紀錄查詢，方便掌握日常費用的處理情況。</p></div><div class="service-actions"><a class="primary" href="https://daily-pay-user.vercel.app/">進入代繳費平台 →</a><a class="secondary" href="/?support=payment">代繳費服務客服</a></div></article>
-<article class="service"><div class="no">災害通知</div><div><h3>小佑的日常生活災害即時通知</h3><p>整合中央氣象署、NCDR 民生示警與 CBS 災防告警資訊，依天氣、交通、民生與水文等類別提供通知服務。</p></div><div class="service-actions"><a class="primary" href="https://daily-weather-user.vercel.app/">進入災害即時通知 →</a><a class="secondary" href="https://daily-weather-user.vercel.app/#service">查看服務說明</a></div></article>
-<p style="margin:26px 0 0;color:var(--muted);font-size:.82rem;line-height:1.8;">各項服務的申請資格、服務範圍與使用規範，以各平台最新公告及法律文件為準。</p></div></section>
-<section id="about" class="about"><div class="wrap copy-grid"><div><div class="section-kicker">二、關於我們</div><h2>關於小佑的日常生活</h2></div><p>我們希望透過清楚、便利的數位服務，協助使用者管理日常事務，並持續改善每一項服務的使用體驗。服務總覽只負責品牌介紹與導覽，不會合併各平台的會員帳號、交易資料或法律文件。</p></div></section>
-<section id="support" class="support"><div class="wrap"><div class="section-kicker">三、客服支援</div><div class="support-box"><div><h3>小佑的日常生活統一客服中心</h3><p>行動會員可在登入後使用既有會員客服；沒有行動會員帳號，也可以透過訪客客服表單提交行動會員或生活代繳費相關問題。</p></div><div class="support-actions"><a class="secondary" href="/">進入行動會員</a><a class="primary" href="/?support=general">使用訪客客服 →</a></div></div></div></section>
+<header><div class="wrap nav"><div class="brand">小佑的日常生活</div><a href="https://daily-user.vercel.app/sitemap">網站地圖</a></div></header>
+<main class="wrap">
+<div class="eyebrow">服務總覽</div>
+<h1>一個入口，找到所有日常服務。</h1>
+<p class="lead">目前公開服務分為會員、代繳費與預約管理。各平台維持自己的資料與登入流程，透過共通導覽互相連結。</p>
+<section class="services">
+<article class="service"><div class="no">01</div><div><h2>行動會員</h2><p>會員、訂單、帳單、優惠券、電子發票、物流、先享後付與客服等會員服務。</p></div><div class="actions"><a class="btn primary" href="https://daily-user.vercel.app/">進入行動會員</a></div></article>
+<article class="service"><div class="no">02</div><div><h2>生活代繳費</h2><p>提供代繳費項目、預定繳費、繳費紀錄與客戶查詢等服務。</p></div><div class="actions"><a class="btn primary" href="https://daily-pay-user.vercel.app/">進入生活代繳費</a></div></article>
+<article class="service"><div class="no">03</div><div><h2>預約管理</h2><p>查看可預約時段、建立預約並管理既有預約行程。</p></div><div class="actions"><a class="btn primary" href="https://daily-reserve-user.vercel.app/">進入預約管理</a></div></article>
+</section>
+<div class="support"><b>需要協助？</b><span>可由統一客服中心取得服務協助。客服時間：每日 09:00－22:00。</span></div>
 </main>
-<footer id="site-footer">
-  <div class="wrap">
-    <div class="section-kicker">小佑的日常生活</div>
-    <div class="footer-title">小佑的日常生活</div>
-    <p class="footer-brand-copy">讓日常生活，多一點便利。從會員服務到生活代繳，以清楚的資訊連結每一項日常需求。</p>
-
-    <div class="footer-grid footer-grid-full">
-      <div>
-        <b>服務與導覽</b>
-        <a href="/">行動會員首頁</a>
-        <a href="/services">服務總覽</a>
-        <a href="https://daily-pay-user.vercel.app/">生活代繳費</a>
-        <a href="https://daily-weather-user.vercel.app/">災害即時通知</a>
-        <a href="/sitemap">完整網站地圖</a>
-        <span class="footer-note">熱門服務：會員、帳單、訂單、客服</span>
-      </div>
-
-      <div>
-        <b>聯絡我們</b>
-        <a href="/?support=general">統一客服中心</a>
-        <a href="tel:+886966236830">客服電話：0966-236-830</a>
-        <span>一般通話費依電信業者資費計收</span>
-        <a href="mailto:leo5511426@gmail.com">電子郵件：leo5511426@gmail.com</a>
-        <span>客服時間：每日 09:00－22:00</span>
-      </div>
-
-      <div>
-        <b>法律與安全</b>
-        <a href="/?legal=1">行動會員隱私權政策</a>
-        <a href="/?legal=1">行動會員服務條款</a>
-        <a href="/?legal=1">法律文件與相關說明</a>
-        <span>生活代繳費之法律文件依該平台公告為準</span>
-      </div>
-
-      <div>
-        <b>品牌資訊</b>
-        <span>品牌名稱：小佑的日常生活</span>
-        <span>目前尚未使用正式圖形 Logo</span>
-        <span>各平台帳號、資料與規範彼此獨立</span>
-      </div>
-    </div>
-
-    <div class="footer-meta">
-      <div>© 2026 小佑的日常生活｜各項服務的帳號、資料處理與使用規範，以各服務頁面公告為準。</div>
-      <button type="button" class="footer-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">回到頂部 ↑</button>
-    </div>
-  </div>
-</footer>
+<footer><div class="wrap foot"><div>© 2026 小佑的日常生活</div><a href="https://daily-user.vercel.app/">返回行動會員</a></div></footer>
 </body></html>
