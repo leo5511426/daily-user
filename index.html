@@ -5192,6 +5192,91 @@ async function ns1OpenSettings(){
 }
 
 </script>
+<style id="member-home-mobile-fix">
+/* ============================================================
+   行動會員首頁｜手機版版面修復
+   只處理 p0 首頁，不影響其他會員頁面與 GAS。
+   ============================================================ */
+#p0{min-width:0;overflow-x:hidden;}
+#p0 .glass-hero,
+#p0 #homeAnnouncementSection,
+#p0 > .card,
+#p0 > div,
+#p0 > section{min-width:0;max-width:100%;box-sizing:border-box;}
+
+#p0 .glass-hero-title,
+#p0 h2,
+#p0 span,
+#p0 div{overflow-wrap:anywhere;}
+
+#p0 .glass-hero-title{word-break:keep-all;}
+#p0 .shortcut-grid{min-width:0;}
+#p0 .shortcut-item{min-width:0;overflow-wrap:anywhere;}
+
+@media(max-width:560px){
+  #p0{padding-left:16px!important;padding-right:16px!important;}
+  #p0 .glass-hero{margin-bottom:18px!important;padding-bottom:14px!important;}
+  #p0 .glass-hero-title{font-size:1.55em!important;line-height:1.25!important;}
+  #p0 .glass-hero-subtitle{font-size:.82em!important;line-height:1.6!important;}
+
+  #p0 #homeAnnouncementSection > div:first-child,
+  #p0 > div[style*="justify-content:space-between"]{
+    flex-wrap:wrap!important;
+    row-gap:6px!important;
+  }
+
+  #p0 > div[style*="grid-template-columns: 1fr 1fr"]{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:8px!important;
+  }
+  #p0 > div[style*="grid-template-columns: 1fr 1fr"] .card{
+    min-width:0!important;
+    padding:16px 7px!important;
+  }
+  #p0 > div[style*="grid-template-columns: 1fr 1fr"] .card > div:nth-child(2){
+    font-size:1.55em!important;
+    white-space:nowrap!important;
+  }
+
+  #p0 #ntListPreview,
+  #p0 #orderListPreview{min-width:0;overflow:hidden;}
+
+  #p0 .shortcut-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  #p0 .shortcut-item{
+    padding:11px 5px!important;
+    font-size:.72em!important;
+  }
+
+  #p0 .brand-service-entry{
+    margin-top:22px!important;
+    padding:18px!important;
+  }
+  #p0 .brand-service-entry h3{
+    font-size:1.12em!important;
+    line-height:1.45!important;
+  }
+  #p0 .brand-service-entry p{
+    line-height:1.65!important;
+  }
+}
+
+@media(max-width:360px){
+  #p0 > div[style*="grid-template-columns: 1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+  #p0 > div[style*="grid-template-columns: 1fr 1fr"] .card > div:nth-child(2){
+    font-size:1.7em!important;
+  }
+  #p0 .shortcut-item{font-size:.68em!important;}
+}
+
+@media(min-width:561px){
+  #p0{padding-left:20px;padding-right:20px;}
+}
+</style>
 </body>
 </html>
 
