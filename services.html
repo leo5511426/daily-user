@@ -13,6 +13,18 @@ main{padding:68px 0 80px}.eyebrow{font-size:.72rem;color:var(--accent);font-weig
 .support{margin-top:40px;padding:26px;background:var(--soft);border:1px solid var(--line);border-radius:20px}.support b{display:block;margin-bottom:5px}.support span{color:var(--muted);font-size:.82rem}
 footer{border-top:1px solid var(--line);padding:26px 0 34px;color:var(--muted);font-size:.75rem}.foot{display:flex;justify-content:space-between;gap:14px}.foot a{color:var(--accent);text-decoration:none}
 @media(max-width:700px){.service{grid-template-columns:44px 1fr}.actions{grid-column:2}}@media(max-width:480px){.service{grid-template-columns:1fr}.actions{grid-column:1}.foot{display:block}.foot a{display:inline-block;margin-top:8px}}
+.brand-footer{margin:44px 0 8px;padding:28px 0 10px;border-top:1px solid var(--line);color:var(--text)}
+.brand-footer-kicker{font-size:.65em;letter-spacing:.2em;color:var(--accent);margin-bottom:8px}
+.brand-footer-title{font-size:1.25em;font-weight:850;margin-bottom:5px}
+.brand-footer-tagline{max-width:46rem;color:var(--muted);font-size:.82em;line-height:1.8;margin-bottom:22px}
+.brand-footer-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.brand-footer-group b{display:block;color:var(--accent);font-size:.72em;letter-spacing:.06em;margin-bottom:9px}
+.brand-footer-link,.brand-footer-text{display:block;width:max-content;max-width:100%;color:var(--text);font-size:.76em;line-height:1.95;text-decoration:none}
+.brand-footer-link{opacity:.78}.brand-footer-link:hover{color:var(--accent);opacity:1}
+.brand-footer-text{color:var(--muted);width:auto}
+.brand-footer-meta{display:flex;justify-content:space-between;gap:14px;align-items:flex-end;margin-top:16px;color:var(--muted);font-size:.68em;line-height:1.7}
+@media(max-width:680px){.brand-footer-grid{grid-template-columns:1fr 1fr;gap:18px 14px}.brand-footer-meta{display:block}.brand-footer-meta>div+div{margin-top:7px}}
+@media(max-width:430px){.brand-footer-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -28,5 +40,28 @@ footer{border-top:1px solid var(--line);padding:26px 0 34px;color:var(--muted);f
 </section>
 <div class="support"><b>需要協助？</b><span>可由統一客服中心取得服務協助。客服時間：每日 09:00－22:00。</span></div>
 </main>
-<footer><div class="wrap foot"><div>© 2026 小佑的日常生活</div><a href="https://daily-user.vercel.app/">返回行動會員</a></div></footer>
+<footer class="brand-footer">
+<div class="brand-footer-kicker">小佑的日常生活</div>
+<div class="brand-footer-title">小佑的日常生活</div>
+<div class="brand-footer-tagline">讓日常生活，多一點便利。以清楚的資訊連結會員、代繳費與預約服務。</div>
+<div class="brand-footer-grid">
+<div class="brand-footer-group"><b>服務與導覽</b>
+<a class="brand-footer-link" href="https://daily-user.vercel.app/">行動會員</a>
+<a class="brand-footer-link" href="https://daily-pay-user.vercel.app/">生活代繳費</a>
+<a class="brand-footer-link" href="https://daily-reserve-user.vercel.app/">預約管理</a>
+<a class="brand-footer-link" href="https://daily-user.vercel.app/services">服務總覽</a>
+<a class="brand-footer-link" href="https://daily-user.vercel.app/sitemap">網站地圖</a></div>
+<div class="brand-footer-group"><b>協助與支援</b>
+<a class="brand-footer-link" href="https://daily-user.vercel.app/?support=general">統一客服中心</a>
+<a class="brand-footer-link" href="tel:+886966236830">客服電話：0966-236-830</a>
+<a class="brand-footer-link" href="mailto:leo5511426@gmail.com">電子郵件：leo5511426@gmail.com</a>
+<span class="brand-footer-text">客服時間：每日 09:00－22:00</span></div>
+<div class="brand-footer-group"><b>法律與政策</b>
+<a class="brand-footer-link" href="https://daily-user.vercel.app/?legal=1">法律資訊中心</a>
+<a class="brand-footer-link" href="https://daily-pay-user.vercel.app/service-info">代繳費服務資訊</a>
+<span class="brand-footer-text">各服務仍依各平台公告及適用文件為準</span></div>
+</div>
+<div class="brand-footer-meta"><div>目前所在服務：共通服務頁面</div><div>© 2026 小佑的日常生活</div></div>
+</footer>
+
 </body></html>
