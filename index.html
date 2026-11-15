@@ -5277,6 +5277,92 @@ async function ns1OpenSettings(){
   #p0{padding-left:20px;padding-right:20px;}
 }
 </style>
+<style id="login-ui-unification-fix">
+/* ============================================================
+   登入頁｜按鈕與底部服務連結視覺統一
+   只處理登入畫面，不更動登入流程與 API。
+   ============================================================ */
+#loginView .btn{
+  width:100%;
+  box-sizing:border-box;
+  min-height:56px;
+  padding:16px 18px !important;
+  margin:0;
+  border-radius:10px !important;
+  font-size:1.05em !important;
+  line-height:1.35;
+  font-weight:750 !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#loginView .btn + .btn{
+  margin-top:12px !important;
+}
+
+/* 客服入口與登入按鈕保持同一套元件規格，
+   但以較低的視覺層級呈現。 */
+#loginView .btn[onclick*="openGuestTicketForm"]{
+  background:var(--accent) !important;
+  color:#fff !important;
+}
+
+/* 登入頁底部三個服務／政策入口改成同一套文字連結 */
+#loginView .login-brand-links{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:0;
+  width:100%;
+  margin:14px 0 4px;
+  line-height:1.8;
+  font-size:.78em;
+  font-weight:650;
+  text-align:center;
+  color:var(--brand-muted);
+}
+#loginView .login-brand-links a,
+#loginView .login-brand-links span{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:0 9px;
+  color:var(--brand-muted);
+  font-size:1em;
+  font-weight:650;
+  text-decoration:none;
+  cursor:pointer;
+}
+#loginView .login-brand-links a:first-child,
+#loginView .login-brand-links span:first-of-type{
+  color:var(--brand-strong);
+}
+#loginView .login-brand-links a:hover,
+#loginView .login-brand-links span:hover{
+  color:var(--accent);
+}
+#loginView .login-brand-links a + span,
+#loginView .login-brand-links span + span{
+  border-left:1px solid var(--border);
+}
+
+@media(max-width:560px){
+  #loginView .btn{
+    min-height:54px;
+    padding:15px 14px !important;
+    font-size:1em !important;
+  }
+  #loginView .login-brand-links{
+    margin-top:12px;
+    font-size:.74em;
+  }
+  #loginView .login-brand-links a,
+  #loginView .login-brand-links span{
+    padding:0 7px;
+  }
+}
+</style>
 </body>
 </html>
 
