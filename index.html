@@ -1208,7 +1208,79 @@ body .sync-indicator{
 /* ============================================================
    全站標準頁尾｜小佑的日常生活
    ============================================================ */
-.brand-footer{display:none!important;}
+/* ============================================================
+   小佑的日常生活｜三平台共用頁尾
+   ============================================================ */
+.brand-footer{
+  margin:44px 0 8px;
+  padding:28px 0 10px;
+  border-top:1px solid var(--border,#ead5dc);
+  color:var(--text,#40363a);
+}
+.brand-footer-kicker{
+  font-size:.65em;
+  letter-spacing:.2em;
+  color:var(--accent,var(--pink,#b95878));
+  margin-bottom:8px;
+}
+.brand-footer-title{
+  font-size:1.25em;
+  font-weight:850;
+  margin-bottom:5px;
+}
+.brand-footer-tagline{
+  max-width:46rem;
+  color:var(--muted,var(--brand-muted));
+  font-size:.82em;
+  line-height:1.8;
+  margin-bottom:22px;
+}
+.brand-footer-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:24px;
+  padding:20px 0;
+  border-top:1px solid var(--border,#ead5dc);
+  border-bottom:1px solid var(--border,#ead5dc);
+}
+.brand-footer-group b{
+  display:block;
+  color:var(--accent,var(--pink,#b95878));
+  font-size:.72em;
+  letter-spacing:.06em;
+  margin-bottom:9px;
+}
+.brand-footer-link,
+.brand-footer-text{
+  display:block;
+  width:max-content;
+  max-width:100%;
+  color:var(--text,#40363a);
+  font-size:.76em;
+  line-height:1.95;
+  text-decoration:none;
+}
+.brand-footer-link{opacity:.78;cursor:pointer}
+.brand-footer-link:hover{color:var(--accent,var(--pink,#b95878));opacity:1}
+.brand-footer-text{color:var(--muted,var(--brand-muted));width:auto}
+.brand-footer-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-end;
+  margin-top:16px;
+  color:var(--muted,var(--brand-muted));
+  font-size:.68em;
+  line-height:1.7;
+}
+@media(max-width:680px){
+  .brand-footer-grid{grid-template-columns:1fr 1fr;gap:18px 14px}
+  .brand-footer-meta{display:block}
+  .brand-footer-meta>div+div{margin-top:7px}
+}
+@media(max-width:430px){
+  .brand-footer-grid{grid-template-columns:1fr}
+}
 .site-footer{
   margin:44px 0 4px;
   padding:26px 0 8px;
