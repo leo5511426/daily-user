@@ -565,20 +565,76 @@ body[data-theme="dark"] .brand-service-entry{background:linear-gradient(135deg,r
 .brand-service-entry h3{margin:4px 0 8px;font-size:1.28em;color:var(--text);}
 .brand-service-entry p{margin:0 0 16px;line-height:1.75;font-size:.86em;opacity:.72;font-weight:normal;}
 .brand-service-entry a{display:inline-flex;align-items:center;gap:8px;color:var(--pink);font-weight:900;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px;}
-.brand-footer{margin:42px 0 8px;padding:28px 0 10px;border-top:1px solid var(--border);color:var(--text);}
-.brand-footer-kicker{font-size:.65em;letter-spacing:.2em;color:var(--pink);margin-bottom:8px;}
-.brand-footer-title{font-size:1.35em;font-weight:900;margin-bottom:5px;}
-.brand-footer-tagline{font-size:.82em;opacity:.62;font-weight:normal;line-height:1.7;margin-bottom:22px;}
-.brand-footer-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding:18px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.brand-footer-group b{display:block;font-size:.72em;color:var(--pink);letter-spacing:.06em;margin-bottom:9px;}
-.brand-footer-link{display:block;width:max-content;max-width:100%;color:var(--text);text-decoration:none;font-size:.78em;line-height:1.9;opacity:.78;cursor:pointer;font-weight:normal;}
-.brand-footer-link:hover{color:var(--pink);opacity:1;}
-.brand-footer-meta{display:flex;justify-content:space-between;gap:14px;align-items:flex-end;margin-top:16px;font-size:.7em;line-height:1.7;opacity:.54;font-weight:normal;}
-.login-brand-links{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:.78em;}
-.login-brand-links a,.login-brand-links span{color:var(--pink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
-@media(max-width:640px){.brand-footer-grid{grid-template-columns:1fr 1fr;gap:18px 14px}.brand-footer-meta{display:block}.brand-footer-meta>div+div{margin-top:7px}}
-@media(max-width:420px){.brand-footer-grid{grid-template-columns:1fr}}
-</style>
+.brand-footer{
+  margin:44px 0 8px;
+  padding:28px 0 10px;
+  border-top:1px solid var(--border);
+  color:var(--text);
+}
+.brand-footer-kicker{
+  font-size:.65em;
+  letter-spacing:.2em;
+  color:var(--accent,var(--pink));
+  margin-bottom:8px;
+}
+.brand-footer-title{
+  font-size:1.25em;
+  font-weight:850;
+  margin-bottom:5px;
+}
+.brand-footer-tagline{
+  max-width:46rem;
+  color:var(--muted,var(--brand-muted));
+  font-size:.82em;
+  line-height:1.8;
+  margin-bottom:22px;
+}
+.brand-footer-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:24px;
+  padding:20px 0;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.brand-footer-group b{
+  display:block;
+  color:var(--accent,var(--pink));
+  font-size:.72em;
+  letter-spacing:.06em;
+  margin-bottom:9px;
+}
+.brand-footer-link,
+.brand-footer-text{
+  display:block;
+  width:max-content;
+  max-width:100%;
+  color:var(--text);
+  font-size:.76em;
+  line-height:1.95;
+  text-decoration:none;
+}
+.brand-footer-link{opacity:.78;cursor:pointer}
+.brand-footer-link:hover{color:var(--accent,var(--pink));opacity:1}
+.brand-footer-text{color:var(--muted,var(--brand-muted));width:auto}
+.brand-footer-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-end;
+  margin-top:16px;
+  color:var(--muted,var(--brand-muted));
+  font-size:.68em;
+  line-height:1.7;
+}
+@media(max-width:680px){
+  .brand-footer-grid{grid-template-columns:1fr 1fr;gap:18px 14px}
+  .brand-footer-meta{display:block}
+  .brand-footer-meta>div+div{margin-top:7px}
+}
+@media(max-width:430px){
+  .brand-footer-grid{grid-template-columns:1fr}
+}</style>
 
 <style id="ui-preference-layer">
 html.ui-font-size-adjust {
@@ -1540,24 +1596,28 @@ body.ui-dynamic-off .login-win11-ring{animation:none!important}
 <footer class="brand-footer">
   <div class="brand-footer-kicker">小佑的日常生活</div>
   <div class="brand-footer-title">小佑的日常生活</div>
-  <div class="brand-footer-tagline">讓日常生活，多一點便利。從會員服務到生活代繳，以清楚的資訊連結每一項日常需求。</div>
+  <div class="brand-footer-tagline">讓日常生活，多一點便利。以清楚的資訊連結會員、代繳費與預約服務。</div>
   <div class="brand-footer-grid">
     <div class="brand-footer-group">
-      <b>探索服務</b>
-      <a class="brand-footer-link" href="/services">服務總覽</a>
-      <a class="brand-footer-link" href="/">行動會員</a>
-      <a class="brand-footer-link" href="https://daily-pay-user.vercel.app/" target="_blank" rel="noopener">生活代繳費</a>
-      <a class="brand-footer-link" href="https://daily-weather-user.vercel.app/" target="_blank" rel="noopener">災害即時通知</a>
+      <b>服務與導覽</b>
+      <a class="brand-footer-link" href="https://daily-user.vercel.app/">行動會員</a>
+      <a class="brand-footer-link" href="https://daily-pay-user.vercel.app/">生活代繳費</a>
+      <a class="brand-footer-link" href="https://daily-reserve-user.vercel.app/">預約管理</a>
+      <a class="brand-footer-link" href="https://daily-user.vercel.app/services">服務總覽</a>
+      <a class="brand-footer-link" href="https://daily-user.vercel.app/sitemap">網站地圖</a>
     </div>
     <div class="brand-footer-group">
       <b>協助與支援</b>
-      <span class="brand-footer-link" onclick="openUnifiedSupport('行動會員')">統一客服中心</span>
-      <span class="brand-footer-link" onclick="openCustomerServiceModal()">會員客服</span>
+      <a class="brand-footer-link" href="https://daily-user.vercel.app/?support=general">統一客服中心</a>
+      <a class="brand-footer-link" href="tel:+886966236830">客服電話：0966-236-830</a>
+      <a class="brand-footer-link" href="mailto:leo5511426@gmail.com">電子郵件：leo5511426@gmail.com</a>
+      <span class="brand-footer-text">客服時間：每日 09:00－22:00</span>
     </div>
     <div class="brand-footer-group">
       <b>法律與政策</b>
-      <span class="brand-footer-link" onclick="openLegalCenter()">行動會員法律資訊</span>
-      <span class="brand-footer-link">各服務法律文件獨立適用</span>
+      <a class="brand-footer-link" href="https://daily-user.vercel.app/?legal=1">法律資訊中心</a>
+      <a class="brand-footer-link" href="https://daily-pay-user.vercel.app/service-info">代繳費服務資訊</a>
+      <span class="brand-footer-text">各服務仍依各平台公告及適用文件為準</span>
     </div>
   </div>
   <div class="brand-footer-meta">
