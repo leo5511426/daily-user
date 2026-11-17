@@ -1287,6 +1287,34 @@ body .sync-indicator{
 
 </style>
 
+<style id="xiaoyou-shared-footer-v2">
+.brand-footer,footer.brand-footer{
+  display:block!important;box-sizing:border-box!important;width:100%!important;max-width:none!important;
+  margin:44px 0 8px!important;padding:28px 0 10px!important;
+  border:0!important;border-top:1px solid #ead5dc!important;border-radius:0!important;
+  color:#40363a!important;background:transparent!important;box-shadow:none!important;
+  font-family:inherit!important;font-weight:500!important;text-align:left!important;
+}
+.brand-footer-inner{width:min(1120px,100%);max-width:100%;margin:0 auto;padding:0 16px;box-sizing:border-box}
+.brand-footer-kicker{margin:0 0 8px!important;color:#b95878!important;font-size:.65em!important;font-weight:800!important;letter-spacing:.2em!important}
+.brand-footer-title{margin:0 0 5px!important;color:#40363a!important;font-size:1.25em!important;font-weight:850!important;line-height:1.5!important}
+.brand-footer-tagline{max-width:46rem;margin:7px 0 22px!important;color:#7c6d72!important;font-size:.82em!important;font-weight:500!important;line-height:1.8!important}
+.brand-footer-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:24px!important;margin:0!important;padding:20px 0!important;border-top:1px solid #ead5dc!important;border-bottom:1px solid #ead5dc!important;background:transparent!important}
+.brand-footer-group{min-width:0!important}
+.brand-footer-group b{display:block!important;margin:0 0 9px!important;color:#b95878!important;font-size:.72em!important;font-weight:800!important;letter-spacing:.06em!important}
+.brand-footer-link,.brand-footer-text{display:block!important;width:max-content!important;max-width:100%!important;margin:0!important;padding:2px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#766970!important;font-family:inherit!important;font-size:.76em!important;font-weight:500!important;line-height:1.95!important;text-align:left!important;text-decoration:none!important;white-space:normal!important;overflow-wrap:anywhere!important}
+.brand-footer-link{cursor:pointer!important;opacity:1!important}
+.brand-footer-link:hover{color:#b95878!important;text-decoration:underline!important;text-underline-offset:3px!important}
+.brand-footer-text{width:auto!important;cursor:default!important;opacity:1!important}
+.brand-footer-meta{display:flex!important;justify-content:space-between!important;gap:14px!important;align-items:flex-end!important;margin:16px 0 0!important;padding:0!important;border:0!important;color:#8a7b80!important;font-size:.68em!important;font-weight:500!important;line-height:1.7!important}
+.brand-footer-meta>div{min-width:0!important}
+@media(max-width:680px){
+ .brand-footer-grid{grid-template-columns:1fr 1fr!important;gap:18px 14px!important}
+ .brand-footer-meta{display:block!important}
+ .brand-footer-meta>div+div{margin-top:7px!important}
+}
+@media(max-width:430px){.brand-footer-grid{grid-template-columns:1fr!important}}
+</style>
 </head>
 <body data-theme="light">
 
@@ -4982,9 +5010,7 @@ function closeAppOverlay() {
 
 <script id="xiaoyou-common-footer">
 (function(){
-  function footerHtml(){
-    return "<footer class=\"brand-footer\">\n  <div class=\"brand-footer-kicker\">小佑的日常生活</div>\n  <div class=\"brand-footer-title\">小佑的日常生活</div>\n  <div class=\"brand-footer-tagline\">讓日常生活，多一點便利。以清楚的資訊連結會員、代繳費與預約服務。</div>\n  <div class=\"brand-footer-grid\">\n    <div class=\"brand-footer-group\">\n      <b>服務與導覽</b>\n      <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/\">行動會員</a>\n      <a class=\"brand-footer-link\" href=\"https://daily-pay-user.vercel.app/\">生活代繳費</a>\n      <a class=\"brand-footer-link\" href=\"https://daily-reserve-user.vercel.app/\">預約管理</a>\n      <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/services\">服務總覽</a>\n      <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/sitemap\">網站地圖</a>\n    </div>\n    <div class=\"brand-footer-group\">\n      <b>協助與支援</b>\n      <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/?support=general\">統一客服中心</a>\n      <a class=\"brand-footer-link\" href=\"tel:+886966236830\">客服電話：0966-236-830</a>\n      <a class=\"brand-footer-link\" href=\"mailto:leo5511426@gmail.com\">電子郵件：leo5511426@gmail.com</a>\n      <span class=\"brand-footer-text\">客服時間：每日 09:00－22:00</span>\n    </div>\n    <div class=\"brand-footer-group\">\n      <b>法律與政策</b>\n      <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/?legal=1\">法律資訊中心</a>\n      <a class=\"brand-footer-link\" href=\"https://daily-pay-user.vercel.app/service-info\">代繳費服務資訊</a>\n      <span class=\"brand-footer-text\">各服務仍依各平台公告及適用文件為準</span>\n    </div>\n  </div>\n  <div class=\"brand-footer-meta\">\n    <div>目前所在服務：小佑的日常生活行動會員</div>\n    <div>© 2026 小佑的日常生活</div>\n  </div>\n</footer>";
-  }
+  function footerHtml(){ return "<footer class=\"brand-footer\" aria-label=\"網站頁尾\">\n  <div class=\"brand-footer-inner\">\n    <div class=\"brand-footer-kicker\">小佑的日常生活</div>\n    <div class=\"brand-footer-title\">小佑的日常生活</div>\n    <div class=\"brand-footer-tagline\">讓日常生活，多一點便利。以清楚的資訊連結會員、代繳費與預約服務。</div>\n    <div class=\"brand-footer-grid\">\n      <div class=\"brand-footer-group\"><b>服務與導覽</b>\n        <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/\">行動會員</a>\n        <a class=\"brand-footer-link\" href=\"https://daily-pay-user.vercel.app/\">生活代繳費</a>\n        <a class=\"brand-footer-link\" href=\"https://daily-reserve-user.vercel.app/\">預約管理</a>\n        <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/services\">服務總覽</a>\n        <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/sitemap\">網站地圖</a>\n      </div>\n      <div class=\"brand-footer-group\"><b>協助與支援</b>\n        <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/?support=general\">統一客服中心</a>\n        <a class=\"brand-footer-link\" href=\"tel:+886966236830\">客服電話：0966-236-830</a>\n        <a class=\"brand-footer-link\" href=\"mailto:leo5511426@gmail.com\">電子郵件：leo5511426@gmail.com</a>\n        <span class=\"brand-footer-text\">客服時間：每日 09:00－22:00</span>\n      </div>\n      <div class=\"brand-footer-group\"><b>法律與政策</b>\n        <a class=\"brand-footer-link\" href=\"https://daily-user.vercel.app/?legal=1\">法律資訊中心</a>\n        <a class=\"brand-footer-link\" href=\"https://daily-pay-user.vercel.app/service-info\">代繳費服務資訊</a>\n        <span class=\"brand-footer-text\">各服務仍依各平台公告及適用文件為準</span>\n      </div>\n    </div>\n    <div class=\"brand-footer-meta\">\n      <div>目前所在服務：小佑的日常生活行動會員</div>\n      <div>© 2026 小佑的日常生活</div>\n    </div>\n  </div>\n</footer>"; }
   function install(){
     var ids=["p0","p1","p2","p3","p4","p5","p6","p7","loginView"];
     ids.forEach(function(id){
