@@ -2433,7 +2433,7 @@ function showLoginOverlay() {
   const retry = document.getElementById('loginRetryBtn');
   if (title) title.textContent = '正在登入';
   if (sub) sub.textContent = '正在安全確認會員資料';
-  if (note) note.textContent = '登入失敗，將自動返回登入頁面…';
+  if (note) note.textContent = '請稍候';
   if (err) { err.textContent = ''; err.style.display = 'none'; }
   if (retry) retry.style.display = 'none';
   overlay.style.display = 'flex';
@@ -2494,8 +2494,8 @@ function showLoginError(msg) {
     overlay.classList.add('is-error');
   }
   if (title) title.textContent = '無法登入';
-  if (sub) sub.textContent = '請確認後再試一次';
-  if (note) note.textContent = '';
+  if (sub) sub.textContent = '請確認帳號或密碼後再試一次';
+  if (note) note.textContent = '登入失敗，將自動返回登入頁面…';
   if (err) {
     err.textContent = String(msg || '登入過程發生問題，請稍後再試。');
     err.style.display = 'block';
@@ -5395,16 +5395,24 @@ async function ns1OpenSettings(){
   position:absolute;
   left:50%;
   top:50%;
-  width:9px;
-  height:22px;
-  margin-left:-4.5px;
-  margin-top:-38px;
-  border-radius:5px;
+  width:11px;
+  height:25px;
+  margin-left:-5.5px;
+  margin-top:-37px;
+  border-radius:4px;
   background:var(--pink, #d77fa0);
-  transform-origin:4.5px 38px;
-  opacity:.22;
+  transform-origin:5.5px 37px;
+  opacity:.2;
   animation:loginSpinnerSegment 1s steps(1,end) infinite;
 }
+#loginProgressOverlay .login-spinner span:nth-child(1){transform:rotate(0deg);animation-delay:0s;}
+#loginProgressOverlay .login-spinner span:nth-child(2){transform:rotate(45deg);animation-delay:.125s;}
+#loginProgressOverlay .login-spinner span:nth-child(3){transform:rotate(90deg);animation-delay:.25s;}
+#loginProgressOverlay .login-spinner span:nth-child(4){transform:rotate(135deg);animation-delay:.375s;}
+#loginProgressOverlay .login-spinner span:nth-child(5){transform:rotate(180deg);animation-delay:.5s;}
+#loginProgressOverlay .login-spinner span:nth-child(6){transform:rotate(225deg);animation-delay:.625s;}
+#loginProgressOverlay .login-spinner span:nth-child(7){transform:rotate(270deg);animation-delay:.75s;}
+#loginProgressOverlay .login-spinner span:nth-child(8){transform:rotate(315deg);animation-delay:.875s;}
 #loginProgressOverlay .login-spinner span:nth-child(1){transform:rotate(0deg);animation-delay:0s;}
 #loginProgressOverlay .login-spinner span:nth-child(2){transform:rotate(45deg);animation-delay:.125s;}
 #loginProgressOverlay .login-spinner span:nth-child(3){transform:rotate(90deg);animation-delay:.25s;}
