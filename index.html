@@ -2401,7 +2401,10 @@ function showLoginOverlay() {
     overlay.className = 'login-progress-overlay';
     overlay.innerHTML = `
       <div class="login-progress-panel" role="status" aria-live="polite">
-        <div class="login-spinner" aria-hidden="true"></div>
+        <div class="login-spinner" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+        </div>
         <div id="lp-main-title" class="login-progress-title">正在登入</div>
         <div id="lp-sub-title" class="login-progress-sub">正在處理您的登入請求</div>
         <div id="lp-sub-note" class="login-progress-note">請稍候</div>
@@ -2430,7 +2433,7 @@ function showLoginOverlay() {
   const retry = document.getElementById('loginRetryBtn');
   if (title) title.textContent = '正在登入';
   if (sub) sub.textContent = '正在安全確認會員資料';
-  if (note) note.textContent = '';
+  if (note) note.textContent = '登入失敗，將自動返回登入頁面…';
   if (err) { err.textContent = ''; err.style.display = 'none'; }
   if (retry) retry.style.display = 'none';
   overlay.style.display = 'flex';
@@ -5382,15 +5385,34 @@ async function ns1OpenSettings(){
   box-shadow:none !important;
 }
 #loginProgressOverlay .login-spinner{
-  width:72px;
-  height:72px;
+  position:relative;
+  width:76px;
+  height:76px;
   margin:0 auto 28px;
-  border:10px solid #dbe4ff;
-  border-top-color:#3157c9;
-  border-right-color:#3157c9;
-  border-radius:50%;
-  animation:loginSpinnerRotate .85s linear infinite;
+  animation:none;
 }
+#loginProgressOverlay .login-spinner span{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:9px;
+  height:22px;
+  margin-left:-4.5px;
+  margin-top:-38px;
+  border-radius:5px;
+  background:var(--pink, #d77fa0);
+  transform-origin:4.5px 38px;
+  opacity:.22;
+  animation:loginSpinnerSegment 1s steps(1,end) infinite;
+}
+#loginProgressOverlay .login-spinner span:nth-child(1){transform:rotate(0deg);animation-delay:0s;}
+#loginProgressOverlay .login-spinner span:nth-child(2){transform:rotate(45deg);animation-delay:.125s;}
+#loginProgressOverlay .login-spinner span:nth-child(3){transform:rotate(90deg);animation-delay:.25s;}
+#loginProgressOverlay .login-spinner span:nth-child(4){transform:rotate(135deg);animation-delay:.375s;}
+#loginProgressOverlay .login-spinner span:nth-child(5){transform:rotate(180deg);animation-delay:.5s;}
+#loginProgressOverlay .login-spinner span:nth-child(6){transform:rotate(225deg);animation-delay:.625s;}
+#loginProgressOverlay .login-spinner span:nth-child(7){transform:rotate(270deg);animation-delay:.75s;}
+#loginProgressOverlay .login-spinner span:nth-child(8){transform:rotate(315deg);animation-delay:.875s;}
 #loginProgressOverlay .login-progress-title{
   font-size:1.35rem !important;
   font-weight:800 !important;
@@ -5418,13 +5440,16 @@ async function ns1OpenSettings(){
   margin:12px 0 0 !important;
   line-height:1.6 !important;
 }
-@keyframes loginSpinnerRotate{
-  to{transform:rotate(360deg);}
+@keyframes loginSpinnerSegment{
+  0%{opacity:1;}
+  12.5%{opacity:.22;}
+  100%{opacity:.22;}
 }
 @media(max-width:390px){
   #loginProgressOverlay{padding:16px !important;}
   #loginProgressOverlay .login-progress-panel{width:100% !important;padding:16px !important;}
-  #loginProgressOverlay .login-spinner{width:62px;height:62px;border-width:9px;margin-bottom:24px;}
+  #loginProgressOverlay .login-spinner{width:64px;height:64px;margin-bottom:24px;}
+#loginProgressOverlay .login-spinner span{width:8px;height:19px;margin-left:-4px;margin-top:-32px;transform-origin:4px 32px;}
 }
 </style></body>
 </html>
