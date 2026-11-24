@@ -5403,7 +5403,7 @@ async function ns1OpenSettings(){
   background:var(--pink, #d77fa0);
   transform-origin:5.5px 37px;
   opacity:.2;
-  animation:loginSpinnerSegment 1.8s steps(1,end) infinite;
+  animation:loginSpinnerSegment 1.8s linear infinite;
 }
 #loginProgressOverlay .login-spinner span:nth-child(1){transform:rotate(0deg);animation-delay:0s;}
 #loginProgressOverlay .login-spinner span:nth-child(2){transform:rotate(45deg);animation-delay:.125s;}
@@ -5456,8 +5456,8 @@ async function ns1OpenSettings(){
 }
 @keyframes loginSpinnerSegment{
   0%{opacity:1;}
-  12.5%{opacity:.22;}
-  100%{opacity:.22;}
+  12.5%{opacity:.2;}
+  100%{opacity:.2;}
 }
 @media(max-width:390px){
   #loginProgressOverlay{padding:16px !important;}
