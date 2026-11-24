@@ -5228,6 +5228,124 @@ async function ns1OpenSettings(){
   }
 }
 </style>
+<style id="login-layout-optimization">
+/* ============================================================
+   登入介面｜桌面置中＋手機 RWD
+   登入頁與已登入會員系統的桌面版面分離。
+   ============================================================ */
+#loginView{
+  width:100%;
+  max-width:560px;
+  min-height:100vh;
+  height:auto;
+  margin:0 auto;
+  padding:40px 28px 48px !important;
+  box-sizing:border-box;
+  overflow-y:auto;
+  overflow-x:hidden;
+  align-self:center;
+}
+
+#loginView > h1{
+  width:100%;
+  max-width:560px;
+  margin:0 auto 22px !important;
+  box-sizing:border-box;
+  text-align:center;
+  line-height:1.25;
+  overflow-wrap:anywhere;
+}
+
+#loginView #guestAnnouncementSection{
+  max-width:560px;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+#loginView #acc,
+#loginView #pw,
+#loginView .pwd-toggle-container,
+#loginView > .btn,
+#loginView .login-brand-links{
+  width:100%;
+  box-sizing:border-box;
+}
+
+#loginView #acc,
+#loginView #pw{
+  display:block;
+}
+
+#loginView .btn{
+  min-height:56px;
+}
+
+#loginView .btn + .btn{
+  margin-top:12px !important;
+}
+
+#loginView .login-brand-links{
+  max-width:560px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* 桌面瀏覽器：登入介面本身保持窄版置中，
+   不跟著會員系統的 full-desktop 寬版展開。 */
+@media(min-width:768px){
+  #loginView{
+    padding-top:54px !important;
+    padding-bottom:54px !important;
+  }
+
+  #loginView > h1{
+    font-size:1.75em !important;
+  }
+}
+
+/* 手機：使用幾乎滿寬的表單，但保留左右安全距離。 */
+@media(max-width:767px){
+  #loginView{
+    max-width:none;
+    padding:34px 20px 44px !important;
+  }
+
+  #loginView > h1{
+    font-size:1.55em !important;
+    margin-bottom:20px !important;
+  }
+}
+
+@media(max-width:390px){
+  #loginView{
+    padding-left:16px !important;
+    padding-right:16px !important;
+  }
+
+  #loginView > h1{
+    font-size:1.45em !important;
+  }
+
+  #loginView .btn{
+    min-height:54px;
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+}
+
+/* 登入頁顯示時，app-container 不因桌面自動版面而拉成寬版。 */
+.app-container.full-desktop:has(#loginView[style*="display: flex"]) #loginView{
+  max-width:560px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* Chromium / 現代瀏覽器支援 :has() 時，進一步限制登入頁外層。 */
+.app-container.full-desktop:has(#loginView[style*="display: flex"]){
+  display:flex;
+  align-items:stretch;
+}
+</style>
 </body>
 </html>
 
