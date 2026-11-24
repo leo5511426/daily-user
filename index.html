@@ -2309,8 +2309,6 @@ function clearLoginHintTimers() {
 
 function scheduleLoginSlowHints() {
   clearLoginHintTimers();_loginHintStage=0;
-  const prompt=document.getElementById('loginWaitPrompt');
-  if(prompt)prompt.hidden=true;
   const sub=document.getElementById('lp-sub-title'),note=document.getElementById('lp-sub-note');
   if(sub)sub.textContent='正在處理您的登入請求';
   if(note)note.textContent='請稍候';
@@ -2319,16 +2317,11 @@ function scheduleLoginSlowHints() {
     if(!active())return;_loginHintStage=1;
     if(sub)sub.textContent='連線時間較長，請稍候';
     if(note)note.textContent='系統正在處理您的登入請求。';
-  },3500));
+  },5000));
   _loginHintTimers.push(setTimeout(()=>{
     if(!active())return;_loginHintStage=2;
     if(sub)sub.textContent='登入處理時間較長';
-    if(note)note.textContent='系統仍在處理您的登入請求，您可以繼續等待。';
-  },8000));
-  _loginHintTimers.push(setTimeout(()=>{
-    if(!active())return;_loginHintStage=3;
-    if(prompt)prompt.hidden=false;
-    document.getElementById('loginContinueWait')?.focus();
+    if(note)note.textContent='仍在等待會員系統回應，請稍候。';
   },10000));
 }
 function continueLoginWaiting(){if(_loginInProgress)scheduleLoginSlowHints();}
@@ -2407,12 +2400,11 @@ function showLoginOverlay() {
     overlay.id = 'loginProgressOverlay';
     overlay.className = 'login-progress-overlay';
     overlay.innerHTML = `
-      <div class="login-progress-panel">
-        <div class="login-win11-ring" aria-hidden="true"><div class="login-win11-check">✓</div></div>
+      <div class="login-progress-panel" role="status" aria-live="polite">
+        <div class="login-spinner" aria-hidden="true"></div>
         <div id="lp-main-title" class="login-progress-title">正在登入</div>
-        <div id="lp-sub-title" class="login-progress-sub" aria-live="polite">正在安全確認會員資料</div>
-        <div id="lp-sub-note" class="login-progress-note"></div>
-        <div id="loginWaitPrompt" class="login-wait-prompt" hidden role="group" aria-label="是否繼續等待登入"><p>登入處理時間較長，是否繼續等待？</p><button id="loginContinueWait" type="button" onclick="continueLoginWaiting()">是，繼續等待</button><button type="button" onclick="cancelLoginWaiting()">否，返回主畫面</button></div>
+        <div id="lp-sub-title" class="login-progress-sub">正在處理您的登入請求</div>
+        <div id="lp-sub-note" class="login-progress-note">請稍候</div>
         <div id="loginErrorMsg" class="login-progress-error"></div>
         <button id="loginRetryBtn" type="button" class="login-progress-retry" onclick="hideLoginOverlay()">返回登入</button>
       </div>`;
@@ -2421,16 +2413,15 @@ function showLoginOverlay() {
 
   overlay.classList.remove('is-success','is-error','is-leaving');
   // 每次登入建立新的動畫元素，不沿用上一次失敗／隱藏的動畫狀態。
-  const oldRing = overlay.querySelector('.login-win11-ring');
-  if (oldRing) {
-    const ring = document.createElement('div');
-    ring.className = 'login-win11-ring';
-    ring.setAttribute('aria-hidden','true');
-    const check = document.createElement('div');
-    check.className = 'login-win11-check';
-    check.textContent = '✓';
-    ring.appendChild(check);
-    oldRing.replaceWith(ring);
+  const oldSpinner = overlay.querySelector('.login-spinner');
+  if (!oldSpinner) {
+    const panel = overlay.querySelector('.login-progress-panel');
+    if (panel) {
+      const spinner = document.createElement('div');
+      spinner.className = 'login-spinner';
+      spinner.setAttribute('aria-hidden','true');
+      panel.insertBefore(spinner, panel.firstChild);
+    }
   }
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
@@ -2486,7 +2477,7 @@ function finishLoginOverlay() {
 }
 
 function showLoginError(msg) {
-  clearLoginHintTimers();const prompt=document.getElementById('loginWaitPrompt');if(prompt)prompt.hidden=true;
+  clearLoginHintTimers();
   const overlay = document.getElementById('loginProgressOverlay');
   const title = document.getElementById('lp-main-title');
   const sub = document.getElementById('lp-sub-title');
@@ -2506,7 +2497,21 @@ function showLoginError(msg) {
     err.textContent = String(msg || '登入過程發生問題，請稍後再試。');
     err.style.display = 'block';
   }
-  if (retry) retry.style.display = 'block';
+  if (retry) retry.style.display = 'none';
+
+  // 登入失敗後回到登入頁，但保留帳號與密碼欄位內容，
+  // 讓客戶只需修正錯誤資訊，不必全部重新輸入。
+  setTimeout(() => {
+    if (!_loginInProgress) return;
+    _loginInProgress = false;
+    setLoginOverlayVisible(false);
+    const loginView = document.getElementById('loginView');
+    const appView = document.getElementById('appView');
+    if (appView) appView.style.display = 'none';
+    if (loginView) loginView.style.display = 'flex';
+    setMemberNavVisible(false);
+    document.getElementById('acc')?.focus();
+  }, 1800);
 }
 
 async function doLogin() {
@@ -5347,6 +5352,79 @@ async function ns1OpenSettings(){
 }
 @media(max-width:560px){
   #loginView{padding-left:16px !important;padding-right:16px !important;}
+}
+</style><style id="login-spinner-ui">
+/* 登入處理畫面：全螢幕、單獨置中 */
+#loginProgressOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  padding:24px !important;
+  box-sizing:border-box !important;
+  display:none;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-direction:column !important;
+  background:#fff !important;
+  z-index:2147483000 !important;
+}
+#loginProgressOverlay .login-progress-panel{
+  width:min(92vw,420px) !important;
+  max-width:420px !important;
+  margin:auto !important;
+  padding:24px !important;
+  box-sizing:border-box !important;
+  text-align:center !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+#loginProgressOverlay .login-spinner{
+  width:72px;
+  height:72px;
+  margin:0 auto 28px;
+  border:10px solid #dbe4ff;
+  border-top-color:#3157c9;
+  border-right-color:#3157c9;
+  border-radius:50%;
+  animation:loginSpinnerRotate .85s linear infinite;
+}
+#loginProgressOverlay .login-progress-title{
+  font-size:1.35rem !important;
+  font-weight:800 !important;
+  color:#222 !important;
+  margin-bottom:8px !important;
+}
+#loginProgressOverlay .login-progress-sub{
+  font-size:1.05rem !important;
+  color:#333 !important;
+  margin:0 !important;
+}
+#loginProgressOverlay .login-progress-note{
+  font-size:.95rem !important;
+  color:#666 !important;
+  margin-top:6px !important;
+}
+#loginProgressOverlay.is-error{
+  background:#fff !important;
+}
+#loginProgressOverlay.is-error .login-spinner{
+  display:none !important;
+}
+#loginProgressOverlay .login-progress-error{
+  color:#c62828 !important;
+  margin:12px 0 0 !important;
+  line-height:1.6 !important;
+}
+@keyframes loginSpinnerRotate{
+  to{transform:rotate(360deg);}
+}
+@media(max-width:390px){
+  #loginProgressOverlay{padding:16px !important;}
+  #loginProgressOverlay .login-progress-panel{width:100% !important;padding:16px !important;}
+  #loginProgressOverlay .login-spinner{width:62px;height:62px;border-width:9px;margin-bottom:24px;}
 }
 </style></body>
 </html>
