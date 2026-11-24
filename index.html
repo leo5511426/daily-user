@@ -2317,13 +2317,13 @@ function scheduleLoginSlowHints() {
   const active=()=>_loginInProgress&&document.getElementById('loginProgressOverlay')?.style.display!=='none';
   _loginHintTimers.push(setTimeout(()=>{
     if(!active())return;_loginHintStage=1;
-    if(sub)sub.textContent='目前連線較慢，請稍候';
-    if(note)note.textContent='並避免進行其他操作。';
+    if(sub)sub.textContent='連線時間較長，請稍候';
+    if(note)note.textContent='系統正在處理您的登入請求。';
   },3500));
   _loginHintTimers.push(setTimeout(()=>{
     if(!active())return;_loginHintStage=2;
-    if(sub)sub.textContent='系統仍在處理您的登入請求中';
-    if(note)note.textContent='請勿進行其他操作';
+    if(sub)sub.textContent='登入處理時間較長';
+    if(note)note.textContent='系統仍在處理您的登入請求，您可以繼續等待。';
   },8000));
   _loginHintTimers.push(setTimeout(()=>{
     if(!active())return;_loginHintStage=3;
@@ -2412,7 +2412,7 @@ function showLoginOverlay() {
         <div id="lp-main-title" class="login-progress-title">正在登入</div>
         <div id="lp-sub-title" class="login-progress-sub" aria-live="polite">正在安全確認會員資料</div>
         <div id="lp-sub-note" class="login-progress-note"></div>
-        <div id="loginWaitPrompt" class="login-wait-prompt" hidden role="group" aria-label="是否繼續等待登入"><p>是否繼續等待？</p><button id="loginContinueWait" type="button" onclick="continueLoginWaiting()">是，繼續等待</button><button type="button" onclick="cancelLoginWaiting()">否，返回主畫面</button></div>
+        <div id="loginWaitPrompt" class="login-wait-prompt" hidden role="group" aria-label="是否繼續等待登入"><p>登入處理時間較長，是否繼續等待？</p><button id="loginContinueWait" type="button" onclick="continueLoginWaiting()">是，繼續等待</button><button type="button" onclick="cancelLoginWaiting()">否，返回主畫面</button></div>
         <div id="loginErrorMsg" class="login-progress-error"></div>
         <button id="loginRetryBtn" type="button" class="login-progress-retry" onclick="hideLoginOverlay()">返回登入</button>
       </div>`;
@@ -5344,6 +5344,18 @@ async function ns1OpenSettings(){
 .app-container.full-desktop:has(#loginView[style*="display: flex"]){
   display:flex;
   align-items:stretch;
+  width:100% !important;
+  max-width:560px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  box-shadow:0 6px 26px rgba(86,57,68,.08) !important;
+}
+
+@media(max-width:767px){
+  .app-container.full-desktop:has(#loginView[style*="display: flex"]){
+    max-width:100% !important;
+    box-shadow:none !important;
+  }
 }
 </style>
 </body>
