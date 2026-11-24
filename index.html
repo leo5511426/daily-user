@@ -5358,6 +5358,88 @@ async function ns1OpenSettings(){
   }
 }
 </style>
+<style id="login-layout-final-fix">
+/* ============================================================
+   登入頁最終版面修正
+   外層容器依視窗自動伸展；登入內容自行置中。
+   登入等待層固定覆蓋整個視窗，避免出現在頁面右側。
+   ============================================================ */
+@media(min-width:768px){
+  body{
+    width:100%;
+    min-width:0;
+    justify-content:flex-start;
+  }
+
+  #appContainer{
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    margin:0 !important;
+  }
+
+  #loginView{
+    width:min(100%, 560px) !important;
+    max-width:560px !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    align-self:center !important;
+  }
+}
+
+@media(max-width:767px){
+  #appContainer{
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+  }
+
+  #loginView{
+    width:100% !important;
+    max-width:none !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+  }
+}
+
+/* 登入處理提示必須是全螢幕覆蓋層，而不是跟在 app-container 後面
+   形成「跑到右邊」的第二欄。 */
+#loginProgressOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:24px !important;
+  box-sizing:border-box !important;
+  display:none;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-direction:column !important;
+  background:rgba(255,248,250,.96) !important;
+  z-index:2147483000 !important;
+  overflow:auto !important;
+}
+
+#loginProgressOverlay .login-progress-panel{
+  width:min(100%, 420px) !important;
+  max-width:420px !important;
+  box-sizing:border-box !important;
+  margin:auto !important;
+  text-align:center !important;
+}
+
+@media(max-width:390px){
+  #loginProgressOverlay{
+    padding:16px !important;
+  }
+  #loginProgressOverlay .login-progress-panel{
+    width:100% !important;
+  }
+}
+</style>
 </body>
 </html>
 
