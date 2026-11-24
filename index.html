@@ -997,8 +997,7 @@ body .sync-indicator{
 }
 .lp-progress-fill{
   background:var(--accent) !important;
-  box-shadow:none !important;
-}
+  box-shadow:none !important;}
 #loginView h1{
   color:var(--brand-strong) !important;
   font-size:1.75em !important;
@@ -1998,7 +1997,6 @@ window.openSessionDetail = function(index) {
     width:'min(92vw,680px)'
   }).then(function(){ openSessionManager('devices'); });
 };
-
 window.openSecurityEventDetail = function(index) {
   const e = _securityEventCache[index];
   if (!e) return;
@@ -2997,8 +2995,7 @@ function renderShortcuts() {
   try {
     const raw = localStorage.getItem('myShortcuts');
     if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) current = parsed;
+      const parsed = JSON.parse(raw);      if (Array.isArray(parsed)) current = parsed;
     }
   } catch (e) {
     console.warn('[renderShortcuts] localStorage 設定損壞，已回復預設快捷鍵。', e);
@@ -3997,8 +3994,7 @@ if (isConfirmed) {
 try {
 let res = await fetchWithQueue(SCRIPT_URL, { action: 'buyerCompleteOrder', oid: oid, uid: store.userData.id, pw: savedPw }, "更新訂單狀態中...");
 if (res && res.success) Swal.fire('訂單已完成', res.message, 'success').then(() => silentSyncData()); else if (res) Swal.fire('錯誤', res.message, 'error');
-} catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }
-}
+} catch(e) { Swal.fire('錯誤', '連線異常，請稍後再試', 'error'); }}
 }
 
 function updateReturnAttachmentPreview() {
@@ -4997,8 +4993,7 @@ function closeAppOverlay() {
   dialog?.addEventListener('click', e => e.stopPropagation());
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && modal?.classList.contains('is-open')) {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault();      e.stopPropagation();
       closeAppOverlay();
     }
   }, true);
@@ -5357,7 +5352,7 @@ async function ns1OpenSettings(){
   #loginView{padding-left:16px !important;padding-right:16px !important;}
 }
 </style><style id="login-spinner-ui">
-/* 登入處理畫面：全螢幕、單獨置中 */
+/* 登入處理畫面：仿拓元等待畫面，僅調整 Loading Spinner 與其提示文字 */
 #loginProgressOverlay{
   position:fixed !important;
   inset:0 !important;
@@ -5371,9 +5366,12 @@ async function ns1OpenSettings(){
   align-items:center !important;
   justify-content:center !important;
   flex-direction:column !important;
-  background:#fff !important;
+  background:rgba(255,255,255,.72) !important;
   z-index:2147483000 !important;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
 }
+
 #loginProgressOverlay .login-progress-panel{
   width:min(92vw,420px) !important;
   max-width:420px !important;
@@ -5384,89 +5382,131 @@ async function ns1OpenSettings(){
   background:transparent !important;
   box-shadow:none !important;
 }
+
+/* 4px 線條環：使用網站主色，若未定義則沿用粉紅品牌色，最後才使用藍色 fallback */
 #loginProgressOverlay .login-spinner{
-  position:relative;
-  width:76px;
-  height:76px;
-  margin:0 auto 28px;
-  animation:none;
+  position:relative !important;
+  width:64px !important;
+  height:64px !important;
+  margin:0 auto 24px !important;
+  border-radius:50% !important;
+  animation:loginSpinnerRotate 1.15s linear infinite !important;
+  background:conic-gradient(
+    from 0deg,
+    transparent 0deg 22deg,
+    var(--primary-color, var(--pink, #0088FF)) 42deg,
+    var(--primary-color, var(--pink, #0088FF)) 82deg,
+    rgba(255,255,255,0) 112deg 360deg
+  ) !important;
+  -webkit-mask:radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4px),
+    #000 calc(100% - 3.5px)
+  ) !important;
+  mask:radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4px),
+    #000 calc(100% - 3.5px)
+  ) !important;
 }
+
+/* 保留既有 8 個 span 結構，但改由外層漸層環負責視覺，不再產生舊版跳動效果 */
 #loginProgressOverlay .login-spinner span{
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:11px;
-  height:25px;
-  margin-left:-5.5px;
-  margin-top:-37px;
-  border-radius:4px;
-  background:var(--pink, #d77fa0);
-  transform-origin:5.5px 37px;
-  opacity:.2;
-  animation:loginSpinnerSegment 2.4s linear infinite;
-}
-#loginProgressOverlay .login-spinner span:nth-child(1){transform:rotate(0deg);animation-delay:0s;}
-#loginProgressOverlay .login-spinner span:nth-child(2){transform:rotate(45deg);animation-delay:.3s;}
-#loginProgressOverlay .login-spinner span:nth-child(3){transform:rotate(90deg);animation-delay:.6s;}
-#loginProgressOverlay .login-spinner span:nth-child(4){transform:rotate(135deg);animation-delay:.9s;}
-#loginProgressOverlay .login-spinner span:nth-child(5){transform:rotate(180deg);animation-delay:1.2s;}
-#loginProgressOverlay .login-spinner span:nth-child(6){transform:rotate(225deg);animation-delay:1.5s;}
-#loginProgressOverlay .login-spinner span:nth-child(7){transform:rotate(270deg);animation-delay:1.8s;}
-#loginProgressOverlay .login-spinner span:nth-child(8){transform:rotate(315deg);animation-delay:2.1s;}
-#loginProgressOverlay .login-spinner span:nth-child(1){transform:rotate(0deg);animation-delay:0s;}
-#loginProgressOverlay .login-spinner span:nth-child(2){transform:rotate(45deg);animation-delay:.125s;}
-#loginProgressOverlay .login-spinner span:nth-child(3){transform:rotate(90deg);animation-delay:.25s;}
-#loginProgressOverlay .login-spinner span:nth-child(4){transform:rotate(135deg);animation-delay:.375s;}
-#loginProgressOverlay .login-spinner span:nth-child(5){transform:rotate(180deg);animation-delay:.5s;}
-#loginProgressOverlay .login-spinner span:nth-child(6){transform:rotate(225deg);animation-delay:.625s;}
-#loginProgressOverlay .login-spinner span:nth-child(7){transform:rotate(270deg);animation-delay:.75s;}
-#loginProgressOverlay .login-spinner span:nth-child(8){transform:rotate(315deg);animation-delay:.875s;}
-#loginProgressOverlay .login-progress-title{
-  font-size:1.35rem !important;
-  font-weight:800 !important;
-  color:#222 !important;
-  margin-bottom:8px !important;
-}
-#loginProgressOverlay .login-progress-sub{
-  font-size:1.05rem !important;
-  color:#333 !important;
-  margin:0 !important;
-}
-#loginProgressOverlay .login-progress-note{
-  font-size:1.05rem !important;
-  color:#c85f83 !important;
-  margin-top:10px !important;
-}
-#loginProgressOverlay.is-error .login-progress-note{
-  font-size:1.15rem !important;
-  font-weight:900 !important;
-  color:#c85f83 !important;
-  margin-top:12px !important;
-}
-#loginProgressOverlay.is-error{
-  background:#fff !important;
-}
-#loginProgressOverlay.is-error .login-spinner{
   display:none !important;
 }
+
+@keyframes loginSpinnerRotate{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+
+/* Loading 時只保留一行明確提示 */
+#loginProgressOverlay:not(.is-error) .login-progress-title{
+  font-size:0 !important;
+  line-height:1.5 !important;
+  margin:0 !important;
+  color:#555555 !important;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif !important;
+  font-weight:600 !important;
+}
+
+#loginProgressOverlay:not(.is-error) .login-progress-title::after{
+  content:"登入中，請避免進行任何操作";
+  display:block;
+  font-size:1rem;
+  line-height:1.6;
+  color:#555555;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+#loginProgressOverlay:not(.is-error) .login-progress-sub,
+#loginProgressOverlay:not(.is-error) .login-progress-note{
+  display:none !important;
+}
+
 #loginProgressOverlay .login-progress-error{
   color:#c62828 !important;
   margin:12px 0 0 !important;
   line-height:1.6 !important;
 }
-@keyframes loginSpinnerSegment{
-  0%{opacity:1;}
-  8%{opacity:1;}
-  12.5%{opacity:.2;}
-  100%{opacity:.2;}
+
+#loginProgressOverlay.is-error{
+  background:#fff !important;
 }
+
+#loginProgressOverlay.is-error .login-spinner{
+  display:none !important;
+}
+
+#loginProgressOverlay.is-error .login-progress-title{
+  font-size:1.35rem !important;
+  font-weight:800 !important;
+  color:#222 !important;
+  margin-bottom:8px !important;
+}
+
+#loginProgressOverlay.is-error .login-progress-title::after{
+  content:none !important;
+}
+
+#loginProgressOverlay.is-error .login-progress-sub{
+  font-size:1.05rem !important;
+  color:#333 !important;
+  margin:0 !important;
+}
+
+#loginProgressOverlay.is-error .login-progress-note{
+  display:block !important;
+  font-size:1.15rem !important;
+  font-weight:900 !important;
+  color:#c85f83 !important;
+  margin-top:12px !important;
+}
+
+#loginProgressOverlay.is-error .login-progress-error{
+  display:block !important;
+}
+
+#loginProgressOverlay .login-progress-retry{
+  display:none !important;
+}
+
 @media(max-width:390px){
   #loginProgressOverlay{padding:16px !important;}
-  #loginProgressOverlay .login-progress-panel{width:100% !important;padding:16px !important;}
-  #loginProgressOverlay .login-spinner{width:64px;height:64px;margin-bottom:24px;}
-#loginProgressOverlay .login-spinner span{width:8px;height:19px;margin-left:-4px;margin-top:-32px;transform-origin:4px 32px;}
+  #loginProgressOverlay .login-progress-panel{
+    width:100% !important;
+    padding:16px !important;
+  }
+  #loginProgressOverlay .login-spinner{
+    width:56px !important;
+    height:56px !important;
+    margin-bottom:20px !important;
+  }
+  #loginProgressOverlay:not(.is-error) .login-progress-title::after{
+    font-size:.95rem;
+  }
 }
 </style></body>
 </html>
-
 
